@@ -3,6 +3,7 @@
 #include <mbgl/map/camera.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_impl.hpp>
+#include <mbgl/map/map_lod_shift.hpp>
 #include <mbgl/map/transform.hpp>
 #include <mbgl/math/angles.hpp>
 #include <mbgl/math/log2.hpp>
@@ -525,6 +526,38 @@ void Map::setFreeCameraOptions(const FreeCameraOptions& camera) {
 
 FreeCameraOptions Map::getFreeCameraOptions() const {
     return impl->transform.getFreeCameraOptions();
+}
+
+void Map::setTileLodMinRadius(double radius) {
+    impl->tileLodMinRadius = radius;
+}
+
+double Map::getTileLodMinRadius() const {
+    return impl->tileLodMinRadius;
+}
+
+void Map::setTileLodScale(double scale) {
+    impl->tileLodScale = scale;
+}
+
+double Map::getTileLodScale() const {
+    return impl->tileLodScale;
+}
+
+void Map::setTileLodPitchThreshold(double threshold) {
+    impl->tileLodPitchThreshold = threshold;
+}
+
+double Map::getTileLodPitchThreshold() const {
+    return impl->tileLodPitchThreshold;
+}
+
+void Map::setTileLodZoomShift(const std::vector<double>& shift) {
+    impl->tileLodZoomShift = MapLodShift(shift);
+}
+
+double Map::getTileLodZoomShift(double zoom) const {
+    return impl->tileLodZoomShift.get(zoom);
 }
 
 } // namespace mbgl

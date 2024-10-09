@@ -117,9 +117,13 @@ public:
     void enableAndroidEmulatorGoldfishMitigation(bool enable);
 #endif
 
+    int getLastRenderedTileCount() const noexcept { return lastRenderedTileCount; }
+
 private:
     class Impl;
     std::unique_ptr<Impl> impl;
+
+    int lastRenderedTileCount = 0;
 };
 
 } // namespace mbgl
