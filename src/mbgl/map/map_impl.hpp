@@ -2,6 +2,7 @@
 
 #include <mbgl/annotation/annotation_manager.hpp>
 #include <mbgl/map/map.hpp>
+#include <mbgl/map/map_lod_shift.hpp>
 #include <mbgl/map/map_observer.hpp>
 #include <mbgl/map/map_options.hpp>
 #include <mbgl/map/mode.hpp>
@@ -13,6 +14,8 @@
 #include <mbgl/style/style.hpp>
 #include <mbgl/util/size.hpp>
 #include <mbgl/tile/tile_operation.hpp>
+
+#include <numbers>
 
 namespace mbgl {
 
@@ -90,6 +93,11 @@ public:
     bool loading = false;
     bool rendererFullyLoaded;
     std::unique_ptr<StillImageRequest> stillImageRequest;
+
+    double tileLodMinRadius = 3;
+    double tileLodScale = 1;
+    double tileLodPitchThreshold = (60.0 / 180.0) * std::numbers::pi;
+    MapLodShift tileLodZoomShift;
 };
 
 // Forward declaration of this method is required for the MapProjection class
