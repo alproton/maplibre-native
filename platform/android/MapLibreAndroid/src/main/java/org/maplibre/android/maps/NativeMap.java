@@ -261,6 +261,8 @@ interface NativeMap {
 
   void setSwapBehaviorFlush(boolean flush);
 
+  int getLastRenderedTileCount();
+
   //
   // Deprecated Annotations API
   //
