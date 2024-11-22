@@ -1252,6 +1252,10 @@ jni::jdouble NativeMapView::getTileLodZoomShift(JNIEnv&) {
     return jni::jdouble(map->getTileLodZoomShift());
 }
 
+jni::jint NativeMapView::getLastRenderedTileCount(JNIEnv&) {
+    return jni::jint(mapRenderer.getLastRenderedTileCount());
+}
+
 mbgl::Map& NativeMapView::getMap() {
     return *map;
 }
@@ -1379,6 +1383,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::getTileLodPitchThreshold, "nativeGetTileLodPitchThreshold"),
         METHOD(&NativeMapView::setTileLodZoomShift, "nativeSetTileLodZoomShift"),
         METHOD(&NativeMapView::getTileLodZoomShift, "nativeGetTileLodZoomShift"),
+        METHOD(&NativeMapView::getLastRenderedTileCount, "nativeGetLastRenderedTileCount"),
         METHOD(&NativeMapView::triggerRepaint, "nativeTriggerRepaint"));
 }
 
