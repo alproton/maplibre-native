@@ -25,6 +25,7 @@
 #include <mbgl/renderer/layer_tweaker.hpp>
 #include <mbgl/renderer/render_target.hpp>
 
+#include <chrono>
 #include <limits>
 #endif // MLN_DRAWABLE_RENDERER
 
@@ -567,6 +568,18 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
 
     frameCount += 1;
     MLN_END_FRAME();
+
+    static int frame_count = 0;
+    static auto previous_time = std::chrono::high_resolution_clock::now();
+    ++frame_count;
+    auto time = std::chrono::high_resolution_clock::now();
+    double elapsed =
+        std::chrono::duration<double>(time - previous_time).count();
+    if (elapsed > 1) {
+        Log::Error(Event::General, "######  FPS: " + std::to_string(frame_count / elapsed));
+        previous_time = time;
+        frame_count = 0;
+    }
 }
 
 void Renderer::Impl::reduceMemoryUse() {

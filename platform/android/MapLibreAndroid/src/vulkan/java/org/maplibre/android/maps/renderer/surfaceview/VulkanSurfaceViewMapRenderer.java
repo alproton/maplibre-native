@@ -7,8 +7,8 @@ public class VulkanSurfaceViewMapRenderer extends SurfaceViewMapRenderer {
 
   public VulkanSurfaceViewMapRenderer(Context context,
                                 @NonNull MapLibreVulkanSurfaceView surfaceView,
-                                String localIdeographFontFamily) {
-    super(context, surfaceView, localIdeographFontFamily);
+                                String localIdeographFontFamily, boolean multiThreadedGpuResourceUpload) {
+    super(context, surfaceView, localIdeographFontFamily, multiThreadedGpuResourceUpload);
 
     this.surfaceView.setRenderer(this);
   }
