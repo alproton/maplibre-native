@@ -307,6 +307,25 @@ const std::vector<AttributeInfo> ShaderInfo<BuiltIn::LineShader, gfx::Backend::T
 };
 const std::vector<TextureInfo> ShaderInfo<BuiltIn::LineShader, gfx::Backend::Type::OpenGL>::textures = {};
 
+//Line Route
+const std::vector<UniformBlockInfo> ShaderInfo<BuiltIn::LineRouteShader, gfx::Backend::Type::OpenGL>::uniformBlocks = {
+    UniformBlockInfo{"GlobalPaintParamsUBO", idGlobalPaintParamsUBO},
+    UniformBlockInfo{"LineDrawableUBO", idLineDrawableUBO},
+    UniformBlockInfo{"LineInterpolationUBO", idLineInterpolationUBO},
+    UniformBlockInfo{"LineEvaluatedPropsUBO", idLineEvaluatedPropsUBO},
+};
+const std::vector<AttributeInfo> ShaderInfo<BuiltIn::LineRouteShader, gfx::Backend::Type::OpenGL>::attributes = {
+    AttributeInfo{"a_pos_normal", idLinePosNormalVertexAttribute},
+    AttributeInfo{"a_data", idLineDataVertexAttribute},
+    AttributeInfo{"a_color", idLineColorVertexAttribute},
+    AttributeInfo{"a_blur", idLineBlurVertexAttribute},
+    AttributeInfo{"a_opacity", idLineOpacityVertexAttribute},
+    AttributeInfo{"a_gapwidth", idLineGapWidthVertexAttribute},
+    AttributeInfo{"a_offset", idLineOffsetVertexAttribute},
+    AttributeInfo{"a_width", idLineWidthVertexAttribute},
+};
+const std::vector<TextureInfo> ShaderInfo<BuiltIn::LineRouteShader, gfx::Backend::Type::OpenGL>::textures = {};
+
 // Line Gradient
 const std::vector<UniformBlockInfo> ShaderInfo<BuiltIn::LineGradientShader, gfx::Backend::Type::OpenGL>::uniformBlocks =
     {

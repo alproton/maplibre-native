@@ -89,6 +89,10 @@ struct LineWidth : DataDrivenPaintProperty<float, attributes::width, uniforms::w
     static float defaultValue() { return 1.f; }
 };
 
+struct LineVanishDistance : DataDrivenPaintProperty<float, attributes::destination_dist, uniforms::destination_dist> {
+    static float defaultValue() { return 0.f; }
+};
+
 class LineLayoutProperties : public Properties<
     LineCap,
     LineJoin,
@@ -111,6 +115,21 @@ class LinePaintProperties : public Properties<
     LineTranslateAnchor,
     LineWidth
 > {};
+
+class RouteLinePaintProperties : public Properties<
+    LineBlur,
+    LineColor,
+    LineDasharray,
+    LineFloorWidth,
+    LineGapWidth,
+    LineGradient,
+    LineOffset,
+    LineOpacity,
+    LinePattern,
+    LineTranslate,
+    LineTranslateAnchor,
+    LineWidth,
+    LineVanishDistance> {};
 
 class LineLayerProperties final : public LayerProperties {
 public:

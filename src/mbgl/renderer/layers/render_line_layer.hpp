@@ -32,10 +32,12 @@ class LineLayerTweaker;
 using LineLayerTweakerPtr = std::shared_ptr<LineLayerTweaker>;
 #endif
 
-class RenderLineLayer final : public RenderLayer {
+class RenderLineLayer : public RenderLayer {
 public:
     explicit RenderLineLayer(Immutable<style::LineLayer::Impl>);
+    void setIsRouteLayer(bool routeLayer);
     ~RenderLineLayer() override;
+
 
 #if MLN_DRAWABLE_RENDERER
     /// Generate any changes needed by the layer
@@ -92,6 +94,8 @@ private:
     gfx::ShaderGroupPtr lineGradientShaderGroup;
     gfx::ShaderGroupPtr lineSDFShaderGroup;
     gfx::ShaderGroupPtr linePatternShaderGroup;
+    gfx::ShaderGroupPtr lineRouteShaderGroup;
+    bool isRouteLayer;
 #endif
 };
 

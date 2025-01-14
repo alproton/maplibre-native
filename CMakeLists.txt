@@ -440,6 +440,9 @@ list(APPEND INCLUDE_FILES
     ${PROJECT_SOURCE_DIR}/include/mbgl/util/work_request.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/util/work_task.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/util/work_task_impl.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_options.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/make_id.hpp
 )
 list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/actor/mailbox.cpp
@@ -575,6 +578,8 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/programs/line_pattern_program.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/programs/line_program.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/programs/line_program.hpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/programs/route_line_program.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/programs/route_line_program.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/programs/line_sdf_program.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/programs/program.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/programs/program_parameters.cpp
@@ -1006,6 +1011,8 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/version.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/version.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/work_request.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/route/route.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_manager.cpp
 )
 
 if(MLN_WITH_OPENGL)
@@ -1078,6 +1085,7 @@ if(MLN_WITH_OPENGL)
             ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/symbol_sdf_icon.hpp
             ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/symbol_sdf_text.hpp
             ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/symbol_text_and_icon.hpp
+            ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/route_line.hpp
     )
     list(APPEND 
         SRC_FILES

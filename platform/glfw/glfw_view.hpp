@@ -101,6 +101,7 @@ private:
 
     void addRandomPointAnnotations(int count);
     void addRandomLineAnnotations(int count);
+    void addRoute();
     void addRandomShapeAnnotations(int count);
     void addRandomCustomPointAnnotations(int count);
     void addAnimatedAnnotation();

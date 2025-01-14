@@ -30,18 +30,21 @@ using ShapeAnnotationGeometry =
 class LineAnnotation {
 public:
     LineAnnotation(ShapeAnnotationGeometry geometry_,
-                   style::PropertyValue<float> opacity_ = 1.0f,
-                   style::PropertyValue<float> width_ = 1.0f,
-                   style::PropertyValue<Color> color_ = Color::black())
+                   style::PropertyValue<float> opacity_  = 1.0f,
+                   style::PropertyValue<float> width_  = 1.0f,
+                   style::PropertyValue<Color> color_ = Color::black(),
+                   bool isRoute_ = false)
         : geometry(std::move(geometry_)),
           opacity(std::move(opacity_)),
           width(std::move(width_)),
-          color(std::move(color_)) {}
+          color(std::move(color_)),
+            isRoute(std::move(isRoute_)){}
 
     ShapeAnnotationGeometry geometry;
     style::PropertyValue<float> opacity;
     style::PropertyValue<float> width;
     style::PropertyValue<Color> color;
+    bool isRoute = false;
 };
 
 class FillAnnotation {

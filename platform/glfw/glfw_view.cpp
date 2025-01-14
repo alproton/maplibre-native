@@ -28,6 +28,10 @@
 #include <mbgl/util/instrumentation.hpp>
 #include <mbgl/util/platform.hpp>
 #include <mbgl/util/string.hpp>
+#include <mbgl/style/style.hpp>
+#include <mbgl/map/map.hpp>
+#include <mbgl/util/geojson.hpp>
+#include <iostream>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -52,6 +56,8 @@
 #endif
 
 #define GL_GLEXT_PROTOTYPES
+#include "mbgl/style/conversion/geojson.hpp"
+
 #include <GLFW/glfw3.h>
 
 #include <cassert>
@@ -389,7 +395,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
     auto *view = reinterpret_cast<GLFWView *>(glfwGetWindowUserPointer(window));
 
     if (action == GLFW_RELEASE) {
-        if (key != GLFW_KEY_R || key != GLFW_KEY_S) view->animateRouteCallback = nullptr;
+        // if (key != GLFW_KEY_R || key != GLFW_KEY_S) view->animateRouteCallback = nullptr;
 
         switch (key) {
             case GLFW_KEY_ESCAPE:
@@ -442,6 +448,11 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
             case GLFW_KEY_L:
                 view->addRandomLineAnnotations(1);
                 break;
+
+            case GLFW_KEY_R:
+                view->addRoute();
+                break;
+
             case GLFW_KEY_A: {
                 // XXX Fix precision loss in flyTo:
                 // https://github.com/mapbox/mapbox-gl-native/issues/4298
@@ -462,37 +473,37 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 view->map->flyTo(cameraOptions, animationOptions);
                 nextPlace = nextPlace % places.size();
             } break;
-            case GLFW_KEY_R: {
-                view->show3DExtrusions = true;
-                view->toggle3DExtrusions(view->show3DExtrusions);
-                if (view->animateRouteCallback) break;
-                view->animateRouteCallback = [](mbgl::Map *routeMap) {
-                    static mapbox::cheap_ruler::CheapRuler ruler{40.7}; // New York
-                    static mapbox::geojson::geojson route{mapbox::geojson::parse(mbgl::platform::glfw::route)};
-                    const auto &geometry = route.get<mapbox::geometry::geometry<double>>();
-                    const auto &lineString = geometry.get<mapbox::geometry::line_string<double>>();
-
-                    static double routeDistance = ruler.lineDistance(lineString);
-                    static double routeProgress = 0;
-                    routeProgress += 0.0005;
-                    if (routeProgress > 1.0) {
-                        routeProgress = 0.0;
-                    }
-
-                    auto camera = routeMap->getCameraOptions();
-
-                    auto point = ruler.along(lineString, routeProgress * routeDistance);
-                    const mbgl::LatLng center{point.y, point.x};
-                    auto latLng = *camera.center;
-                    double bearing = ruler.bearing({latLng.longitude(), latLng.latitude()}, point);
-                    double easing = bearing - *camera.bearing;
-                    easing += easing > 180.0 ? -360.0 : easing < -180 ? 360.0 : 0;
-                    bearing = *camera.bearing + (easing / 20);
-                    routeMap->jumpTo(
-                        mbgl::CameraOptions().withCenter(center).withZoom(18.0).withBearing(bearing).withPitch(60.0));
-                };
-                view->animateRouteCallback(view->map);
-            } break;
+            // case GLFW_KEY_R: {
+            //     view->show3DExtrusions = true;
+            //     view->toggle3DExtrusions(view->show3DExtrusions);
+            //     if (view->animateRouteCallback) break;
+            //     view->animateRouteCallback = [](mbgl::Map *routeMap) {
+            //         static mapbox::cheap_ruler::CheapRuler ruler{40.7}; // New York
+            //         static mapbox::geojson::geojson route{mapbox::geojson::parse(mbgl::platform::glfw::route)};
+            //         const auto &geometry = route.get<mapbox::geometry::geometry<double>>();
+            //         const auto &lineString = geometry.get<mapbox::geometry::line_string<double>>();
+            //
+            //         static double routeDistance = ruler.lineDistance(lineString);
+            //         static double routeProgress = 0;
+            //         routeProgress += 0.0005;
+            //         if (routeProgress > 1.0) {
+            //             routeProgress = 0.0;
+            //         }
+            //
+            //         auto camera = routeMap->getCameraOptions();
+            //
+            //         auto point = ruler.along(lineString, routeProgress * routeDistance);
+            //         const mbgl::LatLng center{point.y, point.x};
+            //         auto latLng = *camera.center;
+            //         double bearing = ruler.bearing({latLng.longitude(), latLng.latitude()}, point);
+            //         double easing = bearing - *camera.bearing;
+            //         easing += easing > 180.0 ? -360.0 : easing < -180 ? 360.0 : 0;
+            //         bearing = *camera.bearing + (easing / 20);
+            //         routeMap->jumpTo(
+            //             mbgl::CameraOptions().withCenter(center).withZoom(18.0).withBearing(bearing).withPitch(60.0));
+            //     };
+            //     view->animateRouteCallback(view->map);
+            // } break;
             case GLFW_KEY_E:
                 view->toggle3DExtrusions(!view->show3DExtrusions);
                 break;
@@ -548,6 +559,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                     auto source = std::make_unique<GeoJSONSource>("states");
                     source->setURL(url);
                     style.addSource(std::move(source));
+
 
                     mbgl::CameraOptions cameraOptions;
                     cameraOptions.center = mbgl::LatLng{42.619626, -103.523181};
@@ -810,6 +822,35 @@ void GLFWView::addRandomPointAnnotations(int count) {
     }
 }
 
+void GLFWView::addRoute() {
+    MLN_TRACE_FUNC();
+
+    auto getLineString = [&]() -> mbgl::LineString<double> {
+        mbgl::LineString<double> linestring;
+        int numpts = 25;
+        float radius = 50.0f;
+        for(int i = 0; i < numpts; i++) {
+            float anglerad = (float(i) / float(numpts - 1))* 2 * 3.14f;
+            mbgl::Point<double> pt {radius * sin(anglerad), radius * cos(anglerad)};
+            linestring.push_back(pt);
+            std::cout<<"x: "<<pt.x<<" y: "<<pt.y<<std::endl;
+        }
+
+        return linestring;
+    };
+
+    // mbgl::Color outerColor{1.0f, 1.0f, 1.0f, 1.0f};
+    // mbgl::LineString<double> outerLinestring = getLineString();
+    // float outerWidth = 8.0f;
+    // annotationIDs.push_back(map->addAnnotation(mbgl::LineAnnotation {outerLinestring, 1.0f, outerWidth, outerColor, true}));
+
+    mbgl::Color innerColor{0.0f, 0.0f, 1.0f, 1.0f};
+    mbgl::LineString<double> innerLinestring = getLineString();
+    float innerWidth = 5.0f;
+    mbgl::LineAnnotation la = mbgl::LineAnnotation (innerLinestring, 1.0f, innerWidth, innerColor, true);
+    annotationIDs.push_back(map->addAnnotation(la));
+}
+
 void GLFWView::addRandomLineAnnotations(int count) {
     MLN_TRACE_FUNC();
 
@@ -818,7 +859,8 @@ void GLFWView::addRandomLineAnnotations(int count) {
         for (int j = 0; j < 3; ++j) {
             lineString.push_back(makeRandomPoint());
         }
-        annotationIDs.push_back(map->addAnnotation(mbgl::LineAnnotation{lineString, 1.0f, 2.0f, {makeRandomColor()}}));
+        mbgl::LineAnnotation la = mbgl::LineAnnotation{lineString, 1.0f, 2.0f, {makeRandomColor()}};
+        annotationIDs.push_back(map->addAnnotation(la));
     }
 }
 

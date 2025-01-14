@@ -241,6 +241,7 @@ enum {
     idLineFloorWidthVertexAttribute,
     idLinePatternFromVertexAttribute,
     idLinePatternToVertexAttribute,
+    idLineRouteDistanceToDestAttribute,
 
     lineVertexAttributeCount
 };

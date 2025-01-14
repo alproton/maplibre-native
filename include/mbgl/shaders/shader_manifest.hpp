@@ -24,6 +24,7 @@
 #include <mbgl/shaders/gl/drawable_line_gradient.hpp>
 #include <mbgl/shaders/gl/drawable_line_pattern.hpp>
 #include <mbgl/shaders/gl/drawable_line_sdf.hpp>
+#include <mbgl/shaders/gl/drawable_line_route.hpp>
 #include <mbgl/shaders/gl/drawable_raster.hpp>
 #include <mbgl/shaders/gl/drawable_symbol_icon.hpp>
 #include <mbgl/shaders/gl/drawable_symbol_sdf.hpp>

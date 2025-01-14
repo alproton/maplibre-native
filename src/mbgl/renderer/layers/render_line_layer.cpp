@@ -57,6 +57,12 @@ RenderLineLayer::RenderLineLayer(Immutable<style::LineLayer::Impl> _impl)
       unevaluated(impl_cast(baseImpl).paint.untransitioned()),
       colorRamp(std::make_shared<PremultipliedImage>(Size(256, 1))) {
     styleDependencies = unevaluated.getDependencies();
+
+    isRouteLayer = impl_cast(baseImpl).isRouteLayer;
+}
+
+void RenderLineLayer::setIsRouteLayer(bool routeLayer) {
+    isRouteLayer = routeLayer;
 }
 
 RenderLineLayer::~RenderLineLayer() = default;
@@ -617,29 +623,58 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                 }
             }
         } else {
-            // simple line
-            if (!lineShaderGroup) {
-                lineShaderGroup = shaders.getShaderGroup("LineShader");
-                if (!lineShaderGroup) {
+            //check if this layer is to be used for a route
+            if(isRouteLayer) {
+                if(!lineRouteShaderGroup) {
+                    lineRouteShaderGroup = shaders.getShaderGroup("LineRouteShader");
+                    if(!lineRouteShaderGroup) {
+                        continue;
+                    }
+                }
+
+                auto shader = lineRouteShaderGroup->getOrCreateShader(context, propertiesAsUniforms, posNormalAttribName);
+                if(!shader) {
                     continue;
                 }
+
+                //build the drawables.
+                auto builder = createLineBuilder("lineRoute", std::move(shader));
+
+                // vertices, attributes and segments
+                addAttributes(*builder, bucket, std::move(vertexAttrs));
+                setSegments(builder, bucket);
+
+                builder->flush(context);
+                for (auto& drawable : builder->clearDrawables()) {
+                    addDrawable(std::move(drawable), LineLayerTweaker::LineType::Simple);
+                }
             }
+             else
+                 {
+                 // simple line
+                 if (!lineShaderGroup) {
+                     lineShaderGroup = shaders.getShaderGroup("LineShader");
+                     if (!lineShaderGroup) {
+                         continue;
+                     }
+                 }
 
-            auto shader = lineShaderGroup->getOrCreateShader(context, propertiesAsUniforms, posNormalAttribName);
-            if (!shader) {
-                continue;
-            }
+                 auto shader = lineShaderGroup->getOrCreateShader(context, propertiesAsUniforms, posNormalAttribName);
+                 if (!shader) {
+                     continue;
+                 }
 
-            auto builder = createLineBuilder("line", std::move(shader));
+                 auto builder = createLineBuilder("line", std::move(shader));
 
-            // vertices, attributes and segments
-            addAttributes(*builder, bucket, std::move(vertexAttrs));
-            setSegments(builder, bucket);
+                 // vertices, attributes and segments
+                 addAttributes(*builder, bucket, std::move(vertexAttrs));
+                 setSegments(builder, bucket);
 
-            builder->flush(context);
-            for (auto& drawable : builder->clearDrawables()) {
-                addDrawable(std::move(drawable), LineLayerTweaker::LineType::Simple);
-            }
+                 builder->flush(context);
+                 for (auto& drawable : builder->clearDrawables()) {
+                     addDrawable(std::move(drawable), LineLayerTweaker::LineType::Simple);
+                 }
+             }
         }
     }
 }

@@ -12,12 +12,16 @@
 /platform/android/.gradle
 /platform/android/x86
 /platform/android/x86_64
+/platform/android/buildSrc
 /cmake-build-debug
 /platform/android/build
 /platform/android/MapLibreAndroid/src/main/assets/sdk_versions/com.mapbox.mapboxsdk
 /platform/ios/platform/ios/Mapbox.playground/build/
 /platform/windows/vendor/mesa3d/
+/cmake-build-release
+/cmake-build-debug
 *.code-workspace
+*.class
 
 .DS_Store
 .cache

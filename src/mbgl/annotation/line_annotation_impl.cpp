@@ -1,3 +1,5 @@
+#include "mbgl/style/layers/line_layer_impl.hpp"
+
 #include <mbgl/annotation/line_annotation_impl.hpp>
 #include <mbgl/annotation/annotation_manager.hpp>
 #include <mbgl/style/style_impl.hpp>
@@ -12,13 +14,15 @@ LineAnnotationImpl::LineAnnotationImpl(AnnotationID id_, LineAnnotation annotati
       annotation(ShapeAnnotationGeometry::visit(annotation_.geometry, CloseShapeAnnotation{}),
                  annotation_.opacity,
                  annotation_.width,
-                 annotation_.color) {}
+                 annotation_.color,
+                 annotation_.isRoute) {}
 
 void LineAnnotationImpl::updateStyle(Style::Impl& style) const {
     Layer* layer = style.getLayer(layerID);
 
     if (!layer) {
         auto newLayer = std::make_unique<LineLayer>(layerID, AnnotationManager::SourceID);
+        newLayer->setIsRoute(annotation.isRoute);
         newLayer->setSourceLayer(layerID);
         newLayer->setLineJoin(LineJoinType::Round);
         layer = style.addLayer(std::move(newLayer), AnnotationManager::PointLayerID);

@@ -44,6 +44,7 @@ MBGL_DEFINE_UNIFORM_SCALAR(float, fade_change);
 MBGL_DEFINE_UNIFORM_SCALAR(float, weight);
 
 MBGL_DEFINE_UNIFORM_VECTOR(float, 2, extrude_scale);
+MBGL_DEFINE_UNIFORM_VECTOR(float, 1, destination_dist);
 
 namespace heatmap {
 MBGL_DEFINE_UNIFORM_SCALAR(float, extrude_scale);

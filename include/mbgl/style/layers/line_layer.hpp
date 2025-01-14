@@ -21,7 +21,7 @@ class LineLayer final : public Layer {
 public:
     LineLayer(const std::string& layerID, const std::string& sourceID);
     ~LineLayer() override;
-
+    void setIsRoute(bool isRoute);
     // Layout properties
 
     static PropertyValue<LineCapType> getDefaultLineCap();

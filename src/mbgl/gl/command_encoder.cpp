@@ -31,6 +31,11 @@ void CommandEncoder::present(gfx::Renderable& renderable) {
 
 void CommandEncoder::pushDebugGroup(const char* name) {
     (void)name;
+    std::string namestr = name;
+    if(namestr.find("coastline-render") != std::string::npos) {
+        namestr= namestr.substr(namestr.find_last_of(".") + 1);
+    }
+
 #ifndef NDEBUG
     if (auto debugging = context.getDebuggingExtension()) {
         if (debugging->pushDebugGroup) {
