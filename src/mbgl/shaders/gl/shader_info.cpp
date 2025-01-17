@@ -313,7 +313,9 @@ const std::vector<UniformBlockInfo> ShaderInfo<BuiltIn::LineRouteShader, gfx::Ba
     UniformBlockInfo{"LineDrawableUBO", idLineDrawableUBO},
     UniformBlockInfo{"LineInterpolationUBO", idLineInterpolationUBO},
     UniformBlockInfo{"LineEvaluatedPropsUBO", idLineEvaluatedPropsUBO},
+    UniformBlockInfo{"LineRouteUBO", idLineRouteUBO}
 };
+
 const std::vector<AttributeInfo> ShaderInfo<BuiltIn::LineRouteShader, gfx::Backend::Type::OpenGL>::attributes = {
     AttributeInfo{"a_pos_normal", idLinePosNormalVertexAttribute},
     AttributeInfo{"a_data", idLineDataVertexAttribute},
@@ -323,6 +325,7 @@ const std::vector<AttributeInfo> ShaderInfo<BuiltIn::LineRouteShader, gfx::Backe
     AttributeInfo{"a_gapwidth", idLineGapWidthVertexAttribute},
     AttributeInfo{"a_offset", idLineOffsetVertexAttribute},
     AttributeInfo{"a_width", idLineWidthVertexAttribute},
+    AttributeInfo{"a_distance_to_dest", idLineRouteDistanceToDestAttribute}
 };
 const std::vector<TextureInfo> ShaderInfo<BuiltIn::LineRouteShader, gfx::Backend::Type::OpenGL>::textures = {};
 

@@ -127,6 +127,11 @@ struct alignas(16) LineSDFInterpolationUBO {
 };
 static_assert(sizeof(LineSDFInterpolationUBO) % 16 == 0);
 
+struct alignas(16) LineRouteInterpolationUBO {
+    float distance_to_dest;
+};
+static_assert(sizeof(LineRouteInterpolationUBO) % 16 == 0);
+
 //
 // Line evaluated properties
 
@@ -149,6 +154,7 @@ enum {
     idLineTilePropertiesUBO,
     idLineEvaluatedPropsUBO,
     idLineExpressionUBO,
+    idLineRouteUBO,
     lineUBOCount
 };
 

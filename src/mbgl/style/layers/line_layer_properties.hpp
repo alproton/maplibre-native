@@ -90,7 +90,7 @@ struct LineWidth : DataDrivenPaintProperty<float, attributes::width, uniforms::w
 };
 
 struct LineVanishDistance : DataDrivenPaintProperty<float, attributes::destination_dist, uniforms::destination_dist> {
-    static float defaultValue() { return 0.f; }
+    static float defaultValue() { return 0.33f; }
 };
 
 class LineLayoutProperties : public Properties<
@@ -148,6 +148,7 @@ public:
     // Data members.
     CrossfadeParameters crossfade;
     LinePaintProperties::PossiblyEvaluated evaluated;
+
 };
 
 } // namespace style

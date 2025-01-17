@@ -18,6 +18,7 @@ struct ShaderSource<BuiltIn::LineRouteShader, gfx::Backend::Type::OpenGL> {
 
 layout (location = 0) in vec2 a_pos_normal;
 layout (location = 1) in vec4 a_data;
+layout (location = 8) in float a_distance_to_dest;
 
 layout (std140) uniform GlobalPaintParamsUBO {
     highp vec2 u_pattern_atlas_texsize;
@@ -58,10 +59,12 @@ layout (std140) uniform LineEvaluatedPropsUBO {
     highp float props_pad2;
 };
 
+
 out vec2 v_normal;
 out vec2 v_width2;
 out float v_gamma_scale;
 out highp float v_linesofar;
+out highp float v_distance_to_dest;
 
 #ifndef HAS_UNIFORM_u_color
 layout (location = 2) in highp vec4 a_color;
@@ -84,6 +87,7 @@ layout (location = 6) in lowp vec2 a_offset;
 #ifndef HAS_UNIFORM_u_width
 layout (location = 7) in mediump vec2 a_width;
 #endif
+
 
 void main() {
     #ifndef HAS_UNIFORM_u_color
@@ -165,6 +169,7 @@ mediump float width = u_width;
     v_gamma_scale = extrude_length_without_perspective / extrude_length_with_perspective;
 
     v_width2 = vec2(outset, inset);
+    v_distance_to_dest = a_distance_to_dest;
 }
 )";
     static constexpr const char* fragment = R"(layout (std140) uniform LineDrawableUBO {
@@ -195,9 +200,14 @@ layout (std140) uniform LineEvaluatedPropsUBO {
     highp float props_pad2;
 };
 
+layout (std140) uniform LineRouteUBO {
+    highp float u_distance_traversed;
+};
+
 in vec2 v_width2;
 in vec2 v_normal;
 in float v_gamma_scale;
+in float v_distance_to_dest;
 
 #ifndef HAS_UNIFORM_u_color
 in highp vec4 color;
@@ -230,6 +240,11 @@ lowp float opacity = u_opacity;
     float alpha = clamp(min(dist - (v_width2.t - blur2), v_width2.s - dist) / blur2, 0.0, 1.0);
 
     fragColor = color * (alpha * opacity);
+    fragColor.a = v_distance_to_dest;
+    //u_distance_traversed
+    if(v_distance_to_dest < u_distance_traversed) {
+        discard;
+    }
 
 #ifdef OVERDRAW_INSPECTOR
     fragColor = vec4(1.0);

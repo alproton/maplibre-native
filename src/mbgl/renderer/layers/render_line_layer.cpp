@@ -451,6 +451,41 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
             builder.setVertexAttributes(std::move(vertexAttrs));
         };
 
+    auto addLineRouteAttributes = [&](gfx::DrawableBuilder& builder, const LineBucket& bucket, gfx::VertexAttributeArrayPtr&& vertexAttrs) {
+        const auto vertexCount = bucket.vertices.elements();
+        builder.setRawVertices({}, vertexCount, gfx::AttributeDataType::Short4);
+
+        if (const auto& attr = vertexAttrs->set(idLinePosNormalVertexAttribute)) {
+            attr->setSharedRawData(bucket.sharedVertices,
+                                   offsetof(LineLayoutVertex, a1),
+                                   /*vertexOffset=*/0,
+                                   sizeof(LineLayoutVertex),
+                                   gfx::AttributeDataType::Short2);
+        }
+
+        if (const auto& attr = vertexAttrs->set(idLineDataVertexAttribute)) {
+            attr->setSharedRawData(bucket.sharedVertices,
+                                   offsetof(LineLayoutVertex, a2),
+                                   /*vertexOffset=*/0,
+                                   sizeof(LineLayoutVertex),
+                                   gfx::AttributeDataType::UByte4);
+        }
+
+        if(const auto& attr = vertexAttrs->set(idLineRouteDistanceToDestAttribute)) {
+            // mbgl::gfx::VertexVector<float> dist2dest;
+            const std::shared_ptr<mbgl::gfx::VertexVector<float>> dist2dest = std::make_shared<mbgl::gfx::VertexVector<float>>();
+             size_t numverts = bucket.vertices.elements();
+            dist2dest->reserve(numverts);
+            float dist = float(numverts);
+            for (size_t i = 0; i < numverts; ++i) {
+                dist2dest->emplace_back((dist - float(i))/dist);
+            }
+            attr->setSharedRawData(dist2dest, 0, 0, sizeof(float), gfx::AttributeDataType::Float);
+        }
+
+        builder.setVertexAttributes(std::move(vertexAttrs));
+    };
+
     tileLayerGroup->setStencilTiles(renderTiles);
 
     StringIDSetsPair propertiesAsUniforms;
@@ -640,13 +675,12 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                 //build the drawables.
                 auto builder = createLineBuilder("lineRoute", std::move(shader));
 
-                // vertices, attributes and segments
-                addAttributes(*builder, bucket, std::move(vertexAttrs));
+                addLineRouteAttributes(*builder, bucket, std::move(vertexAttrs));
                 setSegments(builder, bucket);
 
                 builder->flush(context);
                 for (auto& drawable : builder->clearDrawables()) {
-                    addDrawable(std::move(drawable), LineLayerTweaker::LineType::Simple);
+                    addDrawable(std::move(drawable), LineLayerTweaker::LineType::Route);
                 }
             }
              else

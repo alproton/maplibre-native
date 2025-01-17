@@ -35,6 +35,7 @@ public:
     ~LineLayerTweaker() override = default;
 
     void execute(LayerGroupBase&, const PaintParameters&) override;
+    void setRouteDistanceTraversed(float t);
 
 #if MLN_RENDER_BACKEND_METAL
     using LinePaintProperties = style::LinePaintProperties;
@@ -60,7 +61,7 @@ private:
 
 protected:
     gfx::UniformBufferPtr evaluatedPropsUniformBuffer;
-
+    float routeDistanceTraversed = 0.33f;
 #if MLN_RENDER_BACKEND_METAL
     gfx::UniformBufferPtr expressionUniformBuffer;
     Unevaluated::GPUExpressions gpuExpressions;

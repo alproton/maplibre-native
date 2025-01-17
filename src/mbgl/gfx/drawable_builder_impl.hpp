@@ -33,6 +33,12 @@ public:
         std::array<uint8_t, 4> a2;
     };
 
+    struct RouteLineLayoutVertex {
+        std::array<int16_t, 2> a1;
+        std::array<uint8_t, 4> a2;
+        std::array<float, 1> a3;
+    };
+
 public:
     gfx::VertexVector<VT> vertices;
 

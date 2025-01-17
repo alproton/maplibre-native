@@ -65,6 +65,10 @@ auto LineLayerTweaker::evaluate([[maybe_unused]] const PaintParameters& paramete
     return evaluated.get<Property>().constantOr(Property::defaultValue());
 }
 
+void LineLayerTweaker::setRouteDistanceTraversed(float t) {
+    routeDistanceTraversed = t;
+}
+
 void LineLayerTweaker::execute(LayerGroupBase& layerGroup, const PaintParameters& parameters) {
     auto& context = parameters.context;
     const auto& evaluated = static_cast<const LineLayerProperties&>(*evaluatedProperties).evaluated;
@@ -204,6 +208,35 @@ void LineLayerTweaker::execute(LayerGroupBase& layerGroup, const PaintParameters
                     0};
                 drawableUniforms.createOrUpdate(idLineInterpolationUBO, &lineInterpolationUBO, context);
             } break;
+
+            case LineType::Route:
+                {
+                    const LineDrawableUBO drawableUBO = {
+                        /*matrix = */ util::cast<float>(matrix),
+                        /*ratio = */ 1.0f / tileID.pixelsToTileUnits(1.0f, static_cast<float>(zoom)),
+                        0,
+                        0,
+                        0};
+                    drawableUniforms.createOrUpdate(idLineDrawableUBO, &drawableUBO, context);
+
+                    const auto lineInterpolationUBO = LineInterpolationUBO{
+                        /*color_t =*/std::get<0>(binders->get<LineColor>()->interpolationFactor(zoom)),
+                        /*blur_t =*/std::get<0>(binders->get<LineBlur>()->interpolationFactor(zoom)),
+                        /*opacity_t =*/std::get<0>(binders->get<LineOpacity>()->interpolationFactor(zoom)),
+                        /*gapwidth_t =*/std::get<0>(binders->get<LineGapWidth>()->interpolationFactor(zoom)),
+                        /*offset_t =*/std::get<0>(binders->get<LineOffset>()->interpolationFactor(zoom)),
+                        /*width_t =*/std::get<0>(binders->get<LineWidth>()->interpolationFactor(zoom)),
+                        0,
+                        0};
+                    drawableUniforms.createOrUpdate(idLineInterpolationUBO, &lineInterpolationUBO, context);
+
+
+                    const auto lineRouteInterpolaionUBO = LineRouteInterpolationUBO {
+                        routeDistanceTraversed
+                        };
+                    drawableUniforms.createOrUpdate(idLineRouteUBO, &lineRouteInterpolaionUBO, context);
+                }
+                break;
 
             case LineType::Gradient: {
                 const LineGradientDrawableUBO drawableUBO = {
