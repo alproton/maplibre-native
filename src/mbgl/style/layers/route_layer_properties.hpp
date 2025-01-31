@@ -1,8 +1,52 @@
-//
-// Created by spalaniappan on 1/22/25.
-//
+#pragma once
 
-#ifndef ROUTE_LAYER_PROPERTIES_HPP
-#define ROUTE_LAYER_PROPERTIES_HPP
+#include <mbgl/style/types.hpp>
+#include <mbgl/style/layer_properties.hpp>
+#include <mbgl/style/layers/line_layer.hpp>
+#include <mbgl/style/layout_property.hpp>
+#include <mbgl/style/paint_property.hpp>
+#include <mbgl/style/properties.hpp>
+#include <mbgl/programs/attributes.hpp>
+#include <mbgl/programs/uniforms.hpp>
+#include <mbgl/style/layers/line_layer_properties.hpp>
+#include <mbgl/style/layers/route_layer_impl.hpp>
 
-#endif //ROUTE_LAYER_PROPERTIES_HPP
+namespace mbgl {
+namespace style {
+
+class RoutePaintProperties : public Properties<
+    LineBlur,
+    LineColor,
+    LineDasharray,
+    LineFloorWidth,
+    LineGapWidth,
+    LineGradient,
+    LineOffset,
+    LineOpacity,
+    LinePattern,
+    LineTranslate,
+    LineTranslateAnchor,
+    LineWidth,
+    LineVanishDistance> {};
+
+class RouteLayerProperties final : public LayerProperties {
+public:
+    explicit RouteLayerProperties(Immutable<RouteLayer::Impl>);
+    RouteLayerProperties(
+        Immutable<RouteLayer::Impl>,
+        RoutePaintProperties::PossiblyEvaluated);
+    ~RouteLayerProperties() override;
+
+    unsigned long constantsMask() const override;
+
+    expression::Dependency getDependencies() const noexcept override;
+
+    const RouteLayer::Impl& layerImpl() const noexcept;
+    // Data members.
+    RoutePaintProperties::PossiblyEvaluated evaluated;
+
+};
+
+
+}
+}

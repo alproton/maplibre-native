@@ -203,6 +203,8 @@ if(MLN_DRAWABLE_RENDERER)
         ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/hillshade_prepare_layer_tweaker.hpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/line_layer_tweaker.cpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/line_layer_tweaker.hpp
+        ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/route_layer_tweaker.cpp
+        ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/route_layer_tweaker.hpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/location_indicator_layer_tweaker.cpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/location_indicator_layer_tweaker.hpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/raster_layer_tweaker.cpp
@@ -251,6 +253,7 @@ list(APPEND INCLUDE_FILES
     ${PROJECT_SOURCE_DIR}/include/mbgl/layermanager/fill_layer_factory.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/layermanager/heatmap_layer_factory.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/layermanager/hillshade_layer_factory.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/layermanager/route_layer_factory.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/layermanager/layer_factory.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/layermanager/layer_manager.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/layermanager/line_layer_factory.hpp
@@ -359,6 +362,7 @@ list(APPEND INCLUDE_FILES
     ${PROJECT_SOURCE_DIR}/include/mbgl/style/layers/heatmap_layer.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/style/layers/hillshade_layer.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/style/layers/line_layer.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/style/layers/route_layer.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/style/layers/raster_layer.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/style/layers/symbol_layer.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/style/light.hpp
@@ -441,8 +445,9 @@ list(APPEND INCLUDE_FILES
     ${PROJECT_SOURCE_DIR}/include/mbgl/util/work_task.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/util/work_task_impl.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_options.hpp
-    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route.hpp
+        ${PROJECT_SOURCE_DIR}/include/mbgl/route/RouteSegment.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/make_id.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/id_types.hpp
 )
 list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/actor/mailbox.cpp
@@ -506,6 +511,7 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/layermanager/fill_layer_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/layermanager/heatmap_layer_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/layermanager/hillshade_layer_factory.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/layermanager/route_layer_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/layermanager/layer_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/layermanager/layer_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/layermanager/line_layer_factory.cpp
@@ -615,6 +621,8 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/buckets/hillshade_bucket.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/buckets/line_bucket.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/buckets/line_bucket.hpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/buckets/route_bucket.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/buckets/route_bucket.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/buckets/raster_bucket.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/buckets/raster_bucket.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/buckets/symbol_bucket.cpp
@@ -643,6 +651,8 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/render_hillshade_layer.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/render_line_layer.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/render_line_layer.hpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/render_route_layer.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/render_route_layer.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/render_raster_layer.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/render_raster_layer.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/renderer/layers/render_symbol_layer.cpp
@@ -819,10 +829,15 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/hillshade_layer_properties.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/hillshade_layer_properties.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/line_layer.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/route_layer.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/line_layer_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/line_layer_impl.hpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/route_layer_impl.hpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/route_layer_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/line_layer_properties.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/line_layer_properties.hpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/route_layer_properties.hpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/route_layer_properties.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/raster_layer.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/raster_layer_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/style/layers/raster_layer_impl.hpp
@@ -1011,7 +1026,7 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/version.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/version.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/work_request.cpp
-    ${PROJECT_SOURCE_DIR}/src/mbgl/route/route.cpp
+        ${PROJECT_SOURCE_DIR}/src/mbgl/route/RouteSegment.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_manager.cpp
 )
 

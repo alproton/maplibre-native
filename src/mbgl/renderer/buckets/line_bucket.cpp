@@ -7,6 +7,9 @@
 
 #include <cassert>
 #include <utility>
+#include <iostream>
+#include <thread>
+#include <sstream>
 
 namespace mbgl {
 
@@ -30,15 +33,52 @@ LineBucket::~LineBucket() {
     sharedVertices->release();
 }
 
+std::string LineBucket::getStats() const {
+
+}
+
 void LineBucket::addFeature(const GeometryTileFeature& feature,
                             const GeometryCollection& geometryCollection,
                             const ImagePositions& patternPositions,
                             const PatternLayerMap& patternDependencies,
                             std::size_t index,
                             const CanonicalTileID& canonical) {
-    for (auto& line : geometryCollection) {
-        addGeometry(line, feature, canonical);
+    if(debug) {
+
+        // int idx = 0;
+        std::cout<<"numlines: "<<geometryCollection.size()<<std::endl;
+        std::cout.flush();
     }
+    for (auto& line : geometryCollection) {
+        // std::cout<<std::endl<<"geometry: "<<idx<<std::endl;
+        // for(auto& geometry : line) {
+        //     std::cout<<geometry.x<<", "<<geometry.y<<std::endl;
+        // }
+        // std::cout<<"adding geometry- "<<std::endl;
+        addGeometry(line, feature, canonical);
+        // idx++;
+        // std::cout.flush();
+    }
+    if(debug) {
+        std::cout<<"added feature"<<std::endl;
+        std::cout<<"tri indices: "<<triangles.elements()<<std::endl;
+        // for(size_t i = 0; i < triangles.elements()-3; i+=3) {
+        //     uint16_t idx0 = triangles.at(i);
+        //     uint16_t idx1 = triangles.at(i+1);
+        //     uint16_t idx2 = triangles.at(i+2);
+        //     std::cout<<"idx0: "<<idx0<<"idx1: "<<idx1<<"idx2: "<<idx2<<std::endl;
+        // }
+        std::cout.flush();
+
+        int numvertices = vertices.elements();
+        std::cout<<"numvertices: "<<numvertices<<std::endl;
+        const LineLayoutVertex& vv0 = vertices.at(0);
+        const LineLayoutVertex& vv1 = vertices.at(numvertices-1);
+        std::cout<<"vv0: "<<vv0.a1[0]<<", "<<vv0.a1[1]<<std::endl;
+        std::cout<<"vvlast: "<<vv1.a1[0]<<", "<<vv1.a1[1]<<std::endl;
+        std::cout.flush();
+    }
+
 
     for (auto& pair : paintPropertyBinders) {
         const auto it = patternDependencies.find(pair.first);
@@ -51,9 +91,11 @@ void LineBucket::addFeature(const GeometryTileFeature& feature,
     }
 }
 
+
 void LineBucket::addGeometry(const GeometryCoordinates& coordinates,
                              const GeometryTileFeature& feature,
                              const CanonicalTileID& canonical) {
+
     gfx::PolylineGenerator<LineLayoutVertex, Segment<LineAttributes>> generator(
         vertices,
         LineProgram::layoutVertex,
@@ -112,6 +154,7 @@ void LineBucket::addGeometry(const GeometryCoordinates& coordinates,
     options.overscaling = overscaling;
 
     generator.generate(coordinates, options);
+
 }
 
 void LineBucket::upload([[maybe_unused]] gfx::UploadPass& uploadPass) {

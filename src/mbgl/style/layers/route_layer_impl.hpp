@@ -1,8 +1,27 @@
-//
-// Created by spalaniappan on 1/22/25.
-//
+#pragma once
 
-#ifndef ROUTE_LAYER_IMPL_HPP
-#define ROUTE_LAYER_IMPL_HPP
+#include <mbgl/style/layer_impl.hpp>
+#include <mbgl/style/layers/route_layer.hpp>
+#include <mbgl/style/layers/line_layer_properties.hpp>
 
-#endif //ROUTE_LAYER_IMPL_HPP
+namespace mbgl {
+namespace style {
+
+class RouteLayer::Impl : public Layer::Impl {
+public:
+    using Layer::Impl::Impl;
+    bool hasLayoutDifference(const Layer::Impl&) const override;
+    void stringifyLayout(rapidjson::Writer<rapidjson::StringBuffer>&) const override;
+
+    expression::Dependency getDependencies() const noexcept override {
+        return layout.getDependencies() | paint.getDependencies();
+    }
+
+    LineLayoutProperties::Unevaluated layout;
+    LinePaintProperties::Transitionable paint;
+
+    DECLARE_LAYER_TYPE_INFO;
+};
+
+} // namespace style
+} // namespace mbgl

@@ -10,7 +10,6 @@ protected:
     std::unique_ptr<style::Layer> createLayer(const std::string& id,
                                               const style::conversion::Convertible& value) noexcept final;
     std::unique_ptr<RenderLayer> createRenderLayer(Immutable<style::Layer::Impl>) noexcept final;
-
 };
 
 }

@@ -24,7 +24,6 @@ public:
                float zoom,
                uint32_t overscaling);
     ~LineBucket() override;
-
     void addFeature(const GeometryTileFeature&,
                     const GeometryCollection&,
                     const mbgl::ImagePositions& patternPositions,
@@ -41,6 +40,7 @@ public:
     void update(const FeatureStates&, const GeometryTileLayer&, const std::string&, const ImagePositions&) override;
 
     PossiblyEvaluatedLayoutProperties layout;
+    std::string getStats() const;
 
     using VertexVector = gfx::VertexVector<LineLayoutVertex>;
     const std::shared_ptr<VertexVector> sharedVertices = std::make_shared<VertexVector>();

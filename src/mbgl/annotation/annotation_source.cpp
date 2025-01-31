@@ -25,7 +25,7 @@ std::optional<std::string> AnnotationSource::Impl::getAttribution() const {
 }
 
 bool AnnotationSource::supportsLayerType(const mbgl::style::LayerTypeInfo* info) const {
-    return !std::strcmp(info->type, "line") || !std::strcmp(info->type, "symbol") || !std::strcmp(info->type, "fill");
+    return !std::strcmp(info->type, "line") || !std::strcmp(info->type, "symbol") || !std::strcmp(info->type, "fill") || !std::strcmp(info->type, "route");
 }
 
 Mutable<Source::Impl> AnnotationSource::createMutable() const noexcept {

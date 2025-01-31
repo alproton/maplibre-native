@@ -4,6 +4,7 @@
 #include <mbgl/annotation/annotation_manager.hpp>
 #include <mbgl/style/style_impl.hpp>
 #include <mbgl/style/layers/line_layer.hpp>
+#include <mbgl/style/layers/route_layer.hpp>
 
 namespace mbgl {
 
@@ -20,18 +21,36 @@ LineAnnotationImpl::LineAnnotationImpl(AnnotationID id_, LineAnnotation annotati
 void LineAnnotationImpl::updateStyle(Style::Impl& style) const {
     Layer* layer = style.getLayer(layerID);
 
+    bool enableNewRouteImpl = false;
+
     if (!layer) {
-        auto newLayer = std::make_unique<LineLayer>(layerID, AnnotationManager::SourceID);
-        newLayer->setIsRoute(annotation.isRoute);
-        newLayer->setSourceLayer(layerID);
-        newLayer->setLineJoin(LineJoinType::Round);
-        layer = style.addLayer(std::move(newLayer), AnnotationManager::PointLayerID);
+        if(enableNewRouteImpl && annotation.isRoute) {
+            auto newLayer = std::make_unique<RouteLayer>(layerID, AnnotationManager::SourceID);
+            newLayer->setSourceLayer(layerID);
+            newLayer->setLineJoin(LineJoinType::Round);
+            layer = style.addLayer(std::move(newLayer), AnnotationManager::PointLayerID);
+        }
+        else {
+            auto newLayer = std::make_unique<LineLayer>(layerID, AnnotationManager::SourceID);
+            newLayer->setIsRoute(annotation.isRoute);
+            newLayer->setSourceLayer(layerID);
+            newLayer->setLineJoin(LineJoinType::Round);
+            layer = style.addLayer(std::move(newLayer), AnnotationManager::PointLayerID);
+        }
     }
 
-    auto* lineLayer = static_cast<LineLayer*>(layer);
-    lineLayer->setLineOpacity(annotation.opacity);
-    lineLayer->setLineWidth(annotation.width);
-    lineLayer->setLineColor(annotation.color);
+    if(enableNewRouteImpl && annotation.isRoute) {
+        auto* routeLayer = static_cast<RouteLayer*>(layer);
+        routeLayer->setLineOpacity(annotation.opacity);
+        routeLayer->setLineWidth(annotation.width);
+        routeLayer->setLineColor(annotation.color);
+    }
+    else {
+        auto* lineLayer = static_cast<LineLayer*>(layer);
+        lineLayer->setLineOpacity(annotation.opacity);
+        lineLayer->setLineWidth(annotation.width);
+        lineLayer->setLineColor(annotation.color);
+    }
 }
 
 const ShapeAnnotationGeometry& LineAnnotationImpl::geometry() const {

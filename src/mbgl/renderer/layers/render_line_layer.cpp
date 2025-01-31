@@ -30,6 +30,7 @@
 #include <mbgl/renderer/update_parameters.hpp>
 #include <mbgl/shaders/line_layer_ubo.hpp>
 #include <mbgl/shaders/shader_program_base.hpp>
+#include <mbgl/renderer/buckets/line_bucket.hpp>
 #endif
 
 namespace mbgl {
@@ -480,6 +481,7 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
             for (size_t i = 0; i < numverts; ++i) {
                 dist2dest->emplace_back((dist - float(i))/dist);
             }
+
             attr->setSharedRawData(dist2dest, 0, 0, sizeof(float), gfx::AttributeDataType::Float);
         }
 

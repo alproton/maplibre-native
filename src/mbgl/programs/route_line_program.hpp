@@ -4,10 +4,10 @@
 #pragma once
 
 #include <mbgl/programs/program.hpp>
+//TODO: we only include line_program, because some of common uniform variables(like ratio, units_to_pixels). Lets move those to a common file later.
+#include <mbgl/programs/line_program.hpp>
 #include <mbgl/programs/attributes.hpp>
 #include <mbgl/programs/uniforms.hpp>
-#include <mbgl/programs/textures.hpp>
-//#include <mbgl/renderer/layers/route_line_render_layer.hpp>
 #include <mbgl/renderer/layers/render_line_layer.hpp>
 #include <mbgl/util/geometry.hpp>
 
@@ -18,11 +18,6 @@ class RenderTile;
 class TransformState;
 class LinePatternPos;
 class ImagePosition;
-
-namespace uniforms {
-MBGL_DEFINE_UNIFORM_SCALAR(float, ratio);
-MBGL_DEFINE_UNIFORM_VECTOR(float, 2, units_to_pixels);
-}
 
 using RouteLineLayoutAttributes = TypeList<attributes::pos_normal, attributes::data<uint8_t, 4>>;
 
@@ -86,6 +81,10 @@ class RouteLineProgram : public Program<RouteLineProgram,
                                                    const TransformState&,
                                                    const std::array<float, 2>& pixelsToGLUnits,
                                                    float pixelRatio);
+
+    using RouteLineLayoutVertex = RouteLineProgram::LayoutVertex;
+    using RouteLineAttributes = RouteLineProgram::AttributeList;
+
 
 };
 }

@@ -6,6 +6,10 @@
 
 namespace mbgl {
 namespace gfx {
+
+RouteSegment::RouteSegment() : segmentHint_(RouteSegmentHint::Invalid) {
+}
+
 RouteSegment::RouteSegment(const RouteSegmentOptions& routeOptions, const RouteSegmentHint& rsh)
     : options_(routeOptions), segmentHint_(rsh) {}
 

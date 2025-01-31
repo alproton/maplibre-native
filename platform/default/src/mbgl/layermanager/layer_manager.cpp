@@ -11,6 +11,7 @@
 #include <mbgl/layermanager/location_indicator_layer_factory.hpp>
 #include <mbgl/layermanager/raster_layer_factory.hpp>
 #include <mbgl/layermanager/symbol_layer_factory.hpp>
+#include <mbgl/layermanager/route_layer_factory.hpp>
 #include <mbgl/util/logging.hpp>
 
 #if MLN_DRAWABLE_RENDERER
@@ -68,6 +69,9 @@ LayerManagerDefault::LayerManagerDefault() {
 #ifdef MLN_RENDER_BACKEND_OPENGL
 #if !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL)
     addLayerType(std::make_unique<CustomLayerFactory>());
+#endif
+#if !defined(MBGL_LAYER_ROUTE_DISABLE_ALL)
+    addLayerType(std::make_unique<RouteLayerFactory>());
 #endif
 #endif
 #if defined(MLN_RENDER_BACKEND_OPENGL) || MLN_RENDER_BACKEND_VULKAN

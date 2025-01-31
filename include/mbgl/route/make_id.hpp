@@ -10,7 +10,7 @@
 
 namespace mbgl {
 namespace gfx {
-class MakeID
+class IDpool
 {
 private:
 	// Change to uint16_t here for a more compact implementation if 16bit or less IDs work for you.
@@ -26,11 +26,11 @@ private:
 	uint m_Count;    // Number of ranges in list
 	uint m_Capacity; // Total capacity of range list
 
-	MakeID& operator=(const MakeID&);
-	MakeID(const MakeID&);
+	IDpool& operator=(const IDpool&);
+	IDpool(const IDpool&);
 
 public:
-	explicit MakeID(const uint max_id)
+	explicit IDpool(const uint max_id)
 	{
 		// Start with a single range, from 0 to max allowed ID (specified)
 		m_Ranges = static_cast<Range*>(::malloc(sizeof(Range)));
@@ -38,7 +38,7 @@ public:
 		Reset(max_id);
 	}
 
-	~MakeID()
+	~IDpool()
 	{
 		::free(m_Ranges);
 	}

@@ -10,6 +10,7 @@ namespace mbgl {
 namespace gfx {
 class RouteSegment {
 public:
+    RouteSegment();
     RouteSegment(const RouteSegmentOptions& routeOptions, const RouteSegmentHint& rsh);
     void update(const RouteSegmentOptions& routeOptions);
     RouteSegmentOptions getRouteOptions() const;
