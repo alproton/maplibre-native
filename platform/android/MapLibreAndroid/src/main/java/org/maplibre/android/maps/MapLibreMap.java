@@ -466,6 +466,15 @@ public final class MapLibreMap {
     return transform.getMinZoom();
   }
 
+  /**
+   * Get the number of tiles rendered in the last frame.
+   *
+   * @return number of tiles rendered in the last frame.
+   */
+  public int getLastRenderedTileCount() {
+    return nativeMapView.getLastRenderedTileCount();
+  }
+
   //
   // MaxZoom
   //
@@ -1641,7 +1650,7 @@ public final class MapLibreMap {
    * Get a camera position that fits a provided bounds and padding and the current camera tilt and bearing.
    *
    * @param latLngBounds the bounds to set the map with
-   * @param padding      the padding to apply to the bounds
+   * @param padding      the padding to apply to the bounds (in left, top, right, bottom order)
    * @return the camera position that fits the bounds and padding
    */
   @Nullable
@@ -1674,7 +1683,7 @@ public final class MapLibreMap {
    * Get a camera position that fits a provided bounds, padding, bearing and tilt.
    *
    * @param latLngBounds the bounds to set the map with
-   * @param padding      the padding to apply to the bounds
+   * @param padding      the padding to apply to the bounds (in left, top, right, bottom order)
    * @param bearing      the bearing to transform the camera position with
    * @param tilt         to transform the camera position with
    * @return the camera position that fits the bounds, bearing and tilt

@@ -136,25 +136,20 @@ void cycleTileLodMode(mbgl::Map &map) {
             map.setTileLodMinRadius(defaultRadius);
             map.setTileLodScale(defaultScale);
             map.setTileLodPitchThreshold(defaultPitchThreshold);
-            std::cout<<"Lod: default"<<std::endl;
             break;
         case TileLodMode::NoLod:
             // When LOD is off we set a maximum PitchThreshold
             map.setTileLodMinRadius(std::numbers::pi);
-            std::cout<<"Lod: NoLOD"<<std::endl;
             break;
         case TileLodMode::Reduced:
             map.setTileLodMinRadius(2);
             map.setTileLodScale(1.5);
             map.setTileLodPitchThreshold(std::numbers::pi / 4);
-            std::cout<<"Lod: reduced"<<std::endl;
             break;
         case TileLodMode::Aggressive:
             map.setTileLodMinRadius(1);
             map.setTileLodScale(2);
             map.setTileLodPitchThreshold(0);
-            std::cout<<"Lod: aggressive"<<std::endl;
-            std::cout<<"Lod: aggressive"<<std::endl;
             break;
     }
     map.triggerRepaint();

@@ -35,6 +35,11 @@ void Renderer::render(const std::shared_ptr<UpdateParameters>& updateParameters)
     if (auto renderTree = impl->orchestrator.createRenderTree(updateParameters)) {
         renderTree->prepare();
         impl->render(*renderTree, updateParameters);
+
+        // Number of rendered tiles (All layers have the same number)
+        if (renderTree->getLayerRenderItemMap().size() > 0) {
+            lastRenderedTileCount = renderTree->getLayerRenderItemMap().begin()->layer.get().renderTileCount();
+        }
     }
 }
 
@@ -151,11 +156,5 @@ void Renderer::reduceMemoryUse() {
 void Renderer::clearData() {
     impl->orchestrator.clearData();
 }
-
-#if MLN_RENDER_BACKEND_OPENGL
-void Renderer::enableAndroidEmulatorGoldfishMitigation(bool enable) {
-    impl->orchestrator.enableAndroidEmulatorGoldfishMitigation(enable);
-}
-#endif
 
 } // namespace mbgl

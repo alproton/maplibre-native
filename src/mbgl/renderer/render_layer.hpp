@@ -131,6 +131,9 @@ public:
     // Checks whether the given zoom is inside this layer zoom range.
     bool supportsZoom(float zoom) const;
 
+    // Return the number of tiles to display for this layer
+    int renderTileCount() const noexcept { return renderTiles ? static_cast<int>(renderTiles->size()) : 0; }
+
     virtual void upload(gfx::UploadPass&) {}
     virtual void render(PaintParameters&) {}
 
@@ -191,9 +194,6 @@ public:
 
     /// Returns the current renderability mode of the layer
     bool isLayerRenderable() const noexcept { return isRenderable; }
-
-    /// Remove all the drawables for tiles
-    virtual std::size_t removeAllDrawables();
 #endif
 
     using Dependency = style::expression::Dependency;
@@ -249,6 +249,9 @@ protected:
     /// Remove all drawables for the tile from the layer group
     /// @return The number of drawables actually removed.
     virtual std::size_t removeTile(RenderPass, const OverscaledTileID&);
+
+    /// Remove all the drawables for tiles
+    virtual std::size_t removeAllDrawables();
 
     /// Update `renderTileIDs` from `renderTiles`
     void updateRenderTileIDs();
