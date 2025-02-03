@@ -36,7 +36,7 @@ public:
 
 GLFWVulkanBackend::GLFWVulkanBackend(GLFWwindow* window_, const bool)
     : mbgl::vulkan::RendererBackend(mbgl::gfx::ContextMode::Unique),
-      mbgl::vulkan::Renderable(
+      mbgl::gfx::Renderable(
           [window_] {
               int fbWidth;
               int fbHeight;

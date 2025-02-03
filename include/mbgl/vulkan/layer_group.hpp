@@ -9,7 +9,7 @@ class PaintParameters;
 
 namespace vulkan {
 
-class Context;
+class RenderPass;
 
 /**
  A layer group for non-tile-based drawables
@@ -23,7 +23,11 @@ public:
     void render(RenderOrchestrator&, PaintParameters&) override;
 
     const gfx::UniformBufferArray& getUniformBuffers() const override { return uniformBuffers; };
+
     gfx::UniformBufferArray& mutableUniformBuffers() override { return uniformBuffers; };
+
+    void bindUniformBuffers(RenderPass&) const noexcept;
+    void unbindUniformBuffers(RenderPass&) const noexcept {}
 
 protected:
     UniformBufferArray uniformBuffers;

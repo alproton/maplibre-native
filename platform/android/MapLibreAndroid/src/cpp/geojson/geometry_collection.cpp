@@ -1,8 +1,6 @@
 #include "geometry_collection.hpp"
 #include "../java/util.hpp"
 
-#include <mbgl/util/instrumentation.hpp>
-
 namespace mbgl {
 namespace android {
 namespace geojson {
@@ -25,8 +23,6 @@ jni::Local<jni::Object<GeometryCollection>> GeometryCollection::New(
 
 mapbox::geometry::geometry_collection<double> GeometryCollection::convert(
     jni::JNIEnv& env, const jni::Object<GeometryCollection>& jCollection) {
-    MLN_TRACE_FUNC();
-
     // Get geometries
     static auto& javaClass = jni::Class<GeometryCollection>::Singleton(env);
     static auto getGeometries = javaClass.GetMethod<jni::Object<java::util::List>()>(env, "geometries");

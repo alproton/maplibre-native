@@ -4,7 +4,6 @@
 #include <mbgl/renderer/renderer.hpp>
 #include <mbgl/util/instrumentation.hpp>
 #include <mbgl/util/logging.hpp>
-#include <mbgl/util/platform.hpp>
 #include <mbgl/util/run_loop.hpp>
 
 #include <string>
@@ -13,6 +12,27 @@
 #include "attach_env.hpp"
 #include "android_renderer_backend.hpp"
 #include "map_renderer_runnable.hpp"
+
+#if MLN_RENDER_BACKEND_OPENGL
+#include <sys/system_properties.h>
+
+namespace {
+std::string androidSysProp(const char* key) {
+    assert(strlen(key) < PROP_NAME_MAX);
+    if (__system_property_find(key) == nullptr) {
+        return "";
+    }
+    char prop[PROP_VALUE_MAX + 1];
+    __system_property_get(key, prop);
+    return prop;
+}
+
+bool inEmulator() {
+    return androidSysProp("ro.kernel.qemu") == "1" || androidSysProp("ro.boot.qemu") == "1" ||
+           androidSysProp("ro.hardware.egl") == "emulation";
+}
+} // namespace
+#endif
 
 namespace mbgl {
 namespace android {
@@ -213,9 +233,6 @@ void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface
     // Lock as the initialization can come from the main thread or the GL thread first
     std::lock_guard<std::mutex> lock(initialisationMutex);
 
-    platform::makeThreadHighPriority();
-    Log::Debug(Event::Android, "Setting render thread priority to " + std::to_string(platform::getCurrentThreadPriority()));
-
     // The android system will have already destroyed the underlying
     // GL resources if this is not the first initialization and an
     // attempt to clean them up will fail
@@ -237,6 +254,14 @@ void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface
     backend = AndroidRendererBackend::Create(window.get(), multiThreadedGpuResourceUpload);
     renderer = std::make_unique<Renderer>(backend->getImpl(), pixelRatio, localIdeographFontFamily);
     rendererRef = std::make_unique<ActorRef<Renderer>>(*renderer, mailboxData.getMailbox());
+
+#if MLN_RENDER_BACKEND_OPENGL
+    // If we're running the emulator with the OpenGL backend, we're going to crash eventually,
+    // unless we enable this mitigation.
+    if (inEmulator()) {
+        renderer->enableAndroidEmulatorGoldfishMitigation(true);
+    }
+#endif
 
     backend->setSwapBehavior(swapBehaviorFlush ? gfx::Renderable::SwapBehaviour::Flush
                                                : gfx::Renderable::SwapBehaviour::NoFlush);
@@ -310,13 +335,6 @@ MapRenderer& MapRenderer::getNativePeer(JNIEnv& env, const jni::Object<MapRender
     MapRenderer* mapRenderer = reinterpret_cast<MapRenderer*>(jObject.Get(env, field));
     assert(mapRenderer != nullptr);
     return *mapRenderer;
-}
-
-int MapRenderer::getLastRenderedTileCount() const noexcept {
-    if (!renderer) {
-        return 0;
-    }
-    return renderer->getLastRenderedTileCount();
 }
 
 } // namespace android

@@ -27,7 +27,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-// # --8<-- [start:top]
+/* ANCHOR: top */
 class JsonApiActivity : AppCompatActivity() {
 
     // Declare a variable for MapView
@@ -35,7 +35,7 @@ class JsonApiActivity : AppCompatActivity() {
 
     // Declare a variable for MapLibreMap
     private lateinit var maplibreMap: MapLibreMap
-    // # --8<-- [end:top]
+    /* ANCHOR_END: top */
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +48,7 @@ class JsonApiActivity : AppCompatActivity() {
         // Init the MapView
         mapView = findViewById(R.id.mapView)
 
-        // # --8<-- [start:mapAsync]
+        /* ANCHOR: mapAsync */
         mapView.getMapAsync { map ->
             maplibreMap = map
 
@@ -57,10 +57,10 @@ class JsonApiActivity : AppCompatActivity() {
             // Fetch data from USGS
             getEarthQuakeDataFromUSGS()
         }
-        // # --8<-- [end:mapAsync]
+        /* ANCHOR_END: mapAsync */
     }
 
-    // # --8<-- [start:getEarthquakes]
+    /* ANCHOR: getEarthquakes */
     // Get Earthquake data from usgs.gov, read API doc at:
     // https://earthquake.usgs.gov/fdsnws/event/1/
     private fun getEarthQuakeDataFromUSGS() {
@@ -91,9 +91,9 @@ class JsonApiActivity : AppCompatActivity() {
             }
         })
     }
-    // # --8<-- [end:getEarthquakes]
+    /* ANCHOR_END: getEarthquakes */
 
-    // # --8<-- [start:addMarkers]
+    /* ANCHOR: addMarkers */
     private fun addMarkersToMap(data: FeatureCollection) {
         val bounds = mutableListOf<LatLng>()
 
@@ -146,7 +146,7 @@ class JsonApiActivity : AppCompatActivity() {
             maplibreMap.cameraPosition = newCameraPosition
         }
     }
-    // # --8<-- [end:addMarkers]
+    /* ANCHOR_END: addMarkers */
 
     override fun onStart() {
         super.onStart()

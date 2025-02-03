@@ -65,9 +65,6 @@ public class AttributionParser {
    */
   @NonNull
   public String createAttributionString(boolean shortenedOutput) {
-    if (attributions.isEmpty()) {
-      return "";
-    }
     StringBuilder stringBuilder = new StringBuilder(withCopyrightSign ? "" : "© ");
     int counter = 0;
     for (Attribution attribution : attributions) {

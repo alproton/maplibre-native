@@ -284,8 +284,6 @@ final class NativeMapView implements NativeMap {
     if (checkState("getCameraForLatLngBounds")) {
       return null;
     }
-    // Note that we have to juggle things a bit to match the ordering of arguments
-    // to match the NativeMapView C++ interface.
     return nativeGetCameraForLatLngBounds(
       bounds,
       padding[1] / pixelRatio,
@@ -888,14 +886,6 @@ final class NativeMapView implements NativeMap {
       return 0;
     }
     return nativeGetTileLodZoomShift();
-  }
-
-  @Override
-  public int getLastRenderedTileCount() {
-    if (checkState("getLastRenderedTileCount")) {
-      return 0;
-    }
-    return nativeGetLastRenderedTileCount();
   }
   // Runtime style Api
 
@@ -1691,9 +1681,6 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   private native double nativeGetTileLodZoomShift();
-
-  @Keep
-  private native int nativeGetLastRenderedTileCount();
 
   @Override
   public long getNativePtr() {

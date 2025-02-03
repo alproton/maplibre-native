@@ -1,5 +1,4 @@
 #include <mbgl/shaders/mtl/line.hpp>
-#include <mbgl/shaders/shader_defines.hpp>
 
 namespace mbgl {
 namespace shaders {

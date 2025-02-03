@@ -74,16 +74,6 @@ void makeThreadLowPriority() {
     }
 }
 
-void makeThreadHighPriority() {
-    if (!SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL)) {
-        Log::Warning(Event::General, "Couldn't set thread scheduling policy");
-    }
-}
-
-double getCurrentThreadPriority() {
-    return GetThreadPriority(GetCurrentThread());
-}
-
 void setCurrentThreadPriority(double priority) {
     if (!SetThreadPriority(GetCurrentThread(), int(priority))) {
         Log::Warning(Event::General, "Couldn't set thread priority");

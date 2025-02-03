@@ -1,8 +1,6 @@
 #pragma once
 
 #include <mbgl/shaders/shader_defines.hpp>
-#include <memory>
-#include <array>
 
 namespace mbgl {
 namespace gfx {

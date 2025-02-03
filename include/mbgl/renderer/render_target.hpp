@@ -62,16 +62,6 @@ public:
         }
     }
 
-    /// Execute the given function for each contained layer group in reversed order
-    template <typename Func /* void(LayerGroupBase&) */>
-    void visitLayerGroupsReversed(Func f) {
-        for (auto rit = layerGroupsByLayerIndex.rbegin(); rit != layerGroupsByLayerIndex.rend(); ++rit) {
-            if (rit->second) {
-                f(*rit->second);
-            }
-        }
-    }
-
     /// Upload the layer groups
     void issueUpload(gfx::UploadPass& uploadPass);
 

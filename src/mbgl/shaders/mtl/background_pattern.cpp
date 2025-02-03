@@ -1,5 +1,4 @@
 #include <mbgl/shaders/mtl/background_pattern.hpp>
-#include <mbgl/shaders/shader_defines.hpp>
 #include <mbgl/shaders/background_layer_ubo.hpp>
 
 namespace mbgl {

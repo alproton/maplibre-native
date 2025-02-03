@@ -1,7 +1,4 @@
 #include <mbgl/shaders/vulkan/hillshade.hpp>
-#include <mbgl/shaders/shader_defines.hpp>
-#include <mbgl/shaders/hillshade_layer_ubo.hpp>
-#include <mbgl/shaders/hillshade_prepare_layer_ubo.hpp>
 
 namespace mbgl {
 namespace shaders {

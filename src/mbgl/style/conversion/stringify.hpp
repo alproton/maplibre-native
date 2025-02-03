@@ -4,7 +4,6 @@
 #include <mbgl/style/property_value.hpp>
 #include <mbgl/style/expression/value.hpp>
 #include <mbgl/style/expression/formatted.hpp>
-#include <mbgl/style/variable_anchor_offset_collection.hpp>
 #include <mbgl/util/enum.hpp>
 #include <mbgl/util/color.hpp>
 #include <mbgl/util/feature.hpp>
@@ -57,21 +56,6 @@ void stringify(Writer& writer, const T& v) {
 template <class Writer>
 void stringify(Writer& writer, const Color& v) {
     writer.String(v.stringify());
-}
-
-template <class Writer>
-void stringify(Writer& writer, const VariableAnchorOffsetCollection& v) {
-    writer.StartArray();
-
-    for (const auto& pair : v) {
-        writer.String(Enum<SymbolAnchorType>::toString(pair.anchorType));
-        writer.StartArray();
-        writer.Double(pair.offset[0]);
-        writer.Double(pair.offset[1]);
-        writer.EndArray();
-    }
-
-    writer.EndArray();
 }
 
 template <class Writer>

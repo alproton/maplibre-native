@@ -9,6 +9,7 @@
 namespace mbgl {
 
 void LayerGroupBase::addDrawable(gfx::UniqueDrawable& drawable) {
+    drawable->setLayerIndex(layerIndex);
     // init their tweakers
     for (const auto& tweaker : drawable->getTweakers()) {
         tweaker->init(*drawable);

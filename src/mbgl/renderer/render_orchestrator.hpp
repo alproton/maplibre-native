@@ -61,6 +61,10 @@ public:
                        const std::optional<std::string>& localFontFamily_);
     ~RenderOrchestrator() override;
 
+#if MLN_RENDER_BACKEND_OPENGL
+    void enableAndroidEmulatorGoldfishMitigation(bool enable) { androidGoldfishMitigationEnabled = enable; }
+#endif
+
     void markContextLost() { contextLost = true; };
     // TODO: Introduce RenderOrchestratorObserver.
     void setObserver(RendererObserver*);
@@ -106,6 +110,7 @@ public:
     bool addLayerGroup(LayerGroupBasePtr);
     bool removeLayerGroup(const LayerGroupBasePtr&);
     size_t numLayerGroups() const noexcept;
+    int32_t maxLayerIndex() const;
     void updateLayerIndex(LayerGroupBasePtr, int32_t newIndex);
 
     template <typename Func /* void(LayerGroupBase&) */>
@@ -113,15 +118,6 @@ public:
         for (auto& pair : layerGroupsByLayerIndex) {
             if (pair.second) {
                 f(*pair.second);
-            }
-        }
-    }
-
-    template <typename Func /* void(LayerGroupBase&) */>
-    void visitLayerGroupsReversed(Func f) {
-        for (auto rit = layerGroupsByLayerIndex.rbegin(); rit != layerGroupsByLayerIndex.rend(); ++rit) {
-            if (rit->second) {
-                f(*rit->second);
             }
         }
     }
@@ -219,6 +215,10 @@ private:
     bool contextLost = false;
     bool placedSymbolDataCollected = false;
     bool tileCacheEnabled = true;
+
+#if MLN_RENDER_BACKEND_OPENGL
+    bool androidGoldfishMitigationEnabled{false};
+#endif
 
     // Vectors with reserved capacity of layerImpls->size() to avoid
     // reallocation on each frame.

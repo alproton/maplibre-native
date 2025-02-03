@@ -55,7 +55,6 @@ interface NativeMap {
   @NonNull
   CameraPosition getCameraPosition();
 
-  // Note for implementors: the ordering of the padding is left, top, right, bottom
   CameraPosition getCameraForLatLngBounds(@NonNull LatLngBounds bounds, int[] padding, double bearing, double pitch);
 
   CameraPosition getCameraForGeometry(@NonNull Geometry geometry, int[] padding, double bearing, double pitch);
@@ -261,8 +260,6 @@ interface NativeMap {
   void triggerRepaint();
 
   void setSwapBehaviorFlush(boolean flush);
-
-  int getLastRenderedTileCount();
 
   //
   // Deprecated Annotations API

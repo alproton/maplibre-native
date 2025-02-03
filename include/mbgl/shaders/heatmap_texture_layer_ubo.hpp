@@ -12,5 +12,10 @@ struct alignas(16) HeatmapTexturePropsUBO {
 };
 static_assert(sizeof(HeatmapTexturePropsUBO) % 16 == 0);
 
+enum {
+    idHeatmapTexturePropsUBO = globalUBOCount,
+    heatmapTextureUBOCount
+};
+
 } // namespace shaders
 } // namespace mbgl

@@ -19,20 +19,20 @@ struct ShaderSource<BuiltIn::BackgroundShader, gfx::Backend::Type::Vulkan> {
 
 layout(location = 0) in ivec2 in_position;
 
-layout(set = DRAWABLE_UBO_SET_INDEX, binding = 0) uniform BackgroundDrawableUBO {
+layout(set = 0, binding = 1) uniform BackgroundDrawableUBO {
     mat4 matrix;
 } drawable;
 
 void main() {
     gl_Position = drawable.matrix * vec4(in_position, 0.0, 1.0);
-    applySurfaceTransform();
+    gl_Position.y *= -1.0;
 }
 )";
 
     static constexpr auto fragment = R"(
 layout(location = 0) out vec4 out_color;
 
-layout(set = LAYER_SET_INDEX, binding = 0) uniform BackgroundLayerUBO {
+layout(set = 0, binding = 2) uniform BackgroundLayerUBO {
     vec4 color;
     float opacity;
     float pad1, pad2, pad3;
@@ -63,7 +63,7 @@ struct ShaderSource<BuiltIn::BackgroundPatternShader, gfx::Backend::Type::Vulkan
 
 layout(location = 0) in ivec2 in_position;
 
-layout(set = DRAWABLE_UBO_SET_INDEX, binding = 0) uniform BackgroundPatternDrawableUBO {
+layout(set = 0, binding = 1) uniform BackgroundPatternDrawableUBO {
     mat4 matrix;
     vec2 pixel_coord_upper;
     vec2 pixel_coord_lower;
@@ -71,7 +71,7 @@ layout(set = DRAWABLE_UBO_SET_INDEX, binding = 0) uniform BackgroundPatternDrawa
     float pad1, pad2, pad3;
 } drawable;
 
-layout(set = LAYER_SET_INDEX, binding = 0) uniform BackgroundPatternLayerUBO {
+layout(set = 0, binding = 2) uniform BackgroundPatternLayerUBO {
     vec2 pattern_tl_a;
     vec2 pattern_br_a;
     vec2 pattern_tl_b;
@@ -101,7 +101,7 @@ void main() {
                                  in_position);
 
     gl_Position = drawable.matrix * vec4(in_position, 0.0, 1.0);
-    applySurfaceTransform();
+    gl_Position.y *= -1.0;
 }
 )";
 
@@ -111,7 +111,7 @@ layout(location = 1) in vec2 frag_pos_b;
 
 layout(location = 0) out vec4 out_color;
 
-layout(set = LAYER_SET_INDEX, binding = 0) uniform BackgroundPatternLayerUBO {
+layout(set = 0, binding = 2) uniform BackgroundPatternLayerUBO {
     vec2 pattern_tl_a;
     vec2 pattern_br_a;
     vec2 pattern_tl_b;
@@ -124,7 +124,7 @@ layout(set = LAYER_SET_INDEX, binding = 0) uniform BackgroundPatternLayerUBO {
     float opacity;
 } layer;
 
-layout(set = DRAWABLE_IMAGE_SET_INDEX, binding = 0) uniform sampler2D image_sampler;
+layout(set = 1, binding = 0) uniform sampler2D image_sampler;
 
 void main() {
 

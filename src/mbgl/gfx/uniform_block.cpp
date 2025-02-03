@@ -1,7 +1,5 @@
 #include <mbgl/gfx/uniform_block.hpp>
 
-#include <cassert>
-
 namespace mbgl {
 namespace gfx {
 

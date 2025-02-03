@@ -211,6 +211,7 @@ void LineBucket::update(const FeatureStates& states,
         uploaded = false;
 
         sharedVertices->updateModified();
+        sharedTriangles->updateModified();
     }
 }
 

@@ -90,8 +90,6 @@ public:
     AndroidRendererBackend& getRendererBackend() const { return *backend; }
     const TaggedScheduler& getThreadPool() const { return threadPool; }
 
-    int getLastRenderedTileCount() const noexcept;
-
 protected:
     // Called from the GL Thread //
 

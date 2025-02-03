@@ -1,6 +1,4 @@
 #include <mbgl/shaders/vulkan/collision.hpp>
-#include <mbgl/shaders/shader_defines.hpp>
-#include <mbgl/shaders/collision_layer_ubo.hpp>
 
 namespace mbgl {
 namespace shaders {

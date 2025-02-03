@@ -8,7 +8,7 @@ namespace mbgl {
 namespace shaders {
 
 struct ClipUBO {
-    mat4 matrix;
+    matf4 matrix;
     std::uint32_t stencil_ref;
 };
 

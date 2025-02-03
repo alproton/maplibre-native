@@ -11,5 +11,10 @@ struct alignas(16) CommonUBO {
 };
 static_assert(sizeof(CommonUBO) % 16 == 0);
 
+enum {
+    idCommonUBO = globalUBOCount,
+    commonUBOCount
+};
+
 } // namespace shaders
 } // namespace mbgl

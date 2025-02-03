@@ -41,14 +41,6 @@ void makeThreadLowPriority() {
 #endif
 }
 
-void makeThreadHighPriority() {
-    setCurrentThreadPriority(-20);
-}
-
-double getCurrentThreadPriority() {
-    return getpriority(PRIO_PROCESS, 0);
-}
-
 void setCurrentThreadPriority(double priority) {
     if (setpriority(PRIO_PROCESS, 0, int(priority)) < 0) {
         Log::Warning(Event::General, "Couldn't set thread priority");

@@ -57,6 +57,7 @@ void HillshadeBucket::clear() {
     indices.clear();
 
     vertices.updateModified();
+    indices.updateModified();
 
     uploaded = false;
 }
@@ -120,6 +121,7 @@ void HillshadeBucket::setMask(TileMask&& mask_) {
     }
 
     vertices.updateModified();
+    indices.updateModified();
 }
 
 bool HillshadeBucket::hasData() const {

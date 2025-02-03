@@ -96,7 +96,7 @@ SymbolInstance::SymbolInstance(Anchor& anchor_,
                                const float overscaling,
                                const float iconRotation,
                                const float textRotation,
-                               const std::optional<VariableAnchorOffsetCollection>& textVariableAnchorOffset_,
+                               const std::array<float, 2>& variableTextOffset_,
                                bool allowVerticalPlacement,
                                const SymbolContent iconType)
     : sharedData(std::move(sharedData_)),
@@ -123,7 +123,7 @@ SymbolInstance::SymbolInstance(Anchor& anchor_,
       iconOffset(iconOffset_),
       key(std::move(key_)),
       textBoxScale(textBoxScale_),
-      textVariableAnchorOffset(textVariableAnchorOffset_),
+      variableTextOffset(variableTextOffset_),
       singleLine(shapedTextOrientations.singleLine) {
     // 'hasText' depends on finding at least one glyph in the shaping that's also in the GlyphPositionMap
     if (!sharedData->empty()) symbolContent |= SymbolContent::Text;
@@ -204,18 +204,6 @@ bool SymbolInstance::hasIcon() const {
 
 bool SymbolInstance::hasSdfIcon() const {
     return symbolContent & SymbolContent::IconSDF;
-}
-
-std::vector<style::SymbolAnchorType> SymbolInstance::getTextAnchors() const {
-    std::vector<style::SymbolAnchorType> result;
-    if (textVariableAnchorOffset) {
-        result.reserve(textVariableAnchorOffset->size());
-        for (const auto& anchorOffset : *textVariableAnchorOffset) {
-            result.push_back(anchorOffset.anchorType);
-        }
-    }
-
-    return result;
 }
 
 const std::optional<SymbolQuads>& SymbolInstance::verticalIconQuads() const {

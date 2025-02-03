@@ -96,7 +96,6 @@ public:
     bool hasTextCollisionBoxData() const;
     bool hasTextCollisionCircleData() const;
     bool hasFormatSectionOverrides() const;
-    bool hasVariableTextAnchors() const;
 
     void sortFeatures(float angle);
     // Returns references to the `symbolInstances` items, sorted by viewport Y.
@@ -161,6 +160,9 @@ public:
             }
             if (sharedOpacityVertices) {
                 sharedOpacityVertices->updateModified();
+            }
+            if (sharedTriangles) {
+                sharedTriangles->updateModified();
             }
         }
 

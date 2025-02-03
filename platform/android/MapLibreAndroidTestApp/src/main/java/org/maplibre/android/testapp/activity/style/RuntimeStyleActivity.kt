@@ -202,8 +202,8 @@ class RuntimeStyleActivity : AppCompatActivity() {
                     true
                 }
 
-                R.id.action_add_raster_source_layer -> {
-                    addRasterSourceLayer()
+                R.id.action_add_satellite_layer -> {
+                    addSatelliteLayer()
                     true
                 }
 
@@ -501,14 +501,13 @@ class RuntimeStyleActivity : AppCompatActivity() {
         ).show()
     }
 
-    private fun addRasterSourceLayer() {
-        // Take note of Tile Usage Policy https://operations.osmfoundation.org/policies/tiles/
-        val osmTileSet = TileSet("osm", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
-        osmTileSet.attribution = "OSM Contributors"
-        val source = RasterSource("osm", osmTileSet, 128)
-        val layer = RasterLayer("osm-layer", "osm")
+    private fun addSatelliteLayer() {
+        // Add a source
+        val source: Source = RasterSource("my-raster-source", "maptiler://sources/satellite", 512)
+        maplibreMap.style!!.addSource(source)
 
-        maplibreMap.setStyle(Style.Builder().withSource(source).withLayer(layer))
+        // Add a layer
+        maplibreMap.style!!.addLayer(RasterLayer("satellite-layer", "my-raster-source"))
     }
 
     private fun updateWaterColorOnZoom() {

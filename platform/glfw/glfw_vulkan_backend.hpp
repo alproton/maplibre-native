@@ -2,14 +2,12 @@
 
 #include "glfw_backend.hpp"
 
-#include <mbgl/vulkan/renderable_resource.hpp>
+#include <mbgl/gfx/renderable.hpp>
 #include <mbgl/vulkan/renderer_backend.hpp>
 
 struct GLFWwindow;
 
-class GLFWVulkanBackend final : public GLFWBackend,
-                                public mbgl::vulkan::RendererBackend,
-                                public mbgl::vulkan::Renderable {
+class GLFWVulkanBackend final : public GLFWBackend, public mbgl::vulkan::RendererBackend, public mbgl::gfx::Renderable {
 public:
     GLFWVulkanBackend(GLFWwindow*, bool capFrameRate);
     ~GLFWVulkanBackend() override;

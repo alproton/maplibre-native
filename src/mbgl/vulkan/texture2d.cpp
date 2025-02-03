@@ -6,8 +6,6 @@
 #include <mbgl/vulkan/command_encoder.hpp>
 #include <mbgl/util/logging.hpp>
 
-#include <math.h>
-
 namespace mbgl {
 namespace vulkan {
 
@@ -50,11 +48,6 @@ Texture2D::~Texture2D() {
 }
 
 gfx::Texture2D& Texture2D::setSamplerConfiguration(const SamplerState& samplerState_) noexcept {
-    if (samplerState.filter == samplerState_.filter && samplerState.wrapU == samplerState_.wrapU &&
-        samplerState.wrapV == samplerState_.wrapV) {
-        return *this;
-    }
-
     samplerState = samplerState_;
     samplerStateDirty = true;
     return *this;
@@ -206,7 +199,7 @@ void Texture2D::uploadSubRegion(const void* pixelData,
 
     enqueueCommands(commandBuffer);
 
-    context.enqueueDeletion([buffAlloc = std::move(bufferAllocation)](auto&) mutable { buffAlloc.reset(); });
+    context.enqueueDeletion([buffAlloc = std::move(bufferAllocation)](const auto&) mutable { buffAlloc.reset(); });
 
     context.renderingStats().numTextureUpdates++;
 }
@@ -396,7 +389,7 @@ void Texture2D::createSampler() {
 
 void Texture2D::destroyTexture() {
     if (imageAllocation) {
-        context.enqueueDeletion([allocation = std::move(imageAllocation)](auto&) mutable { allocation.reset(); });
+        context.enqueueDeletion([allocation = std::move(imageAllocation)](const auto&) mutable { allocation.reset(); });
 
         imageLayout = vk::ImageLayout::eUndefined;
     }
@@ -404,7 +397,7 @@ void Texture2D::destroyTexture() {
 
 void Texture2D::destroySampler() {
     if (sampler) {
-        context.enqueueDeletion([sampler_ = std::move(sampler)](auto& context_) mutable {
+        context.enqueueDeletion([sampler_ = std::move(sampler)](const auto& context_) mutable {
             context_.getBackend().getDevice()->destroySampler(sampler_);
         });
 

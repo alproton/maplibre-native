@@ -55,65 +55,6 @@ void TileSourceRenderItem::render(PaintParameters& parameters) const {
 }
 
 #if MLN_DRAWABLE_RENDERER
-
-#if MLN_RENDER_BACKEND_VULKAN
-class PolylineLayerImpl : public Layer::Impl {
-public:
-    PolylineLayerImpl()
-        : Layer::Impl("", "") {}
-    bool hasLayoutDifference(const Layer::Impl&) const override { return false; }
-    void stringifyLayout(rapidjson::Writer<rapidjson::StringBuffer>&) const override {}
-
-    const LayerTypeInfo* getTypeInfo() const noexcept final { return staticTypeInfo(); }
-    static const LayerTypeInfo* staticTypeInfo() noexcept {
-        const static LayerTypeInfo typeInfo{"debugPolyline",
-                                            LayerTypeInfo::Source::NotRequired,
-                                            LayerTypeInfo::Pass3D::NotRequired,
-                                            LayerTypeInfo::Layout::NotRequired,
-                                            LayerTypeInfo::FadingTiles::NotRequired,
-                                            LayerTypeInfo::CrossTileIndex::NotRequired,
-                                            LayerTypeInfo::TileKind::NotRequired};
-        return &typeInfo;
-    }
-};
-
-class PolylineLayerProperties : public style::LayerProperties {
-public:
-    PolylineLayerProperties()
-        : LayerProperties(makeMutable<PolylineLayerImpl>()) {}
-    expression::Dependency getDependencies() const noexcept override { return expression::Dependency::None; }
-};
-
-class PolylineLayerTweaker : public LayerTweaker {
-public:
-    PolylineLayerTweaker(const shaders::LineEvaluatedPropsUBO& properties)
-        : LayerTweaker("debug-polyline", makeMutable<PolylineLayerProperties>()),
-          linePropertiesUBO(properties) {}
-
-    void execute(LayerGroupBase& layerGroup, const PaintParameters& parameters) override {
-        auto& layerUniforms = layerGroup.mutableUniformBuffers();
-        layerUniforms.createOrUpdate(idLineEvaluatedPropsUBO, &linePropertiesUBO, parameters.context);
-
-        // We would need to set up `idLineExpressionUBO` if the expression mask isn't empty
-        assert(linePropertiesUBO.expressionMask == LineExpressionMask::None);
-
-        const LineExpressionUBO exprUBO = {
-            /* color = */ nullptr,
-            /* blur = */ nullptr,
-            /* opacity = */ nullptr,
-            /* gapwidth = */ nullptr,
-            /* offset = */ nullptr,
-            /* width = */ nullptr,
-            /* floorWidth = */ nullptr,
-        };
-        layerUniforms.createOrUpdate(idLineExpressionUBO, &exprUBO, parameters.context);
-    }
-
-private:
-    shaders::LineEvaluatedPropsUBO linePropertiesUBO;
-};
-#endif
-
 void TileSourceRenderItem::updateDebugDrawables(DebugLayerGroupMap& debugLayerGroups,
                                                 PaintParameters& parameters) const {
     if (!(parameters.debugOptions &
@@ -123,7 +64,7 @@ void TileSourceRenderItem::updateDebugDrawables(DebugLayerGroupMap& debugLayerGr
     }
 
     auto& context = parameters.context;
-    const auto renderPass = RenderPass::Translucent;
+    const auto renderPass = RenderPass::None;
     auto& shaders = *parameters.staticData.shaders;
 
     // initialize debug builder
@@ -252,16 +193,6 @@ void TileSourceRenderItem::updateDebugDrawables(DebugLayerGroupMap& debugLayerGr
     };
 
 #if MLN_ENABLE_POLYLINE_DRAWABLES
-    const shaders::LineEvaluatedPropsUBO linePropertiesUBO = {/*color*/ Color::red(),
-                                                              /*blur*/ 0.f,
-                                                              /*opacity*/ 1.f,
-                                                              /*gapwidth*/ 0.f,
-                                                              /*offset*/ 0.f,
-                                                              /*width*/ 4.f,
-                                                              /*floorwidth*/ 0,
-                                                              LineExpressionMask::None,
-                                                              0};
-
     // function to add polylines drawable
     const auto addPolylineDrawable = [&](TileLayerGroup* tileLayerGroup, const RenderTile& tile) {
         class PolylineDrawableTweaker : public gfx::DrawableTweaker {
@@ -301,8 +232,6 @@ void TileSourceRenderItem::updateDebugDrawables(DebugLayerGroupMap& debugLayerGr
                 auto& drawableUniforms = drawable.mutableUniformBuffers();
                 drawableUniforms.createOrUpdate(idLineDrawableUBO, &drawableUBO, parameters.context);
                 drawableUniforms.createOrUpdate(idLineInterpolationUBO, &lineInterpolationUBO, parameters.context);
-
-#if !MLN_RENDER_BACKEND_VULKAN
                 drawableUniforms.createOrUpdate(idLineEvaluatedPropsUBO, &linePropertiesUBO, parameters.context);
 
                 // We would need to set up `idLineExpressionUBO` if the expression mask isn't empty
@@ -318,7 +247,6 @@ void TileSourceRenderItem::updateDebugDrawables(DebugLayerGroupMap& debugLayerGr
                     /* floorWidth = */ nullptr,
                 };
                 drawableUniforms.createOrUpdate(idLineExpressionUBO, &exprUBO, parameters.context);
-#endif
             };
 
         private:
@@ -335,15 +263,16 @@ void TileSourceRenderItem::updateDebugDrawables(DebugLayerGroupMap& debugLayerGr
         }
         polylineBuilder->addPolyline(coords, options);
 
-#if MLN_RENDER_BACKEND_VULKAN
-        if (!layerTweaker) {
-            layerTweaker = std::make_shared<PolylineLayerTweaker>(linePropertiesUBO);
-            layerTweaker->execute(*tileLayerGroup, parameters);
-            tileLayerGroup->addLayerTweaker(layerTweaker);
-        }
-#endif
-
-        // create line tweaker;
+        // create line tweaker
+        const shaders::LineEvaluatedPropsUBO linePropertiesUBO = {/*color*/ Color::red(),
+                                                                  /*blur*/ 0.f,
+                                                                  /*opacity*/ 1.f,
+                                                                  /*gapwidth*/ 0.f,
+                                                                  /*offset*/ 0.f,
+                                                                  /*width*/ 4.f,
+                                                                  /*floorwidth*/ 0,
+                                                                  LineExpressionMask::None,
+                                                                  0};
         auto tweaker = std::make_shared<PolylineDrawableTweaker>(linePropertiesUBO);
 
         // finish

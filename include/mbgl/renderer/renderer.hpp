@@ -113,12 +113,13 @@ public:
     void reduceMemoryUse();
     void clearData();
 
-    int getLastRenderedTileCount() const noexcept { return lastRenderedTileCount; }
+#if MLN_RENDER_BACKEND_OPENGL
+    void enableAndroidEmulatorGoldfishMitigation(bool enable);
+#endif
+
 private:
     class Impl;
     std::unique_ptr<Impl> impl;
-
-    int lastRenderedTileCount = 0;
 };
 
 } // namespace mbgl

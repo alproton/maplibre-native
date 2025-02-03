@@ -52,7 +52,6 @@ class LatLngBoundsActivity : AppCompatActivity() {
         binding.mapView.getMapAsync { map ->
             maplibreMap = map
 
-            // # --8<-- [start:featureCollection]
             val featureCollection: FeatureCollection =
                 fromJson(GeoParseUtil.loadStringFromAssets(this, "points-sf.geojson"))
             bounds = createBounds(featureCollection)
@@ -60,7 +59,6 @@ class LatLngBoundsActivity : AppCompatActivity() {
             map.getCameraForLatLngBounds(bounds, createPadding(peekHeight))?.let {
                 map.cameraPosition = it
             }
-            // # --8<-- [end:featureCollection]
 
             try {
                 loadStyle(featureCollection)
@@ -73,7 +71,7 @@ class LatLngBoundsActivity : AppCompatActivity() {
     private fun loadStyle(featureCollection: FeatureCollection) {
         maplibreMap.setStyle(
             Style.Builder()
-                .fromUri(TestStyles.VERSATILES)
+                .fromUri(TestStyles.getPredefinedStyleWithFallback("Streets"))
                 .withLayer(
                     SymbolLayer("symbol", "symbol")
                         .withProperties(
@@ -131,7 +129,6 @@ class LatLngBoundsActivity : AppCompatActivity() {
         return intArrayOf(additionalPadding, additionalPadding, additionalPadding, bottomPadding)
     }
 
-    // # --8<-- [start:createBounds]
     private fun createBounds(featureCollection: FeatureCollection): LatLngBounds {
         val boundsBuilder = LatLngBounds.Builder()
         featureCollection.features()?.let {
@@ -142,7 +139,6 @@ class LatLngBoundsActivity : AppCompatActivity() {
         }
         return boundsBuilder.build()
     }
-    // # --8<-- [end:createBounds]
 
     override fun onStart() {
         super.onStart()

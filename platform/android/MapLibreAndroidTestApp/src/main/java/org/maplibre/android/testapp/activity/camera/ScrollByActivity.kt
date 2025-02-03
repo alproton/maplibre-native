@@ -60,12 +60,10 @@ class ScrollByActivity : AppCompatActivity(), OnMapReadyCallback {
         val fab = findViewById<FloatingActionButton>(R.id.fab)
         fab.setColorFilter(ContextCompat.getColor(this@ScrollByActivity, R.color.primary))
         fab.setOnClickListener { _: View? ->
-            // # --8<-- [start:scrollBy]
             maplibreMap.scrollBy(
                 (seekBarX.progress * MULTIPLIER_PER_PIXEL).toFloat(),
                 (seekBarY.progress * MULTIPLIER_PER_PIXEL).toFloat()
             )
-            // # --8<-- [end:scrollBy]
         }
     }
 

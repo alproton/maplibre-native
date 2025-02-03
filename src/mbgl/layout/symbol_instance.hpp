@@ -120,7 +120,7 @@ public:
                    float overscaling,
                    float iconRotation,
                    float textRotation,
-                   const std::optional<VariableAnchorOffsetCollection>& textVariableAnchorOffset,
+                   const std::array<float, 2>& variableTextOffset,
                    bool allowVerticalPlacement,
                    SymbolContent iconType = SymbolContent::None);
 
@@ -136,7 +136,6 @@ public:
     const std::optional<SymbolQuads>& iconQuads() const;
     const std::optional<SymbolQuads>& verticalIconQuads() const;
     void releaseSharedData();
-    std::vector<style::SymbolAnchorType> getTextAnchors() const;
 
 #if MLN_SYMBOL_GUARDS
     /// Check all guard blocks
@@ -184,9 +183,7 @@ public:
     std::optional<size_t> getPlacedIconIndex() const { return placedIconIndex; }
     std::optional<size_t> getPlacedVerticalIconIndex() const { return placedVerticalIconIndex; }
     float getTextBoxScale() const { return textBoxScale; }
-    std::optional<VariableAnchorOffsetCollection> getTextVariableAnchorOffset() const {
-        return textVariableAnchorOffset;
-    }
+    std::array<float, 2> getVariableTextOffset() const { return variableTextOffset; }
     bool getSingleLine() const { return singleLine; }
 
     uint32_t getCrossTileID() const { return crossTileID; }
@@ -270,7 +267,7 @@ private:
     SYM_GUARD_VALUE(24)
     float textBoxScale;
     SYM_GUARD_VALUE(25)
-    std::optional<VariableAnchorOffsetCollection> textVariableAnchorOffset;
+    std::array<float, 2> variableTextOffset;
     SYM_GUARD_VALUE(26)
     bool singleLine;
     SYM_GUARD_VALUE(27)

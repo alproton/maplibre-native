@@ -19,6 +19,7 @@ DrawableGL::DrawableGL(std::string name_)
       impl(std::make_unique<Impl>()) {}
 
 DrawableGL::~DrawableGL() {
+    impl->indexBuffer = {0, nullptr};
     impl->attributeBuffers.clear();
 }
 
@@ -80,7 +81,6 @@ void DrawableGL::draw(PaintParameters& parameters) const {
 #ifndef NDEBUG
     context.bindVertexArray = value::BindVertexArray::Default;
 
-#ifndef NDEBUG
     unbindTextures();
     unbindUniformBuffers();
 #endif
@@ -167,15 +167,7 @@ void DrawableGL::unbindUniformBuffers() const {
     }
 }
 
-struct IndexBufferGL : public gfx::IndexBufferBase {
-    IndexBufferGL(std::unique_ptr<gfx::IndexBuffer>&& buffer_)
-        : buffer(std::move(buffer_)) {}
-    ~IndexBufferGL() override = default;
-
-    std::unique_ptr<mbgl::gfx::IndexBuffer> buffer;
-};
-
-void DrawableGL::upload(gfx::UploadPass& uploadPass) {
+void DrawableGL::issueUpload(gfx::UploadPass& uploadPass) {
     if (isCustom) {
         return;
     }
@@ -190,8 +182,12 @@ void DrawableGL::upload(gfx::UploadPass& uploadPass) {
     constexpr auto usage = gfx::BufferUsageType::StaticDraw;
     assert(impl);
 
-    // Create an index buffer if necessary}
-    if (impl->indexes && (!impl->indexes->getBuffer() || impl->indexes->getDirty())) {
+    // Create an index buffer if necessary
+    if (impl->indexes) {
+        impl->indexes->updateModified();
+    }
+    if (impl->indexes &&
+        (!impl->indexes->getBuffer() || !attributeUpdateTime || impl->indexes->isModifiedAfter(*attributeUpdateTime))) {
         MLN_TRACE_ZONE(build indexes);
         auto indexBufferResource{
             uploadPass.createIndexBufferResource(impl->indexes->data(), impl->indexes->bytes(), usage)};
@@ -199,7 +195,6 @@ void DrawableGL::upload(gfx::UploadPass& uploadPass) {
                                                               std::move(indexBufferResource));
         auto buffer = std::make_unique<IndexBufferGL>(std::move(indexBuffer));
         impl->indexes->setBuffer(std::move(buffer));
-        impl->indexes->setDirty(false);
     }
 
     // Build the vertex attributes and bindings, if necessary

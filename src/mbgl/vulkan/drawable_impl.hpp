@@ -8,7 +8,6 @@
 #include <mbgl/vulkan/render_pass.hpp>
 #include <mbgl/vulkan/upload_pass.hpp>
 #include <mbgl/vulkan/pipeline.hpp>
-#include <mbgl/shaders/shader_defines.hpp>
 #include <mbgl/programs/segment.hpp>
 #include <mbgl/util/mat4.hpp>
 
@@ -23,10 +22,7 @@ using namespace platform;
 
 class Drawable::Impl final {
 public:
-    Impl()
-        : uniformBuffers(DescriptorSetType::DrawableUniform, shaders::globalUBOCount, shaders::maxUBOCountPerDrawable) {
-    }
-
+    Impl() = default;
     ~Impl() = default;
 
     std::vector<UniqueDrawSegment> segments;
@@ -51,8 +47,6 @@ public:
 
     std::vector<vk::Buffer> vulkanVertexBuffers;
     std::vector<vk::DeviceSize> vulkanVertexOffsets;
-
-    std::unique_ptr<ImageDescriptorSet> imageDescriptorSet;
 };
 
 } // namespace vulkan

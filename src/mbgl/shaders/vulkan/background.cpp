@@ -1,6 +1,4 @@
 #include <mbgl/shaders/vulkan/background.hpp>
-#include <mbgl/shaders/shader_defines.hpp>
-#include <mbgl/shaders/background_layer_ubo.hpp>
 
 namespace mbgl {
 namespace shaders {

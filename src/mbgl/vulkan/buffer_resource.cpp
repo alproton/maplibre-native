@@ -3,7 +3,6 @@
 #include <mbgl/vulkan/context.hpp>
 #include <mbgl/vulkan/renderer_backend.hpp>
 #include <mbgl/util/logging.hpp>
-#include <mbgl/util/instrumentation.hpp>
 
 #include <algorithm>
 
@@ -49,8 +48,6 @@ BufferResource::BufferResource(
       size(size_),
       usage(usage_),
       persistent(persistent_) {
-    MLN_TRACE_FUNC();
-
     const auto& allocator = context.getBackend().getAllocator();
 
     std::size_t totalSize = size;
@@ -121,7 +118,7 @@ BufferResource::~BufferResource() noexcept {
 
     if (!bufferAllocation) return;
 
-    context.enqueueDeletion([allocation = std::move(bufferAllocation)](auto&) mutable { allocation.reset(); });
+    context.enqueueDeletion([allocation = std::move(bufferAllocation)](const auto&) mutable { allocation.reset(); });
 }
 
 BufferResource BufferResource::clone() const {
@@ -144,8 +141,6 @@ BufferResource& BufferResource::operator=(BufferResource&& other) noexcept {
 }
 
 void BufferResource::update(const void* newData, std::size_t updateSize, std::size_t offset) noexcept {
-    MLN_TRACE_FUNC();
-
     assert(updateSize + offset <= size);
     updateSize = std::min(updateSize, size - offset);
     if (updateSize <= 0) {

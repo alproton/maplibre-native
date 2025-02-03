@@ -7,7 +7,6 @@
 #include <mbgl/vulkan/context.hpp>
 #include <mbgl/vulkan/drawable.hpp>
 #include <mbgl/vulkan/render_pass.hpp>
-#include <mbgl/vulkan/command_encoder.hpp>
 #include <mbgl/renderer/paint_parameters.hpp>
 #include <mbgl/util/convert.hpp>
 #include <mbgl/util/logging.hpp>
@@ -16,8 +15,7 @@ namespace mbgl {
 namespace vulkan {
 
 TileLayerGroup::TileLayerGroup(int32_t layerIndex_, std::size_t initialCapacity, std::string name_)
-    : mbgl::TileLayerGroup(layerIndex_, initialCapacity, std::move(name_)),
-      uniformBuffers(DescriptorSetType::Layer, shaders::layerUBOStartId, shaders::maxUBOCountPerLayer) {}
+    : mbgl::TileLayerGroup(layerIndex_, initialCapacity, std::move(name_)) {}
 
 void TileLayerGroup::issueUpload(gfx::UploadPass& uploadPass) {
     if (!enabled || !getDrawableCount()) {
@@ -42,7 +40,6 @@ void TileLayerGroup::render(RenderOrchestrator&, PaintParameters& parameters) {
     }
 
     auto& renderPass = static_cast<RenderPass&>(*parameters.renderPass);
-    auto& encoder = renderPass.getEncoder();
 
     // `stencilModeFor3D` uses a different stencil mask value each time its called, so if the
     // drawables in this layer use 3D stencil mode, we need to set it up here so that all the
@@ -94,23 +91,44 @@ void TileLayerGroup::render(RenderOrchestrator&, PaintParameters& parameters) {
         }
 
         if (!bindUBOs) {
-            uniformBuffers.bindDescriptorSets(encoder);
+            bindUniformBuffers(renderPass);
             bindUBOs = true;
         }
 
-        if (features3d) {
-            auto& drawableImpl = static_cast<Drawable&>(drawable);
+        auto& drawableImpl = static_cast<Drawable&>(drawable);
+        auto& drawableUniforms = drawable.mutableUniformBuffers();
+        for (size_t id = 0; id < uniformBuffers.allocatedSize(); id++) {
+            const auto& uniformBuffer = uniformBuffers.get(id);
+            if (!uniformBuffer) continue;
 
-            const auto& depth = drawableImpl.getEnableDepth() ? depthMode3d.value() : gfx::DepthMode::disabled();
-            drawableImpl.setDepthModeFor3D(depth);
+            if (features3d) {
+                drawableImpl.setDepthModeFor3D(drawableImpl.getEnableDepth() ? depthMode3d.value()
+                                                                             : gfx::DepthMode::disabled());
 
-            const auto& stencil = drawableImpl.getEnableStencil() ? stencilMode3d.value()
-                                                                  : gfx::StencilMode::disabled();
-            drawableImpl.setStencilModeFor3D(stencil);
+                drawableImpl.setStencilModeFor3D(drawableImpl.getEnableStencil() ? stencilMode3d.value()
+                                                                                 : gfx::StencilMode::disabled());
+            }
+
+            drawableUniforms.set(id, uniformBuffer);
         }
 
         drawable.draw(parameters);
     });
+
+    if (bindUBOs) {
+        unbindUniformBuffers(renderPass);
+    }
+}
+
+void TileLayerGroup::bindUniformBuffers(RenderPass& renderPass) const noexcept {
+    for (size_t id = 0; id < uniformBuffers.allocatedSize(); id++) {
+        const auto& uniformBuffer = uniformBuffers.get(id);
+        if (!uniformBuffer) continue;
+        const auto& buffer = static_cast<UniformBuffer&>(*uniformBuffer);
+        const auto& resource = buffer.getBufferResource();
+        renderPass.bindVertex(resource, 0, id);
+        renderPass.bindFragment(resource, 0, id);
+    }
 }
 
 } // namespace vulkan
