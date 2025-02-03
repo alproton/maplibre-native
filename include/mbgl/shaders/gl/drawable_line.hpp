@@ -211,7 +211,12 @@ lowp float opacity = u_opacity;
     float blur2 = (blur + 1.0 / DEVICE_PIXEL_RATIO) * v_gamma_scale;
     float alpha = clamp(min(dist - (v_width2.t - blur2), v_width2.s - dist) / blur2, 0.0, 1.0);
 
-    fragColor = color * (alpha * opacity);
+    vec4 final_color = color;
+    if (length(v_normal) > 0.85) {
+        final_color.rgb *= 0.7;
+    }
+
+    fragColor = final_color * (alpha * opacity);
 
 #ifdef OVERDRAW_INSPECTOR
     fragColor = vec4(1.0);
