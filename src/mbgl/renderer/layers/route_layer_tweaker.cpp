@@ -28,7 +28,7 @@ void RouteLayerTweaker::execute(LayerGroupBase& layerGroup, const PaintParameter
     auto& context = parameters.context;
     const auto& evaluated = static_cast<const LineLayerProperties&>(*evaluatedProperties).evaluated;
 
-    const auto& linePatternValue = evaluated.get<LinePattern>().constantOr(Faded<expression::Image>{"", ""});
+    // const auto& linePatternValue = evaluated.get<LinePattern>().constantOr(Faded<expression::Image>{"", ""});
 
     const auto zoom = static_cast<float>(parameters.state.getZoom());
 
