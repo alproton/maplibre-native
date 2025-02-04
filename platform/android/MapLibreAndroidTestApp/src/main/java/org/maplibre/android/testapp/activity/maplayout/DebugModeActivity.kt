@@ -1,13 +1,20 @@
 package org.maplibre.android.testapp.activity.maplayout
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.*
 import org.maplibre.android.maps.MapLibreMap.OnCameraMoveListener
 import org.maplibre.android.maps.MapLibreMap.OnFpsChangedListener
@@ -19,6 +26,12 @@ import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.styles.TestStyles
 import timber.log.Timber
 import java.util.*
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.LocationComponentOptions
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
+import org.maplibre.android.location.permissions.PermissionsListener
+import org.maplibre.android.location.permissions.PermissionsManager
 
 /**
  * Test activity showcasing the different debug modes and allows to cycle between the default map styles.
@@ -34,6 +47,9 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
     private var fpsView: TextView? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        checkPermissions()
+
         setContentView(R.layout.activity_debug_mode)
         setupToolbar()
         setupMapView(savedInstanceState)
@@ -77,13 +93,117 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         return MapLibreMapOptions.createFromAttributes(this, null)
     }
 
+    @SuppressLint("MissingPermission")
+    private fun prepareLocationComp(style: Style) {
+        val context : Context = this
+        val locationComponentOptions =
+            LocationComponentOptions.builder(context)
+                .compassAnimationEnabled(true)
+                .gpsDrawable(R.drawable.ic_my_location)
+                .foregroundDrawableStale(R.drawable.ic_my_location)
+                .foregroundDrawable(R.drawable.ic_my_location)
+                .backgroundDrawable(R.drawable.ic_transparent)
+                .bearingDrawable(R.drawable.ic_transparent)
+                .build()
+
+            maplibreMap.locationComponent.apply {
+                activateLocationComponent(
+                    LocationComponentActivationOptions.Builder(
+                        context,
+                        style
+                    ).locationComponentOptions(locationComponentOptions)
+                        .useDefaultLocationEngine(useLocationEngine)
+                        .build()
+                )
+                applyStyle(locationComponentOptions)
+                isLocationComponentEnabled = true
+                renderMode = RenderMode.GPS
+                cameraMode = CameraMode.TRACKING_GPS
+        }
+        if (useLocationEngine) {
+            maplibreMap.cameraPosition = CameraPosition.Builder().target(LatLng(0.0,0.0)).zoom(15.0).build()
+            maplibreMap.locationComponent.setCameraMode(CameraMode.TRACKING_GPS)
+        } else {
+            maplibreMap.locationComponent.zoomWhileTracking(15.0, 1000)
+        }
+    }
+
+    private val useLocationEngine = true
+    private var permissionsManager: PermissionsManager? = null
+    private var locationManager : LocationManager? = null
+
+    private val locationListener: LocationListener = object : LocationListener {
+        override fun onLocationChanged(location: Location) {
+            if (!useLocationEngine) {
+                maplibreMap.locationComponent.forceLocationUpdate(location)
+            }
+
+            Timber.d("##################### " + location.latitude.toString() + "  ,  " + location.longitude.toString())
+        }
+        override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
+        override fun onProviderEnabled(provider: String) {}
+        override fun onProviderDisabled(provider: String) {}
+    }
+
+    private fun checkPermissions() {
+        val context : Context = this
+
+        if (PermissionsManager.areLocationPermissionsGranted(this)) {
+            // mapView.getMapAsync(this)
+        } else {
+            permissionsManager = PermissionsManager(object : PermissionsListener {
+                override fun onExplanationNeeded(permissionsToExplain: List<String>) {
+                    Toast.makeText(
+                        context,
+                        "You need to accept location permissions.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+                override fun onPermissionResult(granted: Boolean) {
+                    if (granted) {
+                        // mapView.getMapAsync(this@BasicLocationPulsingCircleActivity)
+                    } else {
+                        finish()
+                    }
+                }
+            })
+            permissionsManager!!.requestLocationPermissions(this)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        permissionsManager!!.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
+    private fun prepareLocationManager() {
+        val context : Context = this
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager?
+        try {
+            // Request location updates
+            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1L, 1f, locationListener)
+        } catch(ex: SecurityException) {
+            Timber.d("######################### Security Exception, no location available")
+        }
+    }
+
     override fun onMapReady(map: MapLibreMap) {
         maplibreMap = map
         maplibreMap.setStyle(
             Style.Builder().fromUri(STYLES[currentStyleIndex])
-        ) { style: Style -> setupNavigationView(style.layers) }
+        ) { style: Style ->
+            prepareLocationComp(style)
+            setupNavigationView(style.layers)
+        }
         setupZoomView()
         setFpsView()
+
+        prepareLocationManager()
     }
 
     private fun setFpsView() {

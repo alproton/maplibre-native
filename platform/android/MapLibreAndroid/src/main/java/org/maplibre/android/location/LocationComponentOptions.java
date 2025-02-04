@@ -88,7 +88,7 @@ public class LocationComponentOptions implements Parcelable {
    * Default maximum radius of the LocationComponent circle when it's pulsing.
    */
   public static final float CIRCLE_PULSING_MAX_RADIUS_DEFAULT = 35f;
-
+  private boolean useGoogleLocationEngine = false;
   private float accuracyAlpha;
   private int accuracyColor;
   private int backgroundDrawableStale;
