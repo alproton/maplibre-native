@@ -128,7 +128,11 @@ void TileLayerGroupGL::render(RenderOrchestrator&, PaintParameters& parameters) 
             bindUBOs = true;
         }
 
-        drawable.draw(parameters);
+        if (drawable.getName() != "mapbox-location-background-layer/icon_" && drawable.getName() != "mapbox-location-foreground-layer/icon_") {
+            drawable.draw(parameters);
+        } else {
+            uniformBuffers.unbind();
+        }
     });
 
     if (bindUBOs) {

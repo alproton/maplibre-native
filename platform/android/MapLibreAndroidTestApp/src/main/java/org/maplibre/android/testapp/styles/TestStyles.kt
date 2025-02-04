@@ -5,7 +5,8 @@ import org.maplibre.android.maps.Style
 object TestStyles {
     const val DEMOTILES = "https://demotiles.maplibre.org/style.json"
 
-    const val VERSATILES = "https://tiles.versatiles.org/assets/styles/colorful.json"
+    // const val VERSATILES = "https://tiles.versatiles.org/assets/styles/colorful.json"
+    const val VERSATILES = "https://americanamap.org/style.json"
 
     const val AMERICANA = "https://americanamap.org/style.json"
 

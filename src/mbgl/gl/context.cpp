@@ -810,10 +810,16 @@ void Context::draw(const gfx::DrawMode& drawMode, std::size_t indexOffset, std::
             break;
     }
 
+    /*
     MBGL_CHECK_ERROR(glDrawElements(Enum<gfx::DrawModeType>::to(drawMode.type),
                                     static_cast<GLsizei>(indexLength),
                                     GL_UNSIGNED_SHORT,
                                     reinterpret_cast<GLvoid*>(sizeof(uint16_t) * indexOffset)));
+                                    */
+    glDrawElements(Enum<gfx::DrawModeType>::to(drawMode.type),
+                                    static_cast<GLsizei>(indexLength),
+                                    GL_UNSIGNED_SHORT,
+                                    reinterpret_cast<GLvoid*>(sizeof(uint16_t) * indexOffset));
 
     stats.numDrawCalls++;
 }
