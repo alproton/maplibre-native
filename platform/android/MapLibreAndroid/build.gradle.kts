@@ -24,6 +24,9 @@ dependencies {
     implementation(libs.okhttp3)
     implementation(libs.timber)
     implementation(libs.interpolator)
+    implementation(libs.interpolator)
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    runtimeOnly("com.google.gms:google-services:4.4.2")
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito)

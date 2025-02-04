@@ -6,9 +6,18 @@ object LocationEngineDefault {
     /**
      * Returns the default `LocationEngine`.
      */
+    /*
     fun getDefaultLocationEngine(context: Context): LocationEngine {
         return LocationEngineProxy(
             MapLibreFusedLocationEngineImpl(
+                context.applicationContext
+            )
+        )
+    }
+    */
+    fun getDefaultLocationEngine(context: Context): LocationEngine {
+        return LocationEngineProxy(
+            GoogleLocationEngineImpl(
                 context.applicationContext
             )
         )

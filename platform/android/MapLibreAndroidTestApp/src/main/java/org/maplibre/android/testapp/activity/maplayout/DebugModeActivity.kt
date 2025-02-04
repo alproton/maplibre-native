@@ -13,6 +13,8 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.*
 import org.maplibre.android.maps.MapLibreMap.OnCameraMoveListener
 import org.maplibre.android.maps.MapLibreMap.OnFpsChangedListener
@@ -110,7 +112,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
                         context,
                         style
                     ).locationComponentOptions(locationComponentOptions)
-                        .useDefaultLocationEngine(false)
+                        .useDefaultLocationEngine(useLocationEngine)
                         .build()
                 )
                 applyStyle(locationComponentOptions)
@@ -118,15 +120,23 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
                 renderMode = RenderMode.GPS
                 cameraMode = CameraMode.TRACKING_GPS
         }
-        maplibreMap.locationComponent.zoomWhileTracking(15.0, 1000)
+        if (useLocationEngine) {
+            maplibreMap.cameraPosition = CameraPosition.Builder().target(LatLng(0.0,0.0)).zoom(15.0).build()
+            maplibreMap.locationComponent.setCameraMode(CameraMode.TRACKING_GPS)
+        } else {
+            maplibreMap.locationComponent.zoomWhileTracking(15.0, 1000)
+        }
     }
 
+    private val useLocationEngine = true
     private var permissionsManager: PermissionsManager? = null
     private var locationManager : LocationManager? = null
 
     private val locationListener: LocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            maplibreMap.locationComponent.forceLocationUpdate(location)
+            if (!useLocationEngine) {
+                maplibreMap.locationComponent.forceLocationUpdate(location)
+            }
 
             Timber.d("##################### " + location.latitude.toString() + "  ,  " + location.longitude.toString())
         }
