@@ -843,6 +843,11 @@ public final class LocationComponent {
     locationAnimatorCoordinator.setMaxAnimationFps(maxAnimationFps);
   }
 
+  public void setAnimationTrackingParameters(double cameraAnimScale, double cameraAnimBiasMS, double puckAnimScale, double puckAnimBiasMS) {
+    checkActivationState();
+    locationAnimatorCoordinator.setAnimationTrackingParameters(cameraAnimScale, cameraAnimBiasMS, puckAnimScale, puckAnimBiasMS);
+  }
+
   /**
    * Set the location engine to update the current user location.
    * <p>

@@ -104,6 +104,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
                 .foregroundDrawable(R.drawable.ic_pucl)
                 .backgroundDrawable(R.drawable.ic_transparent)
                 .bearingDrawable(R.drawable.ic_transparent)
+                .trackingAnimationDurationMultiplier(1.0f)
                 .build()
 
             maplibreMap.locationComponent.apply {
@@ -120,15 +121,17 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
                 renderMode = RenderMode.GPS
                 cameraMode = CameraMode.TRACKING_GPS
         }
+        maplibreMap.locationComponent.setMaxAnimationFps(30)
+        maplibreMap.locationComponent.setAnimationTrackingParameters(1.5, 100.0, 1.1, 10.0)
         if (useLocationEngine) {
-            maplibreMap.cameraPosition = CameraPosition.Builder().target(LatLng(0.0,0.0)).zoom(15.0).build()
+            maplibreMap.cameraPosition = CameraPosition.Builder().target(LatLng(0.0,0.0)).zoom(16.4).build()
             maplibreMap.locationComponent.setCameraMode(CameraMode.TRACKING_GPS)
         } else {
-            maplibreMap.locationComponent.zoomWhileTracking(15.0, 1000)
+            maplibreMap.locationComponent.zoomWhileTracking(16.4, 1000)
         }
     }
 
-    private val useLocationEngine = true
+    private val useLocationEngine = false
     private var permissionsManager: PermissionsManager? = null
     private var locationManager : LocationManager? = null
 
@@ -186,7 +189,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager?
         try {
             // Request location updates
-            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1L, 1f, locationListener)
+            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500L, 1f, locationListener)
         } catch(ex: SecurityException) {
             Timber.d("######################### Security Exception, no location available")
         }
@@ -194,6 +197,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
 
     override fun onMapReady(map: MapLibreMap) {
         maplibreMap = map
+        maplibreMap.setTileLodZoomShift(-1.0)
         maplibreMap.setStyle(
             Style.Builder().fromUri(STYLES[currentStyleIndex])
         ) { style: Style ->
@@ -203,7 +207,9 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         setupZoomView()
         setFpsView()
 
-        prepareLocationManager()
+        if (!useLocationEngine) {
+            prepareLocationManager()
+        }
     }
 
     private fun setFpsView() {

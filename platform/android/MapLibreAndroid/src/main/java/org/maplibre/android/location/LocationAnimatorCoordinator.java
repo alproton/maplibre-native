@@ -63,6 +63,11 @@ final class LocationAnimatorCoordinator {
   @VisibleForTesting
   int maxAnimationFps = Integer.MAX_VALUE;
 
+  private double cameraAnimScale = 1.0;
+  private double cameraAnimBiasMS = 0.0;
+  private double puckAnimScale = 1.0;
+  private double puckAnimBiasMS = 0.0;
+
   @VisibleForTesting
   final SparseArray<MapLibreAnimator.AnimationsValueChangeListener> listeners = new SparseArray<>();
 
@@ -150,9 +155,11 @@ final class LocationAnimatorCoordinator {
       animationDuration = Math.min(animationDuration, MAX_ANIMATION_DURATION_MS);
     }
 
-    playAnimators(animationDuration,
+    playAnimators((long)(animationDuration * puckAnimScale + puckAnimBiasMS),
       ANIMATOR_LAYER_LATLNG,
-      ANIMATOR_LAYER_GPS_BEARING,
+      ANIMATOR_LAYER_GPS_BEARING);
+
+    playAnimators((long)(animationDuration * cameraAnimScale + cameraAnimBiasMS),
       ANIMATOR_CAMERA_LATLNG,
       ANIMATOR_CAMERA_GPS_BEARING);
 
@@ -555,5 +562,12 @@ final class LocationAnimatorCoordinator {
       return;
     }
     this.maxAnimationFps = maxAnimationFps;
+  }
+
+  void setAnimationTrackingParameters(double cameraAnimScale, double cameraAnimBiasMS, double puckAnimScale, double puckAnimBiasMS) {
+    this.cameraAnimScale = cameraAnimScale;
+    this.cameraAnimBiasMS = cameraAnimBiasMS;
+    this.puckAnimScale = puckAnimScale;
+    this.puckAnimBiasMS = puckAnimBiasMS;
   }
 }
