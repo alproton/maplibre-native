@@ -31,7 +31,14 @@
 #include <mbgl/style/style.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/util/geojson.hpp>
+#include <mbgl/util/immutable.hpp>
+#include <mbgl/style/expression/expression.hpp>
+#include <mbgl/style/expression/literal.hpp>
+#include <mbgl/style/expression/compound_expression.hpp>
+#include <mbgl/style/expression/type.hpp>
+#include <mbgl/style/expression/dsl.hpp>
 #include <iostream>
+#include <vector>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -67,6 +74,9 @@
 #include <utility>
 #include <sstream>
 #include <numbers>
+
+#include "mbgl/renderer/layer_group.hpp"
+#include "mbgl/style/expression/util.hpp"
 
 using namespace std::numbers;
 
@@ -455,7 +465,8 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 break;
 
             case GLFW_KEY_R:
-                view->addRoute();
+                // view->addRoute();
+                view->addRouteGradient();
                 break;
 
             case GLFW_KEY_A: {
@@ -825,6 +836,97 @@ void GLFWView::addRandomPointAnnotations(int count) {
     for (int i = 0; i < count; ++i) {
         annotationIDs.push_back(map->addAnnotation(mbgl::SymbolAnnotation{makeRandomPoint(), "default_marker"}));
     }
+}
+
+using namespace mbgl::style::expression;
+using namespace mbgl::style::expression::detail;
+
+void GLFWView::addRouteGradient() {
+    MLN_TRACE_FUNC();
+    using namespace mbgl::style::expression;
+
+    auto getLineString = [&]() -> mbgl::LineString<double> {
+        mbgl::LineString<double> linestring;
+        int numpts = 6;
+        float radius = 50.0f;
+        for(int i = 0; i < numpts; i++) {
+            float anglerad = (float(i) / float(numpts - 1))* 2 * 3.14f;
+            mbgl::Point<double> pt {radius * sin(anglerad), radius * cos(anglerad)};
+            linestring.push_back(pt);
+            std::cout<<"x: "<<pt.x<<" y: "<<pt.y<<std::endl;
+        }
+
+        return linestring;
+    };
+    mbgl::LineString<double> linestring;
+    mapbox::geometry::line_string<double> linestring1;
+
+    using namespace mbgl::style;
+    auto lineLayer = std::make_unique<LineLayer>("line-gradient-layer", "line-gradient-source");
+    GeoJSONOptions opts;
+    opts.lineMetrics = true;
+
+    std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>("line-gradient-source", mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts))) ;
+    geoJSONsrc->setGeoJSON(mapbox::geometry::geometry<double>{getLineString()});
+    map->getStyle().addSource(std::move(geoJSONsrc));
+
+    ParsingContext pc;
+    ParseResult pr = createCompoundExpression("line-progress", {}, pc);
+    std::unique_ptr<Expression> lineprogressValueExp = std::move(pr.value());
+
+    double input1 = 0.0;
+    std::unique_ptr<Expression> output1 = dsl::literal(mbgl::Color(0, 0, 0, 0));
+
+    double input2 = 0.11;
+    std::unique_ptr<Expression> output2 = dsl::literal(mbgl::Color(0, 0, 0, 0));
+
+    double input3 = 0.12;
+    std::unique_ptr<Expression> output3 = dsl::literal(mbgl::Color(0, 0, 1, 1));
+
+
+    double input4 = 0.32;
+    std::unique_ptr<Expression> output4 = dsl::literal(mbgl::Color(0, 0, 1, 1));
+
+    double input5 = 0.33;
+    std::unique_ptr<Expression> output5 = dsl::literal(mbgl::Color(1, 0, 0, 1));
+
+    double input6 = 0.66;
+    std::unique_ptr<Expression> output6 = dsl::literal(mbgl::Color(1, 0, 0, 1));
+
+    double input7 = 0.67;
+    std::unique_ptr<Expression> output7 = dsl::literal(mbgl::Color(0.8, 0, 0, 1));
+
+    double input8 = 1.0;
+    std::unique_ptr<Expression> output8 = dsl::literal(mbgl::Color(0.8, 0, 0, 1));
+
+    Interpolator linearInterpolator = dsl::linear();
+    const auto& type = output1->getType();
+
+    std::map<double, std::unique_ptr<Expression>> stops;
+    stops[input1] = std::move(std::move(output1));
+    stops[input2] = std::move(std::move(output2));
+    stops[input3] = std::move(std::move(output3));
+    stops[input4] = std::move(std::move(output4));
+    stops[input5] = std::move(std::move(output5));
+    stops[input6] = std::move(std::move(output6));
+    stops[input7] = std::move(std::move(output7));
+    stops[input8] = std::move(std::move(output8));
+
+    ParsingContext ctx;
+    ParseResult result = createInterpolate(type, std::move(linearInterpolator), std::move(lineprogressValueExp), std::move(stops), ctx);
+    assert(result);
+    std::unique_ptr<Expression> expression = std::move(*result);
+
+    // std::unique_ptr<Expression> expression = dsl::interpolate(linearInterpolator, std::move(lineprogressValueExp), input1, std::move(output1), input2, std::move(output2), input3, std::move(output3));
+
+    ColorRampPropertyValue crpv(std::move(expression));
+    lineLayer->setLineGradient(crpv);
+
+    lineLayer->setLineColor(mbgl::Color(1, 0, 0, 1));
+    lineLayer->setLineCap(LineCapType::Round);
+    lineLayer->setLineJoin(LineJoinType::Round);
+    lineLayer->setLineWidth(15);
+    map->getStyle().addLayer(std::move(lineLayer));
 }
 
 void GLFWView::addRoute() {
