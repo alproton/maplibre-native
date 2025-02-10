@@ -1186,7 +1186,7 @@ public final class LocationComponent {
     locationAnimatorCoordinator = new LocationAnimatorCoordinator(
       maplibreMap.getProjection(),
       MapLibreAnimatorSetProvider.getInstance(),
-      MapLibreAnimatorProvider.getInstance()
+      MapLibreAnimatorProvider.getInstance(),  locationLayerController.getLocationLayerRenderer(), context
     );
     locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options
       .trackingAnimationDurationMultiplier());
