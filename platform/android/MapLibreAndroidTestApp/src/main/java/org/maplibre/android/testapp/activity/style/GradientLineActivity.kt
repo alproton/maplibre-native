@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
+import org.maplibre.android.maps.RouteID
+import org.maplibre.android.maps.RouteOptions
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.*
@@ -13,6 +15,9 @@ import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ResourceUtils
+import org.maplibre.android.utils.ColorUtils
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
 import timber.log.Timber
 import java.io.IOException
 
@@ -21,12 +26,29 @@ import java.io.IOException
  */
 class GradientLineActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
+    private lateinit var routeList: MutableList<RouteID>
+
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gradient_line)
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
+    }
+
+    private fun createRouteGeometry() : LineString {
+        val radius : Double = 5.0
+        val resolution = 20
+        var pointList : MutableList<Point> = mutableListOf<Point>()
+        val xlate = 0
+        for(i in 0..resolution) {
+            val anglerad = (i.toDouble() / (resolution - 1))* 2 * 3.14f
+            val pt : Point = Point.fromLngLat(xlate + radius * Math.sin(anglerad), radius * Math.cos(anglerad))
+            pointList.add(pt);
+        }
+
+        var routeGeom : LineString = LineString.fromLngLats(pointList);
+        return routeGeom;
     }
 
     override fun onMapReady(maplibreMap: MapLibreMap) {
@@ -63,6 +85,18 @@ class GradientLineActivity : AppCompatActivity(), OnMapReadyCallback {
                             )
                     )
             )
+
+            var ropts : org.maplibre.android.maps.RouteOptions = RouteOptions()
+            ropts.outerColor = ColorUtils.rgbaToColor("rgba(255, 255, 255, 1.0)")
+            ropts.innerColor = ColorUtils.rgbaToColor("rgba(0, 0, 255, 1.0)")
+            ropts.outerWidth = 10.0
+            ropts.innerWidth = 6.0
+            val routeGeom = createRouteGeometry()
+            val routeID : RouteID = mapView.createRoute(routeGeom, ropts)
+            routeList = mutableListOf<RouteID>()
+            routeList.add(routeID)
+            mapView.finalizeRoutes()
+
         } catch (exception: IOException) {
             Timber.e(exception)
         }
