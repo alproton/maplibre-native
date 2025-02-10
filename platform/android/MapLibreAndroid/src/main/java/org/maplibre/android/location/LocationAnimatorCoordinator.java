@@ -78,8 +78,12 @@ final class LocationAnimatorCoordinator {
   @VisibleForTesting
   final SparseArray<MapLibreAnimator.AnimationsValueChangeListener> listeners = new SparseArray<>();
 
-  LocationAnimatorCoordinator(@NonNull Projection projection, @NonNull MapLibreAnimatorSetProvider animatorSetProvider,
-                              @NonNull MapLibreAnimatorProvider animatorProvider, LocationLayerRenderer locationLayerRenderer, Context context) {
+  LocationAnimatorCoordinator(@NonNull Projection projection,
+                              @NonNull MapLibreAnimatorSetProvider animatorSetProvider,
+                              @NonNull MapLibreAnimatorProvider animatorProvider,
+                              LocationLayerRenderer locationLayerRenderer,
+                              LocationCameraController locationCameraController,
+                              Context context) {
     this.projection = projection;
     this.animatorProvider = animatorProvider;
     this.animatorSetProvider = animatorSetProvider;
@@ -116,6 +120,12 @@ final class LocationAnimatorCoordinator {
             public void run() {
               locationLayerRenderer.setLatLng(new LatLng(location.lat, location.lon));
               locationLayerRenderer.setGpsBearing((float)(location.bearing));
+              if (locationCameraController.isLocationTracking()) {
+                locationCameraController.setLatLng(new LatLng(location.lat, location.lon));
+              }
+              if (locationCameraController.isLocationBearingTracking()) {
+                locationCameraController.setBearing((float)(location.bearing));
+              }
             }
           };
           mainHandler.post(myRunnable);
@@ -125,7 +135,10 @@ final class LocationAnimatorCoordinator {
   }
 
   StampedLatLon lerp(StampedLatLon a, StampedLatLon b, double t) {
-    return new StampedLatLon(a.lat * (1.0-t) + b.lat * t, a.lon * (1.0-t) + b.lon * t, a.bearing * (1.0-t) + b.bearing * t, (long)((double)(a.time) * (1.0-t) + (double)(b.time) * t));
+    return new StampedLatLon(a.lat * (1.0 - t) + b.lat * t,
+                             a.lon * (1.0 - t) + b.lon * t,
+                             a.bearing * (1.0 - t) + b.bearing * t,
+                             (long)((double)(a.time) * (1.0 - t) + (double)(b.time) * t));
   }
 
   void updateAnimatorListenerHolders(@NonNull Set<AnimatorListenerHolder> listenerHolders) {
@@ -173,7 +186,7 @@ final class LocationAnimatorCoordinator {
     boolean equals(StampedLatLon other) {
       return other.lat == lat && other.lon == lon && other.bearing == bearing && other.time == time;
     }
-  };
+  }
 
   private boolean useCustomPuckAnimator = true;
   private StampedLatLon currentPuckLocation;
@@ -202,7 +215,9 @@ final class LocationAnimatorCoordinator {
       updateLayerAnimators(latLngValues, bearingValues);
     }
 
-    currentPuckLocation = new StampedLatLon(latLngValues[latLngValues.length-1].getLatitude(), latLngValues[latLngValues.length-1].getLongitude(), bearingValues[bearingValues.length-1], newLocation.getTime());
+    currentPuckLocation = new StampedLatLon(latLngValues[latLngValues.length - 1].getLatitude(),
+                                            latLngValues[latLngValues.length - 1].getLongitude(),
+                                            bearingValues[bearingValues.length - 1], newLocation.getTime());
 
     // replace the animation start with the camera's previous value
     latLngValues[0] = previousCameraLatLng;
@@ -211,7 +226,9 @@ final class LocationAnimatorCoordinator {
     } else {
       bearingValues = getBearingValues(previousCameraBearing, newLocations);
     }
-    updateCameraAnimators(latLngValues, bearingValues);
+    if (!useCustomPuckAnimator) {
+      updateCameraAnimators(latLngValues, bearingValues);
+    }
 
     LatLng targetLatLng = new LatLng(newLocation);
     boolean snap = immediateAnimation(projection, previousCameraLatLng, targetLatLng)
@@ -244,11 +261,6 @@ final class LocationAnimatorCoordinator {
     if (!useCustomPuckAnimator) {
       playAnimators(animationDuration,
               ANIMATOR_LAYER_LATLNG,
-              ANIMATOR_LAYER_GPS_BEARING,
-              ANIMATOR_CAMERA_LATLNG,
-              ANIMATOR_CAMERA_GPS_BEARING);
-    } else {
-      playAnimators(animationDuration,
               ANIMATOR_LAYER_GPS_BEARING,
               ANIMATOR_CAMERA_LATLNG,
               ANIMATOR_CAMERA_GPS_BEARING);
@@ -666,7 +678,10 @@ final class LocationAnimatorCoordinator {
     this.maxAnimationFps = maxAnimationFps;
   }
 
-  void setAnimationTrackingParameters(double cameraAnimScale, double cameraAnimBiasMS, double puckAnimScale, double puckAnimBiasMS) {
+  void setAnimationTrackingParameters(double cameraAnimScale,
+                                      double cameraAnimBiasMS,
+                                      double puckAnimScale,
+                                      double puckAnimBiasMS) {
     this.cameraAnimScale = cameraAnimScale;
     this.cameraAnimBiasMS = cameraAnimBiasMS;
     this.puckAnimScale = puckAnimScale;

@@ -843,9 +843,11 @@ public final class LocationComponent {
     locationAnimatorCoordinator.setMaxAnimationFps(maxAnimationFps);
   }
 
-  public void setAnimationTrackingParameters(double cameraAnimScale, double cameraAnimBiasMS, double puckAnimScale, double puckAnimBiasMS) {
+  public void setAnimationTrackingParameters(double cameraAnimScale, double cameraAnimBiasMS,
+                                             double puckAnimScale, double puckAnimBiasMS) {
     checkActivationState();
-    locationAnimatorCoordinator.setAnimationTrackingParameters(cameraAnimScale, cameraAnimBiasMS, puckAnimScale, puckAnimBiasMS);
+    locationAnimatorCoordinator.setAnimationTrackingParameters(cameraAnimScale, cameraAnimBiasMS,
+                                                               puckAnimScale, puckAnimBiasMS);
   }
 
   /**
@@ -1186,7 +1188,10 @@ public final class LocationComponent {
     locationAnimatorCoordinator = new LocationAnimatorCoordinator(
       maplibreMap.getProjection(),
       MapLibreAnimatorSetProvider.getInstance(),
-      MapLibreAnimatorProvider.getInstance(),  locationLayerController.getLocationLayerRenderer(), context
+      MapLibreAnimatorProvider.getInstance(),
+      locationLayerController.getLocationLayerRenderer(),
+      locationCameraController,
+      context
     );
     locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options
       .trackingAnimationDurationMultiplier());
