@@ -268,6 +268,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
 
     companion object {
         private val STYLES = arrayOf(
+            TestStyles.AMERICANA,
             TestStyles.getPredefinedStyleWithFallback("Streets"),
             TestStyles.getPredefinedStyleWithFallback("Outdoor"),
             TestStyles.getPredefinedStyleWithFallback("Bright"),

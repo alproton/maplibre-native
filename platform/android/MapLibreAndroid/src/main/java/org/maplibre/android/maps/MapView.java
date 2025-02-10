@@ -34,6 +34,7 @@ import org.maplibre.android.net.ConnectivityReceiver;
 import org.maplibre.android.storage.FileSource;
 import org.maplibre.android.utils.BitmapUtils;
 import org.maplibre.android.tile.TileOperation;
+import org.maplibre.geojson.LineString;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -438,6 +439,26 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     if (mapRenderer != null) {
       mapRenderer.onDestroy();
     }
+  }
+
+  public RouteID createRoute(LineString routeGeom) {
+    return nativeMapView.createRoute(routeGeom);
+  }
+
+  public boolean disposeRoute(RouteID routeID) {
+    return nativeMapView.disposeRoute(routeID);
+  }
+
+  public boolean setRouteProgress(RouteID routeID, double progress) {
+    return nativeMapView.setRouteProgress(routeID, progress);
+  }
+
+  public void clearRouteSegments(RouteID routeID) {
+    nativeMapView.clearRouteSegments(routeID);
+  }
+
+  public boolean finalizeRoutes() {
+    return nativeMapView.finalizeRoutes();
   }
 
   /**
