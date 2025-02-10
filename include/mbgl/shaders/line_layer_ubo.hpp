@@ -43,7 +43,7 @@ struct alignas(16) LineGradientDrawableUBO {
     /* 76 */ float gapwidth_t;
     /* 80 */ float offset_t;
     /* 84 */ float width_t;
-    /* 88 */ float pad1;
+    /* 88 */ float lineclip_t;
     /* 92 */ float pad2;
     /* 96 */
 };

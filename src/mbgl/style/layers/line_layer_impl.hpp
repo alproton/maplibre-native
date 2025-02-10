@@ -20,6 +20,8 @@ public:
 
     LineLayoutProperties::Unevaluated layout;
     LinePaintProperties::Transitionable paint;
+    LineGradientFilterType gradientFilterType = LineGradientFilterType::Linear;
+
 
     DECLARE_LAYER_TYPE_INFO;
 };

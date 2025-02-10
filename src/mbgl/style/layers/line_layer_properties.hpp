@@ -12,6 +12,7 @@
 #include <mbgl/style/properties.hpp>
 #include <mbgl/programs/attributes.hpp>
 #include <mbgl/programs/uniforms.hpp>
+#include <mbgl/gfx/types.hpp>
 
 namespace mbgl {
 namespace style {
@@ -42,6 +43,10 @@ struct LineSortKey : DataDrivenLayoutProperty<float> {
 };
 
 struct LineBlur : DataDrivenPaintProperty<float, attributes::blur, uniforms::blur> {
+    static float defaultValue() { return 0.f; }
+};
+
+struct LineClip : DataDrivenPaintProperty<float, attributes::line_clip, uniforms::line_clip> {
     static float defaultValue() { return 0.f; }
 };
 
@@ -109,7 +114,8 @@ class LinePaintProperties : public Properties<
     LinePattern,
     LineTranslate,
     LineTranslateAnchor,
-    LineWidth
+    LineWidth,
+    LineClip
 > {};
 
 class LineLayerProperties final : public LayerProperties {

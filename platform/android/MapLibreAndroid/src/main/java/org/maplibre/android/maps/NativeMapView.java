@@ -38,6 +38,7 @@ import org.maplibre.android.style.sources.CannotAddSourceException;
 import org.maplibre.android.style.sources.Source;
 import org.maplibre.android.utils.BitmapUtils;
 import org.maplibre.android.tile.TileOperation;
+import org.maplibre.geojson.LineString;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,6 +114,7 @@ final class NativeMapView implements NativeMap {
   //
   // Methods
   //
+
 
   private boolean checkState(String callingMethod) {
     // validate if invocation has occurred on the main thread
@@ -1122,6 +1124,67 @@ final class NativeMapView implements NativeMap {
     mapRenderer.setSwapBehaviorFlush(flush);
   }
 
+  @Override
+  public RouteID createRoute(LineString routeGeom, RouteOptions routeOptions) {
+    RouteID routeID = new RouteID(nativeRouteCreate(routeGeom, routeOptions.outerColor, routeOptions.innerColor, routeOptions.outerWidth, routeOptions.innerWidth));
+    return routeID;
+  }
+
+  @Override
+  public boolean disposeRoute(RouteID routeID) {
+    boolean success = false;
+    if(routeID.isValid()) {
+      success = nativeRouteDispose(routeID.getId());
+    }
+
+    return success;
+  }
+
+  @Override
+  public boolean createRouteSegment(RouteID routeID, RouteSegmentOptions rsopts) {
+    if(routeID.isValid()) {
+      return nativeRouteSegmentCreate(routeID.getId(), rsopts.geometry, rsopts.sortOrder, rsopts.red, rsopts.green, rsopts.blue);
+    }
+
+    return false;
+  }
+
+  @Override
+  public boolean setRouteProgress(RouteID routeID, double progress) {
+    if(routeID.isValid()) {
+      return nativeRouteSetProgress(routeID.getId(), progress);
+    }
+
+    return false;
+  }
+
+  @Override
+  public void clearRouteSegments(RouteID routeID) {
+    if(routeID.isValid()) {
+      nativeRouteClearSegments(routeID.getId());
+    }
+  }
+
+  @Override
+  public boolean finalizeRoutes() {
+    return nativeFinalizeValidation();
+  }
+
+  @Override
+  public void setRoutesBeforeLayer(String beforeLayer) {
+    nativeRoutesSetLayerBefore(beforeLayer);
+  }
+
+  @Override
+  public String getRoutesStats() {
+    return nativeRoutesGetStats();
+  }
+
+  @Override
+  public void clearRoutesStats() {
+    nativeRoutesClearStats();
+  }
+
   @NonNull
   @Override
   public RectF getDensityDependantRectangle(final RectF rectangle) {
@@ -1491,6 +1554,35 @@ final class NativeMapView implements NativeMap {
   @Keep
   private native void nativeSetVisibleCoordinateBounds(LatLng[] coordinates, RectF padding,
                                                        double direction, long duration);
+
+  //---------------------Native route APIs---------------------
+  @Keep
+  private native int nativeRouteCreate(LineString routeGeometry, int outerColor, int innerColor, double outerWidth, double innerWidth);
+
+  @Keep
+  private native boolean nativeRouteDispose(int routeID);
+
+  @Keep
+  private native boolean nativeRouteSegmentCreate(int routeID, LineString segmentGeometry, int sortOrder, float r, float g, float b);
+
+  @Keep
+  private native boolean nativeRouteSetProgress(int routeID, double progress);
+
+  @Keep
+  private native void nativeRouteClearSegments(int routeID);
+
+  @Keep
+  private native boolean nativeFinalizeValidation();
+
+  @Keep
+  private native void nativeRoutesSetLayerBefore(String beforeLayer);
+
+  @Keep
+  private native String nativeRoutesGetStats();
+
+  @Keep native void nativeRoutesClearStats();
+
+  //---------------------------------------------------------
 
   @Keep
   private native void nativeOnLowMemory();
