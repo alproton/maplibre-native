@@ -15,6 +15,7 @@
 #include "graphics/rectf.hpp"
 #include "geojson/feature.hpp"
 #include "geojson/geometry.hpp"
+#include "geojson/line_string.hpp"
 #include "geometry/lat_lng.hpp"
 #include "geometry/projected_meters.hpp"
 #include "style/layers/layer_manager.hpp"
@@ -24,6 +25,7 @@
 #include "map/image.hpp"
 #include "style/light.hpp"
 #include "bitmap.hpp"
+#include "mbgl/route/route_manager.hpp"
 
 #include <exception>
 #include <string>
@@ -229,6 +231,29 @@ public:
 
     void removeAnnotationIcon(JNIEnv&, const jni::String&);
 
+    //--------------- route APIs ---------------
+    jint routeCreate(JNIEnv& env, const jni::Object<mbgl::android::geojson::LineString>& routeGeom);
+
+    jboolean routeDispose(JNIEnv& env, jint routeID);
+
+    jboolean routeSegmentCreate(JNIEnv& env, jint routeID, const jni::Object<mbgl::android::geojson::LineString>& segmentGeom, jint sortOrder, jfloat red, jfloat green, jfloat blue);
+
+    jboolean routeProgressSet(JNIEnv& env, jint routeID, double progress);
+
+    void routeSegmentsClear(JNIEnv& env, jint routeID);
+
+    void routesSetLayerBefore(JNIEnv& env, const jni::String& str);
+
+    jni::Local<jni::String> routesGetStats(JNIEnv& env);
+
+    void routesClearStats(JNIEnv& env);
+
+    jboolean routesFinalize(JNIEnv& env);
+
+    void routesSetCommonOptions(JNIEnv& env, jint outerColor, jint innerColor, jdouble outerWidth, jdouble innerWidth, jdouble segTransitionDist);
+
+    //------------------------------------------------
+
     jni::jdouble getTopOffsetPixelsForAnnotationSymbol(JNIEnv&, const jni::String&);
 
     jni::Local<jni::Object<TransitionOptions>> getTransitionOptions(JNIEnv&);
@@ -338,6 +363,7 @@ public:
 
 private:
     std::unique_ptr<AndroidRendererFrontend> rendererFrontend;
+    std::unique_ptr<mbgl::route::RouteManager> routeMgr;
 
     JavaVM* vm = nullptr;
     jni::WeakReference<jni::Object<NativeMapView>> javaPeer;
