@@ -8,6 +8,9 @@
 
 #include <utility>
 #include <optional>
+#include <stack>
+#include <mbgl/route/id_types.hpp>
+#include <mbgl/route/route_manager.hpp>
 
 #if (defined(MLN_RENDER_BACKEND_OPENGL) || defined(MLN_RENDER_BACKEND_VULKAN)) && \
     !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL)
@@ -67,6 +70,9 @@ public:
 
     mbgl::Size getSize() const;
 
+    bool getRoutePickMode() const;
+    GLFWRendererFrontend *getRenderFrontend() const;
+
     // mbgl::MapObserver implementation
     void onDidFinishLoadingStyle() override;
     void onWillStartRenderingFrame() override;
@@ -108,6 +114,21 @@ private:
     void updateAnimatedAnnotations();
     void toggleCustomSource();
     void toggleLocationIndicatorLayer();
+    std::vector<RouteID> routeIDlist;
+    std::unique_ptr<mbgl::route::RouteManager> rmptr_;
+    void addRoute();
+    void modifyRoute();
+    void disposeRoute();
+    void addTrafficViz();
+    void modifyTrafficViz();
+    void removeTrafficViz();
+    void incrementRouteProgress();
+    void decrementRouteProgress();
+    void printRouteStats();
+    void beginCapture();
+    void endCapture();
+    void setRouteProgressUsage();
+    void setRoutePickMode();
 
     void cycleDebugOptions();
     void clearAnnotations();
@@ -138,6 +159,21 @@ private:
     bool rotating = false;
     bool pitching = false;
     bool show3DExtrusions = false;
+
+    struct RouteCircle {
+        double resolution = 30;
+        double xlate = 0;
+        int numTrafficZones = 5;
+        bool trafficZonesGridAligned = true;
+        mbgl::LineString<double> points;
+
+        mbgl::Point<double> getProgressPoint(double percent);
+    };
+    std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeList_;
+    RouteID lastRouteID_;
+    double routeProgress_ = 0.0;
+    bool useRouteProgressPercent_ = false;
+    bool routePickMode_ = false;
 
     // Frame timer
     int frames = 0;
