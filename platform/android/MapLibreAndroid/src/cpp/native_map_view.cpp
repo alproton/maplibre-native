@@ -55,6 +55,7 @@
 #include "run_loop_impl.hpp"
 #include "style/light.hpp"
 #include "tile/tile_operation.hpp"
+#include  "mbgl/route/route_manager.hpp"
 
 namespace mbgl {
 namespace android {
@@ -76,7 +77,7 @@ NativeMapView::NativeMapView(jni::JNIEnv& _env,
 
     // Create a renderer frontend
     rendererFrontend = std::make_unique<AndroidRendererFrontend>(mapRenderer);
-
+    routeMgr = std::make_unique<mbgl::route::RouteManager>();
     // Create Map options
     MapOptions options;
     options.withMapMode(MapMode::Continuous)
@@ -305,6 +306,9 @@ jni::Local<jni::String> NativeMapView::getStyleUrl(jni::JNIEnv& env) {
 
 void NativeMapView::setStyleUrl(jni::JNIEnv& env, const jni::String& url) {
     map->getStyle().loadURL(jni::Make<std::string>(env, url));
+    if(routeMgr) {
+        routeMgr->setStyle(map->getStyle());
+    }
 }
 
 jni::Local<jni::String> NativeMapView::getStyleJson(jni::JNIEnv& env) {
@@ -313,6 +317,9 @@ jni::Local<jni::String> NativeMapView::getStyleJson(jni::JNIEnv& env) {
 
 void NativeMapView::setStyleJson(jni::JNIEnv& env, const jni::String& json) {
     map->getStyle().loadJSON(jni::Make<std::string>(env, json));
+    if(routeMgr) {
+        routeMgr->setStyle(map->getStyle());
+    }
 }
 
 void NativeMapView::setLatLngBounds(jni::JNIEnv& env, const jni::Object<mbgl::android::LatLngBounds>& jBounds) {
@@ -1387,8 +1394,89 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::setTileLodZoomShift, "nativeSetTileLodZoomShift"),
         METHOD(&NativeMapView::getTileLodZoomShift, "nativeGetTileLodZoomShift"),
         METHOD(&NativeMapView::getLastRenderedTileCount, "nativeGetLastRenderedTileCount"),
-        METHOD(&NativeMapView::triggerRepaint, "nativeTriggerRepaint"));
+        METHOD(&NativeMapView::triggerRepaint, "nativeTriggerRepaint"),
+        METHOD(&NativeMapView::routeCreate, "nativeRouteCreate"),
+        METHOD(&NativeMapView::routeDispose, "nativeRouteDispose"),
+        METHOD(&NativeMapView::routeProgressSet, "nativeRouteSetProgress"),
+        METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
+        METHOD(&NativeMapView::routesSetLayerBefore, "nativeRoutesSetLayerBefore"),
+        METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
+
 }
+
+
+jint NativeMapView::routeCreate(JNIEnv& env, const jni::Object<mbgl::android::geojson::LineString>& routeGeom) {
+    if(!routeMgr->hasStyle()) {
+        routeMgr->setStyle(map->getStyle());
+    }
+
+    assert(routeMgr->hasStyle() && "style object has not been set");
+    RouteID routeID;
+    if(routeMgr) {
+        if(routeMgr->hasStyle()) {
+            const auto& linestring = mbgl::android::geojson::LineString::convert(env, routeGeom);
+            routeID = routeMgr->routeCreate(linestring);
+        }
+    }
+
+    return routeID.id;
+}
+
+void NativeMapView::routesSetLayerBefore(JNIEnv& env, const jni::String& layerBefore) {
+    if(routeMgr) {
+        std::string layerBeforeStr = jni::Make<std::string>(env, layerBefore);
+        routeMgr->setLayerBefore(layerBeforeStr);
+    }
+}
+
+jboolean NativeMapView::routeDispose(JNIEnv& env, jint routeID) {
+    if(routeMgr) {
+        return routeMgr->routeDispose(RouteID(routeID));
+    }
+
+    return false;
+}
+
+jboolean NativeMapView::routeSegmentCreate(JNIEnv& env, jint routeID, const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
+                                           jint sortOrder, jfloat red, jfloat green, jfloat blue) {
+    if(routeMgr) {
+        const auto& linestring = mbgl::android::geojson::LineString::convert(env, segmentGeom);
+        mbgl::route::RouteSegmentOptions rsegopts;
+        rsegopts.geometry = linestring;
+        rsegopts.color = mbgl::Color(red, green, blue, 1.0f);
+        rsegopts.sortOrder = sortOrder;
+        routeMgr->routeSegmentCreate(RouteID(routeID), rsegopts);
+
+        return true;
+    }
+
+    return false;
+}
+
+jboolean NativeMapView::routeProgressSet(JNIEnv& env, jint routeID, double progress) {
+    if(routeMgr) {
+        return routeMgr->routeSetProgress(RouteID(routeID), progress);
+    }
+
+    return false;
+}
+
+void NativeMapView::routeSegmentsClear(JNIEnv& env, jint routeID) {
+    if(routeMgr) {
+        routeMgr->routeClearSegments(RouteID(routeID));
+    }
+}
+
+jboolean NativeMapView::routesFinalize(JNIEnv& env) {
+    if(routeMgr) {
+        routeMgr->finalize();
+
+        return true;
+    }
+
+    return false;
+}
+
 
 void NativeMapView::onRegisterShaders(gfx::ShaderRegistry&) {};
 
