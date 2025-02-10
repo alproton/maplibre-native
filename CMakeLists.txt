@@ -440,6 +440,11 @@ list(APPEND INCLUDE_FILES
     ${PROJECT_SOURCE_DIR}/include/mbgl/util/work_request.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/util/work_task.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/util/work_task_impl.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/id_pool.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/id_types.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_manager.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_options.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_segment.hpp
 )
 list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/actor/mailbox.cpp
@@ -1007,6 +1012,8 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/version.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/version.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/work_request.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_manager.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_segment.cpp
 )
 
 if(MLN_WITH_OPENGL)
