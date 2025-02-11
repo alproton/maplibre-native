@@ -16,6 +16,7 @@ import androidx.annotation.VisibleForTesting;
 import org.maplibre.android.log.Logger;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.Projection;
+import org.maplibre.android.maps.renderer.MapRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +79,8 @@ final class LocationAnimatorCoordinator {
   @VisibleForTesting
   final SparseArray<MapLibreAnimator.AnimationsValueChangeListener> listeners = new SparseArray<>();
 
-  LocationAnimatorCoordinator(@NonNull Projection projection,
+  LocationAnimatorCoordinator(@NonNull MapRenderer mapRenderer,
+                              @NonNull Projection projection,
                               @NonNull MapLibreAnimatorSetProvider animatorSetProvider,
                               @NonNull MapLibreAnimatorProvider animatorProvider,
                               LocationLayerRenderer locationLayerRenderer,
@@ -118,6 +120,7 @@ final class LocationAnimatorCoordinator {
           Runnable myRunnable = new Runnable() {
             @Override
             public void run() {
+              mapRenderer.onStop();
               locationLayerRenderer.setLatLng(new LatLng(location.lat, location.lon));
               locationLayerRenderer.setGpsBearing((float)(location.bearing));
               if (locationCameraController.isLocationTracking()) {
@@ -126,6 +129,7 @@ final class LocationAnimatorCoordinator {
               if (locationCameraController.isLocationBearingTracking()) {
                 locationCameraController.setBearing((float)(location.bearing));
               }
+              mapRenderer.onStart();
             }
           };
           mainHandler.post(myRunnable);

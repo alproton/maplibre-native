@@ -33,6 +33,7 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapLibreMap.OnCameraIdleListener;
 import org.maplibre.android.maps.MapLibreMap.OnCameraMoveListener;
 import org.maplibre.android.maps.MapLibreMap.OnMapClickListener;
+import org.maplibre.android.maps.renderer.MapRenderer;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.Transform;
 import org.maplibre.android.style.layers.SymbolLayer;
@@ -103,6 +104,8 @@ public final class LocationComponent {
 
   @NonNull
   private final MapLibreMap maplibreMap;
+  @NonNull
+  private final MapRenderer mapRenderer;
   @NonNull
   private final Transform transform;
   private Style style;
@@ -193,9 +196,11 @@ public final class LocationComponent {
    * To get the component object use {@link MapLibreMap#getLocationComponent()}.
    */
   public LocationComponent(@NonNull MapLibreMap maplibreMap,
+                           @NonNull MapRenderer mapRenderer,
                            @NonNull Transform transform,
                            @NonNull List<MapLibreMap.OnDeveloperAnimationListener> developerAnimationListeners) {
     this.maplibreMap = maplibreMap;
+    this.mapRenderer = mapRenderer;
     this.transform = transform;
     developerAnimationListeners.add(developerAnimationListener);
   }
@@ -203,12 +208,14 @@ public final class LocationComponent {
   // used for creating a spy
   LocationComponent() {
     //noinspection ConstantConditions
+    mapRenderer = null;
     maplibreMap = null;
     transform = null;
   }
 
   @VisibleForTesting
   LocationComponent(@NonNull MapLibreMap maplibreMap,
+                    @NonNull MapRenderer mapRenderer,
                     @NonNull Transform transform,
                     @NonNull List<MapLibreMap.OnDeveloperAnimationListener> developerAnimationListeners,
                     @NonNull LocationEngineCallback<LocationEngineResult> currentListener,
@@ -220,6 +227,7 @@ public final class LocationComponent {
                     @NonNull CompassEngine compassEngine,
                     boolean useSpecializedLocationLayer) {
     this.maplibreMap = maplibreMap;
+    this.mapRenderer = mapRenderer;
     this.transform = transform;
     developerAnimationListeners.add(developerAnimationListener);
     this.currentLocationEngineListener = currentListener;
@@ -1186,6 +1194,7 @@ public final class LocationComponent {
       context, maplibreMap, transform, cameraTrackingChangedListener, options, onCameraMoveInvalidateListener);
 
     locationAnimatorCoordinator = new LocationAnimatorCoordinator(
+      mapRenderer,
       maplibreMap.getProjection(),
       MapLibreAnimatorSetProvider.getInstance(),
       MapLibreAnimatorProvider.getInstance(),

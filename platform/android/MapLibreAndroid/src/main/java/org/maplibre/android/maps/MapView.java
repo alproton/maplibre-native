@@ -175,7 +175,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     mapKeyListener = new MapKeyListener(transform, uiSettings, mapGestureDetector);
 
     // LocationComponent
-    maplibreMap.injectLocationComponent(new LocationComponent(maplibreMap, transform, developerAnimationListeners));
+    maplibreMap.injectLocationComponent(
+      new LocationComponent(maplibreMap, mapRenderer, transform, developerAnimationListeners));
 
     // Ensure this view is interactable
     setClickable(true);
