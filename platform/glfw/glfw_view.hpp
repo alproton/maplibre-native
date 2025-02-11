@@ -8,6 +8,8 @@
 
 #include <utility>
 #include <optional>
+#include <vector>
+#include <mbgl/route/id_types.hpp>
 
 #if (defined(MLN_RENDER_BACKEND_OPENGL) || defined(MLN_RENDER_BACKEND_VULKAN)) && \
     !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL)
@@ -108,6 +110,10 @@ private:
     void updateAnimatedAnnotations();
     void toggleCustomSource();
     void toggleLocationIndicatorLayer();
+    std::vector<RouteID> routeIDlist;
+    void addMultipleRoutes();
+    void modifyRoute();
+    void disposeRoute();
 
     void cycleDebugOptions();
     void clearAnnotations();
