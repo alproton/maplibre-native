@@ -91,7 +91,7 @@ target_compile_options(
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<PLATFORM_ID:Windows>>>:-Wextra>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<PLATFORM_ID:Windows>>,$<BOOL:${MLN_WITH_WERROR}>>:-Werror>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<PLATFORM_ID:Android>>:-Wno-error=tautological-constant-compare>
-        $<$<CXX_COMPILER_ID:GNU>:-Wno-error=maybe-uninitialized>
+        #$<$<CXX_COMPILER_ID:GNU>:-Wno-error=maybe-uninitialized>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-error=return-type>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-error=unknown-pragmas>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-error=pragmas>
@@ -443,7 +443,7 @@ list(APPEND INCLUDE_FILES
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/id_pool.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/id_types.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_manager.hpp
-    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_options.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_segment.hpp
 )
 list(APPEND SRC_FILES
@@ -1014,6 +1014,7 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/util/work_request.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_segment.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/route/route.cpp
 )
 
 if(MLN_WITH_OPENGL)
