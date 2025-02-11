@@ -1,13 +1,9 @@
 #pragma once
 
-#include <memory>
 #include <mbgl/route/id_types.hpp>
 #include <mbgl/route/route_segment.hpp>
 #include <mbgl/route/id_pool.hpp>
-#include <memory>
 #include <unordered_map>
-#include <map>
-
 namespace mbgl {
 
 
@@ -17,6 +13,8 @@ class Style;
 
 namespace route {
 
+class Route;
+class LineLayer;
 /***
  * A route is a road between two locations. There can be multiple routes in the case of multiple stops.
  * Each route can have route segments. Routes segments can be used for traffic data.
@@ -26,10 +24,9 @@ class RouteManager final {
 public:
   static RouteManager& getInstance() noexcept;
   void setStyle(style::Style&);
+    void setLayerBefore(const std::string layerBefore);
   RouteID routeCreate();
-  RouteSegmentID routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
-  bool routeSegmentUpdate(const RouteID&, const RouteSegmentID&, RouteSegmentOptions&);
-  bool routeSegmentDispose(const RouteID&, const RouteSegmentID&);
+  void routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
   bool routeDispose(const RouteID&);
   void finalize();
 
@@ -37,11 +34,17 @@ public:
 private:
 
   RouteManager();
+    static const std::string BASE_ROUTE_LAYER;
+    static const std::string ACTIVE_ROUTE_LAYER;
+    static const std::string GEOJSON_ROUTE_SOURCE_ID;
+    static const std::string BASE_ROUTE_SEGMENT_STR;
+
   gfx::IDpool routeIDpool_ = gfx::IDpool(100);
-  gfx::IDpool routeSegmentIDpool_ = gfx::IDpool(100);
   style::Style* style_ = nullptr;
-  std::unordered_map<RouteID, std::map<RouteSegmentID, route::RouteSegment>, IDHasher<RouteID>> routeMap_;
-  bool finalized_ = false;
+  std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
+    std::string layerBefore_;
+
+  bool dirty_ = true;
 };
 };
 
