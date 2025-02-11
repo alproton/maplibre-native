@@ -27,6 +27,8 @@
 #include <mbgl/util/instrumentation.hpp>
 #include <mbgl/util/platform.hpp>
 #include <mbgl/util/string.hpp>
+#include <mbgl/route/route_manager.hpp>
+#include <mbgl/route/route_segment.hpp>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -51,6 +53,8 @@
 #endif
 
 #define GL_GLEXT_PROTOTYPES
+#include "mbgl/route/route_manager.hpp"
+
 #include <GLFW/glfw3.h>
 
 #include <cassert>
@@ -566,13 +570,16 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 view->popAnnotation();
                 break;
             case GLFW_KEY_1:
-                view->addRandomPointAnnotations(1);
+                // view->addRandomPointAnnotations(1);
+                    view->addMultipleRoutes();
                 break;
             case GLFW_KEY_2:
-                view->addRandomPointAnnotations(10);
+                // view->addRandomPointAnnotations(10);
+                    view->disposeRoute();
                 break;
             case GLFW_KEY_3:
-                view->addRandomPointAnnotations(100);
+                // view->addRandomPointAnnotations(100);
+                    view->modifyRoute();
                 break;
             case GLFW_KEY_4:
                 view->addRandomPointAnnotations(1000);
@@ -733,6 +740,49 @@ void GLFWView::addRandomPointAnnotations(int count) {
         annotationIDs.push_back(map->addAnnotation(mbgl::SymbolAnnotation{makeRandomPoint(), "default_marker"}));
     }
 }
+
+void GLFWView::addMultipleRoutes() {
+    using namespace mbgl::route;
+
+    auto getRouteGeom = [&](double xlate, double resolution)->mbgl::LineString<double> {
+        mbgl::LineString<double> linestring;
+        int numpts = resolution;
+        float radius = 50.0f;
+        for(int i = 0; i < numpts; i++) {
+            float anglerad = (float(i) / float(numpts - 1))* 2 * 3.14f;
+            mbgl::Point<double> pt {xlate + radius * sin(anglerad), radius * cos(anglerad)};
+            linestring.push_back(pt);
+            std::cout<<"x: "<<pt.x<<" y: "<<pt.y<<std::endl;
+        }
+
+        return linestring;
+    };
+
+    int numRoutes = 3;
+    auto& rmgr = mbgl::route::RouteManager::getInstance();
+    rmgr.setStyle(map->getStyle());
+
+    for (int i = 0; i < numRoutes; ++i) {
+        mbgl::LineString<double> geom = getRouteGeom(i*20, 20);
+        auto routeID = rmgr.routeCreate(geom);
+        RouteSegmentOptions rsegopts;
+        rsegopts.color = mbgl::Color(1, 1, 1, 1);
+        rsegopts.sortOrder = i;
+
+        rmgr.routeSegmentCreate(routeID, rsegopts);
+    }
+
+    rmgr.finalize();
+}
+
+void GLFWView::modifyRoute() {
+
+}
+
+void GLFWView::disposeRoute() {
+
+}
+
 
 void GLFWView::addRandomLineAnnotations(int count) {
     MLN_TRACE_FUNC();

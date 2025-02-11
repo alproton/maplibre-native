@@ -15,6 +15,16 @@ namespace route {
 
 class Route;
 class LineLayer;
+
+
+struct RouteCommonOptions {
+    Color outerColor = Color(1, 1, 1, 1);
+    Color innerColor = Color(0, 0, 1, 1);
+    uint32_t outerWidth = 7;
+    uint32_t innerWidth = 6;
+};
+
+
 /***
  * A route is a road between two locations. There can be multiple routes in the case of multiple stops.
  * Each route can have route segments. Routes segments can be used for traffic data.
@@ -22,10 +32,13 @@ class LineLayer;
  */
 class RouteManager final {
 public:
+    static const std::string BASE_ROUTE_SEGMENT_STR;
+
   static RouteManager& getInstance() noexcept;
   void setStyle(style::Style&);
-    void setLayerBefore(const std::string layerBefore);
-  RouteID routeCreate();
+  void setLayerBefore(const std::string layerBefore);
+  void setRouteCommonOptions(const RouteCommonOptions& ropts);
+  RouteID routeCreate(const LineString<double>& geometry);
   void routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
   bool routeDispose(const RouteID&);
   void finalize();
@@ -37,13 +50,12 @@ private:
     static const std::string BASE_ROUTE_LAYER;
     static const std::string ACTIVE_ROUTE_LAYER;
     static const std::string GEOJSON_ROUTE_SOURCE_ID;
-    static const std::string BASE_ROUTE_SEGMENT_STR;
 
   gfx::IDpool routeIDpool_ = gfx::IDpool(100);
   style::Style* style_ = nullptr;
   std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
     std::string layerBefore_;
-
+RouteCommonOptions routeOptions_;
   bool dirty_ = true;
 };
 };

@@ -7,8 +7,6 @@
 namespace mbgl {
 namespace route {
 
-const std::string RouteSegmentOptions::BASE_ROUTE_SEGMENT_STR = "base_route_segment";
-
 RouteSegment::RouteSegment(const RouteSegmentOptions& routeOptions)
     : options_(routeOptions) {}
 
@@ -16,6 +14,10 @@ RouteSegmentOptions RouteSegment::getRouteSegmentOptions() const {
     return options_;
 }
 
+uint32_t RouteSegment::getSortOrder() const {
+    return sortOrder_;
+}
+
 RouteSegment::~RouteSegment() {}
-} // namespace gfx
+} // namespace route
 } // namespace mbgl

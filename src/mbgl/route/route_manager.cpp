@@ -18,9 +18,7 @@ namespace route {
 
 const std::string RouteManager::BASE_ROUTE_LAYER = "base route layer";
 const std::string RouteManager::ACTIVE_ROUTE_LAYER = "active route layer";
-const std::string RouteManager::GEOJSON_ROUTE_SOURCE_ID = "route_geojson";
-
-const std::string  RouteManager::BASE_ROUTE_SEGMENT_STR = "base_route_segment";
+const std::string RouteManager::GEOJSON_ROUTE_SOURCE_ID = "route_geojson_source";
 
 RouteManager& RouteManager::getInstance() noexcept {
     static RouteManager instance;
@@ -34,11 +32,11 @@ void RouteManager::setStyle(style::Style& style) {
     style_ = &style;
 }
 
-RouteID RouteManager::routeCreate() {
+RouteID RouteManager::routeCreate(const LineString<double>& geometry) {
     RouteID rid;
     bool success = routeIDpool_.CreateID((rid.id));
     if (success && rid.isValid()) {
-        Route route;
+        Route route(geometry);
         routeMap_[rid] = route;
     }
 
@@ -64,6 +62,10 @@ void RouteManager::setLayerBefore(const std::string layerBefore) {
     layerBefore_ = layerBefore;
 }
 
+void RouteManager::setRouteCommonOptions(const RouteCommonOptions& ropts) {
+    routeOptions_ = ropts;
+}
+
 void RouteManager::finalize() {
     using namespace mbgl::style;
 
@@ -72,7 +74,15 @@ void RouteManager::finalize() {
 
         if(style_->getLayer(BASE_ROUTE_LAYER) == nullptr) {
             std::unique_ptr<style::LineLayer> layer0 = std::make_unique<style::LineLayer>(BASE_ROUTE_LAYER, GEOJSON_ROUTE_SOURCE_ID);
-            style_->addLayer(std::move(layer0));
+            layer0->setLineColor(routeOptions_.outerColor);
+            layer0->setLineCap(LineCapType::Round);
+            layer0->setLineJoin(LineJoinType::Round);
+
+            if(layerBefore_.empty()) {
+                style_->addLayer(std::move(layer0));
+            } else {
+                style_->addLayer(std::move(layer0), layerBefore_);
+            }
         }
 
         // if(style_->getLayer(ACTIVE_ROUTE_LAYER) == nullptr) {
@@ -87,7 +97,7 @@ void RouteManager::finalize() {
         for(auto& iter : routeMap_) {
             const auto& route = iter.second;
 
-            const auto& geom = route.getGeometry(BASE_ROUTE_SEGMENT_STR);
+            const auto& geom = route.getGeometry();
             // lines.push_back(geom);
             feature_collection.emplace_back(geom);
         }

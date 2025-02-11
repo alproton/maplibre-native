@@ -1,32 +1,36 @@
 
 #pragma once
 
-
 #include <mbgl/util/geometry.hpp>
 #include <mbgl/util/color.hpp>
-#include <string>
-#include <mbgl/route/id_types.hpp>
-#include <mbgl/route/id_pool.hpp>
+#include <vector>
 
 namespace mbgl {
 namespace route {
 
-class RouteSegment;
+
 struct RouteSegmentOptions;
+class RouteSegment;
 
 class Route {
     public:
-    Route();
+    Route() = default;
+    Route(const LineString<double>& geometry);
     void routeSegmentCreate(const RouteSegmentOptions&);
-    mbgl::LineString<double> getGeometry(const std::string& name) const;
+    mbgl::LineString<double> getGeometry() const;
+    //Implement a visitor to visit the routes for gradient expressions
     bool clear();
     bool getDirty() const;
     Route& operator=(Route& other) noexcept;
 
 private:
     bool dirty_ = true;
-    //keep the geometry/route segment ordered by the type of traffic or base geometry names for easy access.
-    std::unordered_map<std::string, RouteSegment> segments_;
+    void sortRouteSegments();
+    //Keep an ordered list of routesegments
+    std::vector<RouteSegment> segments_;
+    mbgl::LineString<double> geometry_;
+    // uint32_t drawOrder_ = 0;
+
 };
 
 } // namespace gfx
