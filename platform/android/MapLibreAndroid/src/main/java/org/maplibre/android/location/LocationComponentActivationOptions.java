@@ -24,13 +24,25 @@ public class LocationComponentActivationOptions {
   private final boolean useDefaultLocationEngine;
   private final boolean useSpecializedLocationLayer;
 
+  // Custom puck options
+  private boolean customPuckAnimationEnabled;
+  private boolean customPuckLockSteppedCamera;
+  private boolean customPuckLightweightLock;
+  private long customPuckAnimationRateMS;
+  private long customPuckLagMS;
+
   private LocationComponentActivationOptions(@NonNull Context context, @NonNull Style style,
                                              @Nullable LocationEngine locationEngine,
                                              @Nullable LocationEngineRequest locationEngineRequest,
                                              @Nullable LocationComponentOptions locationComponentOptions,
                                              int styleRes,
                                              boolean useDefaultLocationEngine,
-                                             boolean useSpecializedLocationLayer) {
+                                             boolean useSpecializedLocationLayer,
+                                             boolean customPuckAnimationEnabled,
+                                             boolean customPuckLockSteppedCamera,
+                                             boolean customPuckLightweightLock,
+                                             long customPuckAnimationRateMS,
+                                             long customPuckLagMS) {
     this.context = context;
     this.style = style;
     this.locationEngine = locationEngine;
@@ -39,6 +51,13 @@ public class LocationComponentActivationOptions {
     this.styleRes = styleRes;
     this.useDefaultLocationEngine = useDefaultLocationEngine;
     this.useSpecializedLocationLayer = useSpecializedLocationLayer;
+
+    // Custom puck options
+    this.customPuckAnimationEnabled = customPuckAnimationEnabled;
+    this.customPuckLockSteppedCamera = customPuckLockSteppedCamera;
+    this.customPuckLightweightLock = customPuckLightweightLock;
+    this.customPuckAnimationRateMS = customPuckAnimationRateMS;
+    this.customPuckLagMS = customPuckLagMS;
   }
 
   /**
@@ -147,6 +166,23 @@ public class LocationComponentActivationOptions {
     return useSpecializedLocationLayer;
   }
 
+  // Custom puck options
+  public boolean customPuckAnimationEnabled() {
+    return customPuckAnimationEnabled;
+  }
+  public boolean customPuckLockSteppedCamera() {
+    return customPuckLockSteppedCamera;
+  }
+  public boolean customPuckLightweightLock() {
+    return customPuckLightweightLock;
+  }
+  public long customPuckAnimationRateMS() {
+    return customPuckAnimationRateMS;
+  }
+  public long customPuckLagMS() {
+    return customPuckLagMS;
+  }
+
   /**
    * Builder class for constructing a new instance of {@link LocationComponentActivationOptions}.
    */
@@ -168,6 +204,13 @@ public class LocationComponentActivationOptions {
     private boolean useDefaultLocationEngine = true;
 
     private boolean useSpecializedLocationLayer = false;
+
+    // Custom puck options
+    private boolean customPuckAnimationEnabled = false;
+    private boolean customPuckLockSteppedCamera = false;
+    private boolean customPuckLightweightLock = false;
+    private long customPuckAnimationRateMS = 0;
+    private long customPuckLagMS = 0;
 
     /**
      * Constructor for the {@link LocationComponentActivationOptions} builder class.
@@ -271,6 +314,28 @@ public class LocationComponentActivationOptions {
       return this;
     }
 
+    // Custom puck options
+    public Builder customPuckAnimationEnabled(boolean customPuckAnimationEnabled) {
+      this.customPuckAnimationEnabled = customPuckAnimationEnabled;
+      return this;
+    }
+    public Builder customPuckLockSteppedCamera(boolean customPuckLockSteppedCamera) {
+      this.customPuckLockSteppedCamera = customPuckLockSteppedCamera;
+      return this;
+    }
+    public Builder customPuckLightweightLock(boolean customPuckLightweightLock) {
+      this.customPuckLightweightLock = customPuckLightweightLock;
+      return this;
+    }
+    public Builder customPuckAnimationRateMS(long customPuckAnimationRateMS) {
+      this.customPuckAnimationRateMS = customPuckAnimationRateMS;
+      return this;
+    }
+    public Builder customPuckLagMS(long customPuckLagMS) {
+      this.customPuckLagMS = customPuckLagMS;
+      return this;
+    }
+
     /**
      * Method which actually builds the {@link LocationComponentActivationOptions} object while
      * taking the various options into account.
@@ -300,9 +365,12 @@ public class LocationComponentActivationOptions {
             + "map to fully load before passing the Style object to "
             + "LocationComponentActivationOptions.");
       }
-      return new LocationComponentActivationOptions(context, style, locationEngine,
+      return new LocationComponentActivationOptions(
+        context, style, locationEngine,
         locationEngineRequest, locationComponentOptions, styleRes, useDefaultLocationEngine,
-        useSpecializedLocationLayer);
+        useSpecializedLocationLayer,
+        customPuckAnimationEnabled, customPuckLockSteppedCamera, customPuckLightweightLock,
+        customPuckAnimationRateMS, customPuckLagMS);
     }
   }
 }

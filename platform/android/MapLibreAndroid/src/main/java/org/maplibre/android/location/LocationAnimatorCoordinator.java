@@ -1,7 +1,9 @@
 package org.maplibre.android.location;
 
 import android.animation.Animator;
+import android.content.Context;
 import android.location.Location;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.util.SparseArray;
 import android.view.animation.DecelerateInterpolator;
@@ -15,10 +17,13 @@ import androidx.annotation.VisibleForTesting;
 import org.maplibre.android.log.Logger;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.Projection;
+import org.maplibre.android.maps.renderer.MapRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static org.maplibre.android.location.LocationComponentConstants.ACCURACY_RADIUS_ANIMATION_DURATION;
 import static org.maplibre.android.location.LocationComponentConstants.COMPASS_UPDATE_RATE_MS;
@@ -44,6 +49,31 @@ import org.maplibre.android.geometry.LatLng;
 
 final class LocationAnimatorCoordinator {
 
+  class StampedLatLon {
+    public double lat;
+    public double lon;
+    public double bearing;
+    public long time;
+
+    public StampedLatLon(double lat, double lon, double bearing, long time) {
+      this.lat = lat;
+      this.lon = lon;
+      this.bearing = bearing;
+      this.time = time;
+    }
+
+    public StampedLatLon(StampedLatLon other) {
+      this.lat = other.lat;
+      this.lon = other.lon;
+      this.bearing = other.bearing;
+      this.time = other.time;
+    }
+
+    boolean equals(StampedLatLon other) {
+      return other.lat == lat && other.lon == lon && other.bearing == bearing && other.time == time;
+    }
+  }
+
   private static final String TAG = "Mbgl-LocationAnimatorCoordinator";
 
   @VisibleForTesting
@@ -66,11 +96,91 @@ final class LocationAnimatorCoordinator {
   @VisibleForTesting
   final SparseArray<MapLibreAnimator.AnimationsValueChangeListener> listeners = new SparseArray<>();
 
-  LocationAnimatorCoordinator(@NonNull Projection projection, @NonNull MapLibreAnimatorSetProvider animatorSetProvider,
-                              @NonNull MapLibreAnimatorProvider animatorProvider) {
+  private boolean customPuckAnimationEnabled = false;
+  private StampedLatLon currentPuckLocation;
+  private StampedLatLon previousPuckLocation;
+  private StampedLatLon targetPuckLocation;
+  private long puckInterpolationStartTime = 0;
+  private Timer puckUpdateTimer;
+
+  LocationAnimatorCoordinator(@NonNull Context context,
+                              @NonNull MapRenderer mapRenderer,
+                              @NonNull Projection projection,
+                              @NonNull MapLibreAnimatorSetProvider animatorSetProvider,
+                              @NonNull MapLibreAnimatorProvider animatorProvider,
+                              @NonNull LocationLayerRenderer locationLayerRenderer,
+                              @NonNull LocationCameraController locationCameraController,
+                              @NonNull LocationAnimatorCustomPuckOptions customPuckAnimationOptions) {
     this.projection = projection;
     this.animatorProvider = animatorProvider;
     this.animatorSetProvider = animatorSetProvider;
+
+    customPuckAnimationEnabled = customPuckAnimationOptions.customPuckAnimationEnabled;
+    if (customPuckAnimationEnabled) {
+      puckUpdateTimer = new Timer();
+      puckUpdateTimer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          if (currentPuckLocation == null) {
+            return;
+          }
+          if (previousPuckLocation == null) {
+            previousPuckLocation = new StampedLatLon(currentPuckLocation);
+            puckInterpolationStartTime = SystemClock.elapsedRealtime();
+          }
+          if (targetPuckLocation == null) {
+            targetPuckLocation = new StampedLatLon(currentPuckLocation);
+            puckInterpolationStartTime = SystemClock.elapsedRealtime();
+          }
+          long elapsed = SystemClock.elapsedRealtime() - puckInterpolationStartTime;
+          double t = Math.min((double)(elapsed) / (double)(customPuckAnimationOptions.lagMS), 1.0);
+          StampedLatLon location = lerp(previousPuckLocation, targetPuckLocation, t);
+          if (!targetPuckLocation.equals(currentPuckLocation)) {
+            puckInterpolationStartTime = SystemClock.elapsedRealtime();
+            previousPuckLocation = new StampedLatLon(location);
+            targetPuckLocation = new StampedLatLon(currentPuckLocation);
+          }
+          // Get a handler that can be used to post to the main thread
+          Handler mainHandler = new Handler(context.getMainLooper());
+
+          Runnable myRunnable = new Runnable() {
+            @Override
+            public void run() {
+              if (customPuckAnimationOptions.lockSteppedCamera) {
+                if (customPuckAnimationOptions.lightweightLock) {
+                  mapRenderer.onPause();
+                } else {
+                  mapRenderer.onStop();
+                }
+              }
+              locationLayerRenderer.setLatLng(new LatLng(location.lat, location.lon));
+              locationLayerRenderer.setGpsBearing((float)(location.bearing));
+              if (locationCameraController.isLocationTracking()) {
+                locationCameraController.setLatLng(new LatLng(location.lat, location.lon));
+              }
+              if (locationCameraController.isLocationBearingTracking()) {
+                locationCameraController.setBearing((float)(location.bearing));
+              }
+              if (customPuckAnimationOptions.lockSteppedCamera) {
+                if (customPuckAnimationOptions.lightweightLock) {
+                  mapRenderer.onResume();
+                } else {
+                  mapRenderer.onStart();
+                }
+              }
+            }
+          };
+          mainHandler.post(myRunnable);
+        }
+      }, 0, customPuckAnimationOptions.animationRateMS);
+    }
+  }
+
+  private StampedLatLon lerp(StampedLatLon a, StampedLatLon b, double t) {
+    return new StampedLatLon(a.lat * (1.0 - t) + b.lat * t,
+                             a.lon * (1.0 - t) + b.lon * t,
+                             a.bearing * (1.0 - t) + b.bearing * t,
+                             (long)((double)(a.time) * (1.0 - t) + (double)(b.time) * t));
   }
 
   void updateAnimatorListenerHolders(@NonNull Set<AnimatorListenerHolder> listenerHolders) {
@@ -111,16 +221,23 @@ final class LocationAnimatorCoordinator {
     // generate targets for layer
     LatLng[] latLngValues = getLatLngValues(previousLayerLatLng, newLocations);
     Float[] bearingValues = getBearingValues(previousLayerBearing, newLocations);
-    updateLayerAnimators(latLngValues, bearingValues);
-
-    // replace the animation start with the camera's previous value
-    latLngValues[0] = previousCameraLatLng;
-    if (isGpsNorth) {
-      bearingValues = new Float[] {previousCameraBearing, shortestRotation(0f, previousCameraBearing)};
+    if (customPuckAnimationEnabled) {
+      currentPuckLocation = new StampedLatLon(latLngValues[latLngValues.length - 1].getLatitude(),
+                                              latLngValues[latLngValues.length - 1].getLongitude(),
+                                              bearingValues[bearingValues.length - 1],
+                                              newLocation.getTime());
     } else {
-      bearingValues = getBearingValues(previousCameraBearing, newLocations);
+      updateLayerAnimators(latLngValues, bearingValues);
+
+      // replace the animation start with the camera's previous value
+      latLngValues[0] = previousCameraLatLng;
+      if (isGpsNorth) {
+        bearingValues = new Float[] {previousCameraBearing, shortestRotation(0f, previousCameraBearing)};
+      } else {
+        bearingValues = getBearingValues(previousCameraBearing, newLocations);
+      }
+      updateCameraAnimators(latLngValues, bearingValues);
     }
-    updateCameraAnimators(latLngValues, bearingValues);
 
     LatLng targetLatLng = new LatLng(newLocation);
     boolean snap = immediateAnimation(projection, previousCameraLatLng, targetLatLng)
@@ -150,11 +267,13 @@ final class LocationAnimatorCoordinator {
       animationDuration = Math.min(animationDuration, MAX_ANIMATION_DURATION_MS);
     }
 
-    playAnimators(animationDuration,
-      ANIMATOR_LAYER_LATLNG,
-      ANIMATOR_LAYER_GPS_BEARING,
-      ANIMATOR_CAMERA_LATLNG,
-      ANIMATOR_CAMERA_GPS_BEARING);
+    if (!customPuckAnimationEnabled) {
+      playAnimators(animationDuration,
+        ANIMATOR_LAYER_LATLNG,
+        ANIMATOR_LAYER_GPS_BEARING,
+        ANIMATOR_CAMERA_LATLNG,
+        ANIMATOR_CAMERA_GPS_BEARING);
+    }
 
     previousLocation = newLocation;
   }
