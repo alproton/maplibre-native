@@ -114,6 +114,10 @@ private:
     void addRoute();
     void modifyRoute();
     void disposeRoute();
+    void addTrafficViz();
+    void modifyTrafficViz();
+    void removeTrafficViz();
+
 
     void cycleDebugOptions();
     void clearAnnotations();
@@ -144,7 +148,14 @@ private:
     bool rotating = false;
     bool pitching = false;
     bool show3DExtrusions = false;
-    std::stack<RouteID> routeList_;
+
+    struct RouteCircle {
+        double resolution = 30;
+        double xlate = 0;
+        int numTrafficStatus = 5;
+    };
+    std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeList_;
+    uint32_t trafficViz = 0;
 
     // Frame timer
     int frames = 0;

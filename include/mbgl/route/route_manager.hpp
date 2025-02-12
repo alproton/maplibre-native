@@ -36,6 +36,7 @@ public:
 
   static RouteManager& getInstance() noexcept;
   void setStyle(style::Style&);
+  bool hasStyle() const;
   void setLayerBefore(const std::string layerBefore);
   void setRouteCommonOptions(const RouteCommonOptions& ropts);
   RouteID routeCreate(const LineString<double>& geometry);

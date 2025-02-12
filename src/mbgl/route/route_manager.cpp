@@ -32,6 +32,10 @@ void RouteManager::setStyle(style::Style& style) {
     style_ = &style;
 }
 
+bool RouteManager::hasStyle() const {
+    return style_ != nullptr;
+}
+
 RouteID RouteManager::routeCreate(const LineString<double>& geometry) {
     RouteID rid;
     bool success = routeIDpool_.CreateID((rid.id));

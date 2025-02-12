@@ -29,6 +29,7 @@
 #include <mbgl/util/string.hpp>
 #include <mbgl/route/route_manager.hpp>
 #include <mbgl/route/route_segment.hpp>
+#include <random>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -570,22 +571,19 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 view->popAnnotation();
                 break;
             case GLFW_KEY_1:
-                // view->addRandomPointAnnotations(1);
                     view->addRoute();
                 break;
             case GLFW_KEY_2:
-                // view->addRandomPointAnnotations(10);
                     view->disposeRoute();
                 break;
             case GLFW_KEY_3:
-                // view->addRandomPointAnnotations(100);
-                    view->modifyRoute();
+                view->addTrafficViz();
                 break;
             case GLFW_KEY_4:
-                view->addRandomPointAnnotations(1000);
+                    view->modifyTrafficViz();
                 break;
             case GLFW_KEY_5:
-                view->addRandomPointAnnotations(10000);
+                    view->removeTrafficViz();
                 break;
             case GLFW_KEY_6:
                 view->addRandomPointAnnotations(100000);
@@ -744,13 +742,13 @@ void GLFWView::addRandomPointAnnotations(int count) {
 void GLFWView::addRoute() {
     using namespace mbgl::route;
 
-    auto getRouteGeom = [&](double xlate, double resolution)->mbgl::LineString<double> {
+    auto getRouteGeom = [](const RouteCircle& route)->mbgl::LineString<double> {
+        std::cout<<"Creating route with xlate: "<<route.xlate<<", resolution: "<<route.resolution<<std::endl;
         mbgl::LineString<double> linestring;
-        int numpts = resolution;
         float radius = 50.0f;
-        for(int i = 0; i < numpts; i++) {
-            float anglerad = (float(i) / float(numpts - 1))* 2 * 3.14f;
-            mbgl::Point<double> pt {xlate + radius * sin(anglerad), radius * cos(anglerad)};
+        for(int i = 0; i < route.resolution; i++) {
+            float anglerad = (float(i) / float(route.resolution - 1))* 2 * 3.14f;
+            mbgl::Point<double> pt {route.xlate + radius * sin(anglerad), radius * cos(anglerad)};
             linestring.push_back(pt);
             std::cout<<"x: "<<pt.x<<" y: "<<pt.y<<std::endl;
         }
@@ -760,30 +758,68 @@ void GLFWView::addRoute() {
 
     auto& rmgr = mbgl::route::RouteManager::getInstance();
     rmgr.setStyle(map->getStyle());
-    mbgl::LineString<double> geom = getRouteGeom(routeList_.size()*20, 20);
+    RouteCircle route{30.0, routeList_.size()*20.0, 5};
+    mbgl::LineString<double> geom = getRouteGeom(route);
     auto routeID = rmgr.routeCreate(geom);
-    routeList_.push(routeID);
-    // RouteSegmentOptions rsegopts;
-    // rsegopts.color = mbgl::Color(1, 1, 1, 1);
-    // rsegopts.sortOrder = i;
-    //
-    // rmgr.routeSegmentCreate(routeID, rsegopts);
+    routeList_[routeID] = route;
 
 
     rmgr.finalize();
 }
 
-void GLFWView::modifyRoute() {
+void GLFWView::addTrafficViz() {
+
+    auto& rmgr = mbgl::route::RouteManager::getInstance();
+    const auto& getColorTable = [](uint32_t numColors)-> std::vector<mbgl::Color> {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<> distrib(0.0, 1.0);
+        std::vector<mbgl::Color> colors;
+        for(uint32_t i = 0; i < numColors; i++) {
+            double rand_r = distrib(gen);
+            double rand_g = distrib(gen);
+            double rand_b = distrib(gen);
+            mbgl::Color color(rand_r, rand_g, rand_b, 1.0);
+            colors.push_back(color);
+        }
+        return colors;
+    };
+
+    for(const auto& iter : routeList_) {
+        const auto& routeID = iter.first;
+        const auto& route = iter.second;
+        std::vector<mbgl::Color> colors = getColorTable(route.numTrafficStatus);
+
+        int blockSize = route.resolution / route.numTrafficStatus;
+        int trafficBlockSize = floor(float(blockSize) / 2.0f);
+
+        std::vector<mbgl::LineString<double>> trafficLines;
+        for(int i = 0; i < route.resolution; i++) {
+
+
+        }
+
+    }
+
 
 }
+
+void GLFWView::modifyTrafficViz() {
+
+}
+
+void GLFWView::removeTrafficViz() {
+
+}
+
 
 void GLFWView::disposeRoute() {
     auto& rmgr = mbgl::route::RouteManager::getInstance();
     if(!routeList_.empty()) {
-        auto& routeID = routeList_.top();
+        auto& routeID = routeList_.begin()->first;
         bool success = rmgr.routeDispose(routeID);
         if(success) {
-            routeList_.pop();
+            routeList_.erase(routeID);
         }
         rmgr.finalize();
     }
