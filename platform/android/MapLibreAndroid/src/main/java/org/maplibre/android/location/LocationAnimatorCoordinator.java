@@ -120,7 +120,8 @@ final class LocationAnimatorCoordinator {
           Runnable myRunnable = new Runnable() {
             @Override
             public void run() {
-              mapRenderer.onStop();
+              // mapRenderer.onStop();
+              mapRenderer.onPause();
               locationLayerRenderer.setLatLng(new LatLng(location.lat, location.lon));
               locationLayerRenderer.setGpsBearing((float)(location.bearing));
               if (locationCameraController.isLocationTracking()) {
@@ -129,12 +130,13 @@ final class LocationAnimatorCoordinator {
               if (locationCameraController.isLocationBearingTracking()) {
                 locationCameraController.setBearing((float)(location.bearing));
               }
-              mapRenderer.onStart();
+              // mapRenderer.onStart();
+              mapRenderer.onResume();
             }
           };
           mainHandler.post(myRunnable);
         }
-      }, 0, 10);
+      }, 0, 33);
     }
   }
 
