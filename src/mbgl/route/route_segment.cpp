@@ -1,7 +1,3 @@
-//
-// Created by spalaniappan on 1/6/25.
-//
-
 #include <mbgl/route/route_segment.hpp>
 
 namespace mbgl {

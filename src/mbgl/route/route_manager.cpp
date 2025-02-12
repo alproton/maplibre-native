@@ -48,10 +48,9 @@ void RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
 }
 
 bool RouteManager::routeDispose(const RouteID& routeID) {
-    style_ = nullptr;
     if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        //finalize will just rebuild the geojsonsource
         routeMap_.erase(routeID);
-
         return true;
     }
 
@@ -77,6 +76,7 @@ void RouteManager::finalize() {
             layer0->setLineColor(routeOptions_.outerColor);
             layer0->setLineCap(LineCapType::Round);
             layer0->setLineJoin(LineJoinType::Round);
+            layer0->setLineWidth(routeOptions_.outerWidth);
 
             if(layerBefore_.empty()) {
                 style_->addLayer(std::move(layer0));
@@ -85,13 +85,15 @@ void RouteManager::finalize() {
             }
         }
 
-        // if(style_->getLayer(ACTIVE_ROUTE_LAYER) == nullptr) {
-        //     std::unique_ptr<style::LineLayer> layer1  = std::make_unique<style::LineLayer>(ACTIVE_ROUTE_LAYER, GEOJSON_ROUTE_SOURCE_ID);
-        //     style_->addLayer(std::move(layer1));
-        // }
-        GeoJSONOptions opts;
-        opts.lineMetrics = true;
-        std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(GEOJSON_ROUTE_SOURCE_ID, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts))) ;
+        if(style_->getLayer(ACTIVE_ROUTE_LAYER) == nullptr) {
+            std::unique_ptr<style::LineLayer> layer1  = std::make_unique<style::LineLayer>(ACTIVE_ROUTE_LAYER, GEOJSON_ROUTE_SOURCE_ID);
+            layer1->setLineColor(routeOptions_.innerColor);
+            layer1->setLineCap(LineCapType::Round);
+            layer1->setLineJoin(LineJoinType::Round);
+            layer1->setLineWidth(routeOptions_.innerWidth);
+
+            style_->addLayer(std::move(layer1));
+        }
 
         mapbox::geojsonvt::feature_collection feature_collection;
         for(auto& iter : routeMap_) {
@@ -101,8 +103,19 @@ void RouteManager::finalize() {
             // lines.push_back(geom);
             feature_collection.emplace_back(geom);
         }
-        geoJSONsrc->setGeoJSON(feature_collection);
-        style_->addSource(std::move(geoJSONsrc));
+
+        if(style_->getSource(GEOJSON_ROUTE_SOURCE_ID) != nullptr) {
+            GeoJSONSource* geoJSONsrc = static_cast<GeoJSONSource*>(style_->getSource(GEOJSON_ROUTE_SOURCE_ID));
+            geoJSONsrc->setGeoJSON(feature_collection);
+
+        } else {
+            GeoJSONOptions opts;
+            opts.lineMetrics = true;
+            std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(GEOJSON_ROUTE_SOURCE_ID, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts))) ;
+            geoJSONsrc->setGeoJSON(feature_collection);
+
+            style_->addSource(std::move(geoJSONsrc));
+        }
 
         dirty_ = false;
     }

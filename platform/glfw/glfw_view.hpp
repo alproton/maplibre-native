@@ -8,7 +8,7 @@
 
 #include <utility>
 #include <optional>
-#include <vector>
+#include <stack>
 #include <mbgl/route/id_types.hpp>
 
 #if (defined(MLN_RENDER_BACKEND_OPENGL) || defined(MLN_RENDER_BACKEND_VULKAN)) && \
@@ -111,7 +111,7 @@ private:
     void toggleCustomSource();
     void toggleLocationIndicatorLayer();
     std::vector<RouteID> routeIDlist;
-    void addMultipleRoutes();
+    void addRoute();
     void modifyRoute();
     void disposeRoute();
 
@@ -144,6 +144,7 @@ private:
     bool rotating = false;
     bool pitching = false;
     bool show3DExtrusions = false;
+    std::stack<RouteID> routeList_;
 
     // Frame timer
     int frames = 0;

@@ -20,8 +20,8 @@ class LineLayer;
 struct RouteCommonOptions {
     Color outerColor = Color(1, 1, 1, 1);
     Color innerColor = Color(0, 0, 1, 1);
-    uint32_t outerWidth = 7;
-    uint32_t innerWidth = 6;
+    float outerWidth = 10;
+    float innerWidth = 6;
 };
 
 

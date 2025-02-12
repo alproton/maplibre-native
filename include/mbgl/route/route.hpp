@@ -29,7 +29,7 @@ private:
     //Keep an ordered list of routesegments
     std::vector<RouteSegment> segments_;
     mbgl::LineString<double> geometry_;
-    // uint32_t drawOrder_ = 0;
+    // uint32_t sortOrder_ = 0;
 
 };
 

@@ -571,7 +571,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 break;
             case GLFW_KEY_1:
                 // view->addRandomPointAnnotations(1);
-                    view->addMultipleRoutes();
+                    view->addRoute();
                 break;
             case GLFW_KEY_2:
                 // view->addRandomPointAnnotations(10);
@@ -741,7 +741,7 @@ void GLFWView::addRandomPointAnnotations(int count) {
     }
 }
 
-void GLFWView::addMultipleRoutes() {
+void GLFWView::addRoute() {
     using namespace mbgl::route;
 
     auto getRouteGeom = [&](double xlate, double resolution)->mbgl::LineString<double> {
@@ -758,19 +758,17 @@ void GLFWView::addMultipleRoutes() {
         return linestring;
     };
 
-    int numRoutes = 3;
     auto& rmgr = mbgl::route::RouteManager::getInstance();
     rmgr.setStyle(map->getStyle());
+    mbgl::LineString<double> geom = getRouteGeom(routeList_.size()*20, 20);
+    auto routeID = rmgr.routeCreate(geom);
+    routeList_.push(routeID);
+    // RouteSegmentOptions rsegopts;
+    // rsegopts.color = mbgl::Color(1, 1, 1, 1);
+    // rsegopts.sortOrder = i;
+    //
+    // rmgr.routeSegmentCreate(routeID, rsegopts);
 
-    for (int i = 0; i < numRoutes; ++i) {
-        mbgl::LineString<double> geom = getRouteGeom(i*20, 20);
-        auto routeID = rmgr.routeCreate(geom);
-        RouteSegmentOptions rsegopts;
-        rsegopts.color = mbgl::Color(1, 1, 1, 1);
-        rsegopts.sortOrder = i;
-
-        rmgr.routeSegmentCreate(routeID, rsegopts);
-    }
 
     rmgr.finalize();
 }
@@ -780,7 +778,15 @@ void GLFWView::modifyRoute() {
 }
 
 void GLFWView::disposeRoute() {
-
+    auto& rmgr = mbgl::route::RouteManager::getInstance();
+    if(!routeList_.empty()) {
+        auto& routeID = routeList_.top();
+        bool success = rmgr.routeDispose(routeID);
+        if(success) {
+            routeList_.pop();
+        }
+        rmgr.finalize();
+    }
 }
 
 
