@@ -172,7 +172,7 @@ final class LocationAnimatorCoordinator {
           };
           mainHandler.post(myRunnable);
         }
-      }, 0, customPuckAnimationOptions.animationRateMS);
+      }, 0, customPuckAnimationOptions.animationIntervalMS);
     }
   }
 
