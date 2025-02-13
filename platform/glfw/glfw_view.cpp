@@ -750,7 +750,7 @@ void GLFWView::addRoute() {
             float anglerad = (float(i) / float(route.resolution - 1))* 2 * 3.14f;
             mbgl::Point<double> pt {route.xlate + radius * sin(anglerad), radius * cos(anglerad)};
             linestring.push_back(pt);
-            std::cout<<"x: "<<pt.x<<" y: "<<pt.y<<std::endl;
+            std::cout<<std::to_string(i)<<". x: "<<pt.x<<" y: "<<pt.y<<std::endl;
         }
 
         return linestring;
@@ -758,8 +758,12 @@ void GLFWView::addRoute() {
 
     auto& rmgr = mbgl::route::RouteManager::getInstance();
     rmgr.setStyle(map->getStyle());
-    RouteCircle route{30.0, routeList_.size()*20.0, 5};
+    RouteCircle route;
+    route.resolution = 30.0;
+    route.xlate = routeList_.size()*20.0;
     mbgl::LineString<double> geom = getRouteGeom(route);
+    route.points = geom;
+    assert(route.points.size() == route.resolution && "invalid number of points generated");
     auto routeID = rmgr.routeCreate(geom);
     routeList_[routeID] = route;
 
@@ -769,39 +773,56 @@ void GLFWView::addRoute() {
 
 void GLFWView::addTrafficViz() {
 
-    auto& rmgr = mbgl::route::RouteManager::getInstance();
     const auto& getColorTable = [](uint32_t numColors)-> std::vector<mbgl::Color> {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<> distrib(0.0, 1.0);
         std::vector<mbgl::Color> colors;
         for(uint32_t i = 0; i < numColors; i++) {
-            double rand_r = distrib(gen);
-            double rand_g = distrib(gen);
-            double rand_b = distrib(gen);
-            mbgl::Color color(rand_r, rand_g, rand_b, 1.0);
+            // double rand_r = distrib(gen);
+            // double rand_g = distrib(gen);
+            // double rand_b = distrib(gen);
+            // mbgl::Color color(rand_r, rand_g, rand_b, 1.0);
+            mbgl::Color color(1.0, 0.0, 0.0, 1.0);
             colors.push_back(color);
         }
         return colors;
     };
 
+    auto& rmgr = mbgl::route::RouteManager::getInstance();
     for(const auto& iter : routeList_) {
         const auto& routeID = iter.first;
         const auto& route = iter.second;
-        std::vector<mbgl::Color> colors = getColorTable(route.numTrafficStatus);
+        std::vector<mbgl::Color> colors = getColorTable(route.numTrafficZones);
 
-        int blockSize = route.resolution / route.numTrafficStatus;
-        int trafficBlockSize = floor(float(blockSize) / 2.0f);
+        size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
+        size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
 
-        std::vector<mbgl::LineString<double>> trafficLines;
-        for(int i = 0; i < route.resolution; i++) {
+        auto& routePts = route.points;
+        std::vector<mbgl::LineString<double>> trafficBlks;
+        mbgl::LineString<double> currTrafficBlk;
+        for(size_t i = 0; i < routePts.size(); i++) {
+            if(i % blockSize == 0 && !currTrafficBlk.empty()) {
+                trafficBlks.push_back(currTrafficBlk);
+                currTrafficBlk.clear();
+            }
 
-
+            if(i % blockSize < innerBlockSize) {
+                currTrafficBlk.push_back(mbgl::Point<double>(routePts.at(i).x, routePts.at(i).y));
+            }
         }
+        if(!currTrafficBlk.empty()) { trafficBlks.push_back(currTrafficBlk);}
 
+        for(size_t i = 0; i < trafficBlks.size(); i++) {
+            mbgl::route::RouteSegmentOptions rsegopts;
+            rsegopts.color = colors[i];
+            rsegopts.geometry = trafficBlks[i];
+            rsegopts.sortOrder = i;
+
+            rmgr.routeSegmentCreate(routeID, rsegopts);
+        }
     }
-
-
+    rmgr.finalize();
 }
 
 void GLFWView::modifyTrafficViz() {

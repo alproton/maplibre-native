@@ -2,6 +2,8 @@
 #include <mbgl/util/geometry.hpp>
 #include <mbgl/util/color.hpp>
 #include <mbgl/route/route.hpp>
+#include <map>
+#include <memory>
 
 #pragma once
 
@@ -14,18 +16,21 @@ struct RouteSegmentOptions {
     uint32_t sortOrder = 0;
 };
 
+
 class RouteSegment {
 public:
     RouteSegment() = default;
-    RouteSegment(const RouteSegmentOptions& routeOptions);
+    RouteSegment(const RouteSegmentOptions& routeSegOptions, const LineString<double>& routeGeometry, const std::vector<double>& routeGeomDistances, double routeTotalDistance);
+    const std::vector<double> getNormalizedPositions() const;
     RouteSegmentOptions getRouteSegmentOptions() const;
     uint32_t getSortOrder() const;
+
     ~RouteSegment();
 
 private:
     RouteSegmentOptions options_;
+    std::vector<double> normalizedPositions_;
     uint32_t sortOrder_ = 0;
-
 };
 } // namespace route
 } // namespace mbgl

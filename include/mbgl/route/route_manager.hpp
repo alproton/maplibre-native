@@ -14,7 +14,7 @@ class Style;
 namespace route {
 
 class Route;
-class LineLayer;
+// class LineLayer;
 
 
 struct RouteCommonOptions {
@@ -42,6 +42,7 @@ public:
   RouteID routeCreate(const LineString<double>& geometry);
   void routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
   bool routeDispose(const RouteID&);
+    bool hasRoutes() const;
   void finalize();
 
   ~RouteManager();
@@ -56,7 +57,7 @@ private:
   style::Style* style_ = nullptr;
   std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
     std::string layerBefore_;
-RouteCommonOptions routeOptions_;
+    RouteCommonOptions routeOptions_;
   bool dirty_ = true;
 };
 };

@@ -152,7 +152,11 @@ private:
     struct RouteCircle {
         double resolution = 30;
         double xlate = 0;
-        int numTrafficStatus = 5;
+        int numTrafficZones = 5;
+        bool trafficZonesGridAligned = true;
+        mbgl::LineString<double> points;
+
+
     };
     std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeList_;
     uint32_t trafficViz = 0;

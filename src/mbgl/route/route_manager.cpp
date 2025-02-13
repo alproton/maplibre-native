@@ -1,8 +1,9 @@
 
-#include "mbgl/route/route_manager.hpp"
+// #include "mbgl/route/route_manager.hpp"
 
-#include "mbgl/programs/segment.hpp"
-#include "mbgl/style/layer.hpp"
+// #include "mbgl/programs/segment.hpp"
+#include <mbgl/style/layer.hpp>
+#include <mbgl/style/layers/line_layer.hpp>
 
 #include <mbgl/route/route_manager.hpp>
 #include <mbgl/route/id_pool.hpp>
@@ -12,6 +13,11 @@
 #include <mbgl/route/route.hpp>
 #include <mbgl/style/layers/line_layer.hpp>
 #include <mbgl/style/sources/geojson_source.hpp>
+#include <mbgl/style/expression/expression.hpp>
+#include <mbgl/style/expression/literal.hpp>
+#include <mbgl/style/expression/compound_expression.hpp>
+#include <mbgl/style/expression/type.hpp>
+#include <mbgl/style/expression/dsl.hpp>
 
 namespace mbgl {
 namespace route {
@@ -42,6 +48,7 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry) {
     if (success && rid.isValid()) {
         Route route(geometry);
         routeMap_[rid] = route;
+        dirty_ = true;
     }
 
     return rid;
@@ -49,16 +56,33 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry) {
 
 void RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
      routeMap_[routeID].routeSegmentCreate(routeSegOpts);
+    dirty_ = true;
 }
 
 bool RouteManager::routeDispose(const RouteID& routeID) {
-    if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        //finalize will just rebuild the geojsonsource
+    assert(style_ != nullptr && "Style not set!");
+    assert(routeID.isValid() && "Invalid route ID");
+    assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
+    bool success = false;
+    if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end() && style_ != nullptr) {
+        std::string baseLayerName = BASE_ROUTE_LAYER + std::to_string(routeID.id);
+        std::string activeLayerName = ACTIVE_ROUTE_LAYER + std::to_string(routeID.id);
+        std::string geoJSONsrcName = GEOJSON_ROUTE_SOURCE_ID + std::to_string(routeID.id);
+        if(style_->removeLayer(baseLayerName) != nullptr) {
+            success = true;
+        }
+        if(style_->removeLayer(activeLayerName) != nullptr) {
+            success = true;
+        }
+        if(!style_->removeSource(geoJSONsrcName)) {
+            success = true;
+        }
+
         routeMap_.erase(routeID);
-        return true;
+        return success;
     }
 
-    return false;
+    return success;
 }
 
 void RouteManager::setLayerBefore(const std::string layerBefore) {
@@ -69,56 +93,117 @@ void RouteManager::setRouteCommonOptions(const RouteCommonOptions& ropts) {
     routeOptions_ = ropts;
 }
 
+bool RouteManager::hasRoutes() const {
+    return !routeMap_.empty();
+}
+
 void RouteManager::finalize() {
     using namespace mbgl::style;
-
+    using namespace mbgl::style::expression;
     assert(style_ != nullptr);
-    if(style_ != nullptr) {
+    if(style_ != nullptr && dirty_) {
+        //create the layers and geojsonsource for base route
+        for(const auto& iter : routeMap_) {
+            std::string baseLayerName = BASE_ROUTE_LAYER + std::to_string(iter.first.id);
+            std::string geoJSONSourceName = GEOJSON_ROUTE_SOURCE_ID + std::to_string(iter.first.id);
+            const auto& route = iter.second;
 
-        if(style_->getLayer(BASE_ROUTE_LAYER) == nullptr) {
-            std::unique_ptr<style::LineLayer> layer0 = std::make_unique<style::LineLayer>(BASE_ROUTE_LAYER, GEOJSON_ROUTE_SOURCE_ID);
-            layer0->setLineColor(routeOptions_.outerColor);
-            layer0->setLineCap(LineCapType::Round);
-            layer0->setLineJoin(LineJoinType::Round);
-            layer0->setLineWidth(routeOptions_.outerWidth);
+            //create the layers for each route
+            if(style_->getLayer(baseLayerName) == nullptr) {
+                std::unique_ptr<style::LineLayer> baselayer = std::make_unique<style::LineLayer>(baseLayerName, geoJSONSourceName);
+                baselayer->setLineColor(routeOptions_.outerColor);
+                baselayer->setLineCap(LineCapType::Round);
+                baselayer->setLineJoin(LineJoinType::Round);
+                baselayer->setLineWidth(routeOptions_.outerWidth);
 
-            if(layerBefore_.empty()) {
-                style_->addLayer(std::move(layer0));
-            } else {
-                style_->addLayer(std::move(layer0), layerBefore_);
+                if(layerBefore_.empty()) {
+                    style_->addLayer(std::move(baselayer));
+                } else {
+                    style_->addLayer(std::move(baselayer), layerBefore_);
+                }
+            }
+
+            if(style_->getSource(geoJSONSourceName) == nullptr) {
+
+                mapbox::geojsonvt::feature_collection featureCollection;
+                const auto& geom = route.getGeometry();
+                featureCollection.emplace_back(geom);
+
+                GeoJSONOptions opts;
+                opts.lineMetrics = true;
+                std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(geoJSONSourceName, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts))) ;
+                geoJSONsrc->setGeoJSON(featureCollection);
+
+                style_->addSource(std::move(geoJSONsrc));
             }
         }
 
-        if(style_->getLayer(ACTIVE_ROUTE_LAYER) == nullptr) {
-            std::unique_ptr<style::LineLayer> layer1  = std::make_unique<style::LineLayer>(ACTIVE_ROUTE_LAYER, GEOJSON_ROUTE_SOURCE_ID);
-            layer1->setLineColor(routeOptions_.innerColor);
-            layer1->setLineCap(LineCapType::Round);
-            layer1->setLineJoin(LineJoinType::Round);
-            layer1->setLineWidth(routeOptions_.innerWidth);
-
-            style_->addLayer(std::move(layer1));
-        }
-
-        mapbox::geojsonvt::feature_collection feature_collection;
+        //create the layers, geojsonsource and gradients for active route
+        // std::map<double, mbgl::Color> segmentGradients;
         for(auto& iter : routeMap_) {
-            const auto& route = iter.second;
+            std::string activeLayerName = ACTIVE_ROUTE_LAYER + std::to_string(iter.first.id);
+            std::string geoJSONSourceName = GEOJSON_ROUTE_SOURCE_ID + std::to_string(iter.first.id);
+            auto& route = iter.second;
 
-            const auto& geom = route.getGeometry();
-            // lines.push_back(geom);
-            feature_collection.emplace_back(geom);
-        }
+            //create the layers for each route
+            if(style_->getLayer(activeLayerName) == nullptr) {
+                std::unique_ptr<style::LineLayer> activelayer = std::make_unique<style::LineLayer>(activeLayerName, geoJSONSourceName);
+                activelayer->setLineColor(routeOptions_.innerColor);
+                activelayer->setLineCap(LineCapType::Round);
+                activelayer->setLineJoin(LineJoinType::Round);
+                activelayer->setLineWidth(routeOptions_.innerWidth);
 
-        if(style_->getSource(GEOJSON_ROUTE_SOURCE_ID) != nullptr) {
-            GeoJSONSource* geoJSONsrc = static_cast<GeoJSONSource*>(style_->getSource(GEOJSON_ROUTE_SOURCE_ID));
-            geoJSONsrc->setGeoJSON(feature_collection);
+                if(layerBefore_.empty()) {
+                    style_->addLayer(std::move(activelayer));
+                } else {
+                    style_->addLayer(std::move(activelayer), layerBefore_);
+                }
+            }
 
-        } else {
-            GeoJSONOptions opts;
-            opts.lineMetrics = true;
-            std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(GEOJSON_ROUTE_SOURCE_ID, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts))) ;
-            geoJSONsrc->setGeoJSON(feature_collection);
+            //create the geojson source for each route
+            if(style_->getSource(geoJSONSourceName) == nullptr) {
+                mapbox::geojsonvt::feature_collection featureCollection;
+                const auto& geom = iter.second.getGeometry();
+                featureCollection.emplace_back(geom);
 
-            style_->addSource(std::move(geoJSONsrc));
+                GeoJSONOptions opts;
+                opts.lineMetrics = true;
+                std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(geoJSONSourceName, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts))) ;
+                geoJSONsrc->setGeoJSON(featureCollection);
+
+                style_->addSource(std::move(geoJSONsrc));
+            }
+
+            //Create the gradient colors expressions and set on the active layer
+            if(route.getGradientDirty()) {
+                std::map<double, mbgl::Color> gradient = route.getRouteSegmentColorStops(routeOptions_.innerColor);
+
+                ParsingContext pc;
+                ParseResult pr = createCompoundExpression("line-progress", {}, pc);
+                std::unique_ptr<Expression> lineprogressValueExp = std::move(pr.value());
+
+                Interpolator linearInterpolator = dsl::linear();
+
+                using namespace mbgl::style::expression;
+                std::map<double, std::unique_ptr<Expression>> stops;
+                for(auto& segGradientIter : gradient) {
+                    stops[segGradientIter.first] = (dsl::literal(segGradientIter.second));
+                }
+
+                const auto& type = stops.begin()->second->getType();
+
+                ParsingContext ctx;
+                ParseResult result = createInterpolate(type, std::move(linearInterpolator), std::move(lineprogressValueExp), std::move(stops), ctx);
+                assert(result);
+                std::unique_ptr<Expression> expression = std::move(*result);
+
+                ColorRampPropertyValue crpv(std::move(expression));
+                Layer* activeRouteLayer = style_->getLayer(activeLayerName);
+                LineLayer* activeRouteLineLayer = static_cast<LineLayer*>(activeRouteLayer);
+                activeRouteLineLayer->setLineGradient(crpv);
+
+                route.validateGradientDirty();
+            }
         }
 
         dirty_ = false;
