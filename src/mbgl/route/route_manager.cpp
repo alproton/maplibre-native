@@ -1,7 +1,4 @@
 
-// #include "mbgl/route/route_manager.hpp"
-
-// #include "mbgl/programs/segment.hpp"
 #include <mbgl/style/layer.hpp>
 #include <mbgl/style/layers/line_layer.hpp>
 
@@ -59,6 +56,15 @@ void RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
     dirty_ = true;
 }
 
+void RouteManager::routeClearSegments(const RouteID& routeID) {
+    assert(routeID.isValid() && "invalid route ID");
+    if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        routeMap_[routeID].routeSegmentsClear();
+    }
+
+    dirty_ = true;
+}
+
 bool RouteManager::routeDispose(const RouteID& routeID) {
     assert(style_ != nullptr && "Style not set!");
     assert(routeID.isValid() && "Invalid route ID");
@@ -95,6 +101,18 @@ void RouteManager::setRouteCommonOptions(const RouteCommonOptions& ropts) {
 
 bool RouteManager::hasRoutes() const {
     return !routeMap_.empty();
+}
+
+bool RouteManager::routeSetProgress(const RouteID& routeID, const double progress) {
+    assert(style_ != nullptr && "Style not set!");
+    assert(routeID.isValid() && "invalid route ID");
+    double validProgress = std::clamp(progress, 0.0, 1.0);
+    bool success = false;
+    if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        success = routeMap_[routeID].routeSetProgress(validProgress);
+    }
+    dirty_ = true;
+    return success;
 }
 
 void RouteManager::finalize() {
@@ -142,6 +160,7 @@ void RouteManager::finalize() {
         // std::map<double, mbgl::Color> segmentGradients;
         for(auto& iter : routeMap_) {
             std::string activeLayerName = ACTIVE_ROUTE_LAYER + std::to_string(iter.first.id);
+            std::string baseLayerName = BASE_ROUTE_LAYER + std::to_string(iter.first.id);
             std::string geoJSONSourceName = GEOJSON_ROUTE_SOURCE_ID + std::to_string(iter.first.id);
             auto& route = iter.second;
 
@@ -174,10 +193,7 @@ void RouteManager::finalize() {
                 style_->addSource(std::move(geoJSONsrc));
             }
 
-            //Create the gradient colors expressions and set on the active layer
-            if(route.getGradientDirty()) {
-                std::map<double, mbgl::Color> gradient = route.getRouteSegmentColorStops(routeOptions_.innerColor);
-
+            const auto& createGradientExpression = [](const std::map<double, mbgl::Color>& gradient) {
                 ParsingContext pc;
                 ParseResult pr = createCompoundExpression("line-progress", {}, pc);
                 std::unique_ptr<Expression> lineprogressValueExp = std::move(pr.value());
@@ -197,12 +213,33 @@ void RouteManager::finalize() {
                 assert(result);
                 std::unique_ptr<Expression> expression = std::move(*result);
 
-                ColorRampPropertyValue crpv(std::move(expression));
+                return expression;
+            };
+
+
+
+            //Create the gradient colors expressions and set on the active layer
+            if(route.getGradientDirty()) {
+                //create the gradient expression for active route.
+                std::map<double, mbgl::Color> activeLayerGradient = route.getRouteSegmentColorStops(routeOptions_.innerColor);
+                std::unique_ptr<expression::Expression> activeLayerExpression = createGradientExpression(activeLayerGradient);
+
+                ColorRampPropertyValue activeColorRampProp(std::move(activeLayerExpression));
                 Layer* activeRouteLayer = style_->getLayer(activeLayerName);
                 LineLayer* activeRouteLineLayer = static_cast<LineLayer*>(activeRouteLayer);
-                activeRouteLineLayer->setLineGradient(crpv);
+                activeRouteLineLayer->setLineGradient(activeColorRampProp);
+
+                //create the gradient expression for the base route
+                std::map<double, mbgl::Color> baseLayerGradient = route.getRouteColorStops(routeOptions_.outerColor);
+                std::unique_ptr<expression::Expression> baseLayerExpression = createGradientExpression(baseLayerGradient);
+
+                ColorRampPropertyValue baseColorRampProp(std::move(baseLayerExpression));
+                Layer* baseRouteLayer = style_->getLayer(baseLayerName);
+                LineLayer* baseRouteLineLayer = static_cast<LineLayer*>(baseRouteLayer);
+                baseRouteLineLayer->setLineGradient(baseColorRampProp);
 
                 route.validateGradientDirty();
+
             }
         }
 

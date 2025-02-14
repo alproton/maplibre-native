@@ -117,7 +117,8 @@ private:
     void addTrafficViz();
     void modifyTrafficViz();
     void removeTrafficViz();
-
+    void incrementRouteProgress();
+    void decrementRouteProgress();
 
     void cycleDebugOptions();
     void clearAnnotations();
@@ -159,7 +160,7 @@ private:
 
     };
     std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeList_;
-    uint32_t trafficViz = 0;
+    double routeProgress_ = 0.0;
 
     // Frame timer
     int frames = 0;

@@ -41,6 +41,8 @@ public:
   void setRouteCommonOptions(const RouteCommonOptions& ropts);
   RouteID routeCreate(const LineString<double>& geometry);
   void routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
+    bool routeSetProgress(const RouteID&, const double progress);
+    void routeClearSegments(const RouteID&);
   bool routeDispose(const RouteID&);
     bool hasRoutes() const;
   void finalize();

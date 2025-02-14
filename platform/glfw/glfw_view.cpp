@@ -586,10 +586,10 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                     view->removeTrafficViz();
                 break;
             case GLFW_KEY_6:
-                view->addRandomPointAnnotations(100000);
+                view->incrementRouteProgress();
                 break;
             case GLFW_KEY_7:
-                view->addRandomShapeAnnotations(1);
+                view->decrementRouteProgress();
                 break;
             case GLFW_KEY_8:
                 view->addRandomShapeAnnotations(10);
@@ -779,11 +779,11 @@ void GLFWView::addTrafficViz() {
         std::uniform_real_distribution<> distrib(0.0, 1.0);
         std::vector<mbgl::Color> colors;
         for(uint32_t i = 0; i < numColors; i++) {
-            // double rand_r = distrib(gen);
-            // double rand_g = distrib(gen);
-            // double rand_b = distrib(gen);
-            // mbgl::Color color(rand_r, rand_g, rand_b, 1.0);
-            mbgl::Color color(1.0, 0.0, 0.0, 1.0);
+            double rand_r = distrib(gen);
+            double rand_g = distrib(gen);
+            double rand_b = distrib(gen);
+            mbgl::Color color(rand_r, rand_g, rand_b, 1.0);
+            // mbgl::Color color(1.0, 0.0, 0.0, 1.0);
             colors.push_back(color);
         }
         return colors;
@@ -826,11 +826,38 @@ void GLFWView::addTrafficViz() {
 }
 
 void GLFWView::modifyTrafficViz() {
-
+//TODO
 }
 
-void GLFWView::removeTrafficViz() {
+void GLFWView::incrementRouteProgress() {
+    routeProgress_ += 0.01;
+    std::cout<<"Route progress: "<<routeProgress_<<std::endl;
+    auto& rmgr = mbgl::route::RouteManager::getInstance();
+    for(const auto& iter : routeList_) {
+        const auto& routeID = iter.first;
+        rmgr.routeSetProgress(routeID, routeProgress_);
+    }
+    rmgr.finalize();
+}
 
+void GLFWView::decrementRouteProgress() {
+    routeProgress_ -= 0.01;
+    std::cout<<"Route progress: "<<routeProgress_<<std::endl;
+    auto& rmgr = mbgl::route::RouteManager::getInstance();
+    for(const auto& iter : routeList_) {
+        const auto& routeID = iter.first;
+        rmgr.routeSetProgress(routeID, routeProgress_);
+    }
+    rmgr.finalize();
+}
+
+
+void GLFWView::removeTrafficViz() {
+    auto& rmgr = mbgl::route::RouteManager::getInstance();
+    for(const auto& iter : routeList_) {
+        rmgr.routeClearSegments(iter.first);
+    }
+    rmgr.finalize();
 }
 
 

@@ -8,6 +8,9 @@
 namespace mbgl {
 
 namespace route {
+
+const double Route::EPSILON = 0.00001;
+
     Route::Route(const LineString<double>& geometry) : geometry_(geometry) {
         for(size_t i = 1; i < geometry_.size(); ++i) {
             mbgl::Point<double> a = geometry_[i];
@@ -37,9 +40,36 @@ namespace route {
         return geometry_;
     }
 
+
+    std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& routeColor) const {
+        std::map<double, mbgl::Color> gradients;
+        if(progress_ == 0.0) {
+            gradients[0.0] = routeColor;
+            gradients[1.0] = routeColor;
+        } else {
+            gradients[0.0] = progressColor_;
+            gradients[progress_] = progressColor_;
+            gradients[progress_+EPSILON] = routeColor;
+            gradients[1.0] = routeColor;
+
+        }
+
+        return gradients;
+    }
+
+
     std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color& routeColor) const {
         std::map<double, mbgl::Color> gradients;
-        const double EPSILON = 0.00001;
+        assert((progress_ >= 0.0 && progress_ <= 1.0) && "invalid route progress");
+        if(segments_.empty()) {
+            return getRouteColorStops(routeColor);
+        }
+
+        if(progress_ > 0.0) {
+            gradients[0.0] = progressColor_;
+            gradients[progress_] = progressColor_;
+        }
+
         for(size_t i = 0; i < segments_.size(); ++i) {
             const auto& segNormalizedPos = segments_[i].getNormalizedPositions();
             const auto& segColor = segments_[i].getRouteSegmentOptions().color;
@@ -55,57 +85,64 @@ namespace route {
 
                 if(j == 0) {
                     double start = segPos-EPSILON < 0.0 ? 0.0 : segPos-EPSILON;
-                    gradients[start] = routeColor;
+                    if(start > progress_) {
+                        gradients[start] = routeColor;
+                    }
                 }
 
-                gradients[segPos] = segColor;
+                if(segPos > progress_) {
+                    gradients[segPos] = segColor;
+                }
 
                 if(j == segNormalizedPos.size()-1) {
                     double end = segPos+EPSILON > 1.0 ? 1.0 : segPos+EPSILON;
-                    gradients[end] = routeColor;
+                    if(end > progress_) {
+                        gradients[end] = routeColor;
+                    }
                 }
             }
         }
 
-        if(segments_.empty()) {
+        const auto& firstSegNormalizedPos = segments_[0].getNormalizedPositions();
+        const auto& lastSegNormalizedPos = segments_[segments_.size()-1].getNormalizedPositions();
+        const auto& firstSegColor = segments_[0].getRouteSegmentOptions().color;
+        const auto& lastSegColor = segments_[segments_.size()-1].getRouteSegmentOptions().color;
+
+        assert(firstSegNormalizedPos[0] >= 0.0 && "normalized positions cannot be < 0.0");
+        if(firstSegNormalizedPos[0] < EPSILON) {
+            gradients[0.0] = firstSegColor;
+        } else {
             gradients[0.0] = routeColor;
-            gradients[1.0] = routeColor;
+            double firstNpos = firstSegNormalizedPos[0];
+            gradients[firstNpos-EPSILON] = routeColor;
+            gradients[firstNpos] = firstSegColor;
         }
-        else {
-            const auto& firstSegNormalizedPos = segments_[0].getNormalizedPositions();
-            const auto& lastSegNormalizedPos = segments_[segments_.size()-1].getNormalizedPositions();
-            const auto& firstSegColor = segments_[0].getRouteSegmentOptions().color;
-            const auto& lastSegColor = segments_[segments_.size()-1].getRouteSegmentOptions().color;
-
-            assert(firstSegNormalizedPos[0] >= 0.0 && "normalized positions cannot be < 0.0");
-            if(firstSegNormalizedPos[0] < EPSILON) {
-                gradients[0.0] = firstSegColor;
-            } else {
-                gradients[0.0] = routeColor;
-                double firstNpos = firstSegNormalizedPos[0];
-                gradients[firstNpos-EPSILON] = routeColor;
-                gradients[firstNpos] = firstSegColor;
-            }
 
 
-            if(lastSegNormalizedPos[lastSegNormalizedPos.size()-1] >= (1.0 - EPSILON)) {
-                gradients[1.0] = lastSegColor;
-            } else {
-                double lastNpos = lastSegNormalizedPos[lastSegNormalizedPos.size()-1];
-                gradients[lastNpos] = lastSegColor;
-                gradients[lastNpos+EPSILON] = routeColor;
-                gradients[1.0] = routeColor;
-            }
+        if(lastSegNormalizedPos[lastSegNormalizedPos.size()-1] >= (1.0 - EPSILON)) {
+            gradients[1.0] = lastSegColor;
+        } else {
+            double lastNpos = lastSegNormalizedPos[lastSegNormalizedPos.size()-1];
+            gradients[lastNpos] = lastSegColor;
+            gradients[lastNpos+EPSILON] = routeColor;
+            gradients[1.0] = routeColor;
         }
 
         return gradients;
+    }
+
+    bool Route::routeSetProgress(const double t) {
+        progress_ = t;
+        gradientDirty_ = true;
+
+        return true;
     }
 
     std::vector<double> Route::getRouteSegmentDistances() const {
         return segDistances_;
     }
 
-    bool Route::clear() {
+    bool Route::routeSegmentsClear() {
         segments_.clear();
 
         return true;
