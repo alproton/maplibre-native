@@ -303,7 +303,7 @@ void drawPuck(gfx::Context& context, float x, float y, float pitch) {
     static auto program = createPuckShader(static_cast<gl::Context&>(context));
     glUseProgram(program);
     float c = std::cos(pitch);
-    glUniform4f(0, x , y * c, 0.05f, 0.1f * c);
+    glUniform4f(0, x , y, 0.05f, 0.1f * c);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 

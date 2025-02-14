@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.Size;
 import androidx.annotation.VisibleForTesting;
 
+import org.maplibre.android.location.modes.CameraMode;
 import org.maplibre.android.log.Logger;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.Projection;
@@ -159,7 +160,11 @@ final class LocationAnimatorCoordinator {
                 locationCameraController.setLatLng(new LatLng(location.lat, location.lon));
               }
               if (locationCameraController.isLocationBearingTracking()) {
-                locationCameraController.setBearing((float)(location.bearing));
+                float bearing = (float)(location.bearing);
+                if (locationCameraController.getCameraMode() == CameraMode.TRACKING_GPS_NORTH) {
+                  bearing = 0.0f;
+                }
+                locationCameraController.setBearing(bearing);
               }
               if (customPuckAnimationOptions.lockSteppedCamera) {
                 if (customPuckAnimationOptions.lightweightLock) {
