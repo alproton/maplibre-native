@@ -110,6 +110,14 @@ public abstract class MapRenderer implements MapRendererScheduler {
     // Implement if needed
   }
 
+  public void requestPause() {
+    // Implement if needed
+  }
+
+  public void requestUnPause() {
+    // Implement if needed
+  }
+
   public abstract void setRenderingRefreshMode(RenderingRefreshMode mode);
 
   public abstract RenderingRefreshMode getRenderingRefreshMode();

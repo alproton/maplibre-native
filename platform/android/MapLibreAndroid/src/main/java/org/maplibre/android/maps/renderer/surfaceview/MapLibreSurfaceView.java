@@ -204,6 +204,14 @@ public abstract class MapLibreSurfaceView extends SurfaceView implements Surface
     renderThread.onResume();
   }
 
+  public void requestPause() {
+    renderThread.requestPause();
+  }
+
+  public void requestUnPause() {
+    renderThread.requestUnPause();
+  }
+
   /**
    * Queue a runnable to be run on the rendering thread. This can be used
    * to communicate with the Renderer on the rendering thread.
@@ -395,6 +403,19 @@ public abstract class MapLibreSurfaceView extends SurfaceView implements Surface
             Thread.currentThread().interrupt();
           }
         }
+      }
+    }
+
+    public void requestPause() {
+      synchronized (renderThreadManager) {
+        requestPaused = true;
+        renderThreadManager.notifyAll();
+      }
+    }
+
+    public void requestUnPause() {
+      synchronized (renderThreadManager) {
+        requestPaused = false;
       }
     }
 

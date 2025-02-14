@@ -237,7 +237,9 @@ UniqueProgram Context::createProgram(ShaderID vertexShader, ShaderID fragmentSha
     // position attribute is always first and always enabled. The integrity of
     // this assumption is verified in AttributeLocations::queryLocations and
     // AttributeLocations::getFirstAttribName.
-    MBGL_CHECK_ERROR(glBindAttribLocation(result, 0, location0AttribName));
+    if (location0AttribName != nullptr) {
+        MBGL_CHECK_ERROR(glBindAttribLocation(result, 0, location0AttribName));
+    }
 
     linkProgram(result);
 
@@ -269,6 +271,40 @@ void Context::verifyProgramLinkage(ProgramID program_) {
     }
 
     throw std::runtime_error("program failed to link");
+}
+
+UniqueProgram createPuckShader(gl::Context& context) {
+    const char* vs = R"(
+#version 310 es
+layout(location = 0) uniform vec4 params;
+void main() {
+  float x = params.x;
+  float y = params.y;
+  float dx = params.z;
+  float dy = params.w;
+  vec4 pos[3] = vec4[3](vec4(x - dx, y - dy, 0, 1), vec4(x + dx, y - dy, 0, 1), vec4(x, y + dy, 0, 1));
+  gl_Position = pos[gl_VertexID];
+}
+    )";
+    const char* ps = R"(
+#version 310 es
+out mediump vec4 fragColor;
+void main() {
+  fragColor = vec4(0,1,0,1);
+}
+    )";
+    auto vertexShader = context.createShader(gl::ShaderType::Vertex, {vs});
+    auto fragmentShader = context.createShader(gl::ShaderType::Fragment, {ps});
+    auto program = context.createProgram(vertexShader, fragmentShader, nullptr);
+    return program;
+}
+
+void drawPuck(gfx::Context& context, float x, float y, float pitch) {
+    static auto program = createPuckShader(static_cast<gl::Context&>(context));
+    glUseProgram(program);
+    float c = std::cos(pitch);
+    glUniform4f(0, x , y * c, 0.05f, 0.1f * c);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 UniqueTexture Context::createUniqueTexture(const Size& size,

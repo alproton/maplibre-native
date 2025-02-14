@@ -148,7 +148,7 @@ final class LocationAnimatorCoordinator {
             public void run() {
               if (customPuckAnimationOptions.lockSteppedCamera) {
                 if (customPuckAnimationOptions.lightweightLock) {
-                  mapRenderer.onPause();
+                  mapRenderer.requestPause();
                 } else {
                   mapRenderer.onStop();
                 }
@@ -163,7 +163,7 @@ final class LocationAnimatorCoordinator {
               }
               if (customPuckAnimationOptions.lockSteppedCamera) {
                 if (customPuckAnimationOptions.lightweightLock) {
-                  mapRenderer.onResume();
+                  mapRenderer.requestUnPause();
                 } else {
                   mapRenderer.onStart();
                 }

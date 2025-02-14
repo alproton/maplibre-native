@@ -68,6 +68,16 @@ public class SurfaceViewMapRenderer extends MapRenderer {
     super.onResume();
   }
 
+  @Override
+  public void requestPause() {
+    surfaceView.requestPause();
+  }
+
+  @Override
+  public void requestUnPause() {
+    surfaceView.requestUnPause();
+  }
+
   public void onSurfaceCreated(Surface surface) {
     super.onSurfaceCreated(surface);
   }
