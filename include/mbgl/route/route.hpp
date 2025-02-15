@@ -20,7 +20,7 @@ class Route {
     Route() = default;
     Route(const LineString<double>& geometry);
     void routeSegmentCreate(const RouteSegmentOptions&);
-    std::map<double, mbgl::Color> getRouteSegmentColorStops(const mbgl::Color& routeColor) const;
+    std::map<double, mbgl::Color> getRouteSegmentColorStops(const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;
     bool routeSetProgress(const double t);
@@ -34,13 +34,14 @@ class Route {
     Route& operator=(Route& other) noexcept;
 
 private:
+    std::map<double, mbgl::Color> applyProgressOnGradient();
     static const double EPSILON ;
     bool gradientDirty_ = true;
     double progress_ = 0.0;
-    void sortRouteSegments();
     std::vector<double> segDistances_;
     std::vector<RouteSegment> segments_;
     mbgl::LineString<double> geometry_;
+    std::map<double, mbgl::Color> segGradient_;
     double totalDistance_ = 0.0;
     mbgl::Color progressColor_ = Color(0.0, 0.0, 0.0, 0.0);
 };
