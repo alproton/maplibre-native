@@ -32,6 +32,27 @@
 #include <cstring>
 #include <iterator>
 
+#if ANDROID
+#include <sys/system_properties.h>
+static std::string androidSysProp(const char* key) {
+    assert(strlen(key) < PROP_NAME_MAX);
+    if (__system_property_find(key) == nullptr) {
+        return "";
+    }
+    char prop[PROP_VALUE_MAX + 1];
+    __system_property_get(key, prop);
+    return prop;
+}
+static bool isDebugPuckEnabled() {
+    auto prop = androidSysProp("rivian.navigation-debug-puck");
+    return prop == "1" || prop == "true" || prop == "TRUE" || prop == "True";
+}
+#else
+static bool isDebugPuckEnabled() {
+    return true;
+}
+#endif
+
 namespace mbgl {
 namespace gl {
 
@@ -300,6 +321,9 @@ void main() {
 }
 
 void drawPuck(gfx::Context& context, float x, float y, float pitch) {
+    if (!isDebugPuckEnabled()) {
+        return;
+    }
     static auto program = createPuckShader(static_cast<gl::Context&>(context));
     glUseProgram(program);
     float c = std::cos(pitch);
