@@ -2,8 +2,10 @@ package org.maplibre.android.location;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.SystemClock;
 import androidx.annotation.NonNull;
 
+import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.location.modes.CameraMode;
 import org.maplibre.android.maps.renderer.MapRenderer;
 
@@ -47,8 +49,8 @@ final class LocationAnimatorCustomPuck {
   }
 
   private StampedLatLon lerp(StampedLatLon a, StampedLatLon b, double t) {
-    double bearingA = normalize(a.bearing);
-    double bearingB = shortestRotation(b.bearing, bearingA);
+    double bearingA = (double)(normalize((float)(a.bearing)));
+    double bearingB = (double)(shortestRotation((float)(b.bearing, bearingA)));
     return new StampedLatLon(a.lat * (1.0 - t) + b.lat * t,
                              a.lon * (1.0 - t) + b.lon * t,
                              bearingA * (1.0 - t) + bearingB * t,
