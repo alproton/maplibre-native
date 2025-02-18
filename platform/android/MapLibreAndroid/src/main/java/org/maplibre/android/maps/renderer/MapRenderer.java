@@ -52,6 +52,9 @@ public abstract class MapRenderer implements MapRendererScheduler {
   private double expectedRenderTime = 0;
   private MapLibreMap.OnFpsChangedListener onFpsChangedListener;
 
+  private double customPuckLatestLat = 0.0;
+  private double customPuckLatestLon = 0.0;
+
   public static MapRenderer create(MapLibreMapOptions options, @NonNull Context context, Runnable initCallback) {
 
     MapRenderer renderer = null;
@@ -158,6 +161,20 @@ public abstract class MapRenderer implements MapRendererScheduler {
     nativeSetSwapBehaviorFlush(flush);
   }
 
+  public void setCustomPuckState(double lat, double lon, double bearing, float iconScale, boolean cameraTracking) {
+    nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
+    customPuckLatestLat = lat;
+    customPuckLatestLon = lon;
+  }
+
+  public double getCustomPuckLatestLatitude() {
+    return customPuckLatestLat;
+  }
+
+  public double getCustomPuckLatestLongitude() {
+    return customPuckLatestLon;
+  }
+
   /**
    * May be called from any thread.
    * <p>
@@ -192,6 +209,9 @@ public abstract class MapRenderer implements MapRendererScheduler {
   private native void nativeRender();
 
   private native void nativeSetSwapBehaviorFlush(boolean flush);
+
+  private native void nativeSetCustomPuckState(
+    double lat, double lon, double bearing, float iconScale, boolean cameraTracking);
 
   private long timeElapsed;
 
