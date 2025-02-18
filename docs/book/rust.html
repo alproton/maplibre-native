@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Design - MapLibre Native Developer Documentation</title>
+        <title>Rust - MapLibre Native Developer Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -12,33 +12,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="../favicon.svg">
-        <link rel="shortcut icon" href="../favicon.png">
-        <link rel="stylesheet" href="../css/variables.css">
-        <link rel="stylesheet" href="../css/general.css">
-        <link rel="stylesheet" href="../css/chrome.css">
-        <link rel="stylesheet" href="../css/print.css" media="print">
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="../fonts/fonts.css">
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="../highlight.css">
-        <link rel="stylesheet" href="../tomorrow-night.css">
-        <link rel="stylesheet" href="../ayu-highlight.css">
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="../diff.css">
+        <link rel="stylesheet" href="diff.css">
 
 
         <!-- Provide site root to javascript -->
         <script>
-            var path_to_root = "../";
+            var path_to_root = "";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc.js"></script>
+        <script src="toc.js"></script>
     </head>
     <body>
     <div id="body-container">
@@ -90,7 +90,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
             </noscript>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -124,7 +124,7 @@
                     <h1 class="menu-title">MapLibre Native Developer Documentation</h1>
 
                     <div class="right-buttons">
-                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
 
@@ -220,27 +220,68 @@
 }
 
 </style>
-<div class="mdbook-alerts mdbook-alerts-note">
-<p class="mdbook-alerts-title">
-  <span class="mdbook-alerts-icon"></span>
-  note
-</p>
-<p>These notes are partially outdated since the <a href="https://github.com/maplibre/maplibre-native/blob/main/design-proposals/2022-10-27-rendering-modularization.md">renderer modularization</a>.</p>
-</div>
-<h1 id="design"><a class="header" href="#design">Design</a></h1>
-<p>This section is dedicated to documenting current state of MapLibre Native as of end 2022. <a href="./archictural-problems-and-recommendations.html">Architectural Problems and Recommendations</a> section notes recommendations for future improvements from an architectural perspective.</p>
+<h1 id="rust"><a class="header" href="#rust">Rust</a></h1>
+<p>We have added experimental support for integrating Rust code into the source tree.</p>
+<h2 id="rust-bridge"><a class="header" href="#rust-bridge">Rust Bridge</a></h2>
+<p>The Rust bridge lives in the root <code>rustutils</code> directory.</p>
+<p>We use <a href="https://cxx.rs/">CXX</a> to allow interop between Rust and C++.</p>
+<h2 id="building"><a class="header" href="#building">Building</a></h2>
+<h3 id="cmake"><a class="header" href="#cmake">CMake</a></h3>
+<p>When building with CMake, need to have the correct Rust toolchain(s) installed. See <a href="https://www.rust-lang.org/tools/install">Install Rust</a> to install Rust.</p>
+<p>You can use <code>rustup</code> to manage toolchains. Which toolchain you needs depends on your host platform and for what platform you are trying to build. If your host and target platform are the same, you probably have the correct toolchain installed after installing Rust. For example when building for <strong>Android</strong> and building on a <strong>x84 Linux</strong> host you would use the following command:</p>
+<pre><code class="language-shell">rustup target add --toolchain stable-x86_64-unknown-linux-gnu aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+</code></pre>
+<p>See <a href="https://doc.rust-lang.org/nightly/rustc/platform-support.html">Platform Support</a> in the Rust documentation for more details. You will get a descriptive error message when the correct toolchain is not available, so we don't list all possible combinations here.</p>
+<p>You also need to have cxxbridge installed:</p>
+<pre><code class="language-shell">cargo install cxxbridge-cmd
+</code></pre>
+<p>Set <code>-DMLN_USE_RUST=ON</code> when generating a configuration with CMake.</p>
+<h3 id="bazel"><a class="header" href="#bazel">Bazel</a></h3>
+<p>Pass the <code>--//:use_rust</code> flag to Bazel commands.</p>
+<p>Note that when <a href="./ios/README.html">generating an Xcode project</a> you should not pass this option to Bazel directly, but as follows:</p>
+<pre><code class="language-shell">bazel run //platform/ios:xcodeproj --@rules_xcodeproj//xcodeproj:extra_common_flags="--//:renderer=metal --//:use_rust"
+</code></pre>
+<h2 id="just"><a class="header" href="#just">Just</a></h2>
+<p>For the Rust subproject, we suggest installing <a href="https://github.com/casey/just#readme">just</a>, a modern alternative to <code>make</code>. The <code>justfile</code> in the root directory contains a number of useful commands for building and testing the Rust code.  The same commands can be run directly, but <code>just</code> provides a more convenient interface.</p>
+<ul>
+<li>Install <code>just</code> with <code>cargo install just</code></li>
+<li>Run <code>just</code> in the <code>/rustutils</code> dir to see a list of available commands</li>
+<li>Some common commands: <code>just check</code>, <code>just test</code>, <code>just fmt</code></li>
+<li>To run the same steps as used by CI, run <code>just ci-test</code></li>
+</ul>
+<h2 id="creating-a-new-module"><a class="header" href="#creating-a-new-module">Creating a new Module</a></h2>
+<p>To create a new module:</p>
+<ol>
+<li>Add a new source file to <code>rustutils/src/example.rs</code>.</li>
+<li>Implement it, see the <a href="https://cxx.rs/index.html">CXX documentation</a> or see <code>rustutils/src/color.rs</code> for an example.</li>
+<li>Create a C++ source file that will use the generated C++ header. See <code>src/mbgl/util/color.rs.cpp</code> for an example. Import the generated header with
+<pre><code class="language-cpp">#include &lt;rustutils/example.hpp&gt;
+</code></pre>
+</li>
+<li>Conditionally include either the <code>*.rs.cpp</code> file or the <code>*.cpp</code> file it replaces in CMake and Bazel. Here is what it looks like for CMake:
+<pre><code class="language-cmake">${PROJECT_SOURCE_DIR}/src/mbgl/util/color$&lt;IF:$&lt;BOOL:${MLN_USE_RUST}&gt;,.rs.cpp,.cpp&gt;
+</code></pre>
+And here for Bazel:
+<pre><code class="language-bazel">select({
+  "//:rust": [
+      "src/mbgl/util/color.rs.cpp",
+  ],
+  "//conditions:default": [
+      "src/mbgl/util/color.cpp",
+  ],
+})
+</code></pre>
+</li>
+</ol>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../ios/release.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="profiling/tracy-profiling.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -248,13 +289,10 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../ios/release.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="profiling/tracy-profiling.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
             </nav>
 
         </div>
@@ -267,13 +305,13 @@
         </script>
 
 
-        <script src="../elasticlunr.min.js"></script>
-        <script src="../mark.min.js"></script>
-        <script src="../searcher.js"></script>
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
 
-        <script src="../clipboard.min.js"></script>
-        <script src="../highlight.js"></script>
-        <script src="../book.js"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
 
