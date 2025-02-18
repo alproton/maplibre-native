@@ -175,7 +175,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     mapKeyListener = new MapKeyListener(transform, uiSettings, mapGestureDetector);
 
     // LocationComponent
-    maplibreMap.injectLocationComponent(new LocationComponent(maplibreMap, transform, developerAnimationListeners));
+    maplibreMap.injectLocationComponent(new LocationComponent(
+      maplibreMap, mapRenderer, transform, developerAnimationListeners));
 
     // Ensure this view is interactable
     setClickable(true);
@@ -1081,6 +1082,22 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    */
   public void removeOnSpriteRequestedListener(MapView.OnSpriteRequestedListener callback) {
     mapChangeReceiver.removeOnSpriteRequestedListener(callback);
+  }
+
+  /**
+   * Access the interpolated custom puck latest latitude.
+   *
+   */
+  public double getCustomPuckLatestLatitude() {
+    return mapRenderer.getCustomPuckLatestLatitude();
+  }
+
+  /**
+   * Access the interpolated custom puck latest longitude.
+   *
+   */
+  public double getCustomPuckLatestLongitude() {
+    return mapRenderer.getCustomPuckLatestLongitude();
   }
 
   /**
