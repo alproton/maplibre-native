@@ -24,6 +24,8 @@ public:
     void resizeFramebuffer(int width, int height) override;
     PremultipliedImage readFramebuffer() override;
 
+    gfx::CustomPuckState getCurrentCustomPuckState() const override { return getCustomPuckState(); }
+
     // mbgl::gfx::RendererBackend implementation
 public:
     mbgl::gfx::Renderable& getDefaultRenderable() override { return *this; }

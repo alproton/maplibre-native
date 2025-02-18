@@ -13,6 +13,8 @@
 
 #include <jni/jni.hpp>
 
+#include <mbgl/gfx/custom_dots.hpp>
+#include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_options.hpp>
 #include <mbgl/math/minmax.hpp>
@@ -60,8 +62,16 @@
 #include "mbgl/route/route_manager.hpp"
 #include "mbgl/route/route.hpp"
 
+#include "android_renderer_backend.hpp"
+
+#include "android_renderer_backend.hpp"
+
 namespace mbgl {
 namespace android {
+
+namespace {
+constexpr const char* PUCK_ICON_NAME = "mapbox-location-icon";
+} // namespace
 
 NativeMapView::NativeMapView(jni::JNIEnv& _env,
                              const jni::Object<NativeMapView>& _obj,
@@ -1281,6 +1291,12 @@ void NativeMapView::addImages(JNIEnv& env, const jni::Array<jni::Object<mbgl::an
     for (std::size_t i = 0; i < len; i++) {
         auto image = mbgl::android::Image::getImage(env, jimages.Get(env, i));
         map->getStyle().addImage(std::make_unique<mbgl::style::Image>(image));
+
+        // Workaround for issue #3135
+        // We detect the puck bitmap and pass it to the renderer which generates a custom puck texture
+        if (image.getID() == PUCK_ICON_NAME) {
+            mapRenderer.getRendererBackend().setPuckBitmap(image.getImage());
+        }
     }
 }
 
@@ -1358,6 +1374,52 @@ jni::jdouble NativeMapView::getTileLodZoomShift(JNIEnv&, jni::jdouble zoom) {
 
 jni::jint NativeMapView::getLastRenderedTileCount(JNIEnv&) {
     return jni::jint(mapRenderer.getLastRenderedTileCount());
+}
+
+void NativeMapView::setCustomDotsNextLayer(JNIEnv& env, const jni::String& layer) {
+    mapRenderer.getRendererBackend().setCustomDotsNextLayer(jni::Make<std::string>(env, layer));
+}
+
+void NativeMapView::setCustomDotsPoints(JNIEnv& env,
+                                        jni::jint id,
+                                        const jni::Object<mbgl::android::geojson::MultiPoint>& jniPoints) {
+    const auto& geojsonPoints = mbgl::android::geojson::MultiPoint::convert(env, jniPoints);
+    gfx::CustomDotsPoints points;
+    points.reserve(geojsonPoints.size());
+    for (const auto& point : geojsonPoints) {
+        points.emplace_back(point.y, point.x);
+    }
+    mapRenderer.getRendererBackend().setCustomDotsPoints(id, std::move(points));
+}
+
+void NativeMapView::clearCustomDotsVideoMemory(JNIEnv&) {
+    mapRenderer.getRendererBackend().clearCustomDotsVideoMemory();
+}
+
+void NativeMapView::setCustomDotsOptions(JNIEnv&,
+                                         jni::jint id,
+                                         jni::jfloat innerR,
+                                         jni::jfloat innerG,
+                                         jni::jfloat innerB,
+                                         jni::jfloat outerR,
+                                         jni::jfloat outerG,
+                                         jni::jfloat outerB,
+                                         jni::jfloat innerRadius,
+                                         jni::jfloat outerRadius) {
+    gfx::CustomDotsOptions options;
+    options.innerColor = {innerR, innerG, innerB, 1.f};
+    options.outerColor = {outerR, outerG, outerB, 1.f};
+    options.innerRadius = innerRadius;
+    options.outerRadius = outerRadius;
+    mapRenderer.getRendererBackend().setCustomDotsOptions(id, options);
+}
+
+void NativeMapView::setCustomDotsEnabled(JNIEnv&, jni::jboolean enabled) {
+    mapRenderer.getRendererBackend().setCustomDotsEnabled(enabled == jni::jni_true);
+}
+
+jni::jboolean NativeMapView::isCustomDotsInitialized(JNIEnv&) {
+    return mapRenderer.getRendererBackend().isCustomDotsInitialized();
 }
 
 mbgl::Map& NativeMapView::getMap() {
@@ -1500,7 +1562,14 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::getRenderingStats, "nativeGetRenderingStats"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
-        METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"));
+        METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
+        // Custom Dots API
+        METHOD(&NativeMapView::setCustomDotsNextLayer, "nativeSetCustomDotsNextLayer"),
+        METHOD(&NativeMapView::setCustomDotsPoints, "nativeSetCustomDotsPoints"),
+        METHOD(&NativeMapView::clearCustomDotsVideoMemory, "nativeClearCustomDotsVideoMemory"),
+        METHOD(&NativeMapView::setCustomDotsOptions, "nativeSetCustomDotsOptions"),
+        METHOD(&NativeMapView::setCustomDotsEnabled, "nativeSetCustomDotsEnabled"),
+        METHOD(&NativeMapView::isCustomDotsInitialized, "nativeIsCustomDotsInitialized"));
 }
 
 std::map<double, double> NativeMapView::convert(JNIEnv& env,
