@@ -4,6 +4,8 @@
 #include <mbgl/gfx/backend.hpp>
 #include <mbgl/gfx/command_encoder.hpp>
 #include <mbgl/gfx/context_observer.hpp>
+#include <mbgl/gfx/custom_dots.hpp>
+#include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/gfx/draw_scope.hpp>
 #include <mbgl/gfx/program.hpp>
 #include <mbgl/gfx/renderbuffer.hpp>
@@ -177,6 +179,14 @@ public:
     /// Unbind the global uniform buffers
     virtual void unbindGlobalUniformBuffers(gfx::RenderPass&) const noexcept = 0;
 #endif
+
+    // This is a workaround to issue #3135
+    // Remove the custom puck code when #3135 is resolved
+    virtual std::unique_ptr<CustomPuck> createCustomPuck() { return nullptr; }
+
+    // Similar to custom puck, CustomDots should be replaced with CustomLayerV3
+    // once texture atlas updates are optimized out
+    virtual std::unique_ptr<CustomDots> createCustomDots() { return nullptr; }
 
 protected:
     virtual std::unique_ptr<TextureResource> createTextureResource(Size, TexturePixelType, TextureChannelDataType) = 0;
