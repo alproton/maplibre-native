@@ -50,7 +50,7 @@ final class LocationAnimatorCustomPuck {
 
   private StampedLatLon lerp(StampedLatLon a, StampedLatLon b, double t) {
     double bearingA = (double)(normalize((float)(a.bearing)));
-    double bearingB = (double)(shortestRotation((float)(b.bearing, bearingA)));
+    double bearingB = (double)(shortestRotation((float)(b.bearing), (float)(bearingA)));
     return new StampedLatLon(a.lat * (1.0 - t) + b.lat * t,
                              a.lon * (1.0 - t) + b.lon * t,
                              bearingA * (1.0 - t) + bearingB * t,
