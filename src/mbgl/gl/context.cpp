@@ -111,6 +111,64 @@ constexpr size_t renderBufferByteSize(const gfx::RenderbufferPixelType type, con
     return sz;
 }
 #endif
+
+UniqueProgram createPuckShader(gl::Context& context) {
+    const char* vs = R"(
+#version 310 es
+layout(location = 0) uniform vec4 params;
+void main() {
+  float x = params.x;
+  float y = params.y;
+  float dx = params.z;
+  float dy = params.w;
+  vec4 pos[3] = vec4[3](vec4(x - dx, y - dy, 0, 1), vec4(x + dx, y - dy, 0, 1), vec4(x, y + dy, 0, 1));
+  gl_Position = pos[gl_VertexID];
+}
+    )";
+    const char* ps = R"(
+#version 310 es
+out mediump vec4 fragColor;
+void main() {
+  fragColor = vec4(0,1,0,1);
+}
+    )";
+    auto vertexShader = context.createShader(gl::ShaderType::Vertex, {vs});
+    auto fragmentShader = context.createShader(gl::ShaderType::Fragment, {ps});
+    auto program = context.createProgram(vertexShader, fragmentShader, nullptr);
+    return program;
+}
+
+void drawPuck(const UniqueProgram& program, float x, float y, float pitch) {
+    if (!isDebugPuckEnabled()) {
+        return;
+    }
+    glUseProgram(program);
+    float c = std::cos(pitch);
+    glUniform4f(0, x , y, 0.05f, 0.1f * c);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+class CustomPuck : public gfx::CustomPuck {
+public:
+    CustomPuck(gl::Context& context) : program(createPuckShader(context)) {
+    }
+
+    void draw(const TransformState& transform) override {
+        const auto& latlon = transform.getLatLng();
+        const auto screenSize = transform.getSize();
+        auto screenCoord = transform.latLngToScreenCoordinate(latlon);
+        auto pitch = transform.getPitch();
+        screenCoord.x = screenCoord.x / screenSize.width;
+        screenCoord.y = screenCoord.y / screenSize.height;
+        screenCoord.x = screenCoord.x * 2 - 1;
+        screenCoord.y = screenCoord.y * 2 - 1;
+        drawPuck(program, static_cast<float>(screenCoord.x), static_cast<float>(screenCoord.y), static_cast<float>(pitch));
+    }
+
+private:
+    UniqueProgram program;
+};
+
 } // namespace
 
 Context::Context(RendererBackend& backend_)
@@ -294,41 +352,8 @@ void Context::verifyProgramLinkage(ProgramID program_) {
     throw std::runtime_error("program failed to link");
 }
 
-UniqueProgram createPuckShader(gl::Context& context) {
-    const char* vs = R"(
-#version 310 es
-layout(location = 0) uniform vec4 params;
-void main() {
-  float x = params.x;
-  float y = params.y;
-  float dx = params.z;
-  float dy = params.w;
-  vec4 pos[3] = vec4[3](vec4(x - dx, y - dy, 0, 1), vec4(x + dx, y - dy, 0, 1), vec4(x, y + dy, 0, 1));
-  gl_Position = pos[gl_VertexID];
-}
-    )";
-    const char* ps = R"(
-#version 310 es
-out mediump vec4 fragColor;
-void main() {
-  fragColor = vec4(0,1,0,1);
-}
-    )";
-    auto vertexShader = context.createShader(gl::ShaderType::Vertex, {vs});
-    auto fragmentShader = context.createShader(gl::ShaderType::Fragment, {ps});
-    auto program = context.createProgram(vertexShader, fragmentShader, nullptr);
-    return program;
-}
-
-void drawPuck(gfx::Context& context, float x, float y, float pitch) {
-    if (!isDebugPuckEnabled()) {
-        return;
-    }
-    static auto program = createPuckShader(static_cast<gl::Context&>(context));
-    glUseProgram(program);
-    float c = std::cos(pitch);
-    glUniform4f(0, x , y, 0.05f, 0.1f * c);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+std::unique_ptr<gfx::CustomPuck> Context::createCustomPuck() {
+    return std::make_unique<gl::CustomPuck>(*this);
 }
 
 UniqueTexture Context::createUniqueTexture(const Size& size,

@@ -46,10 +46,6 @@ constexpr auto CaptureFrameCount = 1;
 
 namespace mbgl {
 
-namespace gl {
-void drawPuck(gfx::Context& context, float x, float y, float pitch);
-} // namespace gl
-
 using namespace style;
 
 namespace {
@@ -536,16 +532,11 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
     context.unbindGlobalUniformBuffers(*parameters.renderPass);
 #endif
 
-    const auto& latlon = updateParameters->transformState.getLatLng();
-    const auto screenSize = updateParameters->transformState.getSize();
-    auto screenCoord = updateParameters->transformState.latLngToScreenCoordinate(latlon);
-    auto pitch = updateParameters->transformState.getPitch();
-    screenCoord.x = screenCoord.x / screenSize.width;
-    screenCoord.y = screenCoord.y / screenSize.height;
-    screenCoord.x = screenCoord.x * 2 - 1;
-    screenCoord.y = screenCoord.y * 2 - 1;
-    gl::drawPuck(
-        context, static_cast<float>(screenCoord.x), static_cast<float>(screenCoord.y), static_cast<float>(pitch));
+    if (!customPuck) {
+        customPuck = context.createCustomPuck();
+        assert(customPuck != nullptr);
+    }
+    customPuck->draw(updateParameters->transformState);
 
     // Ends the RenderPass
     parameters.renderPass.reset();

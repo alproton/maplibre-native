@@ -147,6 +147,7 @@ endif()
 if(MLN_DRAWABLE_RENDERER)
     list(APPEND INCLUDE_FILES
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/context.hpp
+        ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/custom_puck.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/drawable.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/drawable_data.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/drawable_impl.hpp
@@ -166,6 +167,7 @@ if(MLN_DRAWABLE_RENDERER)
         ${PROJECT_SOURCE_DIR}/include/mbgl/util/suppress_copies.hpp
     )
     list(APPEND SRC_FILES
+        ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/custom_puck.cpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/drawable.cpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/drawable_builder.cpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/drawable_builder_impl.hpp

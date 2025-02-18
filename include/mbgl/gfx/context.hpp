@@ -4,6 +4,7 @@
 #include <mbgl/gfx/backend.hpp>
 #include <mbgl/gfx/command_encoder.hpp>
 #include <mbgl/gfx/context_observer.hpp>
+#include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/gfx/draw_scope.hpp>
 #include <mbgl/gfx/program.hpp>
 #include <mbgl/gfx/renderbuffer.hpp>
@@ -177,6 +178,8 @@ public:
     /// Unbind the global uniform buffers
     virtual void unbindGlobalUniformBuffers(gfx::RenderPass&) const noexcept = 0;
 #endif
+
+    virtual std::unique_ptr<CustomPuck> createCustomPuck() { return nullptr; }
 
 protected:
     virtual std::unique_ptr<TextureResource> createTextureResource(Size, TexturePixelType, TextureChannelDataType) = 0;
