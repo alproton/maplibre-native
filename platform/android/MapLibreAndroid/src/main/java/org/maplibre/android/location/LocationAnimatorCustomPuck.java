@@ -2,6 +2,7 @@ package org.maplibre.android.location;
 
 import android.content.Context;
 import android.os.Handler;
+import androidx.annotation.NonNull;
 
 import org.maplibre.android.location.modes.CameraMode;
 import org.maplibre.android.maps.renderer.MapRenderer;
