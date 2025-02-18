@@ -1,6 +1,8 @@
 #pragma once
 
 #include <mbgl/actor/scheduler.hpp>
+#include <mbgl/gfx/custom_puck.hpp>
+#include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/util/util.hpp>
 #include <mbgl/gfx/rendering_stats.hpp>
 
@@ -60,11 +62,17 @@ public:
 
     virtual mbgl::gfx::RenderingStats getRenderingStats() { return {}; };
 
+    virtual CustomPuckState getCurrentCustomPuckState() const { return {}; }
+
 #if MLN_DRAWABLE_RENDERER
     /// One-time shader initialization
     virtual void initShaders(gfx::ShaderRegistry&, const ProgramParameters&) = 0;
 #endif
     const mbgl::util::SimpleIdentity uniqueID;
+
+    std::unique_ptr<gfx::CustomPuck> customPuck = nullptr;
+
+    std::unique_ptr<gfx::CustomDots> customDots = nullptr;
 
 protected:
     virtual std::unique_ptr<Context> createContext() = 0;
