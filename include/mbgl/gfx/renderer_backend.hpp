@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mbgl/actor/scheduler.hpp>
+#include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/util/util.hpp>
 
 #include <memory>
@@ -49,6 +50,10 @@ public:
 
     /// Returns a reference to the default surface that should be rendered on.
     virtual Renderable& getDefaultRenderable() = 0;
+
+    virtual CustomPuckState getCurrentCustomPuckState() const {
+        return {};
+    }
 
 #if MLN_DRAWABLE_RENDERER
     /// One-time shader initialization
