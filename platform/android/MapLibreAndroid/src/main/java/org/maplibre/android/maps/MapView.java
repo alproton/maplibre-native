@@ -35,6 +35,7 @@ import org.maplibre.android.storage.FileSource;
 import org.maplibre.android.utils.BitmapUtils;
 import org.maplibre.android.tile.TileOperation;
 import org.maplibre.geojson.LineString;
+import org.maplibre.geojson.MultiPoint;
 import org.maplibre.geojson.Point;
 
 import java.util.ArrayList;
@@ -93,6 +94,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   @Nullable
   private Bundle savedInstanceState;
   private boolean isStarted;
+
+  private double customPuckLatestLat = 0.0;
+  private double customPuckLatestLon = 0.0;
+  private double customPuckLatestBearing = 0.0;
 
   @UiThread
   public MapView(@NonNull Context context) {
@@ -177,7 +182,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     mapKeyListener = new MapKeyListener(transform, uiSettings, mapGestureDetector);
 
     // LocationComponent
-    maplibreMap.injectLocationComponent(new LocationComponent(maplibreMap, transform, developerAnimationListeners));
+    maplibreMap.injectLocationComponent(new LocationComponent(this, transform, developerAnimationListeners));
 
     // Ensure this view is interactable
     setClickable(true);
@@ -574,6 +579,87 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    */
   public RouteID queryRoute(double x, double y, int radius) {
     return nativeMapView.queryRoute(x, y, radius);
+  }
+
+  /***
+   * Set the layer that get rendered after the custom dots
+   */
+  public void setCustomDotsNextLayer(String layer) {
+    nativeMapView.setCustomDotsNextLayer(layer);
+  }
+
+  /***
+   * Set the list of Lat/Lon dots to render on the map when custom dots are enabled.
+   */
+  public void setCustomDotsPoints(int id, MultiPoint points) {
+    nativeMapView.setCustomDotsPoints(id, points);
+  }
+
+  /***
+   * Clear video memory used by custom dots
+   */
+  public void clearCustomDotsVideoMemory() {
+    nativeMapView.clearCustomDotsVideoMemory();
+  }
+
+  /***
+   * Set the custom dots options
+   */
+  public void setCustomDotsOptions(int id, CustomDotsOptions options) {
+    nativeMapView.setCustomDotsOptions(id, options);
+  }
+
+  /***
+   * Enable or disable custom dots rendering
+   */
+  public void setCustomDotsEnabled(boolean enabled) {
+    nativeMapView.setCustomDotsEnabled(enabled);
+  }
+
+  /***
+   * Check if the renderer is initialized for custom dots
+   */
+  public boolean isCustomDotsInitialized() {
+    return nativeMapView.isCustomDotsInitialized();
+  }
+
+  /**
+   * set the custom puck state
+   *
+   */
+  public void setCustomPuckState(double lat,
+                                 double lon,
+                                 double bearing,
+                                 float iconScale,
+                                 boolean cameraTracking) {
+    mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
+    customPuckLatestLat = lat;
+    customPuckLatestLon = lon;
+    customPuckLatestBearing = bearing;
+  }
+
+  /**
+   * Access the interpolated custom puck latest latitude.
+   *
+   */
+  public double getCustomPuckLatestLatitude() {
+    return customPuckLatestLat;
+  }
+
+  /**
+   * Access the interpolated custom puck latest longitude.
+   *
+   */
+  public double getCustomPuckLatestLongitude() {
+    return customPuckLatestLon;
+  }
+
+  /**
+   * Access the interpolated custom puck latest bearing.
+   *
+   */
+  public double getCustomPuckLatestBearing() {
+    return customPuckLatestBearing;
   }
 
   /**
@@ -1638,7 +1724,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   }
 
   @Nullable
-  MapLibreMap getMapLibreMap() {
+  public MapLibreMap getMapLibreMap() {
     return maplibreMap;
   }
 
