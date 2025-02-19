@@ -80,7 +80,9 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
     override fun onMapReady(map: MapLibreMap) {
         maplibreMap = map
         maplibreMap.setStyle(
-            Style.Builder().fromUri(STYLES[currentStyleIndex])
+            // Style.Builder().fromUri(STYLES[currentStyleIndex])
+            Style.Builder().fromUri("https://maptiles.dev.ue1.vcs.goriv.co/tiling/style.json")
+
         ) { style: Style -> setupNavigationView(style.layers) }
         setupZoomView()
         setFpsView()

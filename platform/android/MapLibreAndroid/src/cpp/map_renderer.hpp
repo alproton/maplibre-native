@@ -126,6 +126,9 @@ private:
 
     void setSwapBehaviorFlush(JNIEnv&, jboolean flush);
 
+    void setCustomPuckState(
+        JNIEnv&, jdouble lat, jdouble lon, jdouble bearing, jboolean camera_tracking, jboolean visible);
+
 private:
     jni::WeakReference<jni::Object<MapRenderer>, jni::EnvAttachingDeleter> javaPeer;
 

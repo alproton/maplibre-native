@@ -150,11 +150,15 @@ void drawPuck(const UniqueProgram& program, float x, float y, float pitch) {
 
 class CustomPuck : public gfx::CustomPuck {
 public:
-    CustomPuck(gl::Context& context) : program(createPuckShader(context)) {
+    CustomPuck(gl::Context& context_) : context(context_), program(createPuckShader(context)) {
     }
 
     void draw(const TransformState& transform) override {
-        const auto& latlon = transform.getLatLng();
+        const auto& state = context.getBackend().getCurrentCustomPuckState();
+        auto latlon = transform.getLatLng();
+        if (!state.camera_tracking) {
+            latlon = LatLng(state.lat, state.lon);
+        }
         const auto screenSize = transform.getSize();
         auto screenCoord = transform.latLngToScreenCoordinate(latlon);
         auto pitch = transform.getPitch();
@@ -166,6 +170,7 @@ public:
     }
 
 private:
+    gl::Context& context;
     UniqueProgram program;
 };
 

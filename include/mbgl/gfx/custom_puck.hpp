@@ -13,9 +13,6 @@ struct CustomPuckState {
     bool visible = false;
 };
 
-void customPuckSetState(const CustomPuckState& state);
-const CustomPuckState& customPuckGetState();
-
 class CustomPuck {
 protected:
     CustomPuck() = default;

@@ -280,6 +280,13 @@ void MapRenderer::setSwapBehaviorFlush(JNIEnv&, jboolean flush) {
     }
 }
 
+void MapRenderer::setCustomPuckState(
+    JNIEnv&, jdouble lat, jdouble lon, jdouble bearing, jboolean camera_tracking, jboolean visible) {
+    if (backend) {
+        backend->setCustomPuckState({lat, lon, bearing, camera_tracking == JNI_TRUE, visible == JNI_TRUE});
+    }
+}
+
 // Static methods //
 
 void MapRenderer::registerNative(jni::JNIEnv& env) {
@@ -301,7 +308,8 @@ void MapRenderer::registerNative(jni::JNIEnv& env) {
         METHOD(&MapRenderer::onSurfaceCreated, "nativeOnSurfaceCreated"),
         METHOD(&MapRenderer::onSurfaceChanged, "nativeOnSurfaceChanged"),
         METHOD(&MapRenderer::onSurfaceDestroyed, "nativeOnSurfaceDestroyed"),
-        METHOD(&MapRenderer::setSwapBehaviorFlush, "nativeSetSwapBehaviorFlush"));
+        METHOD(&MapRenderer::setSwapBehaviorFlush, "nativeSetSwapBehaviorFlush"),
+        METHOD(&MapRenderer::setCustomPuckState, "nativeSetCustomPuckState"));
 }
 
 MapRenderer& MapRenderer::getNativePeer(JNIEnv& env, const jni::Object<MapRenderer>& jObject) {
