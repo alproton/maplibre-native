@@ -45,7 +45,7 @@ static std::string androidSysProp(const char* key) {
 }
 static bool isDebugPuckEnabled() {
     auto prop = androidSysProp("rivian.navigation-debug-puck");
-    return prop == "1" || prop == "true" || prop == "TRUE" || prop == "True";
+    return prop == "1" || prop == "true" || prop == "TRUE" || prop == "True" || prop == "";
 }
 #else
 static bool isDebugPuckEnabled() {
