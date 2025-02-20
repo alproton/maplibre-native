@@ -167,7 +167,6 @@ if(MLN_DRAWABLE_RENDERER)
         ${PROJECT_SOURCE_DIR}/include/mbgl/util/suppress_copies.hpp
     )
     list(APPEND SRC_FILES
-        ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/custom_puck.cpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/drawable.cpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/drawable_builder.cpp
         ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/drawable_builder_impl.hpp
@@ -478,6 +477,7 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/color_mode.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/command_encoder.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/cull_face_mode.hpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/custom_puck.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/debug_group.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/depth_mode.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/draw_mode.hpp
