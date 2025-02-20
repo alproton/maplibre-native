@@ -115,14 +115,21 @@ constexpr size_t renderBufferByteSize(const gfx::RenderbufferPixelType type, con
 UniqueProgram createPuckShader(gl::Context& context) {
     const char* vs = R"(
 #version 310 es
-layout(location = 0) uniform vec4 params;
+layout(location = 0) uniform vec4 params0;
+layout(location = 1) uniform vec4 params1;
 void main() {
-  float x = params.x;
-  float y = params.y;
-  float dx = params.z;
-  float dy = params.w;
-  vec4 pos[3] = vec4[3](vec4(x - dx, y - dy, 0, 1), vec4(x + dx, y - dy, 0, 1), vec4(x, y + dy, 0, 1));
-  gl_Position = pos[gl_VertexID];
+  float x = params0.x;
+  float y = params0.y;
+  float dx = params0.z;
+  float dy = params0.w;
+  float cos_bearing = params1.x;
+  float sin_bearing = params1.y;
+  float cos_pitch = params1.z;
+  vec2 pos[3] = vec2[3](vec2(-dx, -dy), vec2(dx, -dy), vec2(0, dy));
+  vec2 dxy = pos[gl_VertexID];
+  dxy = vec2(dxy.x * cos_bearing - dxy.y * sin_bearing, dxy.x * sin_bearing + dxy.y * cos_bearing);
+  dxy.y *= cos_pitch;
+  gl_Position = vec4(x + dxy.x, y + dxy.y, 0, 1);
 }
     )";
     const char* ps = R"(
@@ -138,26 +145,32 @@ void main() {
     return program;
 }
 
-void drawPuck(const UniqueProgram& program, float x, float y, float pitch) {
+void drawPuck(const UniqueProgram& program, float x, float y, float pitch, float bearing) {
     if (!isDebugPuckEnabled()) {
         return;
     }
     glUseProgram(program);
-    float c = std::cos(pitch);
-    glUniform4f(0, x , y, 0.05f, 0.1f * c);
+    glUniform4f(0, x, y, 0.05f, 0.1f);
+    glUniform4f(1, std::cos(-bearing), std::sin(-bearing), std::cos(pitch), 0);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 class CustomPuck : public gfx::CustomPuck {
 public:
-    CustomPuck(gl::Context& context_) : context(context_), program(createPuckShader(context)) {
-    }
+    CustomPuck(gl::Context& context_)
+        : context(context_),
+          program(createPuckShader(context)) {}
 
     void draw(const TransformState& transform) override {
         const auto& state = context.getBackend().getCurrentCustomPuckState();
+        if (!state.visible) {
+            return;
+        }
+        float bearing = 0.f;
         auto latlon = transform.getLatLng();
         if (!state.camera_tracking) {
             latlon = LatLng(state.lat, state.lon);
+            bearing = static_cast<float>(state.bearing);
         }
         const auto screenSize = transform.getSize();
         auto screenCoord = transform.latLngToScreenCoordinate(latlon);
@@ -166,7 +179,11 @@ public:
         screenCoord.y = screenCoord.y / screenSize.height;
         screenCoord.x = screenCoord.x * 2 - 1;
         screenCoord.y = screenCoord.y * 2 - 1;
-        drawPuck(program, static_cast<float>(screenCoord.x), static_cast<float>(screenCoord.y), static_cast<float>(pitch));
+        drawPuck(program,
+                 static_cast<float>(screenCoord.x),
+                 static_cast<float>(screenCoord.y),
+                 static_cast<float>(pitch),
+                 bearing);
     }
 
 private:
