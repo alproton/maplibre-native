@@ -116,29 +116,25 @@ constexpr size_t renderBufferByteSize(const gfx::RenderbufferPixelType type, con
 UniqueProgram createPuckShader(gl::Context& context) {
     const char* vs = R"(
 #version 310 es
-layout(location = 0) uniform vec4 params0;
-layout(location = 1) uniform vec4 params1;
+layout(location = 0) uniform vec2 v0;
+layout(location = 1) uniform vec2 v1;
+layout(location = 2) uniform vec2 v2;
+layout(location = 3) uniform vec2 v3;
+out mediump vec2 uv;
 void main() {
-  float x = params0.x;
-  float y = params0.y;
-  float dx = params0.z;
-  float dy = params0.w;
-  float cos_bearing = params1.x;
-  float sin_bearing = params1.y;
-  float cos_pitch = params1.z;
-  vec2 pos[3] = vec2[3](vec2(-dx, -dy), vec2(dx, -dy), vec2(0, dy));
-  vec2 dxy = pos[gl_VertexID];
-  float rx = dxy.x * cos_bearing - dxy.y * sin_bearing;
-  float ry = dxy.x * sin_bearing + dxy.y * cos_bearing;
-  ry *= cos_pitch;
-  gl_Position = vec4(x + rx, y + ry, 0, 1);
+  vec2 pos[4] = vec2[4](v0, v1, v2, v3);
+  vec2 vertex_uv[4] = vec2[4](vec2(0,0), vec2(1,0), vec2(0,1), vec2(1,1));
+  gl_Position = vec4(pos[gl_VertexID], 0, 1);
+  uv = vertex_uv[gl_VertexID];
 }
     )";
     const char* ps = R"(
 #version 310 es
+in mediump vec2 uv;
 out mediump vec4 fragColor;
 void main() {
-  fragColor = vec4(0,1,0,1);
+  mediump float c = (1.f - abs(uv.x * 2.f - 1.f)) * (1.f - uv.y);
+  fragColor = vec4(0, 1, 0, c);
 }
     )";
     auto vertexShader = context.createShader(gl::ShaderType::Vertex, {vs});
@@ -147,14 +143,21 @@ void main() {
     return program;
 }
 
-void drawPuck(const UniqueProgram& program, float x, float y, float pitch, float bearing) {
+void drawPuck(const UniqueProgram& program, ScreenCoordinate quad[]) {
     if (!isDebugPuckEnabled()) {
         return;
     }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
+
     glUseProgram(program);
-    glUniform4f(0, x, y, 0.03f, 0.2f);
-    glUniform4f(1, std::cos(bearing), std::sin(bearing), std::cos(pitch), 0);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    for(int i = 0; i < 4; ++i) {
+        glUniform2f(i, static_cast<float>(quad[i].x), static_cast<float>(quad[i].y));
+    }
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    glDisable(GL_BLEND);
 }
 
 class CustomPuck : public gfx::CustomPuck {
@@ -164,9 +167,11 @@ public:
           program(createPuckShader(context)) {}
 
     void draw(const TransformState& transform) override {
+        context.bindVertexArray = value::BindVertexArray::Default;
+
         const auto& state = context.getBackend().getCurrentCustomPuckState();
         if (!state.visible) {
-            return;
+            // return;
         }
         float bearing = 0.f;
         auto latlon = transform.getLatLng();
@@ -174,6 +179,7 @@ public:
             latlon = LatLng(state.lat, state.lon);
             bearing = static_cast<float>(-state.bearing * std::numbers::pi / 180.0 - transform.getBearing());
         }
+
         const auto screenSize = transform.getSize();
         auto screenCoord = transform.latLngToScreenCoordinate(latlon);
         auto pitch = transform.getPitch();
@@ -181,11 +187,30 @@ public:
         screenCoord.y = screenCoord.y / screenSize.height;
         screenCoord.x = screenCoord.x * 2 - 1;
         screenCoord.y = screenCoord.y * 2 - 1;
-        drawPuck(program,
-                 static_cast<float>(screenCoord.x),
-                 static_cast<float>(screenCoord.y),
-                 static_cast<float>(pitch),
-                 bearing);
+
+        ScreenCoordinate quad[4] = {
+            {-1, -1},
+            {1, -1},
+            {-1, 1},
+            {1, 1},
+        };
+
+        double cosPitch = std::cos(pitch);
+        double cosBearing = std::cos(bearing);
+        double sinBearing = std::sin(bearing);
+
+        double dx = 64 / static_cast<double>(screenSize.width);
+        double dy = 64 / static_cast<double>(screenSize.height);
+
+        for(auto& v : quad) {
+            double x = v.x * cosBearing - v.y * sinBearing;
+            double y = v.x * sinBearing + v.y * cosBearing;
+            y *= cosPitch;
+            v.x = x * dx;
+            v.y = y * dy;
+        }
+
+        drawPuck(program, quad);
     }
 
 private:
