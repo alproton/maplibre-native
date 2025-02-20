@@ -158,8 +158,8 @@ public abstract class MapRenderer implements MapRendererScheduler {
     nativeSetSwapBehaviorFlush(flush);
   }
 
-  public void setCustomPuckState(double lat, double lon, double bearing, boolean camera_tracking, boolean visible) {
-    nativeSetCustomPuckState(lat, lon, bearing, camera_tracking, visible);
+  public void setCustomPuckState(double lat, double lon, double bearing, float iconScale, boolean cameraTracking) {
+    nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
   }
 
   /**
@@ -197,7 +197,8 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
   private native void nativeSetSwapBehaviorFlush(boolean flush);
 
-  private native void nativeSetCustomPuckState(double lat, double lon, double bearing, boolean camera_tracking, boolean visible);
+  private native void nativeSetCustomPuckState(
+    double lat, double lon, double bearing, float iconScale, boolean cameraTracking);
 
   private long timeElapsed;
 

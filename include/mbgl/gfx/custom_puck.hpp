@@ -1,16 +1,19 @@
 #pragma once
 
 #include <mbgl/map/transform_state.hpp>
+#include <array>
 
 namespace mbgl {
 namespace gfx {
+
+class Context;
 
 struct CustomPuckState {
     double lat = 0;
     double lon = 0;
     double bearing = 0;
-    bool camera_tracking = false;
-    bool visible = false;
+    float iconScale = 1.f;
+    bool cameraTracking = false;
 };
 
 class CustomPuck {
@@ -20,7 +23,14 @@ protected:
 public:
     virtual ~CustomPuck() = default;
 
-    virtual void draw(const TransformState& transform) = 0;
+    void draw(const TransformState& transform);
+
+protected:
+    using ScreenQuad = std::array<ScreenCoordinate, 4>;
+
+    virtual void drawImpl(const ScreenQuad&) {}
+
+    virtual CustomPuckState getState() { return {}; }
 };
 
 } // namespace gfx

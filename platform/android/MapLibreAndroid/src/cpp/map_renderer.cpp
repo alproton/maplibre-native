@@ -281,9 +281,9 @@ void MapRenderer::setSwapBehaviorFlush(JNIEnv&, jboolean flush) {
 }
 
 void MapRenderer::setCustomPuckState(
-    JNIEnv&, jdouble lat, jdouble lon, jdouble bearing, jboolean camera_tracking, jboolean visible) {
+    JNIEnv&, jdouble lat, jdouble lon, jdouble bearing, jfloat iconScale, jboolean cameraTracking) {
     if (backend) {
-        backend->setCustomPuckState({lat, lon, bearing, camera_tracking == JNI_TRUE, visible == JNI_TRUE});
+        backend->setCustomPuckState({lat, lon, bearing, iconScale, cameraTracking == JNI_TRUE});
     }
 }
 

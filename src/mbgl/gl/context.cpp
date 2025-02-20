@@ -2,6 +2,7 @@
 
 #include <mbgl/gfx/shader_registry.hpp>
 #include <mbgl/gl/command_encoder.hpp>
+#include <mbgl/gl/custom_puck.hpp>
 #include <mbgl/gl/defines.hpp>
 #include <mbgl/gl/draw_scope_resource.hpp>
 #include <mbgl/gl/enum.hpp>
@@ -31,28 +32,6 @@
 
 #include <cstring>
 #include <iterator>
-#include <numbers>
-
-#if ANDROID
-#include <sys/system_properties.h>
-static std::string androidSysProp(const char* key) {
-    assert(strlen(key) < PROP_NAME_MAX);
-    if (__system_property_find(key) == nullptr) {
-        return "";
-    }
-    char prop[PROP_VALUE_MAX + 1];
-    __system_property_get(key, prop);
-    return prop;
-}
-static bool isDebugPuckEnabled() {
-    auto prop = androidSysProp("rivian.navigation-debug-puck");
-    return prop == "1" || prop == "true" || prop == "TRUE" || prop == "True" || prop == "";
-}
-#else
-static bool isDebugPuckEnabled() {
-    return true;
-}
-#endif
 
 namespace mbgl {
 namespace gl {
@@ -112,112 +91,6 @@ constexpr size_t renderBufferByteSize(const gfx::RenderbufferPixelType type, con
     return sz;
 }
 #endif
-
-UniqueProgram createPuckShader(gl::Context& context) {
-    const char* vs = R"(
-#version 310 es
-layout(location = 0) uniform vec2 v0;
-layout(location = 1) uniform vec2 v1;
-layout(location = 2) uniform vec2 v2;
-layout(location = 3) uniform vec2 v3;
-out mediump vec2 uv;
-void main() {
-  vec2 pos[4] = vec2[4](v0, v1, v2, v3);
-  vec2 vertex_uv[4] = vec2[4](vec2(0,0), vec2(1,0), vec2(0,1), vec2(1,1));
-  gl_Position = vec4(pos[gl_VertexID], 0, 1);
-  uv = vertex_uv[gl_VertexID];
-}
-    )";
-    const char* ps = R"(
-#version 310 es
-in mediump vec2 uv;
-out mediump vec4 fragColor;
-void main() {
-  mediump float c = (1.f - abs(uv.x * 2.f - 1.f)) * (1.f - uv.y);
-  fragColor = vec4(0, 1, 0, c);
-}
-    )";
-    auto vertexShader = context.createShader(gl::ShaderType::Vertex, {vs});
-    auto fragmentShader = context.createShader(gl::ShaderType::Fragment, {ps});
-    auto program = context.createProgram(vertexShader, fragmentShader, nullptr);
-    return program;
-}
-
-void drawPuck(const UniqueProgram& program, ScreenCoordinate quad[]) {
-    if (!isDebugPuckEnabled()) {
-        return;
-    }
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
-
-    glUseProgram(program);
-    for(int i = 0; i < 4; ++i) {
-        glUniform2f(i, static_cast<float>(quad[i].x), static_cast<float>(quad[i].y));
-    }
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    glDisable(GL_BLEND);
-}
-
-class CustomPuck : public gfx::CustomPuck {
-public:
-    CustomPuck(gl::Context& context_)
-        : context(context_),
-          program(createPuckShader(context)) {}
-
-    void draw(const TransformState& transform) override {
-        context.bindVertexArray = value::BindVertexArray::Default;
-
-        const auto& state = context.getBackend().getCurrentCustomPuckState();
-        if (!state.visible) {
-            // return;
-        }
-        float bearing = 0.f;
-        auto latlon = transform.getLatLng();
-        if (!state.camera_tracking) {
-            latlon = LatLng(state.lat, state.lon);
-            bearing = static_cast<float>(-state.bearing * std::numbers::pi / 180.0 - transform.getBearing());
-        }
-
-        const auto screenSize = transform.getSize();
-        auto screenCoord = transform.latLngToScreenCoordinate(latlon);
-        auto pitch = transform.getPitch();
-        screenCoord.x = screenCoord.x / screenSize.width;
-        screenCoord.y = screenCoord.y / screenSize.height;
-        screenCoord.x = screenCoord.x * 2 - 1;
-        screenCoord.y = screenCoord.y * 2 - 1;
-
-        ScreenCoordinate quad[4] = {
-            {-1, -1},
-            {1, -1},
-            {-1, 1},
-            {1, 1},
-        };
-
-        double cosPitch = std::cos(pitch);
-        double cosBearing = std::cos(bearing);
-        double sinBearing = std::sin(bearing);
-
-        double dx = 64 / static_cast<double>(screenSize.width);
-        double dy = 64 / static_cast<double>(screenSize.height);
-
-        for(auto& v : quad) {
-            double x = v.x * cosBearing - v.y * sinBearing;
-            double y = v.x * sinBearing + v.y * cosBearing;
-            y *= cosPitch;
-            v.x = x * dx;
-            v.y = y * dy;
-        }
-
-        drawPuck(program, quad);
-    }
-
-private:
-    gl::Context& context;
-    UniqueProgram program;
-};
-
 } // namespace
 
 Context::Context(RendererBackend& backend_)
