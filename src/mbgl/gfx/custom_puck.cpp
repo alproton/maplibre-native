@@ -42,8 +42,8 @@ void CustomPuck::draw(const TransformState& transform) {
         double x = v.x * cosBearing - v.y * sinBearing;
         double y = v.x * sinBearing + v.y * cosBearing;
         y *= cosPitch;
-        v.x = x * dx;
-        v.y = y * dy;
+        v.x = screenCoord.x + x * dx;
+        v.y = screenCoord.y + y * dy;
     }
 
     drawImpl(quad);

@@ -40,6 +40,36 @@ void main() {
     return program;
 }
 
+class ScopedGlStates {
+public:
+    ScopedGlStates() {
+        glGetBooleanv(GL_BLEND, &blendEnabled);
+        glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
+        glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDst);
+        glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
+
+        glBindVertexArray(0);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    ~ScopedGlStates() {
+        if (blendEnabled) {
+            glEnable(GL_BLEND);
+        } else {
+            glDisable(GL_BLEND);
+        }
+        glBlendFunc(blendSrc, blendDst);
+        glBindVertexArray(vao);
+    }
+
+private:
+    GLboolean blendEnabled;
+    GLint blendSrc;
+    GLint blendDst;
+    GLint vao;
+};
+
 } // namespace
 
 CustomPuck::CustomPuck(gl::Context& context_)
@@ -47,9 +77,7 @@ CustomPuck::CustomPuck(gl::Context& context_)
       program(createPuckShader(context_)) {}
 
 void CustomPuck::drawImpl(const ScreenQuad& quad) {
-    glBindVertexArray(0);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    ScopedGlStates glStates;
 
     glUseProgram(program);
     for (int i = 0; i < 4; ++i) {
