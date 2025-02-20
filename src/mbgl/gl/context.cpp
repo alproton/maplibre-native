@@ -31,6 +31,7 @@
 
 #include <cstring>
 #include <iterator>
+#include <numbers>
 
 #if ANDROID
 #include <sys/system_properties.h>
@@ -127,9 +128,10 @@ void main() {
   float cos_pitch = params1.z;
   vec2 pos[3] = vec2[3](vec2(-dx, -dy), vec2(dx, -dy), vec2(0, dy));
   vec2 dxy = pos[gl_VertexID];
-  dxy = vec2(dxy.x * cos_bearing - dxy.y * sin_bearing, dxy.x * sin_bearing + dxy.y * cos_bearing);
-  dxy.y *= cos_pitch;
-  gl_Position = vec4(x + dxy.x, y + dxy.y, 0, 1);
+  float rx = dxy.x * cos_bearing - dxy.y * sin_bearing;
+  float ry = dxy.x * sin_bearing + dxy.y * cos_bearing;
+  ry *= cos_pitch;
+  gl_Position = vec4(x + rx, y + ry, 0, 1);
 }
     )";
     const char* ps = R"(
@@ -150,8 +152,8 @@ void drawPuck(const UniqueProgram& program, float x, float y, float pitch, float
         return;
     }
     glUseProgram(program);
-    glUniform4f(0, x, y, 0.05f, 0.1f);
-    glUniform4f(1, std::cos(-bearing), std::sin(-bearing), std::cos(pitch), 0);
+    glUniform4f(0, x, y, 0.03f, 0.2f);
+    glUniform4f(1, std::cos(bearing), std::sin(bearing), std::cos(pitch), 0);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
@@ -170,7 +172,7 @@ public:
         auto latlon = transform.getLatLng();
         if (!state.camera_tracking) {
             latlon = LatLng(state.lat, state.lon);
-            bearing = static_cast<float>(state.bearing);
+            bearing = static_cast<float>(-state.bearing * std::numbers::pi / 180.0 - transform.getBearing());
         }
         const auto screenSize = transform.getSize();
         auto screenCoord = transform.latLngToScreenCoordinate(latlon);
