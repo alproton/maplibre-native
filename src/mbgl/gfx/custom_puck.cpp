@@ -33,7 +33,7 @@ void CustomPuck::draw(const TransformState& transform) {
     double cosBearing = std::cos(bearing);
     double sinBearing = std::sin(bearing);
 
-    constexpr float defaultIconPixelSize = 64;
+    constexpr float defaultIconPixelSize = 128;
     float iconPixelSize = state.iconScale * defaultIconPixelSize;
     double dx = iconPixelSize / static_cast<double>(screenSize.width);
     double dy = iconPixelSize / static_cast<double>(screenSize.height);
