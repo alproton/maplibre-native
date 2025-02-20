@@ -84,8 +84,6 @@ void CustomPuck::drawImpl(const ScreenQuad& quad) {
         glUniform2f(i, static_cast<float>(quad[i].x), static_cast<float>(quad[i].y));
     }
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    glDisable(GL_BLEND);
 }
 
 gfx::CustomPuckState CustomPuck::getState() {
