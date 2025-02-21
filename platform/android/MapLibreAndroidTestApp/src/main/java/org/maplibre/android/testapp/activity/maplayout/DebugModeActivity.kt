@@ -117,6 +117,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
                         .customPuckAnimationEnabled(true)
                         .customPuckAnimationIntervalMS(30)
                         .customPuckLagMS(900)
+                        .customPuckIconScale(0.8f)
                         .build()
                 )
                 applyStyle(locationComponentOptions)

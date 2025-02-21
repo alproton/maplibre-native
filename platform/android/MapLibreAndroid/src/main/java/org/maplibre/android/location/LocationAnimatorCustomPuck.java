@@ -115,7 +115,8 @@ final class LocationAnimatorCustomPuck {
             boolean tracking = locationCameraController.isLocationTracking()
                                && locationCameraController.getCameraMode() != CameraMode.TRACKING_GPS_NORTH
                                && !locationCameraController.isTransitioning();
-            mapRenderer.setCustomPuckState(location.lat, location.lon, location.bearing, 1.0f, tracking);
+            mapRenderer.setCustomPuckState(
+              location.lat, location.lon, location.bearing, customPuckAnimationOptions.iconScale, tracking);
           }
         };
         mainHandler.post(myRunnable);

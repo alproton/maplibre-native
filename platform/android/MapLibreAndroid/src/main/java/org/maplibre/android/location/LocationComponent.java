@@ -263,6 +263,7 @@ public final class LocationComponent {
     customPuckAnimationOptions.customPuckAnimationEnabled = activationOptions.customPuckAnimationEnabled();
     customPuckAnimationOptions.animationIntervalMS = activationOptions.customPuckAnimationIntervalMS();
     customPuckAnimationOptions.lagMS = activationOptions.customPuckLagMS();
+    customPuckAnimationOptions.iconScale = activationOptions.customPuckIconScale();
 
     // Initialize the LocationComponent with Context, the map's `Style`, and either custom LocationComponentOptions
     // or backup options created from default/custom attributes
