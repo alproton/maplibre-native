@@ -28,6 +28,7 @@ public class LocationComponentActivationOptions {
   private boolean customPuckAnimationEnabled;
   private long customPuckAnimationIntervalMS;
   private long customPuckLagMS;
+  private float customPuckIconScale;
 
   private LocationComponentActivationOptions(@NonNull Context context, @NonNull Style style,
                                              @Nullable LocationEngine locationEngine,
@@ -38,7 +39,8 @@ public class LocationComponentActivationOptions {
                                              boolean useSpecializedLocationLayer,
                                              boolean customPuckAnimationEnabled,
                                              long customPuckAnimationIntervalMS,
-                                             long customPuckLagMS) {
+                                             long customPuckLagMS,
+                                             float puckIconsScale) {
     this.context = context;
     this.style = style;
     this.locationEngine = locationEngine;
@@ -52,6 +54,7 @@ public class LocationComponentActivationOptions {
     this.customPuckAnimationEnabled = customPuckAnimationEnabled;
     this.customPuckAnimationIntervalMS = customPuckAnimationIntervalMS;
     this.customPuckLagMS = customPuckLagMS;
+    this.customPuckIconScale = puckIconsScale;
   }
 
   /**
@@ -184,6 +187,14 @@ public class LocationComponentActivationOptions {
   public long customPuckLagMS() {
     return customPuckLagMS;
   }
+  /**
+   * Custom puck option
+   *
+   * @return Displayed puck icon scale
+   */
+  public float customPuckIconScale() {
+    return customPuckIconScale;
+  }
 
   /**
    * Builder class for constructing a new instance of {@link LocationComponentActivationOptions}.
@@ -211,6 +222,7 @@ public class LocationComponentActivationOptions {
     private boolean customPuckAnimationEnabled = false;
     private long customPuckAnimationIntervalMS = 0;
     private long customPuckLagMS = 0;
+    private float customPuckIconScale = 1.0f;
 
     /**
      * Constructor for the {@link LocationComponentActivationOptions} builder class.
@@ -327,6 +339,10 @@ public class LocationComponentActivationOptions {
       this.customPuckLagMS = customPuckLagMS;
       return this;
     }
+    public Builder customPuckIconScale(float customPuckIconScale) {
+      this.customPuckIconScale = customPuckIconScale;
+      return this;
+    }
 
     /**
      * Method which actually builds the {@link LocationComponentActivationOptions} object while
@@ -360,7 +376,7 @@ public class LocationComponentActivationOptions {
       return new LocationComponentActivationOptions(context, style, locationEngine,
         locationEngineRequest, locationComponentOptions, styleRes, useDefaultLocationEngine,
         useSpecializedLocationLayer,
-        customPuckAnimationEnabled, customPuckAnimationIntervalMS, customPuckLagMS);
+        customPuckAnimationEnabled, customPuckAnimationIntervalMS, customPuckLagMS, customPuckIconScale);
     }
   }
 }
