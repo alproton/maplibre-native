@@ -100,6 +100,7 @@ final class LocationAnimatorCustomPuck {
           public void run() {
             locationLayerRenderer.setLatLng(new LatLng(location.lat, location.lon));
             locationLayerRenderer.setGpsBearing((float)(location.bearing));
+            locationLayerRenderer.hide();
             if (locationCameraController.isLocationTracking()) {
               locationCameraController.setLatLng(new LatLng(location.lat, location.lon));
             }

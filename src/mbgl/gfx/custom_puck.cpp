@@ -1,9 +1,24 @@
 
 #include <mbgl/gfx/custom_puck.hpp>
 #include <numbers>
+#include <mutex>
 
 namespace mbgl {
 namespace gfx {
+
+namespace {
+
+PremultipliedImage& puckBitmap() {
+    static PremultipliedImage image{};
+    return image;
+}
+
+std::mutex& puckBitmapMutex() {
+    static std::mutex mutex;
+    return mutex;
+}
+
+} // namespace
 
 void CustomPuck::draw(const TransformState& transform) {
     const auto& state = getState();
@@ -47,6 +62,23 @@ void CustomPuck::draw(const TransformState& transform) {
     }
 
     drawImpl(quad);
+}
+
+void setPuckBitmap(const PremultipliedImage& src) {
+    assert(src.valid());
+    std::lock_guard<std::mutex> lock(puckBitmapMutex());
+    auto& dst = puckBitmap();
+    if (dst.valid()) {
+        return;
+    }
+    dst.size = src.size;
+    dst.data = std::make_unique<uint8_t[]>(src.bytes());
+    std::memcpy(dst.data.get(), src.data.get(), src.bytes());
+}
+
+const PremultipliedImage& getPuckBitmap() {
+    std::lock_guard<std::mutex> lock(puckBitmapMutex());
+    return puckBitmap();
 }
 
 } // namespace gfx

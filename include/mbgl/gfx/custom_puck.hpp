@@ -1,7 +1,9 @@
 #pragma once
 
 #include <mbgl/map/transform_state.hpp>
+#include <mbgl/util/image.hpp>
 #include <array>
+#include <memory>
 
 namespace mbgl {
 namespace gfx {
@@ -32,6 +34,9 @@ protected:
 
     virtual CustomPuckState getState() { return {}; }
 };
+
+void setPuckBitmap(const PremultipliedImage& src);
+const PremultipliedImage& getPuckBitmap();
 
 } // namespace gfx
 } // namespace mbgl

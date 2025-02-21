@@ -16,6 +16,7 @@ public:
 private:
     gl::Context& context;
     UniqueProgram program;
+    TextureID texture = 0;
 };
 
 } // namespace gl

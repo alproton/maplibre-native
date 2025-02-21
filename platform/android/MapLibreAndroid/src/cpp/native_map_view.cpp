@@ -13,6 +13,7 @@
 
 #include <jni/jni.hpp>
 
+#include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_options.hpp>
 #include <mbgl/math/minmax.hpp>
@@ -1185,6 +1186,9 @@ void NativeMapView::addImages(JNIEnv& env, const jni::Array<jni::Object<mbgl::an
     for (std::size_t i = 0; i < len; i++) {
         auto image = mbgl::android::Image::getImage(env, jimages.Get(env, i));
         map->getStyle().addImage(std::make_unique<mbgl::style::Image>(image));
+        if (image.getID() == "mapbox-location-icon") {
+            gfx::setPuckBitmap(image.getImage());
+        }
     }
 }
 

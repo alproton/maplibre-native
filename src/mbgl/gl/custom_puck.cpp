@@ -19,7 +19,7 @@ layout(location = 3) uniform vec2 v3;
 out mediump vec2 uv;
 void main() {
   vec2 pos[4] = vec2[4](v0, v1, v2, v3);
-  vec2 vertex_uv[4] = vec2[4](vec2(0,0), vec2(1,0), vec2(0,1), vec2(1,1));
+  vec2 vertex_uv[4] = vec2[4](vec2(0,1), vec2(1,1), vec2(0,0), vec2(1,0));
   gl_Position = vec4(pos[gl_VertexID], 0, 1);
   uv = vertex_uv[gl_VertexID];
 }
@@ -28,16 +28,28 @@ void main() {
 #version 310 es
 in mediump vec2 uv;
 out mediump vec4 fragColor;
+uniform sampler2D tex;
 void main() {
-  mediump float c = (1.f - abs(uv.x * 2.f - 1.f)) * (1.f - uv.y);
-  c = clamp(pow(c * 2.f, 2.f), 0.f, 1.f);
-  fragColor = vec4(0, 1, 0, c);
+  fragColor = texture(tex, uv);
 }
     )";
     auto vertexShader = context.createShader(gl::ShaderType::Vertex, {vs});
     auto fragmentShader = context.createShader(gl::ShaderType::Fragment, {ps});
     auto program = context.createProgram(vertexShader, fragmentShader, nullptr);
     return program;
+}
+
+TextureID createTexture(const PremultipliedImage& image) {
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGBA, image.size.width, image.size.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data.get());
+    return texture;
 }
 
 class ScopedGlStates {
@@ -47,10 +59,14 @@ public:
         glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
         glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDst);
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+        glGetIntegerv(GL_ACTIVE_TEXTURE, &textureUnit);
+
 
         glBindVertexArray(0);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glActiveTexture(0);
     }
 
     ~ScopedGlStates() {
@@ -61,6 +77,8 @@ public:
         }
         glBlendFunc(blendSrc, blendDst);
         glBindVertexArray(vao);
+        glActiveTexture(textureUnit);
+        glBindTexture(GL_TEXTURE_2D, textureBinding);
     }
 
 private:
@@ -68,6 +86,8 @@ private:
     GLint blendSrc;
     GLint blendDst;
     GLint vao;
+    GLint textureBinding;
+    GLint textureUnit;
 };
 
 } // namespace
@@ -79,6 +99,15 @@ CustomPuck::CustomPuck(gl::Context& context_)
 void CustomPuck::drawImpl(const ScreenQuad& quad) {
     ScopedGlStates glStates;
 
+    if (!texture) {
+        const auto& bitmap = gfx::getPuckBitmap();
+        if (!bitmap.valid()) {
+            return;
+        }
+        texture = createTexture(bitmap);
+    }
+
+    glBindTexture(GL_TEXTURE_2D, texture);
     glUseProgram(program);
     for (int i = 0; i < 4; ++i) {
         glUniform2f(i, static_cast<float>(quad[i].x), static_cast<float>(quad[i].y));
