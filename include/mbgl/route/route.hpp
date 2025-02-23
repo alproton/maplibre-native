@@ -12,9 +12,11 @@ namespace route {
 struct RouteSegmentOptions;
 class RouteSegment;
 
-/**
- * A
- **/
+/***
+ * A route is a polyline that represents a road between two locations. There can be multiple routes in the case of multiple stops.
+ * Each route can have route segments. Routes segments represents a traffic zone.
+ * A route must have a base route segment (aka casing) that contains all the vertices of the polyline that makes it.
+ */
 class Route {
     public:
     Route() = default;

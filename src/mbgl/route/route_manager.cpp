@@ -221,13 +221,11 @@ void RouteManager::finalize() {
                     style_->addLayer(std::move(baselayer), layerBefore_);
                 }
             }
-
         }
 
         //create the layers, geojsonsource and gradients for active route
-        // std::map<double, mbgl::Color> segmentGradients;
         for(auto& iter : routeMap_) {
-            [[maybe_unused]]auto& route = iter.second;
+            auto& route = iter.second;
             const auto& routeID = iter.first;
             std::string activeLayerName = getActiveRouteLayerName(routeID);
             std::string activeGeoJSONSourceName = getActiveGeoJSONsourceName(routeID);
@@ -246,7 +244,6 @@ void RouteManager::finalize() {
                 style_->addSource(std::move(geoJSONsrc));
             }
 
-
             //create the layers for each route
             if(style_->getLayer(activeLayerName) == nullptr) {
                 std::unique_ptr<style::LineLayer> activelayer = std::make_unique<style::LineLayer>(activeLayerName, activeGeoJSONSourceName);
@@ -263,7 +260,7 @@ void RouteManager::finalize() {
             }
 
 
-            [[maybe_unused]] const auto& createGradientExpression = [](const std::map<double, mbgl::Color>& gradient) {
+            const auto& createGradientExpression = [](const std::map<double, mbgl::Color>& gradient) {
                 ParsingContext pc;
                 ParseResult pr = createCompoundExpression("line-progress", {}, pc);
                 std::unique_ptr<Expression> lineprogressValueExp = std::move(pr.value());

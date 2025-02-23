@@ -8,7 +8,6 @@
 
 namespace mbgl {
 
-
 namespace style {
 class Style;
 } // namespace style
@@ -32,15 +31,13 @@ struct RouteMgrStats {
 
 
 /***
- * A route is a road between two locations. There can be multiple routes in the case of multiple stops.
- * Each route can have route segments. Routes segments can be used for traffic data.
- * A route must have a base route segment that contains all the vertices of the polyline that makes it.
- */
+ * A route manager manages construction, disposal and updating of one or more routes. It is the API facade and is 1:1 with a map view.
+ * You can create and mutate multiple routes as many times and after you're done with mutating routes, the client code needs to call
+ * finalize() on the route manager for it to create needed resources underneath the hood for rendering.
+ **/
 class RouteManager final {
 public:
-    // static const std::string BASE_ROUTE_SEGMENT_STR;
-
-    RouteManager();
+  RouteManager();
   void setStyle(style::Style&);
   static void appendStats(const std::string& str);
   static const std::string getStats();
@@ -50,32 +47,32 @@ public:
   void setRouteCommonOptions(const RouteCommonOptions& ropts);
   RouteID routeCreate(const LineString<double>& geometry);
   void routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
-    bool routeSetProgress(const RouteID&, const double progress);
-    void routeClearSegments(const RouteID&);
+  bool routeSetProgress(const RouteID&, const double progress);
+  void routeClearSegments(const RouteID&);
   bool routeDispose(const RouteID&);
-    bool hasRoutes() const;
+  bool hasRoutes() const;
   void finalize();
 
   ~RouteManager();
 private:
-    static const std::string BASE_ROUTE_LAYER;
-    static const std::string ACTIVE_ROUTE_LAYER;
-    static const std::string GEOJSON_BASE_ROUTE_SOURCE_ID;
-    static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
-    static std::stringstream ss_;
+  static const std::string BASE_ROUTE_LAYER;
+  static const std::string ACTIVE_ROUTE_LAYER;
+  static const std::string GEOJSON_BASE_ROUTE_SOURCE_ID;
+  static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
+  static std::stringstream ss_;
 
-    RouteMgrStats stats_;
+  RouteMgrStats stats_;
   gfx::IDpool routeIDpool_ = gfx::IDpool(100);
-  //TODO: change this to weak reference
   std::string getActiveRouteLayerName(const RouteID& routeID) const;
   std::string getBaseRouteLayerName(const RouteID& routeID) const;
   std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
   std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
 
+  //TODO: change this to weak reference
   style::Style* style_ = nullptr;
   std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
-    std::string layerBefore_;
-    RouteCommonOptions routeOptions_;
+  std::string layerBefore_;
+  RouteCommonOptions routeOptions_;
   bool dirty_ = true;
 };
 };
