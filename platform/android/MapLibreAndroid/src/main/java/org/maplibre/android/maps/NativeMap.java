@@ -22,6 +22,7 @@ import org.maplibre.android.style.layers.Layer;
 import org.maplibre.android.style.layers.TransitionOptions;
 import org.maplibre.android.style.light.Light;
 import org.maplibre.android.style.sources.Source;
+import org.maplibre.geojson.LineString;
 
 import java.util.List;
 
@@ -245,6 +246,24 @@ interface NativeMap {
   void triggerRepaint();
 
   void setSwapBehaviorFlush(boolean flush);
+
+  //
+  // Route API
+  //
+  RouteID createRoute(LineString routeGeom);
+
+  boolean disposeRoute(RouteID routeID);
+
+  boolean createRouteSegment(RouteID routeID, RouteSegmentOptions rsopts);
+
+  boolean setRouteProgress(RouteID routeID, double progress);
+
+  void clearRouteSegments(RouteID routeID);
+
+  boolean finalizeRoutes();
+
+  void setRoutesBeforeLayer(String beforeLayer);
+
 
   //
   // Deprecated Annotations API

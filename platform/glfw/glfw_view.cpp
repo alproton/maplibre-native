@@ -151,7 +151,7 @@ GLFWView::GLFWView(bool fullscreen_,
     MLN_TRACE_FUNC();
 
     glfwSetErrorCallback(glfwError);
-
+    rmptr_ = std::make_unique<mbgl::route::RouteManager>();
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
     if (!glfwInit()) {
@@ -756,19 +756,18 @@ void GLFWView::addRoute() {
         return linestring;
     };
 
-    auto& rmgr = mbgl::route::RouteManager::getInstance();
-    rmgr.setStyle(map->getStyle());
+    rmptr_->setStyle(map->getStyle());
     RouteCircle route;
     route.resolution = 30.0;
     route.xlate = routeList_.size()*20.0;
     mbgl::LineString<double> geom = getRouteGeom(route);
     route.points = geom;
     assert(route.points.size() == route.resolution && "invalid number of points generated");
-    auto routeID = rmgr.routeCreate(geom);
+    auto routeID = rmptr_->routeCreate(geom);
     routeList_[routeID] = route;
 
 
-    rmgr.finalize();
+    rmptr_->finalize();
 }
 
 void GLFWView::addTrafficViz() {
@@ -789,7 +788,6 @@ void GLFWView::addTrafficViz() {
         return colors;
     };
 
-    auto& rmgr = mbgl::route::RouteManager::getInstance();
     for(const auto& iter : routeList_) {
         const auto& routeID = iter.first;
         const auto& route = iter.second;
@@ -819,10 +817,10 @@ void GLFWView::addTrafficViz() {
             rsegopts.geometry = trafficBlks[i];
             rsegopts.sortOrder = i;
 
-            rmgr.routeSegmentCreate(routeID, rsegopts);
+            rmptr_->routeSegmentCreate(routeID, rsegopts);
         }
     }
-    rmgr.finalize();
+    rmptr_->finalize();
 }
 
 void GLFWView::modifyTrafficViz() {
@@ -832,44 +830,40 @@ void GLFWView::modifyTrafficViz() {
 void GLFWView::incrementRouteProgress() {
     routeProgress_ += 0.01;
     std::cout<<"Route progress: "<<routeProgress_<<std::endl;
-    auto& rmgr = mbgl::route::RouteManager::getInstance();
     for(const auto& iter : routeList_) {
         const auto& routeID = iter.first;
-        rmgr.routeSetProgress(routeID, routeProgress_);
+        rmptr_->routeSetProgress(routeID, routeProgress_);
     }
-    rmgr.finalize();
+    rmptr_->finalize();
 }
 
 void GLFWView::decrementRouteProgress() {
     routeProgress_ -= 0.01;
     std::cout<<"Route progress: "<<routeProgress_<<std::endl;
-    auto& rmgr = mbgl::route::RouteManager::getInstance();
     for(const auto& iter : routeList_) {
         const auto& routeID = iter.first;
-        rmgr.routeSetProgress(routeID, routeProgress_);
+        rmptr_->routeSetProgress(routeID, routeProgress_);
     }
-    rmgr.finalize();
+    rmptr_->finalize();
 }
 
 
 void GLFWView::removeTrafficViz() {
-    auto& rmgr = mbgl::route::RouteManager::getInstance();
     for(const auto& iter : routeList_) {
-        rmgr.routeClearSegments(iter.first);
+        rmptr_->routeClearSegments(iter.first);
     }
-    rmgr.finalize();
+    rmptr_->finalize();
 }
 
 
 void GLFWView::disposeRoute() {
-    auto& rmgr = mbgl::route::RouteManager::getInstance();
     if(!routeList_.empty()) {
         auto& routeID = routeList_.begin()->first;
-        bool success = rmgr.routeDispose(routeID);
+        bool success = rmptr_->routeDispose(routeID);
         if(success) {
             routeList_.erase(routeID);
         }
-        rmgr.finalize();
+        rmptr_->finalize();
     }
 }
 

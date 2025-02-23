@@ -159,6 +159,10 @@ const double Route::EPSILON = 0.00001;
         return true;
     }
 
+    uint32_t Route::getNumRouteSegments() const {
+        return static_cast<uint32_t>(segments_.size());
+    }
+
     std::vector<double> Route::getRouteSegmentDistances() const {
         return segDistances_;
     }

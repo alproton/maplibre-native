@@ -4,6 +4,8 @@
 #include <mbgl/route/route_segment.hpp>
 #include <mbgl/route/id_pool.hpp>
 #include <unordered_map>
+#include <string>
+
 namespace mbgl {
 
 
@@ -14,14 +16,18 @@ class Style;
 namespace route {
 
 class Route;
-// class LineLayer;
-
 
 struct RouteCommonOptions {
     Color outerColor = Color(1, 1, 1, 1);
     Color innerColor = Color(0, 0, 1, 1);
     float outerWidth = 10;
     float innerWidth = 6;
+};
+
+struct RouteMgrStats {
+    uint32_t numFinalizedInvoked = 0;
+    uint32_t numRoutes = 0;
+    uint32_t numRouteSegments = 0;
 };
 
 
@@ -32,10 +38,13 @@ struct RouteCommonOptions {
  */
 class RouteManager final {
 public:
-    static const std::string BASE_ROUTE_SEGMENT_STR;
+    // static const std::string BASE_ROUTE_SEGMENT_STR;
 
-  static RouteManager& getInstance() noexcept;
+    RouteManager();
   void setStyle(style::Style&);
+  static void appendStats(const std::string& str);
+  static const std::string getStats();
+  static void clearStats();
   bool hasStyle() const;
   void setLayerBefore(const std::string layerBefore);
   void setRouteCommonOptions(const RouteCommonOptions& ropts);
@@ -49,13 +58,20 @@ public:
 
   ~RouteManager();
 private:
-
-  RouteManager();
     static const std::string BASE_ROUTE_LAYER;
     static const std::string ACTIVE_ROUTE_LAYER;
-    static const std::string GEOJSON_ROUTE_SOURCE_ID;
+    static const std::string GEOJSON_BASE_ROUTE_SOURCE_ID;
+    static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
+    static std::stringstream ss_;
 
+    RouteMgrStats stats_;
   gfx::IDpool routeIDpool_ = gfx::IDpool(100);
+  //TODO: change this to weak reference
+  std::string getActiveRouteLayerName(const RouteID& routeID) const;
+  std::string getBaseRouteLayerName(const RouteID& routeID) const;
+  std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
+  std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
+
   style::Style* style_ = nullptr;
   std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
     std::string layerBefore_;

@@ -10,6 +10,7 @@
 #include <optional>
 #include <stack>
 #include <mbgl/route/id_types.hpp>
+#include <mbgl/route/route_manager.hpp>
 
 #if (defined(MLN_RENDER_BACKEND_OPENGL) || defined(MLN_RENDER_BACKEND_VULKAN)) && \
     !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL)
@@ -111,6 +112,7 @@ private:
     void toggleCustomSource();
     void toggleLocationIndicatorLayer();
     std::vector<RouteID> routeIDlist;
+    std::unique_ptr<mbgl::route::RouteManager> rmptr_;
     void addRoute();
     void modifyRoute();
     void disposeRoute();

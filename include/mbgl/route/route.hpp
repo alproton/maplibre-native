@@ -32,6 +32,7 @@ class Route {
     bool getGradientDirty() const;
     void validateGradientDirty();
     Route& operator=(Route& other) noexcept;
+    uint32_t getNumRouteSegments() const;
 
 private:
     std::map<double, mbgl::Color> applyProgressOnGradient();
