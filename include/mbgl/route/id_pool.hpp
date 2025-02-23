@@ -7,6 +7,13 @@
 
 namespace mbgl {
 namespace gfx {
+
+/***
+ ** An IDpool is a pool of IDs from which you can create consecutive IDs. This is very similary to graphics APIs such as
+ * opengl or vulkan where you an ID is used to represent a resource. Every ID constructed is consecutive and when an
+ * ID is disposed, it returns back to the pool for re-use. Every invocation to create an ID will return the smallest
+ * contiguous ID.
+ */
 class IDpool
 {
 private:
