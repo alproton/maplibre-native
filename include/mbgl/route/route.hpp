@@ -43,7 +43,7 @@ private:
     static const double EPSILON ;
     bool gradientDirty_ = true;
     double progress_ = 0.0;
-    std::vector<double> segDistances_;
+    std::vector<double> legDistances_;
     std::vector<RouteSegment> segments_;
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;

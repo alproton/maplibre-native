@@ -446,6 +446,7 @@ list(APPEND INCLUDE_FILES
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/route.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_segment.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/puck.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_utils.hpp
 )
 list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/actor/mailbox.cpp
@@ -1017,6 +1018,7 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_segment.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/route/route.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/route/puck.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_utils.cpp
 )
 
 if(MLN_WITH_OPENGL)

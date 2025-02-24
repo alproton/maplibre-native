@@ -1,9 +1,13 @@
 
 
+#include <iostream>
 #include <mbgl/route/route.hpp>
 #include <mbgl/util/math.hpp>
 
 #include <mbgl/route/route_segment.hpp>
+#include <mbgl/route/route_utils.hpp>
+#include <mapbox/geometry/point_arithmetic.hpp>
+#include <iostream>
 
 namespace mbgl {
 
@@ -16,7 +20,7 @@ const double Route::EPSILON = 0.00001;
             mbgl::Point<double> a = geometry_[i];
             mbgl::Point<double> b = geometry_[i-1];
             double dist = mbgl::util::dist<double>(a, b);
-            segDistances_.push_back(dist);
+            legDistances_.push_back(dist);
             totalDistance_ += dist;
         }
     }
@@ -30,7 +34,7 @@ const double Route::EPSILON = 0.00001;
     }
 
     void Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
-        RouteSegment routeSeg(rsegopts, geometry_, segDistances_, totalDistance_);
+        RouteSegment routeSeg(rsegopts, geometry_, legDistances_, totalDistance_);
         segments_.push_back(routeSeg);
 
         gradientDirty_ = true;
@@ -156,9 +160,32 @@ const double Route::EPSILON = 0.00001;
     bool Route::routeSetProgress(const double t) {
         progress_ = t;
         gradientDirty_ = true;
-        //TODO: calculate currentTraversedPoint_ here.
 
-        return true;
+        //calculate currentTraversedPoint_ here.
+        double currDist = 0.0;
+        double normCurrDist = 0.0;
+        double prevNormCurrDist = 0.0;
+        for(size_t i = 1; i < geometry_.size(); ++i) {
+            const mbgl::Point<double>& pt1 = geometry_[i-1];
+            const mbgl::Point<double>& pt2 = geometry_[i];
+            prevNormCurrDist = currDist/totalDistance_;
+
+            currDist += mbgl::util::dist<double>(pt1, pt2);
+            normCurrDist = currDist / totalDistance_;
+            if(normCurrDist > t) {
+                double m = t - prevNormCurrDist;
+                mbgl::Point<double> vec =  pt2 - pt1;
+                currentTraversedPoint_ = pt1 + vec*m;
+                if(RouteUtils::isPointBetween(currentTraversedPoint_, pt1, pt2)) {
+                    // std::cout<<"pt1: "<<pt1.x <<", "<<pt1.y<<std::endl;
+                    // std::cout<<"pt2: "<<pt2.x <<", "<<pt2.y<<std::endl;
+                    // std::cout<<"traverse: "<<currentTraversedPoint_.x<<", "<<currentTraversedPoint_.y<<std::endl;
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     mbgl::Point<double> Route::routeGetCurrentProgressPoint() const {
@@ -170,7 +197,7 @@ const double Route::EPSILON = 0.00001;
     }
 
     std::vector<double> Route::getRouteSegmentDistances() const {
-        return segDistances_;
+        return legDistances_;
     }
 
     bool Route::routeSegmentsClear() {
@@ -191,12 +218,15 @@ const double Route::EPSILON = 0.00001;
         if(this == &other) {
             return *this;
         }
-        segDistances_ = other.segDistances_;
+        gradientDirty_ = other.gradientDirty_;
+        progress_ = other.progress_;
+        legDistances_ = other.legDistances_;
         segments_ = other.segments_;
         geometry_ = other.geometry_;
-        gradientDirty_ = other.gradientDirty_;
-        totalDistance_ = other.totalDistance_;
         segGradient_ = other.segGradient_;
+        totalDistance_ = other.totalDistance_;
+        progressColor_ = other.progressColor_;
+        currentTraversedPoint_ = other.currentTraversedPoint_;
 
         return *this;
     }

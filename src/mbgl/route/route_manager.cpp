@@ -150,6 +150,23 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const double progres
     if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         success = routeMap_[routeID].routeSetProgress(validProgress);
     }
+
+    //set the location of the puck
+    if(activePuckID_.isValid() && routeID == routePuck_.first) {
+
+        const Route& route =  routeMap_[routePuck_.first];
+        const auto& toArray = [](const mbgl::LatLng &crd) ->std::array<double, 3> {
+            return {crd.latitude(), crd.longitude(), 0};
+        };
+
+        mbgl::style::LocationIndicatorLayer* locationLayer = static_cast<mbgl::style::LocationIndicatorLayer*>(style_->getLayer(PUCK_LAYER_ID));
+        if(locationLayer) {
+            mbgl::Point<double> trackedPt = route.routeGetCurrentProgressPoint();
+            mbgl::LatLng latlng = {trackedPt.y, trackedPt.x};
+            locationLayer->setLocation(toArray(latlng));
+        }
+    }
+
     dirty_ = true;
     return success;
 }
@@ -312,77 +329,73 @@ void RouteManager::finalize() {
                 route.validateGradientDirty();
             }
         }
+        dirty_ = false;
+    }
 
         //create the layer for the puck
-        if(puckDirty_) {
-            if(style_->getLayer(PUCK_LAYER_ID) == nullptr && activePuckID_.isValid()) {
+    if(style_ != nullptr && puckDirty_) {
+        if(style_->getLayer(PUCK_LAYER_ID) == nullptr && activePuckID_.isValid()) {
 
-                const auto& premultiply = [](mbgl::Color c)-> mbgl::Color {
-                    c.r *= c.a;
-                    c.g *= c.a;
-                    c.b *= c.a;
-                    return c;
-                };
+            const auto& premultiply = [](mbgl::Color c)-> mbgl::Color {
+                c.r *= c.a;
+                c.g *= c.a;
+                c.b *= c.a;
+                return c;
+            };
 
+            auto puckLayer = std::make_unique<mbgl::style::LocationIndicatorLayer>(PUCK_LAYER_ID);
+            //puckLayer->setLocationTransition(mbgl::style::TransitionOptions(mbgl::Duration::zero(),mbgl::Duration::zero()));
+            std::chrono::milliseconds millisDuration(50);
+            std::chrono::nanoseconds nanosDelay(100);
+            puckLayer->setLocationTransition(mbgl::style::TransitionOptions(millisDuration,nanosDelay));
 
-                auto puckLayer = std::make_unique<mbgl::style::LocationIndicatorLayer>(PUCK_LAYER_ID);
-                puckLayer->setLocationTransition(mbgl::style::TransitionOptions(mbgl::Duration::zero(),mbgl::Duration::zero()));
+            puckLayer->setAccuracyRadius(50);
+            puckLayer->setAccuracyRadiusColor(
+                premultiply(mbgl::Color{0.0f, 1.0f, 0.0f, 0.2f})); // Note: these must be fed premultiplied
 
-                puckLayer->setAccuracyRadius(50);
-                puckLayer->setAccuracyRadiusColor(
-                    premultiply(mbgl::Color{0.0f, 1.0f, 0.0f, 0.2f})); // Note: these must be fed premultiplied
+            puckLayer->setBearingTransition(mbgl::style::TransitionOptions(mbgl::Duration::zero(), mbgl::Duration::zero()));
+            puckLayer->setBearing(mbgl::style::Rotation(0.0));
+            puckLayer->setAccuracyRadiusBorderColor(premultiply(mbgl::Color{0.0f, 1.0f, 0.2f, 0.4f}));
+            puckLayer->setTopImageSize(0.18f);
+            puckLayer->setBearingImageSize(0.26f);
+            puckLayer->setShadowImageSize(0.2f);
+            puckLayer->setImageTiltDisplacement(7.0f); // set to 0 for a "flat" puck
+            puckLayer->setPerspectiveCompensation(0.9f);
 
-                puckLayer->setBearingTransition(mbgl::style::TransitionOptions(mbgl::Duration::zero(), mbgl::Duration::zero()));
-                puckLayer->setBearing(mbgl::style::Rotation(0.0));
-                puckLayer->setAccuracyRadiusBorderColor(premultiply(mbgl::Color{0.0f, 1.0f, 0.2f, 0.4f}));
-                puckLayer->setTopImageSize(0.18f);
-                puckLayer->setBearingImageSize(0.26f);
-                puckLayer->setShadowImageSize(0.2f);
-                puckLayer->setImageTiltDisplacement(7.0f); // set to 0 for a "flat" puck
-                puckLayer->setPerspectiveCompensation(0.9f);
-
-                //add the puck images to the style
-                const PuckOptions& popts = puckMap_[activePuckID_].getPuckOptions();
-                std::string bearingLocation = popts.locations.at(PuckImageType::pitBearing).fileLocation + "/"+popts.locations.at(PuckImageType::pitBearing).fileName;
-                std::string bearingName = popts.locations.at(PuckImageType::pitBearing).fileName;
-                std::unique_ptr<mbgl::style::Image> bearing = std::make_unique<mbgl::style::Image>(bearingName, mbgl::decodeImage(mbgl::util::read_file(bearingLocation)), 1.0f);
-                style_->addImage(std::move(bearing));
-
-                std::string shadowLocation = popts.locations.at(PuckImageType::pitShadow).fileLocation + "/"+popts.locations.at(PuckImageType::pitShadow).fileName;
-                std::string shadowName = popts.locations.at(PuckImageType::pitShadow).fileName;
-                std::unique_ptr<mbgl::style::Image> shadow = std::make_unique<mbgl::style::Image>(shadowName, mbgl::decodeImage(mbgl::util::read_file(shadowLocation)), 1.0f);
-                style_->addImage(std::move(shadow));
-
-                std::string topLocation = popts.locations.at(PuckImageType::pitTop).fileLocation + "/"+popts.locations.at(PuckImageType::pitTop).fileName;
-                std::string topName = popts.locations.at(PuckImageType::pitTop).fileName;
-                std::unique_ptr<mbgl::style::Image> top = std::make_unique<mbgl::style::Image>(topName, mbgl::decodeImage(mbgl::util::read_file(topLocation)), 1.0f);
-                style_->addImage(std::move(top));
-
-                //add puck image expression to the layer
-                puckLayer->setBearingImage(mbgl::style::expression::Image(bearingName));
-                puckLayer->setShadowImage(mbgl::style::expression::Image(shadowName));
-                puckLayer->setTopImage(mbgl::style::expression::Image(topName));
-
-                //add the puck layer to the style
-                style_->addLayer(std::move(puckLayer));
+            //add the puck images to the style
+            const PuckOptions& popts = puckMap_[activePuckID_].getPuckOptions();
+            std::string assetLocation = popts.locations.at(PuckImageType::pitBearing).fileLocation;
+            if(!assetLocation.empty()) {
+                if(assetLocation.back() != '/') {
+                    assetLocation += '/';
+                }
             }
+            std::string bearingLocation =  assetLocation + popts.locations.at(PuckImageType::pitBearing).fileName;
+            std::string bearingName = popts.locations.at(PuckImageType::pitBearing).fileName;
+            std::unique_ptr<mbgl::style::Image> bearing = std::make_unique<mbgl::style::Image>(bearingName, mbgl::decodeImage(mbgl::util::read_file(bearingLocation)), 1.0f);
+            style_->addImage(std::move(bearing));
 
-            //set the location of the puck
-            if(activePuckID_.isValid()) {
+            std::string shadowLocation = assetLocation + popts.locations.at(PuckImageType::pitShadow).fileName;
+            std::string shadowName = popts.locations.at(PuckImageType::pitShadow).fileName;
+            std::unique_ptr<mbgl::style::Image> shadow = std::make_unique<mbgl::style::Image>(shadowName, mbgl::decodeImage(mbgl::util::read_file(shadowLocation)), 1.0f);
+            style_->addImage(std::move(shadow));
 
-                const auto& toArray = [](const mbgl::LatLng &crd) ->std::array<double, 3> {
-                    return {crd.latitude(), crd.longitude(), 0};
-                };
+            std::string topLocation = assetLocation + popts.locations.at(PuckImageType::pitTop).fileName;
+            std::string topName = popts.locations.at(PuckImageType::pitTop).fileName;
+            std::unique_ptr<mbgl::style::Image> top = std::make_unique<mbgl::style::Image>(topName, mbgl::decodeImage(mbgl::util::read_file(topLocation)), 1.0f);
+            style_->addImage(std::move(top));
 
-                mbgl::style::LocationIndicatorLayer* locationLayer = static_cast<LocationIndicatorLayer*>(style_->getLayer(PUCK_LAYER_ID));
-                mbgl::LatLng mapCenter = {0.0, 0.0};
-                locationLayer->setLocation(toArray(mapCenter));
-            }
+            //add puck image expression to the layer
+            puckLayer->setBearingImage(mbgl::style::expression::Image(bearingName));
+            puckLayer->setShadowImage(mbgl::style::expression::Image(shadowName));
+            puckLayer->setTopImage(mbgl::style::expression::Image(topName));
 
-            puckDirty_ = false;
+            //add the puck layer to the style
+            style_->addLayer(std::move(puckLayer));
         }
 
-        dirty_ = false;
+
+        puckDirty_ = false;
     }
 }
 
@@ -431,8 +444,12 @@ bool RouteManager::puckSetVisible(const PuckID& puckID, bool onOff) {
     assert(puckID.isValid() && "invalid puck ID");
     if(puckID.isValid() && puckMap_.find(puckID) != puckMap_.end()) {
         puckMap_.at(puckID).setVisible(onOff);
-        //TODO: handle in finalize
-        puckDirty_ = true;
+
+        mbgl::style::LocationIndicatorLayer* locationLayer = static_cast<style::LocationIndicatorLayer*>(style_->getLayer(PUCK_LAYER_ID));
+        if(locationLayer) {
+            mbgl::style::VisibilityType visibility = onOff ? mbgl::style::VisibilityType::Visible : mbgl::style::VisibilityType::None;
+            locationLayer->setVisibility(mbgl::style::VisibilityType(visibility));
+        }
     }
 
     return false;

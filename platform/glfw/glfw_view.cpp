@@ -398,6 +398,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 mbgl::AnimationOptions animationOptions(mbgl::Seconds(10));
                 view->map->flyTo(cameraOptions, animationOptions);
                 nextPlace = nextPlace % places.size();
+                nextPlace = nextPlace % places.size();
             } break;
             case GLFW_KEY_R: {
                 view->show3DExtrusions = true;
@@ -591,7 +592,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 view->decrementRouteProgress();
                 break;
             case GLFW_KEY_8:
-
+                view->setPuckVisibile();
                 break;
             case GLFW_KEY_9:
                 view->addRandomShapeAnnotations(100);
@@ -847,8 +848,9 @@ void GLFWView::decrementRouteProgress() {
 }
 
 void GLFWView::setPuckVisibile() {
-    if(puckID_.isValid()) {
+    if(!puckID_.isValid()) {
         mbgl::route::PuckOptions popts;
+
         popts.locations[mbgl::route::PuckImageType::pitBearing].fileLocation = mbglPuckAssetsPath;
         popts.locations[mbgl::route::PuckImageType::pitBearing].fileName = "puck.png";
 
@@ -863,8 +865,12 @@ void GLFWView::setPuckVisibile() {
         rmptr_->puckSetActive(puckID_);
         const RouteID& firstRouteID = routeList_.begin()->first;
         rmptr_->puckSetRoute(firstRouteID);
-        rmptr_->puckSetVisible(puckID_, true);
+
+        //finalize after setting the puck is active
         rmptr_->finalize();
+
+        //finalize the puck before we can set it visible or not, else the layer is not in the style.
+        rmptr_->puckSetVisible(puckID_, true);
     }
 }
 
