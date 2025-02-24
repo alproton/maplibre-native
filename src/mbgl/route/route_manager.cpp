@@ -15,6 +15,8 @@
 #include <mbgl/style/expression/compound_expression.hpp>
 #include <mbgl/style/expression/type.hpp>
 #include <mbgl/style/expression/dsl.hpp>
+#include <mbgl/style/layers/location_indicator_layer.hpp>
+#include <mbgl/util/io.hpp>
 
 namespace mbgl {
 namespace route {
@@ -23,6 +25,8 @@ const std::string RouteManager::BASE_ROUTE_LAYER = "base_route_layer_";
 const std::string RouteManager::ACTIVE_ROUTE_LAYER = "active_route_layer_";
 const std::string RouteManager::GEOJSON_BASE_ROUTE_SOURCE_ID = "base_route_geojson_source_";
 const std::string RouteManager::GEOJSON_ACTIVE_ROUTE_SOURCE_ID = "active_route_geojson_source_";
+const std::string RouteManager::PUCK_LAYER_ID = "puck_layer";
+
 std::stringstream RouteManager::ss_;
 
 RouteManager::RouteManager()
@@ -309,10 +313,139 @@ void RouteManager::finalize() {
             }
         }
 
+        //create the layer for the puck
+        if(puckDirty_) {
+            if(style_->getLayer(PUCK_LAYER_ID) == nullptr && activePuckID_.isValid()) {
+
+                const auto& premultiply = [](mbgl::Color c)-> mbgl::Color {
+                    c.r *= c.a;
+                    c.g *= c.a;
+                    c.b *= c.a;
+                    return c;
+                };
+
+
+                auto puckLayer = std::make_unique<mbgl::style::LocationIndicatorLayer>(PUCK_LAYER_ID);
+                puckLayer->setLocationTransition(mbgl::style::TransitionOptions(mbgl::Duration::zero(),mbgl::Duration::zero()));
+
+                puckLayer->setAccuracyRadius(50);
+                puckLayer->setAccuracyRadiusColor(
+                    premultiply(mbgl::Color{0.0f, 1.0f, 0.0f, 0.2f})); // Note: these must be fed premultiplied
+
+                puckLayer->setBearingTransition(mbgl::style::TransitionOptions(mbgl::Duration::zero(), mbgl::Duration::zero()));
+                puckLayer->setBearing(mbgl::style::Rotation(0.0));
+                puckLayer->setAccuracyRadiusBorderColor(premultiply(mbgl::Color{0.0f, 1.0f, 0.2f, 0.4f}));
+                puckLayer->setTopImageSize(0.18f);
+                puckLayer->setBearingImageSize(0.26f);
+                puckLayer->setShadowImageSize(0.2f);
+                puckLayer->setImageTiltDisplacement(7.0f); // set to 0 for a "flat" puck
+                puckLayer->setPerspectiveCompensation(0.9f);
+
+                //add the puck images to the style
+                const PuckOptions& popts = puckMap_[activePuckID_].getPuckOptions();
+                std::string bearingLocation = popts.locations.at(PuckImageType::pitBearing).fileLocation + "/"+popts.locations.at(PuckImageType::pitBearing).fileName;
+                std::string bearingName = popts.locations.at(PuckImageType::pitBearing).fileName;
+                std::unique_ptr<mbgl::style::Image> bearing = std::make_unique<mbgl::style::Image>(bearingName, mbgl::decodeImage(mbgl::util::read_file(bearingLocation)), 1.0f);
+                style_->addImage(std::move(bearing));
+
+                std::string shadowLocation = popts.locations.at(PuckImageType::pitShadow).fileLocation + "/"+popts.locations.at(PuckImageType::pitShadow).fileName;
+                std::string shadowName = popts.locations.at(PuckImageType::pitShadow).fileName;
+                std::unique_ptr<mbgl::style::Image> shadow = std::make_unique<mbgl::style::Image>(shadowName, mbgl::decodeImage(mbgl::util::read_file(shadowLocation)), 1.0f);
+                style_->addImage(std::move(shadow));
+
+                std::string topLocation = popts.locations.at(PuckImageType::pitTop).fileLocation + "/"+popts.locations.at(PuckImageType::pitTop).fileName;
+                std::string topName = popts.locations.at(PuckImageType::pitTop).fileName;
+                std::unique_ptr<mbgl::style::Image> top = std::make_unique<mbgl::style::Image>(topName, mbgl::decodeImage(mbgl::util::read_file(topLocation)), 1.0f);
+                style_->addImage(std::move(top));
+
+                //add puck image expression to the layer
+                puckLayer->setBearingImage(mbgl::style::expression::Image(bearingName));
+                puckLayer->setShadowImage(mbgl::style::expression::Image(shadowName));
+                puckLayer->setTopImage(mbgl::style::expression::Image(topName));
+
+                //add the puck layer to the style
+                style_->addLayer(std::move(puckLayer));
+            }
+
+            //set the location of the puck
+            if(activePuckID_.isValid()) {
+
+                const auto& toArray = [](const mbgl::LatLng &crd) ->std::array<double, 3> {
+                    return {crd.latitude(), crd.longitude(), 0};
+                };
+
+                mbgl::style::LocationIndicatorLayer* locationLayer = static_cast<LocationIndicatorLayer*>(style_->getLayer(PUCK_LAYER_ID));
+                mbgl::LatLng mapCenter = {0.0, 0.0};
+                locationLayer->setLocation(toArray(mapCenter));
+            }
+
+            puckDirty_ = false;
+        }
+
         dirty_ = false;
     }
 }
 
+void RouteManager::puckSetActive(const PuckID& puckID) {
+    activePuckID_ = puckID;
+}
+
+PuckID RouteManager::puckCreate(const PuckOptions& popts) {
+    PuckID pid;
+    bool success = puckIDpool_.CreateID((pid.id));
+    if (success && pid.isValid()) {
+        Puck puck(popts);
+        puckMap_[pid] = puck;
+        stats_.numPucks++;
+    }
+
+    return pid;
+}
+
+bool RouteManager::puckSetRoute(const RouteID& routeID) {
+    assert(routeID.isValid() && "invalid route ID");
+    if(routeID.isValid()) {
+        routePuck_ = std::make_pair(routeID, activePuckID_);
+        puckDirty_ = true;
+        return true;
+    }
+
+    return false;
+}
+
+bool RouteManager::puckDispose(const PuckID& puckID) {
+    assert(puckID.isValid() && "invalid puck ID");
+    if(puckID.isValid() && puckMap_.find(puckID) != puckMap_.end()) {
+        puckMap_.erase(puckID);
+
+        //TODO: remove layer from style,
+        //TODO: remove puck images from style
+
+        return true;
+    }
+
+    return false;
+}
+
+bool RouteManager::puckSetVisible(const PuckID& puckID, bool onOff) {
+    assert(puckID.isValid() && "invalid puck ID");
+    if(puckID.isValid() && puckMap_.find(puckID) != puckMap_.end()) {
+        puckMap_.at(puckID).setVisible(onOff);
+        //TODO: handle in finalize
+        puckDirty_ = true;
+    }
+
+    return false;
+}
+
+RouteID RouteManager::puckGetRoute() const {
+    RouteID routeID;
+    if(activePuckID_.isValid() && routePuck_.second == activePuckID_) {
+        routeID = routePuck_.first;
+    }
+
+    return routeID;
+}
 
 RouteManager::~RouteManager() {}
 

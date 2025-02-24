@@ -21,11 +21,13 @@ class Route {
     public:
     Route() = default;
     Route(const LineString<double>& geometry);
+    // Route(const LineString<double>& geometry);
     void routeSegmentCreate(const RouteSegmentOptions&);
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;
     bool routeSetProgress(const double t);
+    mbgl::Point<double> routeGetCurrentProgressPoint() const;
     double getTotalDistance() const;
     mbgl::LineString<double> getGeometry() const;
     bool hasRouteSegments() const;
@@ -47,6 +49,7 @@ private:
     std::map<double, mbgl::Color> segGradient_;
     double totalDistance_ = 0.0;
     mbgl::Color progressColor_ = Color(0.0, 0.0, 0.0, 0.0);
+    mbgl::Point<double> currentTraversedPoint_;
 };
 
 } // namespace gfx

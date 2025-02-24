@@ -40,7 +40,6 @@
 #include <mapbox/cheap_ruler.hpp>
 #include <mapbox/geometry.hpp>
 #include <mapbox/geojson.hpp>
-
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -54,7 +53,7 @@
 #endif
 
 #define GL_GLEXT_PROTOTYPES
-#include "mbgl/route/route_manager.hpp"
+#include <mbgl/route/route_manager.hpp>
 
 #include <GLFW/glfw3.h>
 
@@ -592,7 +591,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 view->decrementRouteProgress();
                 break;
             case GLFW_KEY_8:
-                view->addRandomShapeAnnotations(10);
+
                 break;
             case GLFW_KEY_9:
                 view->addRandomShapeAnnotations(100);
@@ -847,6 +846,27 @@ void GLFWView::decrementRouteProgress() {
     rmptr_->finalize();
 }
 
+void GLFWView::setPuckVisibile() {
+    if(puckID_.isValid()) {
+        mbgl::route::PuckOptions popts;
+        popts.locations[mbgl::route::PuckImageType::pitBearing].fileLocation = mbglPuckAssetsPath;
+        popts.locations[mbgl::route::PuckImageType::pitBearing].fileName = "puck.png";
+
+        popts.locations[mbgl::route::PuckImageType::pitShadow].fileLocation = mbglPuckAssetsPath;
+        popts.locations[mbgl::route::PuckImageType::pitShadow].fileName = "puck_shadow.png";
+
+        popts.locations[mbgl::route::PuckImageType::pitTop].fileLocation = mbglPuckAssetsPath;
+        popts.locations[mbgl::route::PuckImageType::pitTop].fileName = "puck_hat.png";
+
+        puckID_ = rmptr_->puckCreate(popts);
+
+        rmptr_->puckSetActive(puckID_);
+        const RouteID& firstRouteID = routeList_.begin()->first;
+        rmptr_->puckSetRoute(firstRouteID);
+        rmptr_->puckSetVisible(puckID_, true);
+        rmptr_->finalize();
+    }
+}
 
 void GLFWView::removeTrafficViz() {
     for(const auto& iter : routeList_) {

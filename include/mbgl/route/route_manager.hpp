@@ -3,6 +3,7 @@
 #include <mbgl/route/id_types.hpp>
 #include <mbgl/route/route_segment.hpp>
 #include <mbgl/route/id_pool.hpp>
+#include <mbgl/route/puck.hpp>
 #include <unordered_map>
 #include <string>
 
@@ -27,7 +28,9 @@ struct RouteMgrStats {
     uint32_t numFinalizedInvoked = 0;
     uint32_t numRoutes = 0;
     uint32_t numRouteSegments = 0;
+    uint32_t numPucks = 0;
 };
+
 
 
 /***
@@ -51,6 +54,13 @@ public:
   void routeClearSegments(const RouteID&);
   bool routeDispose(const RouteID&);
   bool hasRoutes() const;
+
+  PuckID puckCreate(const PuckOptions& popts);
+  bool puckSetRoute(const RouteID& routeID);
+  void puckSetActive(const PuckID& puckID);
+  bool puckDispose(const PuckID& puckID);
+  bool puckSetVisible(const PuckID& puckID, bool onOff);
+  RouteID puckGetRoute() const;
   void finalize();
 
   ~RouteManager();
@@ -59,10 +69,12 @@ private:
   static const std::string ACTIVE_ROUTE_LAYER;
   static const std::string GEOJSON_BASE_ROUTE_SOURCE_ID;
   static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
+  static const std::string PUCK_LAYER_ID;
   static std::stringstream ss_;
 
   RouteMgrStats stats_;
   gfx::IDpool routeIDpool_ = gfx::IDpool(100);
+  gfx::IDpool puckIDpool_ = gfx::IDpool(100);
   std::string getActiveRouteLayerName(const RouteID& routeID) const;
   std::string getBaseRouteLayerName(const RouteID& routeID) const;
   std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
@@ -71,9 +83,13 @@ private:
   //TODO: change this to weak reference
   style::Style* style_ = nullptr;
   std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
+  std::unordered_map<PuckID, Puck, IDHasher<PuckID>> puckMap_;
+  std::pair<RouteID, PuckID> routePuck_;
+  PuckID activePuckID_;
   std::string layerBefore_;
   RouteCommonOptions routeOptions_;
   bool dirty_ = true;
+  bool puckDirty_ = false;
 };
 };
 

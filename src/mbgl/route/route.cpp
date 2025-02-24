@@ -10,7 +10,7 @@ namespace mbgl {
 namespace route {
 
 const double Route::EPSILON = 0.00001;
-
+    //build a vector of distances for each leg and the total distance
     Route::Route(const LineString<double>& geometry) : geometry_(geometry) {
         for(size_t i = 1; i < geometry_.size(); ++i) {
             mbgl::Point<double> a = geometry_[i];
@@ -76,6 +76,7 @@ const double Route::EPSILON = 0.00001;
                         continue;
                     }
 
+                    //lets leave out the gradient for the very first and last segments. we can determine those after this loop as to whether it may be route color or the segment color.
                     if((i == 0 && j == 0) || (i == segments_.size()-1 && j == segNormalizedPos.size()-1)) {
                         continue;
                     }
@@ -155,8 +156,13 @@ const double Route::EPSILON = 0.00001;
     bool Route::routeSetProgress(const double t) {
         progress_ = t;
         gradientDirty_ = true;
+        //TODO: calculate currentTraversedPoint_ here.
 
         return true;
+    }
+
+    mbgl::Point<double> Route::routeGetCurrentProgressPoint() const {
+        return currentTraversedPoint_;
     }
 
     uint32_t Route::getNumRouteSegments() const {

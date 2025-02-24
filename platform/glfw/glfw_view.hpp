@@ -121,6 +121,7 @@ private:
     void removeTrafficViz();
     void incrementRouteProgress();
     void decrementRouteProgress();
+    void setPuckVisibile();
 
     void cycleDebugOptions();
     void clearAnnotations();
@@ -163,6 +164,7 @@ private:
     };
     std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeList_;
     double routeProgress_ = 0.0;
+    PuckID puckID_;
 
     // Frame timer
     int frames = 0;
