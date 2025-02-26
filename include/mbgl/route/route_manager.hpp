@@ -20,6 +20,7 @@ struct RouteCommonOptions {
     Color innerColor = Color(0, 0, 1, 1);
     float outerWidth = 10;
     float innerWidth = 6;
+    double segTransitionEpsilon = 0.0001;
 };
 
 struct RouteMgrStats {
@@ -27,6 +28,8 @@ struct RouteMgrStats {
     uint32_t numRoutes = 0;
     uint32_t numRouteSegments = 0;
 };
+
+
 
 /***
  * A route manager manages construction, disposal and updating of one or more routes. It is the API facade and is 1:1
@@ -38,7 +41,6 @@ class RouteManager final {
 public:
     RouteManager();
     void setStyle(style::Style&);
-    void appendStats(const std::string& str);
     const std::string getStats() const;
     void clearStats();
     bool hasStyle() const;
@@ -61,19 +63,28 @@ private:
     static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
     static std::stringstream ss_;
 
+    enum class DirtyType {
+        dtRouteSegments,
+        dtRouteProgress,
+        dtRouteGeometry,
+        //TODO: may be route puck position
+    };
+
+    std::unordered_map<DirtyType, std::vector<RouteID>> dirtyRouteMap_;
+
     RouteMgrStats stats_;
     gfx::IDpool routeIDpool_ = gfx::IDpool(100);
     std::string getActiveRouteLayerName(const RouteID& routeID) const;
     std::string getBaseRouteLayerName(const RouteID& routeID) const;
     std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
+    void finalizeRoute(const RouteID& routeID, const DirtyType& dt);
 
     // TODO: change this to weak reference
     style::Style* style_ = nullptr;
     std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
     std::string layerBefore_;
     RouteCommonOptions routeOptions_;
-    bool dirty_ = true;
 };
 }; // namespace route
 

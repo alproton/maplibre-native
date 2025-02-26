@@ -30,14 +30,12 @@ public:
     bool hasRouteSegments() const;
     // Implement a visitor to visit the routes for gradient expressions
     bool routeSegmentsClear();
-    bool getGradientDirty() const;
-    void validateGradientDirty();
     Route& operator=(Route& other) noexcept;
     uint32_t getNumRouteSegments() const;
 
 private:
     std::map<double, mbgl::Color> applyProgressOnGradient();
-    bool gradientDirty_ = true;
+    // bool gradientDirty_ = true;
     double progress_ = 0.0;
     std::vector<double> segDistances_;
     std::vector<RouteSegment> segments_;
