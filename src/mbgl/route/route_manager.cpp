@@ -70,7 +70,7 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry) {
     if (success && rid.isValid()) {
         Route route(geometry);
         routeMap_[rid] = route;
-        stats_.numRouteSegments++;
+        stats_.numRoutes++;
         dirty_ = true;
     }
 
@@ -170,7 +170,11 @@ void RouteManager::appendStats(const std::string& str) {
     ss_ << str;
 }
 
-const std::string RouteManager::getStats() {
+const std::string RouteManager::getStats() const {
+    ss_<<"Num Routes: "<<stats_.numRoutes<<std::endl;
+    ss_<<"Num finalized invocations: "<<stats_.numFinalizedInvoked<<std::endl;
+    ss_<<"Num traffic zones: "<<stats_.numRouteSegments<<std::endl;
+
     return ss_.str();
 }
 

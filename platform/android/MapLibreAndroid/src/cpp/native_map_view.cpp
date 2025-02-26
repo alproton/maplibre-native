@@ -1400,6 +1400,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeProgressSet, "nativeRouteSetProgress"),
         METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
         METHOD(&NativeMapView::routesSetLayerBefore, "nativeRoutesSetLayerBefore"),
+        METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
         METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
 
 }
@@ -1420,6 +1421,21 @@ jint NativeMapView::routeCreate(JNIEnv& env, const jni::Object<mbgl::android::ge
     }
 
     return routeID.id;
+}
+
+jni::Local<jni::String> NativeMapView::routesGetStats(JNIEnv& env) {
+    std::string stats;
+    if(routeMgr) {
+        stats = routeMgr->getStats();
+    }
+
+    return jni::Make<jni::String>(env, stats);
+}
+
+void NativeMapView::routesClearStats(JNIEnv& env) {
+    if(routeMgr) {
+        routeMgr->clearStats();
+    }
 }
 
 void NativeMapView::routesSetLayerBefore(JNIEnv& env, const jni::String& layerBefore) {

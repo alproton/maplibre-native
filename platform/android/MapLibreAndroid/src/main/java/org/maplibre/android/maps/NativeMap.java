@@ -282,6 +282,10 @@ interface NativeMap {
 
   void setRoutesBeforeLayer(String beforeLayer);
 
+  String getRoutesStats();
+
+  void clearRoutesStats();
+
 
   //
   // Deprecated Annotations API

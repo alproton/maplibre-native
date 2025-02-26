@@ -38,9 +38,9 @@ class RouteManager final {
 public:
     RouteManager();
     void setStyle(style::Style&);
-    static void appendStats(const std::string& str);
-    static const std::string getStats();
-    static void clearStats();
+    void appendStats(const std::string& str);
+    const std::string getStats() const;
+    void clearStats();
     bool hasStyle() const;
     void setLayerBefore(const std::string& layerBefore);
     void setRouteCommonOptions(const RouteCommonOptions& ropts);

@@ -665,6 +665,9 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_7:
                     view->decrementRouteProgress();
                 break;
+                case GLFW_KEY_8:
+                    view->printRouteStats();
+                    break;
             }
         } else {
             switch (key) {
@@ -964,6 +967,13 @@ void GLFWView::disposeRoute() {
             routeList_.erase(routeID);
         }
         rmptr_->finalize();
+    }
+}
+
+void GLFWView::printRouteStats() {
+    if(rmptr_) {
+        std::cout<<"Route stats:"<<std::endl;
+        std::cout<<rmptr_->getStats()<<std::endl;
     }
 }
 

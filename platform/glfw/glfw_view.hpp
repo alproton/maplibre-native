@@ -121,6 +121,7 @@ private:
     void removeTrafficViz();
     void incrementRouteProgress();
     void decrementRouteProgress();
+    void printRouteStats();
 
     void cycleDebugOptions();
     void clearAnnotations();

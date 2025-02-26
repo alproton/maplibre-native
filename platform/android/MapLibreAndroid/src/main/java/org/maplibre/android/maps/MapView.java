@@ -456,8 +456,24 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     nativeMapView.clearRouteSegments(routeID);
   }
 
+  public void setRoutesBeforeLayer(String beforeLayer) {
+    nativeMapView.setRoutesBeforeLayer(beforeLayer);
+  }
+
+  public boolean createRouteSegment(RouteID routeID, RouteSegmentOptions rsopts) {
+    return nativeMapView.createRouteSegment(routeID, rsopts);
+  }
+
   public boolean finalizeRoutes() {
     return nativeMapView.finalizeRoutes();
+  }
+
+  public String getRoutesStats() {
+    return nativeMapView.getRoutesStats();
+  }
+
+  public void clearRoutesStats() {
+    nativeMapView.clearRoutesStats();
   }
 
   /**

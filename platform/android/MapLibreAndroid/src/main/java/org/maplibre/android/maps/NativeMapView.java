@@ -1177,6 +1177,16 @@ final class NativeMapView implements NativeMap {
     nativeRoutesSetLayerBefore(beforeLayer);
   }
 
+  @Override
+  public String getRoutesStats() {
+    return nativeRoutesGetStats();
+  }
+
+  @Override
+  public void clearRoutesStats() {
+    nativeRoutesClearStats();
+  }
+
   @NonNull
   @Override
   public RectF getDensityDependantRectangle(final RectF rectangle) {
@@ -1567,6 +1577,11 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   private native void nativeRoutesSetLayerBefore(String beforeLayer);
+
+  @Keep
+  private native String nativeRoutesGetStats();
+
+  @Keep native void nativeRoutesClearStats();
 
   @Keep
   private native void nativeOnLowMemory();

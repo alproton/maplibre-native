@@ -244,6 +244,10 @@ public:
 
     void routesSetLayerBefore(JNIEnv& env, const jni::String& str);
 
+    jni::Local<jni::String> routesGetStats(JNIEnv& env);
+
+    void routesClearStats(JNIEnv& env);
+
     jboolean routesFinalize(JNIEnv& env);
 
 
