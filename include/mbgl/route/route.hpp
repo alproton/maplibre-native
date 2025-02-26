@@ -19,7 +19,7 @@ class RouteSegment;
 class Route {
 public:
     Route() = default;
-    Route(const LineString<double>& geometry);
+    Route(const LineString<double>& geometry, double routeSegTransitionDist = 0.00001);
     void routeSegmentCreate(const RouteSegmentOptions&);
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
@@ -42,7 +42,9 @@ private:
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;
     double totalDistance_ = 0.0;
+    double routeSegTransitionDist_ = 0.00001;
     mbgl::Color progressColor_ = Color(0.0, 0.0, 0.0, 0.0);
+
 };
 
 } // namespace route

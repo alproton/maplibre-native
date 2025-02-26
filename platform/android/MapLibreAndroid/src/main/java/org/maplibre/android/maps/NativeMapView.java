@@ -1189,7 +1189,7 @@ final class NativeMapView implements NativeMap {
 
   @Override
   public void setRoutesCommonOptions(RouteCommonOptions ropts) {
-    nativeRoutesSetCommonOptions(ropts.outerColor, ropts.innerColor, ropts.outerWidth, ropts.innerWidth);
+    nativeRoutesSetCommonOptions(ropts.outerColor, ropts.innerColor, ropts.outerWidth, ropts.innerWidth, ropts.segmentTransitionDist);
   }
 
 
@@ -1591,7 +1591,7 @@ final class NativeMapView implements NativeMap {
 
   @Keep native void nativeRoutesClearStats();
 
-  @Keep native void nativeRoutesSetCommonOptions(int outerColor, int innerCollor, double outerWidth, double innerWidth);
+  @Keep native void nativeRoutesSetCommonOptions(int outerColor, int innerCollor, double outerWidth, double innerWidth, double segTransitionDist);
 
   //---------------------------------------------------------
 

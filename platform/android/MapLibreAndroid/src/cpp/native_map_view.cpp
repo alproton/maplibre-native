@@ -1510,9 +1510,9 @@ void NativeMapView::routesSetCommonOptions(JNIEnv& env, jint outerColor, jint in
         }
         ropts.outerWidth = outerWidth;
         ropts.innerWidth = innerWidth;
+        ropts.segTransitionEpsilon = segTransitionDist;
 
         routeMgr->setRouteCommonOptions(ropts);
-
     }
 }
 
