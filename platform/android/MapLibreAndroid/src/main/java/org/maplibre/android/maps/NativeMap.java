@@ -286,6 +286,7 @@ interface NativeMap {
 
   void clearRoutesStats();
 
+  void setRoutesCommonOptions(RouteCommonOptions ropts);
 
   //
   // Deprecated Annotations API

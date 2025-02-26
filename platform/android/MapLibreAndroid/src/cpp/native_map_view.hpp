@@ -231,7 +231,7 @@ public:
 
     void removeAnnotationIcon(JNIEnv&, const jni::String&);
 
-    //route APIs
+    //--------------- route APIs ---------------
     jint routeCreate(JNIEnv& env, const jni::Object<mbgl::android::geojson::LineString>& routeGeom);
 
     jboolean routeDispose(JNIEnv& env, jint routeID);
@@ -250,6 +250,9 @@ public:
 
     jboolean routesFinalize(JNIEnv& env);
 
+    void routesSetCommonOptions(JNIEnv& env, jint outerColor, jint innerColor, jdouble outerWidth, jdouble innerWidth, jdouble segTransitionDist);
+
+    //------------------------------------------------
 
     jni::jdouble getTopOffsetPixelsForAnnotationSymbol(JNIEnv&, const jni::String&);
 

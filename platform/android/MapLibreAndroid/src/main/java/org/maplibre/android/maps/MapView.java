@@ -476,6 +476,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     nativeMapView.clearRoutesStats();
   }
 
+  public void setRoutesCommonOptions(RouteCommonOptions commonOptions) {
+    nativeMapView.setRoutesCommonOptions(commonOptions);
+  }
+
   /**
    * Queue a runnable to be executed on the map renderer thread.
    *

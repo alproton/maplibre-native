@@ -38,6 +38,7 @@
 // C++ -> Java conversion
 #include "conversion/conversion.hpp"
 #include "conversion/collection.hpp"
+#include "conversion/color.hpp"
 #include "style/conversion/filter.hpp"
 #include "geojson/feature.hpp"
 
@@ -1402,6 +1403,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routesSetLayerBefore, "nativeRoutesSetLayerBefore"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
         METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
+        METHOD(&NativeMapView::routesSetCommonOptions, "nativeRoutesSetCommonOptions");
 
 }
 
@@ -1491,6 +1493,27 @@ jboolean NativeMapView::routesFinalize(JNIEnv& env) {
     }
 
     return false;
+}
+
+void NativeMapView::routesSetCommonOptions(JNIEnv& env, jint outerColor, jint innerColor, jdouble outerWidth, jdouble innerWidth, jdouble segTransitionDist) {
+    using namespace mbgl::android::conversion;
+    if(routeMgr) {
+        route::RouteCommonOptions ropts;
+        Converter<mbgl::Color, int> colorConverter;
+        Result<Color> outerColorRes = colorConverter(env, outerColor);
+        Result<Color> innerColorRes = colorConverter(env, innerColor);
+        if(outerColorRes) {
+            ropts.outerColor = *outerColorRes;
+        }
+        if(innerColorRes) {
+            ropts.innerColor = *innerColorRes;
+        }
+        ropts.outerWidth = outerWidth;
+        ropts.innerWidth = innerWidth;
+
+        routeMgr->setRouteCommonOptions(ropts);
+
+    }
 }
 
 

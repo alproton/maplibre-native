@@ -35,8 +35,6 @@ bool Route::hasRouteSegments() const {
 void Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
     RouteSegment routeSeg(rsegopts, geometry_, segDistances_, totalDistance_);
     segments_.push_back(routeSeg);
-
-    gradientDirty_ = true;
 }
 
 mbgl::LineString<double> Route::getGeometry() const {
@@ -153,7 +151,6 @@ std::map<double, mbgl::Color> Route::applyProgressOnGradient() {
 
 bool Route::routeSetProgress(const double t) {
     progress_ = t;
-    gradientDirty_ = true;
 
     return true;
 }
@@ -172,14 +169,6 @@ bool Route::routeSegmentsClear() {
     return true;
 }
 
-bool Route::getGradientDirty() const {
-    return gradientDirty_;
-}
-
-void Route::validateGradientDirty() {
-    gradientDirty_ = false;
-}
-
 Route& Route::operator=(Route& other) noexcept {
     if (this == &other) {
         return *this;
@@ -187,7 +176,6 @@ Route& Route::operator=(Route& other) noexcept {
     segDistances_ = other.segDistances_;
     segments_ = other.segments_;
     geometry_ = other.geometry_;
-    gradientDirty_ = other.gradientDirty_;
     totalDistance_ = other.totalDistance_;
     segGradient_ = other.segGradient_;
 

@@ -1187,6 +1187,13 @@ final class NativeMapView implements NativeMap {
     nativeRoutesClearStats();
   }
 
+  @Override
+  public void setRoutesCommonOptions(RouteCommonOptions ropts) {
+    nativeRoutesSetCommonOptions(ropts.outerColor, ropts.innerColor, ropts.outerWidth, ropts.innerWidth);
+  }
+
+
+
   @NonNull
   @Override
   public RectF getDensityDependantRectangle(final RectF rectangle) {
@@ -1557,6 +1564,7 @@ final class NativeMapView implements NativeMap {
   private native void nativeSetVisibleCoordinateBounds(LatLng[] coordinates, RectF padding,
                                                        double direction, long duration);
 
+  //---------------------Native route APIs---------------------
   @Keep
   private native int nativeRouteCreate(LineString routeGeometry);
 
@@ -1582,6 +1590,10 @@ final class NativeMapView implements NativeMap {
   private native String nativeRoutesGetStats();
 
   @Keep native void nativeRoutesClearStats();
+
+  @Keep native void nativeRoutesSetCommonOptions(int outerColor, int innerCollor, double outerWidth, double innerWidth);
+
+  //---------------------------------------------------------
 
   @Keep
   private native void nativeOnLowMemory();
