@@ -15,6 +15,8 @@
 #include <mbgl/style/expression/compound_expression.hpp>
 #include <mbgl/style/expression/type.hpp>
 #include <mbgl/style/expression/dsl.hpp>
+#include <chrono>
+#include <boost/geometry/algorithms/detail/overlay/get_turn_info.hpp>
 
 namespace mbgl {
 namespace route {
@@ -26,6 +28,12 @@ const std::string RouteManager::GEOJSON_ACTIVE_ROUTE_SOURCE_ID = "active_route_g
 std::stringstream RouteManager::ss_;
 
 namespace {
+std::string formatElapsedTime(long long value) {
+    std::stringstream ss;
+    ss.imbue(std::locale("")); // Use the user's default locale for number formatting
+    ss << std::fixed << value;
+    return ss.str();
+}
 }
 
 RouteManager::RouteManager()
@@ -176,6 +184,8 @@ const std::string RouteManager::getStats() const {
     ss_<<"Num Routes: "<<stats_.numRoutes<<std::endl;
     ss_<<"Num finalized invocations: "<<stats_.numFinalizedInvoked<<std::endl;
     ss_<<"Num traffic zones: "<<stats_.numRouteSegments<<std::endl;
+    ss_<<"InconsistentAPIusage: "<<std::boolalpha<<stats_.inconsistentAPIusage<<std::endl;
+    ss_<<"Routes finilize elapsed: "<<stats_.finalizeMillis<<std::endl;
 
     return ss_.str();
 }
@@ -189,35 +199,39 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
     using namespace mbgl::style;
     using namespace mbgl::style::expression;
 
-    const auto& createLayer = [&](const std::string& sourceID, const std::string& layerID, const Route& route) {
-        if (style_->getSource(sourceID) == nullptr) {
-            mapbox::geojsonvt::feature_collection featureCollection;
-            const auto& geom = route.getGeometry();
-            featureCollection.emplace_back(geom);
-
-            GeoJSONOptions opts;
-            opts.lineMetrics = true;
-            std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(
-                sourceID, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts)));
-            geoJSONsrc->setGeoJSON(featureCollection);
-
-            style_->addSource(std::move(geoJSONsrc));
+    const auto& createLayer = [&](const std::string& sourceID, const std::string& layerID, const Route& route, const Color& color, int width) {
+        if (style_->getSource(sourceID) != nullptr) {
+            return false;
         }
+        mapbox::geojsonvt::feature_collection featureCollection;
+        const auto& geom = route.getGeometry();
+        featureCollection.emplace_back(geom);
+
+        GeoJSONOptions opts;
+        opts.lineMetrics = true;
+        std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(
+            sourceID, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts)));
+        geoJSONsrc->setGeoJSON(featureCollection);
+
+        style_->addSource(std::move(geoJSONsrc));
 
         // create the layers for each route
-        std::unique_ptr<style::LineLayer> baselayer = std::make_unique<style::LineLayer>(layerID, sourceID);
-        if (style_->getLayer(layerID) == nullptr) {
-            baselayer->setLineColor(routeOptions_.outerColor);
-            baselayer->setLineCap(LineCapType::Round);
-            baselayer->setLineJoin(LineJoinType::Round);
-            baselayer->setLineWidth(routeOptions_.outerWidth);
-
-            if (layerBefore_.empty()) {
-                style_->addLayer(std::move(baselayer));
-            } else {
-                style_->addLayer(std::move(baselayer), layerBefore_);
-            }
+        std::unique_ptr<style::LineLayer> layer = std::make_unique<style::LineLayer>(layerID, sourceID);
+        if (style_->getLayer(layerID) != nullptr) {
+            return false;
         }
+        layer->setLineColor(color);
+        layer->setLineCap(LineCapType::Round);
+        layer->setLineJoin(LineJoinType::Round);
+        layer->setLineWidth(width);
+
+        if (layerBefore_.empty()) {
+            style_->addLayer(std::move(layer));
+        } else {
+            style_->addLayer(std::move(layer), layerBefore_);
+        }
+
+        return true;
     };
 
     const auto& createGradientExpression = [](const std::map<double, mbgl::Color>& gradient) {
@@ -270,10 +284,14 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
         if(createRouteLayers) {
             //create layer for casing/base
-            createLayer(baseLayerName, baseGeoJSONSourceName, route);
+            if(!createLayer(baseGeoJSONSourceName, baseLayerName, route, routeOptions_.outerColor, routeOptions_.outerWidth)) {
+                stats_.inconsistentAPIusage = true;
+            }
 
             //create layer for active/blue
-            createLayer(activeGeoJSONSourceName, activeLayerName, route);
+            if(!createLayer(activeGeoJSONSourceName, activeLayerName, route, routeOptions_.innerColor, routeOptions_.innerWidth)) {
+                stats_.inconsistentAPIusage = true;
+            }
         }
 
         // Create the gradient colors expressions and set on the active layer
@@ -306,18 +324,25 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 void RouteManager::finalize() {
     using namespace mbgl::style;
     using namespace mbgl::style::expression;
+    using namespace std::chrono;
+
     stats_.numFinalizedInvoked++;
-    assert(style_ != nullptr);
-    if (style_ != nullptr) {
-        // create the layers and geojsonsource for base route
-        for (const auto& iter : dirtyRouteMap_) {
-            DirtyType dirtyType = iter.first;
-            for(const auto& routeID : iter.second) {
-                finalizeRoute(routeID, dirtyType);
+    auto startclock = high_resolution_clock::now();
+    {
+        assert(style_ != nullptr);
+        if (style_ != nullptr) {
+            // create the layers and geojsonsource for base route
+            for (const auto& iter : dirtyRouteMap_) {
+                DirtyType dirtyType = iter.first;
+                for(const auto& routeID : iter.second) {
+                    finalizeRoute(routeID, dirtyType);
+                }
             }
+            dirtyRouteMap_.clear();
         }
-        dirtyRouteMap_.clear();
     }
+    auto stopclock = high_resolution_clock::now();
+    stats_.finalizeMillis = formatElapsedTime(duration_cast<milliseconds>(stopclock - startclock).count());
 }
 
 RouteManager::~RouteManager() {}

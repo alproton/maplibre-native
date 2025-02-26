@@ -27,6 +27,8 @@ struct RouteMgrStats {
     uint32_t numFinalizedInvoked = 0;
     uint32_t numRoutes = 0;
     uint32_t numRouteSegments = 0;
+    std::string finalizeMillis;
+    bool inconsistentAPIusage = false;
 };
 
 

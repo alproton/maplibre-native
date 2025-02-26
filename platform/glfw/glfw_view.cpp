@@ -927,7 +927,71 @@ void GLFWView::addTrafficViz() {
 }
 
 void GLFWView::modifyTrafficViz() {
-//TODO
+    const auto& getColorTable = [](uint32_t numColors)-> std::vector<mbgl::Color> {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<> distrib(0.0, 1.0);
+        std::vector<mbgl::Color> colors;
+        for(uint32_t i = 0; i < numColors; i++) {
+            double rand_r = distrib(gen);
+            double rand_g = distrib(gen);
+            double rand_b = distrib(gen);
+            mbgl::Color color(rand_r, rand_g, rand_b, 1.0);
+            // mbgl::Color color(1.0, 0.0, 0.0, 1.0);
+            colors.push_back(color);
+        }
+        return colors;
+    };
+
+
+    for(const auto& iter : routeList_) {
+        const auto& routeID = iter.first;
+        const auto& route = iter.second;
+        rmptr_->routeClearSegments(routeID);
+
+        std::vector<mbgl::Color> colors = getColorTable(route.numTrafficZones);
+
+        size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
+        size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
+
+        auto& routePts = route.points;
+        std::vector<mbgl::LineString<double>> trafficBlks;
+        mbgl::LineString<double> currTrafficBlk;
+        if(route.resolution > route.numTrafficZones) {
+            for(size_t i = 1; i < routePts.size()-1; i++) {
+                if(i % blockSize == 0 && !currTrafficBlk.empty()) {
+                    trafficBlks.push_back(currTrafficBlk);
+                    currTrafficBlk.clear();
+                }
+
+                if(i % blockSize < innerBlockSize) {
+                    mbgl::Point<double> non_aligned_pt;
+                    if(i == 0 || i == routePts.size()-1) {
+                        non_aligned_pt = routePts.at(i);
+                    } else {
+                        mbgl::Point<double> prevpt = routePts.at(i - 1);
+                        mbgl::Point<double> currpt = routePts.at(i);
+                        non_aligned_pt = (currpt - prevpt) * 0.5;
+                    }
+                    currTrafficBlk.push_back(non_aligned_pt);
+                }
+            }
+        } else {
+            std::cout<<"need to have more number of sample points in the route!"<<std::endl;
+            exit(1);
+        }
+        if(!currTrafficBlk.empty()) { trafficBlks.push_back(currTrafficBlk);}
+
+        for(size_t i = 0; i < trafficBlks.size(); i++) {
+            mbgl::route::RouteSegmentOptions rsegopts;
+            rsegopts.color = colors[i];
+            rsegopts.geometry = trafficBlks[i];
+            rsegopts.sortOrder = i;
+
+            rmptr_->routeSegmentCreate(routeID, rsegopts);
+        }
+    }
+
 }
 
 void GLFWView::incrementRouteProgress() {
