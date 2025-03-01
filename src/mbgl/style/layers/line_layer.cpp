@@ -439,6 +439,33 @@ TransitionOptions LineLayer::getLineWidthTransition() const {
     return impl().paint.template get<LineWidth>().options;
 }
 
+void LineLayer::setGradientLineClip(const PropertyValue<float>& value) {
+    if(value == getGradientLineClip()) {
+        return;
+    }
+
+    auto impl_ = mutableImpl();
+    impl_->paint.template get<LineClip>().value = value;
+    baseImpl = std::move(impl_);
+    observer->onLayerChanged(*this);
+}
+
+const PropertyValue<float>& LineLayer::getGradientLineClip() const {
+    return impl().paint.template get<LineClip>().value;
+}
+
+// void LineLayer::setGradientLineFilter(const PropertyValue<LineGradientFilterType>& value) {
+//     if (value == getGradientLineFilter()) return;
+//     auto impl_ = mutableImpl();
+//     impl_->layout.get<LineGradientFilter>() = value;
+//     baseImpl = std::move(impl_);
+//     observer->onLayerChanged(*this);
+// }
+//
+// const PropertyValue<LineGradientFilterType>& LineLayer::getGradientLineFilter() const {
+//     return impl().layout.get<LineGradientFilter>();
+// }
+
 using namespace conversion;
 
 namespace {
@@ -472,6 +499,7 @@ enum class Property : uint8_t {
     LineJoin,
     LineMiterLimit,
     LineRoundLimit,
+    // LineGradientFilter,
     LineSortKey,
 };
 
@@ -507,6 +535,7 @@ constexpr const auto layerProperties = mapbox::eternal::hash_map<mapbox::eternal
      {"line-join", toUint8(Property::LineJoin)},
      {"line-miter-limit", toUint8(Property::LineMiterLimit)},
      {"line-round-limit", toUint8(Property::LineRoundLimit)},
+     // {"line-gradient-filter", toUint8(Property::LineGradientFilter)},
      {"line-sort-key", toUint8(Property::LineSortKey)}});
 
 StyleProperty getLayerProperty(const LineLayer& layer, Property property) {
@@ -563,6 +592,8 @@ StyleProperty getLayerProperty(const LineLayer& layer, Property property) {
             return makeStyleProperty(layer.getLineMiterLimit());
         case Property::LineRoundLimit:
             return makeStyleProperty(layer.getLineRoundLimit());
+        // case Property::LineGradientFilter:
+        //     return makeStyleProperty(layer.getGradientLineFilter());
         case Property::LineSortKey:
             return makeStyleProperty(layer.getLineSortKey());
     }

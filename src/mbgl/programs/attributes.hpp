@@ -39,6 +39,7 @@ MBGL_DEFINE_ATTRIBUTE(float, 2, outline_color);
 MBGL_DEFINE_ATTRIBUTE(float, 1, opacity);
 MBGL_DEFINE_ATTRIBUTE(float, 1, stroke_opacity);
 MBGL_DEFINE_ATTRIBUTE(float, 1, blur);
+MBGL_DEFINE_ATTRIBUTE(float, 1, line_clip);
 MBGL_DEFINE_ATTRIBUTE(float, 1, radius);
 MBGL_DEFINE_ATTRIBUTE(float, 1, width);
 MBGL_DEFINE_ATTRIBUTE(float, 1, floorwidth);

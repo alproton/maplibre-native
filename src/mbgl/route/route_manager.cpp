@@ -157,7 +157,7 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const double progres
     double validProgress = std::clamp(progress, 0.0, 1.0);
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        success = routeMap_[routeID].routeSetProgress(validProgress);
+        routeMap_[routeID].routeSetProgress(validProgress);
     }
     dirtyRouteMap_[DirtyType::dtRouteProgress].push_back(routeID);
 
@@ -260,17 +260,24 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
     if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
 
-        bool createRouteLayers = false;
-        bool createGradients = false;
+        bool updateRouteLayers = false;
+        bool updateGradients = false;
+        bool updateProgress = false;
         switch (dt) {
             case DirtyType::dtRouteGeometry: {
-                createRouteLayers = true;
-                createGradients = true;
+                updateRouteLayers = true;
+                updateGradients = true;
+                updateProgress = true;
             }
             break;
-            case DirtyType::dtRouteProgress:
+
+            case DirtyType::dtRouteProgress: {
+                updateProgress = true;
+            }
+            break;
+
             case DirtyType::dtRouteSegments: {
-                createGradients = true;
+                updateGradients = true;
             }
             break;
 
@@ -282,7 +289,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         std::string activeGeoJSONSourceName = getActiveGeoJSONsourceName(routeID);
         auto& route = routeMap_.at(routeID);
 
-        if(createRouteLayers) {
+        if(updateRouteLayers) {
             //create layer for casing/base
             if(!createLayer(baseGeoJSONSourceName, baseLayerName, route, routeOptions_.outerColor, routeOptions_.outerWidth)) {
                 stats_.inconsistentAPIusage = true;
@@ -294,18 +301,22 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             }
         }
 
+        Layer* activeRouteLayer = style_->getLayer(activeLayerName);
+        LineLayer* activeRouteLineLayer = static_cast<LineLayer*>(activeRouteLayer);
+        Layer* baseRouteLayer = style_->getLayer(baseLayerName);
+        LineLayer* baseRouteLineLayer = static_cast<LineLayer*>(baseRouteLayer);
+
         // Create the gradient colors expressions and set on the active layer
-        if (createGradients) {
+        if (updateGradients) {
 
             // create the gradient expression for active route.
-            std::map<double, mbgl::Color> activeLayerGradient = route.getRouteSegmentColorStops(
+            std::map<double, mbgl::Color> gradientMap = route.getRouteSegmentColorStops(
                 routeOptions_.innerColor);
-            std::unique_ptr<expression::Expression> activeLayerExpression = createGradientExpression(
-                activeLayerGradient);
+            std::unique_ptr<expression::Expression> gradientExpression = createGradientExpression(
+                gradientMap);
 
-            ColorRampPropertyValue activeColorRampProp(std::move(activeLayerExpression));
-            Layer* activeRouteLayer = style_->getLayer(activeLayerName);
-            LineLayer* activeRouteLineLayer = static_cast<LineLayer*>(activeRouteLayer);
+
+            ColorRampPropertyValue activeColorRampProp(std::move(gradientExpression));
             activeRouteLineLayer->setLineGradient(activeColorRampProp);
 
             // create the gradient expression for the base route
@@ -314,9 +325,14 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
                 baseLayerGradient);
 
             ColorRampPropertyValue baseColorRampProp(std::move(baseLayerExpression));
-            Layer* baseRouteLayer = style_->getLayer(baseLayerName);
-            LineLayer* baseRouteLineLayer = static_cast<LineLayer*>(baseRouteLayer);
             baseRouteLineLayer->setLineGradient(baseColorRampProp);
+        }
+
+        if(updateProgress) {
+            double progress = route.routeGetProgress();
+            activeRouteLineLayer->setGradientLineClip(progress);
+            baseRouteLineLayer->setGradientLineClip(progress);
+
         }
     }
 }

@@ -1,3 +1,5 @@
+#include <iostream>
+#include <mapbox/vector_tile.hpp>
 #include <mbgl/renderer/layers/render_line_layer.hpp>
 
 #include <mbgl/geometry/feature_index.hpp>
@@ -510,7 +512,8 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                                                    LineOffset,
                                                    LineWidth,
                                                    LineFloorWidth,
-                                                   LinePattern>(
+                                                   LinePattern,
+                                                   LineClip>(
             paintPropertyBinders, evaluated, propertiesAsUniforms, idLineColorVertexAttribute);
 
         if (!evaluated.get<LineDasharray>().from.empty()) {
@@ -586,6 +589,14 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                 }
             }
 
+            const auto& currLineClipProp = impl_cast(baseImpl).paint.get<LineClip>().value;
+            if(currLineClipProp.isConstant()) {
+                double currLineClipPropValue = currLineClipProp.asConstant();
+                if(layerTweaker) {
+                    LineLayerTweakerPtr lineLayerTweaker =  std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
+                    lineLayerTweaker->setGradientLineClip(currLineClipPropValue);
+                }
+            }
             auto shader = lineGradientShaderGroup->getOrCreateShader(
                 context, propertiesAsUniforms, posNormalAttribName);
             if (!shader) {

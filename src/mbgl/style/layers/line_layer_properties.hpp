@@ -12,6 +12,7 @@
 #include <mbgl/style/properties.hpp>
 #include <mbgl/programs/attributes.hpp>
 #include <mbgl/programs/uniforms.hpp>
+#include <mbgl/gfx/types.hpp>
 
 namespace mbgl {
 namespace style {
@@ -36,12 +37,21 @@ struct LineRoundLimit : LayoutProperty<float> {
     static float defaultValue() { return 1; }
 };
 
+// struct LineGradientFilter : LayoutProperty<LineGradientFilterType> {
+//     static constexpr const char *name() { return "line-gradient-filter"; }
+//     static LineGradientFilterType defaultValue() { return LineGradientFilterType::Linear; }
+// };
+
 struct LineSortKey : DataDrivenLayoutProperty<float> {
     static constexpr const char *name() { return "line-sort-key"; }
     static float defaultValue() { return 0.f; }
 };
 
 struct LineBlur : DataDrivenPaintProperty<float, attributes::blur, uniforms::blur> {
+    static float defaultValue() { return 0.f; }
+};
+
+struct LineClip : DataDrivenPaintProperty<float, attributes::line_clip, uniforms::line_clip> {
     static float defaultValue() { return 0.f; }
 };
 
@@ -109,7 +119,8 @@ class LinePaintProperties : public Properties<
     LinePattern,
     LineTranslate,
     LineTranslateAnchor,
-    LineWidth
+    LineWidth,
+    LineClip
 > {};
 
 class LineLayerProperties final : public LayerProperties {

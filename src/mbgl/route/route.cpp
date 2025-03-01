@@ -1,5 +1,6 @@
 
 
+#include <valarray>
 #include <mbgl/route/route.hpp>
 #include <mbgl/util/math.hpp>
 
@@ -14,7 +15,7 @@ Route::Route(const LineString<double>& geometry, double routeSegTransitionDist)
     for (size_t i = 1; i < geometry_.size(); ++i) {
         mbgl::Point<double> a = geometry_[i];
         mbgl::Point<double> b = geometry_[i - 1];
-        double dist = mbgl::util::dist<double>(a, b);
+        double dist = std::abs(mbgl::util::dist<double>(a, b));
         segDistances_.push_back(dist);
         totalDistance_ += dist;
     }
@@ -39,16 +40,16 @@ mbgl::LineString<double> Route::getGeometry() const {
 
 std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& routeColor) const {
     std::map<double, mbgl::Color> gradients;
-    const double EPSILON = routeSegTransitionDist_;
-    if (progress_ == 0.0) {
+    // const double EPSILON = routeSegTransitionDist_;
+    // if (progress_ == 0.0) {
         gradients[0.0] = routeColor;
         gradients[1.0] = routeColor;
-    } else {
-        gradients[0.0] = progressColor_;
-        gradients[progress_] = progressColor_;
-        gradients[progress_ + EPSILON] = routeColor;
-        gradients[1.0] = routeColor;
-    }
+    // } else {
+    //     gradients[0.0] = progressColor_;
+    //     gradients[progress_] = progressColor_;
+    //     gradients[progress_ + EPSILON] = routeColor;
+    //     gradients[1.0] = routeColor;
+    // }
 
     return gradients;
 }
@@ -68,9 +69,9 @@ std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color
             // each route segment is padded with route color for a small transition gradient.
             for (size_t j = 0; j < segNormalizedPos.size(); ++j) {
                 const auto& segPos = segNormalizedPos[j];
-                if (segPos < progress_) {
-                    continue;
-                }
+                // if (segPos < progress_) {
+                //     continue;
+                // }
 
                 if ((i == 0 && j == 0) || (i == segments_.size() - 1 && j == segNormalizedPos.size() - 1)) {
                     continue;
@@ -125,10 +126,10 @@ std::map<double, mbgl::Color> Route::applyProgressOnGradient() {
     assert(!segGradient_.empty() && "gradients for segments must not empty");
     const double EPSILON = routeSegTransitionDist_;
     std::map<double, mbgl::Color> gradients;
-    if (progress_ > 0.0) {
-        gradients[0.0] = progressColor_;
-        gradients[progress_] = progressColor_;
-    }
+    // if (progress_ > 0.0) {
+    //     gradients[0.0] = progressColor_;
+    //     gradients[progress_] = progressColor_;
+    // }
 
     bool foundProgressEnd = false;
     for (const auto& iter : segGradient_) {
@@ -148,10 +149,12 @@ std::map<double, mbgl::Color> Route::applyProgressOnGradient() {
     return gradients;
 }
 
-bool Route::routeSetProgress(const double t) {
+void Route::routeSetProgress(const double t) {
     progress_ = t;
+}
 
-    return true;
+double Route::routeGetProgress() const {
+    return progress_;
 }
 
 uint32_t Route::getNumRouteSegments() const {
@@ -177,6 +180,7 @@ Route& Route::operator=(Route& other) noexcept {
     geometry_ = other.geometry_;
     totalDistance_ = other.totalDistance_;
     segGradient_ = other.segGradient_;
+    progress_ = other.progress_;
 
     return *this;
 }

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <mbgl/renderer/layers/line_layer_tweaker.hpp>
 
 #include <mbgl/gfx/context.hpp>
@@ -63,6 +64,10 @@ auto LineLayerTweaker::evaluate([[maybe_unused]] const PaintParameters& paramete
 #endif // MLN_RENDER_BACKEND_METAL
 
     return evaluated.get<Property>().constantOr(Property::defaultValue());
+}
+
+void LineLayerTweaker::setGradientLineClip(double clip) {
+    line_clip_ = clip;
 }
 
 void LineLayerTweaker::execute(LayerGroupBase& layerGroup, const PaintParameters& parameters) {
@@ -233,7 +238,7 @@ void LineLayerTweaker::execute(LayerGroupBase& layerGroup, const PaintParameters
                     /* .gapwidth_t = */ std::get<0>(binders->get<LineGapWidth>()->interpolationFactor(zoom)),
                     /* .offset_t = */ std::get<0>(binders->get<LineOffset>()->interpolationFactor(zoom)),
                     /* .width_t = */ std::get<0>(binders->get<LineWidth>()->interpolationFactor(zoom)),
-                    /* .pad1 = */ 0,
+                    /* .line_clip_t = */ static_cast<float>(line_clip_),
                     /* .pad2 = */ 0
                 };
 

@@ -33,6 +33,8 @@ public:
 
     ~LineLayerTweaker() override = default;
 
+    void setGradientLineClip(double clip);
+
     void execute(LayerGroupBase&, const PaintParameters&) override;
 
 #if MLN_RENDER_BACKEND_METAL
@@ -49,6 +51,7 @@ public:
 private:
     template <typename Property>
     auto evaluate(const PaintParameters& parameters) const;
+    double line_clip_ = 0.0;
 
 #if MLN_RENDER_BACKEND_METAL
     template <typename Result>
