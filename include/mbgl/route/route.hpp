@@ -24,7 +24,8 @@ public:
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;
-    bool routeSetProgress(const double t);
+    void routeSetProgress(const double t);
+    double routeGetProgress() const;
     double getTotalDistance() const;
     mbgl::LineString<double> getGeometry() const;
     bool hasRouteSegments() const;
@@ -42,7 +43,7 @@ private:
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;
     double totalDistance_ = 0.0;
-    double routeSegTransitionDist_ = 0.00001;
+    double routeSegTransitionDist_ = 1e-6;
     mbgl::Color progressColor_ = Color(0.0, 0.0, 0.0, 0.0);
 
 };

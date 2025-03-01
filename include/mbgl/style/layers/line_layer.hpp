@@ -112,6 +112,12 @@ public:
     void setLineWidthTransition(const TransitionOptions&);
     TransitionOptions getLineWidthTransition() const;
 
+    void setGradientLineClip(const PropertyValue<float>&);
+    const PropertyValue<float>& getGradientLineClip() const;
+
+    // void setGradientLineFilter(const PropertyValue<LineGradientFilterType>&);
+    // const PropertyValue<LineGradientFilterType>& getGradientLineFilter() const;
+
     // Private implementation
 
     class Impl;

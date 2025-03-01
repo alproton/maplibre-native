@@ -44,7 +44,7 @@ layout (std140) uniform LineGradientDrawableUBO {
     lowp float u_gapwidth_t;
     lowp float u_offset_t;
     lowp float u_width_t;
-    lowp float drawable_pad1;
+    highp float u_line_clip_t;
     lowp float drawable_pad2;
 };
 
@@ -64,6 +64,7 @@ out vec2 v_normal;
 out vec2 v_width2;
 out float v_gamma_scale;
 out highp float v_lineprogress;
+flat out highp float v_line_clip;
 
 #ifndef HAS_UNIFORM_u_blur
 layout (location = 2) in lowp vec2 a_blur;
@@ -158,6 +159,7 @@ mediump float width = u_width;
     v_gamma_scale = extrude_length_without_perspective / extrude_length_with_perspective;
 
     v_width2 = vec2(outset, inset);
+    v_line_clip = u_line_clip_t;
 }
 )";
     static constexpr const char* fragment = R"(layout (std140) uniform LineEvaluatedPropsUBO {
@@ -178,6 +180,7 @@ in vec2 v_width2;
 in vec2 v_normal;
 in float v_gamma_scale;
 in highp float v_lineprogress;
+flat in highp float v_line_clip;
 
 #ifndef HAS_UNIFORM_u_blur
 in lowp float blur;
@@ -208,6 +211,10 @@ lowp float opacity = u_opacity;
     vec4 color = texture(u_image, vec2(v_lineprogress, 0.5));
 
     fragColor = color * (alpha * opacity);
+    if(v_lineprogress < v_line_clip) {
+        discard;
+    }
+
 
 #ifdef OVERDRAW_INSPECTOR
     fragColor = vec4(1.0);
