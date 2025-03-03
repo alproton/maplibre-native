@@ -85,6 +85,10 @@ std::array<double, 3> toArray(const mbgl::LatLng &crd) {
 } // namespace
 #endif // ENABLE_LOCATION_INDICATOR
 
+namespace {
+    const double ROUTE_PROGRESS_STEP = 0.00001;
+}
+
 class SnapshotObserver final : public mbgl::MapSnapshotterObserver {
 public:
     ~SnapshotObserver() override = default;
@@ -995,7 +999,8 @@ void GLFWView::modifyTrafficViz() {
 }
 
 void GLFWView::incrementRouteProgress() {
-    routeProgress_ += 0.01;
+    routeProgress_ += ROUTE_PROGRESS_STEP;
+    std::clamp<double>(routeProgress_, 0.0, 1.0f);
     std::cout<<"Route progress: "<<routeProgress_<<std::endl;
     for(const auto& iter : routeList_) {
         const auto& routeID = iter.first;
@@ -1005,7 +1010,8 @@ void GLFWView::incrementRouteProgress() {
 }
 
 void GLFWView::decrementRouteProgress() {
-    routeProgress_ -= 0.01;
+    routeProgress_ -= ROUTE_PROGRESS_STEP;
+    std::clamp<double>(routeProgress_, 0.0, 1.0f);
     std::cout<<"Route progress: "<<routeProgress_<<std::endl;
     for(const auto& iter : routeList_) {
         const auto& routeID = iter.first;

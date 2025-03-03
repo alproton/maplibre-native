@@ -40,16 +40,8 @@ mbgl::LineString<double> Route::getGeometry() const {
 
 std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& routeColor) const {
     std::map<double, mbgl::Color> gradients;
-    // const double EPSILON = routeSegTransitionDist_;
-    // if (progress_ == 0.0) {
         gradients[0.0] = routeColor;
         gradients[1.0] = routeColor;
-    // } else {
-    //     gradients[0.0] = progressColor_;
-    //     gradients[progress_] = progressColor_;
-    //     gradients[progress_ + EPSILON] = routeColor;
-    //     gradients[1.0] = routeColor;
-    // }
 
     return gradients;
 }

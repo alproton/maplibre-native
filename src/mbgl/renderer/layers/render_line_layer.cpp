@@ -613,8 +613,9 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                 // create texture. to be reused for all the tiles of the layer
                 colorRampTexture2D = context.createTexture2D();
                 colorRampTexture2D->setImage(colorRamp);
+                gfx::TextureFilterType filterType = impl_cast(baseImpl).gradientFilterType == LineGradientFilterType::Linear ? gfx::TextureFilterType::Linear : gfx::TextureFilterType::Nearest;
                 colorRampTexture2D->setSamplerConfiguration(
-                    {gfx::TextureFilterType::Linear, gfx::TextureWrapType::Clamp, gfx::TextureWrapType::Clamp});
+                    {filterType, gfx::TextureWrapType::Clamp, gfx::TextureWrapType::Clamp});
             }
 
             if (colorRampTexture2D) {

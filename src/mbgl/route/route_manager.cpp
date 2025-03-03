@@ -224,6 +224,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         layer->setLineCap(LineCapType::Round);
         layer->setLineJoin(LineJoinType::Round);
         layer->setLineWidth(width);
+        layer->setGradientLineFilter(LineGradientFilterType::Nearest);
 
         if (layerBefore_.empty()) {
             style_->addLayer(std::move(layer));
