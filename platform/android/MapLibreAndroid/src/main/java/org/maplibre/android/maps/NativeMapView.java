@@ -44,8 +44,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import okhttp3.Route;
-
 // Class that wraps the native methods for convenience
 final class NativeMapView implements NativeMap {
 
@@ -1127,8 +1125,8 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public RouteID createRoute(LineString routeGeom) {
-    RouteID routeID = new RouteID(nativeRouteCreate(routeGeom));
+  public RouteID createRoute(LineString routeGeom, RouteOptions routeOptions) {
+    RouteID routeID = new RouteID(nativeRouteCreate(routeGeom, routeOptions.outerColor, routeOptions.innerColor, routeOptions.outerWidth, routeOptions.innerWidth));
     return routeID;
   }
 
@@ -1186,13 +1184,6 @@ final class NativeMapView implements NativeMap {
   public void clearRoutesStats() {
     nativeRoutesClearStats();
   }
-
-  @Override
-  public void setRoutesCommonOptions(RouteCommonOptions ropts) {
-    nativeRoutesSetCommonOptions(ropts.outerColor, ropts.innerColor, ropts.outerWidth, ropts.innerWidth, ropts.segmentTransitionDist);
-  }
-
-
 
   @NonNull
   @Override
@@ -1566,7 +1557,7 @@ final class NativeMapView implements NativeMap {
 
   //---------------------Native route APIs---------------------
   @Keep
-  private native int nativeRouteCreate(LineString routeGeometry);
+  private native int nativeRouteCreate(LineString routeGeometry, int outerColor, int innerColor, double outerWidth, double innerWidth);
 
   @Keep
   private native boolean nativeRouteDispose(int routeID);
@@ -1590,8 +1581,6 @@ final class NativeMapView implements NativeMap {
   private native String nativeRoutesGetStats();
 
   @Keep native void nativeRoutesClearStats();
-
-  @Keep native void nativeRoutesSetCommonOptions(int outerColor, int innerCollor, double outerWidth, double innerWidth, double segTransitionDist);
 
   //---------------------------------------------------------
 

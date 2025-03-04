@@ -44,6 +44,9 @@ public:
     const PropertyValue<float>& getLineSortKey() const;
     void setLineSortKey(const PropertyValue<float>&);
 
+    void setGradientLineFilter(const LineGradientFilterType&);
+    LineGradientFilterType getGradientLineFilter() const;
+
     // Paint properties
 
     static PropertyValue<float> getDefaultLineBlur();
@@ -115,8 +118,6 @@ public:
     void setGradientLineClip(const PropertyValue<float>&);
     const PropertyValue<float>& getGradientLineClip() const;
 
-    // void setGradientLineFilter(const PropertyValue<LineGradientFilterType>&);
-    // const PropertyValue<LineGradientFilterType>& getGradientLineFilter() const;
 
     // Private implementation
 

@@ -11,6 +11,13 @@ namespace route {
 struct RouteSegmentOptions;
 class RouteSegment;
 
+struct RouteOptions {
+    Color outerColor = Color(1, 1, 1, 1);
+    Color innerColor = Color(0, 0, 1, 1);
+    float outerWidth = 10;
+    float innerWidth = 6;
+};
+
 /***
  * A route is a polyline that represents a road between two locations. There can be multiple routes in the case of
  * multiple stops. Each route can have route segments. Routes segments represents a traffic zone. A route must have a
@@ -19,7 +26,7 @@ class RouteSegment;
 class Route {
 public:
     Route() = default;
-    Route(const LineString<double>& geometry, double routeSegTransitionDist = 0.00001);
+    Route(const LineString<double>& geometry, const RouteOptions& ropts);
     void routeSegmentCreate(const RouteSegmentOptions&);
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
@@ -29,14 +36,14 @@ public:
     double getTotalDistance() const;
     mbgl::LineString<double> getGeometry() const;
     bool hasRouteSegments() const;
-    // Implement a visitor to visit the routes for gradient expressions
+    const RouteOptions& getRouteOptions() const;
     bool routeSegmentsClear();
     Route& operator=(Route& other) noexcept;
     uint32_t getNumRouteSegments() const;
 
 private:
     std::map<double, mbgl::Color> applyProgressOnGradient();
-    // bool gradientDirty_ = true;
+    RouteOptions routeOptions_;
     double progress_ = 0.0;
     std::vector<double> segDistances_;
     std::vector<RouteSegment> segments_;

@@ -440,44 +440,105 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     }
   }
 
-  public RouteID createRoute(LineString routeGeom) {
-    return nativeMapView.createRoute(routeGeom);
+  /***
+   * Create a new route on the map view. Once all routes are created and updated , one must call finalizeRoutes().
+   * One should not create a RouteID manually and should only be used what is returned by this method.
+   *
+   * @param routeGeom specified linestring of points in physical coordinates or lat longs
+   * @param routeOptions specified visual appearance of the route geometry
+   * @return a unique id for the route
+   */
+  public RouteID createRoute(LineString routeGeom, RouteOptions routeOptions) {
+    return nativeMapView.createRoute(routeGeom, routeOptions);
   }
 
+  /***
+   * Disposes a route given a route ID. The route ID must have been previous created via createRoute().
+   * Once a route is disposed, the routeID can be recycled and reused.
+   *
+   * @param routeID the specified routeID for the corresponding route to be disposed
+   * @return true if disposal was successful, false otherwise
+   */
   public boolean disposeRoute(RouteID routeID) {
     return nativeMapView.disposeRoute(routeID);
   }
 
+  /***
+   * Sets the progress of a route on the map view.
+   *
+   * @param routeID the specified routeID for the corresponding route. If the route does not exist,
+   *                this method will return false.
+   * @param progress the specified progress which is a value between 0 and 1.
+   * @return true if setting the progress was a success
+   */
   public boolean setRouteProgress(RouteID routeID, double progress) {
     return nativeMapView.setRouteProgress(routeID, progress);
   }
 
+  /***
+   * Removes all the route segments for the corresponding route.
+   *
+   * @param routeID the specified route ID for the corresponding route. If the route does not exist,
+   *                this operation is a no-op.
+   */
   public void clearRouteSegments(RouteID routeID) {
     nativeMapView.clearRouteSegments(routeID);
   }
 
+  /***
+   * Sets the layer before which the routes will be inserted.
+   *
+   * @param beforeLayer the specified layer name before which the routes will be inserted.
+   */
   public void setRoutesBeforeLayer(String beforeLayer) {
     nativeMapView.setRoutesBeforeLayer(beforeLayer);
   }
 
+  /***
+   * Creates a new route segment on the map view. A route segment is a set of points that exists on
+   * the route. These points may be a subset of points that makee the route geometry or it may
+   * be composed on points that are interpolated between points in the route geometry.
+   * A route segment is typically used to visualize traffic zones and is customizable by the client
+   * code.
+   *
+   * @param routeID the specified routeID for the corresponding route.
+   * @param rsopts the specified visual appearance of the route segment
+   * @return true if the route segment was created successfully, false otherwise. If the route
+   * does not exist, false is returned.
+   */
   public boolean createRouteSegment(RouteID routeID, RouteSegmentOptions rsopts) {
     return nativeMapView.createRouteSegment(routeID, rsopts);
   }
 
+  /***
+   * Finalizes the routes on the map view. This method must be called if any route or route segments
+   * calls were made. This method can get fairly expensive and hence we do not want to call this for
+   * every mutation of route or route segment. The client code is free to create/mutate the routes/routesegments
+   * as many times as needed but call the finalizeRoutes() method once (or as few times as possible).
+   *
+   * It is during this time , that map libre layers, expressions and images are constructed.
+   *
+   * @return true if the routes were finalized successfully, false otherwise
+   */
   public boolean finalizeRoutes() {
     return nativeMapView.finalizeRoutes();
   }
 
+  /***
+   * Gets statistics of the underlying health of routes management and includes stats on various
+   * constructs built in native code, such as memory and time take for such constructs.
+   *
+   * @return a formatted string containing the statistics
+   */
   public String getRoutesStats() {
     return nativeMapView.getRoutesStats();
   }
 
+  /***
+   * Clears the stream containing the statistics of the underlying constructs related to routes.
+   */
   public void clearRoutesStats() {
     nativeMapView.clearRoutesStats();
-  }
-
-  public void setRoutesCommonOptions(RouteCommonOptions commonOptions) {
-    nativeMapView.setRoutesCommonOptions(commonOptions);
   }
 
   /**

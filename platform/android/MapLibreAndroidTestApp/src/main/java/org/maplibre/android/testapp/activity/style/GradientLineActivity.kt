@@ -13,6 +13,7 @@ import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ResourceUtils
+import org.maplibre.geojson.LineString
 import timber.log.Timber
 import java.io.IOException
 
@@ -63,6 +64,8 @@ class GradientLineActivity : AppCompatActivity(), OnMapReadyCallback {
                             )
                     )
             )
+
+
         } catch (exception: IOException) {
             Timber.e(exception)
         }

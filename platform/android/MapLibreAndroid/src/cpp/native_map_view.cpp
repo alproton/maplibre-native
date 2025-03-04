@@ -57,6 +57,7 @@
 #include "style/light.hpp"
 #include "tile/tile_operation.hpp"
 #include  "mbgl/route/route_manager.hpp"
+#include "mbgl/route/route.hpp"
 
 namespace mbgl {
 namespace android {
@@ -1403,12 +1404,10 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routesSetLayerBefore, "nativeRoutesSetLayerBefore"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
         METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
-        METHOD(&NativeMapView::routesSetCommonOptions, "nativeRoutesSetCommonOptions");
-
 }
 
 
-jint NativeMapView::routeCreate(JNIEnv& env, const jni::Object<mbgl::android::geojson::LineString>& routeGeom) {
+jint NativeMapView::routeCreate(JNIEnv& env, const jni::Object<mbgl::android::geojson::LineString>& routeGeom, jint outerColor, jint innerColor, jdouble outerWidth, jdouble innerWidth) {
     if(!routeMgr->hasStyle()) {
         routeMgr->setStyle(map->getStyle());
     }
@@ -1417,8 +1416,21 @@ jint NativeMapView::routeCreate(JNIEnv& env, const jni::Object<mbgl::android::ge
     RouteID routeID;
     if(routeMgr) {
         if(routeMgr->hasStyle()) {
+            using namespace mbgl::android::conversion;
             const auto& linestring = mbgl::android::geojson::LineString::convert(env, routeGeom);
-            routeID = routeMgr->routeCreate(linestring);
+            mbgl::route::RouteOptions routeOptions;
+            Converter<mbgl::Color, int> colorConverter;
+            Result<Color> outerColorRes = colorConverter(env, outerColor);
+            Result<Color> innerColorRes = colorConverter(env, innerColor);
+            if(outerColorRes) {
+                routeOptions.outerColor = *outerColorRes;
+            }
+            if(innerColorRes) {
+                routeOptions.innerColor = *innerColorRes;
+            }
+            routeOptions.outerWidth = outerWidth;
+            routeOptions.innerWidth = innerWidth;
+            routeID = routeMgr->routeCreate(linestring, routeOptions);
         }
     }
 
@@ -1494,28 +1506,6 @@ jboolean NativeMapView::routesFinalize(JNIEnv& env) {
 
     return false;
 }
-
-void NativeMapView::routesSetCommonOptions(JNIEnv& env, jint outerColor, jint innerColor, jdouble outerWidth, jdouble innerWidth, jdouble segTransitionDist) {
-    using namespace mbgl::android::conversion;
-    if(routeMgr) {
-        route::RouteCommonOptions ropts;
-        Converter<mbgl::Color, int> colorConverter;
-        Result<Color> outerColorRes = colorConverter(env, outerColor);
-        Result<Color> innerColorRes = colorConverter(env, innerColor);
-        if(outerColorRes) {
-            ropts.outerColor = *outerColorRes;
-        }
-        if(innerColorRes) {
-            ropts.innerColor = *innerColorRes;
-        }
-        ropts.outerWidth = outerWidth;
-        ropts.innerWidth = innerWidth;
-        ropts.segTransitionEpsilon = segTransitionDist;
-
-        routeMgr->setRouteCommonOptions(ropts);
-    }
-}
-
 
 void NativeMapView::onRegisterShaders(gfx::ShaderRegistry&) {};
 

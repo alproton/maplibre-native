@@ -15,13 +15,6 @@ class Style;
 
 namespace route {
 
-struct RouteCommonOptions {
-    Color outerColor = Color(1, 1, 1, 1);
-    Color innerColor = Color(0, 0, 1, 1);
-    float outerWidth = 10;
-    float innerWidth = 6;
-    double segTransitionEpsilon = 0.0001;
-};
 
 struct RouteMgrStats {
     uint32_t numFinalizedInvoked = 0;
@@ -47,8 +40,7 @@ public:
     void clearStats();
     bool hasStyle() const;
     void setLayerBefore(const std::string& layerBefore);
-    void setRouteCommonOptions(const RouteCommonOptions& ropts);
-    RouteID routeCreate(const LineString<double>& geometry);
+    RouteID routeCreate(const LineString<double>& geometry, const RouteOptions& ropts);
     void routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
     bool routeSetProgress(const RouteID&, const double progress);
     void routeClearSegments(const RouteID&);
@@ -86,7 +78,6 @@ private:
     style::Style* style_ = nullptr;
     std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
     std::string layerBefore_;
-    RouteCommonOptions routeOptions_;
 };
 }; // namespace route
 

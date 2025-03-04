@@ -28,6 +28,10 @@ const std::string RouteManager::GEOJSON_ACTIVE_ROUTE_SOURCE_ID = "active_route_g
 std::stringstream RouteManager::ss_;
 
 namespace {
+
+#define TRACE_FUNCTION_CALL(stream, stubstr) \
+stream << __FUNCTION__ << std::endl << stubstr << std::endl;
+
 std::string formatElapsedTime(long long value) {
     std::stringstream ss;
     ss.imbue(std::locale("")); // Use the user's default locale for number formatting
@@ -66,6 +70,7 @@ void RouteManager::setStyle(style::Style& style) {
             if (activeGeoJSONsrc) {
                 style.addSource(std::move(activeGeoJSONsrc));
             }
+            TRACE_FUNCTION_CALL(ss_, "transferred layers across styles");
         }
     }
     style_ = &style;
@@ -75,11 +80,13 @@ bool RouteManager::hasStyle() const {
     return style_ != nullptr;
 }
 
-RouteID RouteManager::routeCreate(const LineString<double>& geometry) {
+RouteID RouteManager::routeCreate(const LineString<double>& geometry, const RouteOptions& ropts) {
     RouteID rid;
     bool success = routeIDpool_.createID((rid.id));
     if (success && rid.isValid()) {
-        Route route(geometry);
+        TRACE_FUNCTION_CALL(ss_, "created RouteID: "+std::to_string(rid.id));
+
+        Route route(geometry, ropts);
         routeMap_[rid] = route;
         stats_.numRoutes++;
         dirtyRouteMap_[DirtyType::dtRouteGeometry].push_back(rid);
@@ -89,9 +96,13 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry) {
 }
 
 void RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
-    routeMap_[routeID].routeSegmentCreate(routeSegOpts);
-    stats_.numRouteSegments++;
-    dirtyRouteMap_[DirtyType::dtRouteSegments].push_back(routeID);
+    if(routeID.isValid() && routeMap_.find(routeID) == routeMap_.end()) {
+        TRACE_FUNCTION_CALL(ss_, "for routeID: "+std::to_string(routeID.id));
+
+        routeMap_[routeID].routeSegmentCreate(routeSegOpts);
+        stats_.numRouteSegments++;
+        dirtyRouteMap_[DirtyType::dtRouteSegments].push_back(routeID);
+    }
 }
 
 void RouteManager::routeClearSegments(const RouteID& routeID) {
@@ -130,6 +141,8 @@ bool RouteManager::routeDispose(const RouteID& routeID) {
 
         routeMap_.erase(routeID);
         stats_.numRoutes--;
+        TRACE_FUNCTION_CALL(ss_, "disposed routeID: "+std::to_string(routeID.id));
+
         return success;
     }
 
@@ -138,13 +151,8 @@ bool RouteManager::routeDispose(const RouteID& routeID) {
 
 void RouteManager::setLayerBefore(const std::string& layerBefore) {
     layerBefore_ = layerBefore;
-}
+    TRACE_FUNCTION_CALL(ss_, "layerBefore: "+layerBefore_);
 
-void RouteManager::setRouteCommonOptions(const RouteCommonOptions& ropts) {
-    routeOptions_ = ropts;
-    for(const auto& iter : routeMap_) {
-        dirtyRouteMap_[DirtyType::dtRouteGeometry].push_back(iter.first);
-    }
 }
 
 bool RouteManager::hasRoutes() const {
@@ -157,6 +165,8 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const double progres
     double validProgress = std::clamp(progress, 0.0, 1.0);
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        TRACE_FUNCTION_CALL(ss_, "progress: "+std::to_string(validProgress));
+
         routeMap_[routeID].routeSetProgress(validProgress);
     }
     dirtyRouteMap_[DirtyType::dtRouteProgress].push_back(routeID);
@@ -269,16 +279,19 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
                 updateRouteLayers = true;
                 updateGradients = true;
                 updateProgress = true;
+                TRACE_FUNCTION_CALL(ss_, "dirty route geometry");
             }
             break;
 
             case DirtyType::dtRouteProgress: {
                 updateProgress = true;
+                TRACE_FUNCTION_CALL(ss_, "dirty route progress");
             }
             break;
 
             case DirtyType::dtRouteSegments: {
                 updateGradients = true;
+                TRACE_FUNCTION_CALL(ss_, "dirty route segments");
             }
             break;
 
@@ -289,15 +302,16 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         std::string activeLayerName = getActiveRouteLayerName(routeID);
         std::string activeGeoJSONSourceName = getActiveGeoJSONsourceName(routeID);
         auto& route = routeMap_.at(routeID);
+        const RouteOptions& routeOptions = route.getRouteOptions();
 
         if(updateRouteLayers) {
             //create layer for casing/base
-            if(!createLayer(baseGeoJSONSourceName, baseLayerName, route, routeOptions_.outerColor, routeOptions_.outerWidth)) {
+            if(!createLayer(baseGeoJSONSourceName, baseLayerName, route, routeOptions.outerColor, routeOptions.outerWidth)) {
                 stats_.inconsistentAPIusage = true;
             }
 
             //create layer for active/blue
-            if(!createLayer(activeGeoJSONSourceName, activeLayerName, route, routeOptions_.innerColor, routeOptions_.innerWidth)) {
+            if(!createLayer(activeGeoJSONSourceName, activeLayerName, route, routeOptions.innerColor, routeOptions.innerWidth)) {
                 stats_.inconsistentAPIusage = true;
             }
         }
@@ -312,7 +326,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
             // create the gradient expression for active route.
             std::map<double, mbgl::Color> gradientMap = route.getRouteSegmentColorStops(
-                routeOptions_.innerColor);
+                routeOptions.innerColor);
             std::unique_ptr<expression::Expression> gradientExpression = createGradientExpression(
                 gradientMap);
 
@@ -321,7 +335,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             activeRouteLineLayer->setLineGradient(activeColorRampProp);
 
             // create the gradient expression for the base route
-            std::map<double, mbgl::Color> baseLayerGradient = route.getRouteColorStops(routeOptions_.outerColor);
+            std::map<double, mbgl::Color> baseLayerGradient = route.getRouteColorStops(routeOptions.outerColor);
             std::unique_ptr<expression::Expression> baseLayerExpression = createGradientExpression(
                 baseLayerGradient);
 

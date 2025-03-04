@@ -268,7 +268,7 @@ interface NativeMap {
   //
   // Route API
   //
-  RouteID createRoute(LineString routeGeom);
+  RouteID createRoute(LineString routeGeom, RouteOptions routeOptions);
 
   boolean disposeRoute(RouteID routeID);
 
@@ -285,8 +285,6 @@ interface NativeMap {
   String getRoutesStats();
 
   void clearRoutesStats();
-
-  void setRoutesCommonOptions(RouteCommonOptions ropts);
 
   //
   // Deprecated Annotations API

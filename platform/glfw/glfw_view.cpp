@@ -86,7 +86,7 @@ std::array<double, 3> toArray(const mbgl::LatLng &crd) {
 #endif // ENABLE_LOCATION_INDICATOR
 
 namespace {
-    const double ROUTE_PROGRESS_STEP = 0.00001;
+    const double ROUTE_PROGRESS_STEP = 0.000001;
 }
 
 class SnapshotObserver final : public mbgl::MapSnapshotterObserver {
@@ -851,6 +851,10 @@ void GLFWView::addRandomPointAnnotations(int count) {
 void GLFWView::addRoute() {
     using namespace mbgl::route;
 
+    std::vector<mbgl::Color> colors = {{0, 0, 1.0, 1.0}, 
+                                         {0.5, 0.5, 0.5, 1}
+                                         };
+
     auto getRouteGeom = [](const RouteCircle& route)->mbgl::LineString<double> {
         mbgl::LineString<double> linestring;
         float radius = 50.0f;
@@ -870,7 +874,11 @@ void GLFWView::addRoute() {
     mbgl::LineString<double> geom = getRouteGeom(route);
     route.points = geom;
     assert(route.points.size() == route.resolution && "invalid number of points generated");
-    auto routeID = rmptr_->routeCreate(geom);
+    RouteOptions routeOpts;
+    int colorIdx = routeList_.size() % 2 == 0 ? 0 : 1;
+    std::cout<<"colorIdx: "<<colorIdx<<std::endl;
+    routeOpts.innerColor = colors[colorIdx];
+    auto routeID = rmptr_->routeCreate(geom, routeOpts);
     routeList_[routeID] = route;
 
 
