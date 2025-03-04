@@ -23,12 +23,16 @@ public:
 
     void draw(const TransformState& transform);
 
+    void debugChargers(const TransformState& transform);
+
 protected:
     using ScreenQuad = std::array<ScreenCoordinate, 4>;
 
     virtual void drawImpl(const ScreenQuad&) = 0;
 
     virtual CustomPuckState getState() = 0;
+
+    virtual void drawChargerImpl(const std::vector<float>&, float, float) = 0;
 };
 
 void setPuckBitmap(const PremultipliedImage& src);

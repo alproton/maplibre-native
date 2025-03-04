@@ -543,6 +543,7 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
     }
     if (customPuck) {
         customPuck->draw(updateParameters->transformState);
+        customPuck->debugChargers(updateParameters->transformState);
     }
 
     // Ends the RenderPass
