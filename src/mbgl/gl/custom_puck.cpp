@@ -2,6 +2,7 @@
 #include <mbgl/gl/defines.hpp>
 #include <mbgl/gl/renderer_backend.hpp>
 #include <algorithm>
+#include <mbgl/util/logging.hpp>
 
 #ifndef GL_EXT_texture_filter_anisotropic
 #define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
@@ -44,6 +45,39 @@ void main() {
     auto vertexShader = context.createShader(gl::ShaderType::Vertex, {vs});
     auto fragmentShader = context.createShader(gl::ShaderType::Fragment, {ps});
     auto program = context.createProgram(vertexShader, fragmentShader, nullptr);
+    return program;
+}
+
+UniqueProgram createChargerShader(gl::Context& context) {
+    const char* vs = R"(
+#version 310 es
+layout (location = 0) in vec2 pos;
+layout(location = 1) uniform vec2 size;
+out mediump vec2 uv;
+void main() {
+  mediump float dx = size.x;
+  mediump float dy = size.y;
+  vec2 trianglePos[6] = vec2[6](vec2(-dx,-dy), vec2(+dx,-dy), vec2(-dx,+dy), vec2(-dx,+dy), vec2(+dx,-dy), vec2(+dx,+dy));
+  vec2 triangleUv[6] = vec2[6](vec2(0, 0), vec2(1, 0), vec2(0, 1), vec2(0, 1), vec2(1, 0), vec2(1, 1));
+  gl_Position = vec4(pos + trianglePos[gl_VertexID], 0, 1);
+  uv = triangleUv[gl_VertexID];
+}
+    )";
+    const char* ps = R"(
+#version 310 es
+out mediump vec4 fragColor;
+in mediump vec2 uv;
+void main() {
+  mediump vec2 p = uv * 2.0 - vec2(1.0);
+  mediump float outer = 1.0 - min(pow(dot(p, p), 4.0), 1.0);
+  mediump float inner = 1.0 - min(pow(dot(p, p) * 1.5, 4.0), 1.0);
+  mediump vec3 color = mix(vec3(0.3, 0.3, 0.3), vec3(0.3, 0.8, 0.3), inner);
+  fragColor = vec4(color, 1.0) * outer;
+}
+    )";
+    auto vertexShader = context.createShader(gl::ShaderType::Vertex, {vs});
+    auto fragmentShader = context.createShader(gl::ShaderType::Fragment, {ps});
+    auto program = context.createProgram(vertexShader, fragmentShader, "pos");
     return program;
 }
 
@@ -131,7 +165,8 @@ private:
 
 CustomPuck::CustomPuck(gl::Context& context_)
     : context(context_),
-      program(createPuckShader(context_)) {}
+      program(createPuckShader(context_)),
+      chargerProgram(createChargerShader(context_)) {}
 
 void CustomPuck::drawImpl(const ScreenQuad& quad) {
     ScopedGlStates glStates;
@@ -154,6 +189,38 @@ void CustomPuck::drawImpl(const ScreenQuad& quad) {
 
 gfx::CustomPuckState CustomPuck::getState() {
     return context.getBackend().getCurrentCustomPuckState();
+}
+
+void CustomPuck::drawChargerImpl(const std::vector<float>& vertices, float dx, float dy) {
+    ScopedGlStates glStates;
+
+    Log::Error(Event::Render, "############################ DRAWING " + std::to_string(vertices.size() / 2));
+
+    constexpr int maxPoint = 10000;
+
+    if (vao == 0) {
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+        glGenBuffers(1, &vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, maxPoint * 2 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glVertexAttribDivisor(0, 6);
+        glEnableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
+        glDisableVertexAttribArray(3);
+        glDisableVertexAttribArray(4);
+    }
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
+
+    glUseProgram(chargerProgram);
+    glUniform2f(1, dx, dy);
+
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, vertices.size() / 2);
 }
 
 } // namespace gl
