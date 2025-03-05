@@ -13,6 +13,7 @@
 
 #include <jni/jni.hpp>
 
+#include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_options.hpp>
@@ -59,6 +60,8 @@
 #include "tile/tile_operation.hpp"
 #include "mbgl/route/route_manager.hpp"
 #include "mbgl/route/route.hpp"
+
+#include "android_renderer_backend.hpp"
 
 namespace mbgl {
 namespace android {
@@ -1279,6 +1282,52 @@ jni::jint NativeMapView::getLastRenderedTileCount(JNIEnv&) {
     return jni::jint(mapRenderer.getLastRenderedTileCount());
 }
 
+void NativeMapView::setCustomDotsNextLayer(JNIEnv& env, const jni::String& layer) {
+    mapRenderer.getRendererBackend().setCustomDotsNextLayer(jni::Make<std::string>(env, layer));
+}
+
+void NativeMapView::setCustomDotsPoints(JNIEnv& env,
+                                        jni::jint id,
+                                        const jni::Object<mbgl::android::geojson::MultiPoint>& jniPoints) {
+    const auto& geojsonPoints = mbgl::android::geojson::MultiPoint::convert(env, jniPoints);
+    gfx::CustomDotsPoints points;
+    points.reserve(geojsonPoints.size());
+    for (const auto& point : geojsonPoints) {
+        points.emplace_back(point.y, point.x);
+    }
+    mapRenderer.getRendererBackend().setCustomDotsPoints(id, std::move(points));
+}
+
+void NativeMapView::clearCustomDotsVideoMemory(JNIEnv&) {
+    mapRenderer.getRendererBackend().clearCustomDotsVideoMemory();
+}
+
+void NativeMapView::setCustomDotsOptions(JNIEnv&,
+                                         jni::jint id,
+                                         jni::jfloat innerR,
+                                         jni::jfloat innerG,
+                                         jni::jfloat innerB,
+                                         jni::jfloat outerR,
+                                         jni::jfloat outerG,
+                                         jni::jfloat outerB,
+                                         jni::jfloat innerRadius,
+                                         jni::jfloat outerRadius) {
+    gfx::CustomDotsOptions options;
+    options.innerColor = {innerR, innerG, innerB, 1.f};
+    options.outerColor = {outerR, outerG, outerB, 1.f};
+    options.innerRadius = innerRadius;
+    options.outerRadius = outerRadius;
+    mapRenderer.getRendererBackend().setCustomDotsOptions(id, options);
+}
+
+void NativeMapView::setCustomDotsEnabled(JNIEnv&, jni::jboolean enabled) {
+    mapRenderer.getRendererBackend().setCustomDotsEnabled(enabled == jni::jni_true);
+}
+
+jni::jboolean NativeMapView::isCustomDotsInitialized(JNIEnv&) {
+    return mapRenderer.getRendererBackend().isCustomDotsInitialized();
+}
+
 mbgl::Map& NativeMapView::getMap() {
     return *map;
 }
@@ -1420,7 +1469,14 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routesClearStats, "nativeRoutesClearStats"),
         METHOD(&NativeMapView::routesBeginCapture, "nativeRoutesBeginCapture"),
         METHOD(&NativeMapView::routesEndCapture, "nativeRoutesEndCapture"),
-        METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
+        METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"),
+        // Custom Dots API
+        METHOD(&NativeMapView::setCustomDotsNextLayer, "nativeSetCustomDotsNextLayer"),
+        METHOD(&NativeMapView::setCustomDotsPoints, "nativeSetCustomDotsPoints"),
+        METHOD(&NativeMapView::clearCustomDotsVideoMemory, "nativeClearCustomDotsVideoMemory"),
+        METHOD(&NativeMapView::setCustomDotsOptions, "nativeSetCustomDotsOptions"),
+        METHOD(&NativeMapView::setCustomDotsEnabled, "nativeSetCustomDotsEnabled"),
+        METHOD(&NativeMapView::isCustomDotsInitialized, "nativeIsCustomDotsInitialized"));
 }
 
 jint NativeMapView::routeCreate(JNIEnv& env,
@@ -1498,7 +1554,10 @@ void NativeMapView::routesClearStats(JNIEnv& env) {
     }
 }
 
-void NativeMapView::routesBeginCapture(JNIEnv& env, jni::jboolean captureGeometry, jni::jboolean captureSegments, jni::jboolean captureProgress) {
+void NativeMapView::routesBeginCapture(JNIEnv& env,
+                                       jni::jboolean captureGeometry,
+                                       jni::jboolean captureSegments,
+                                       jni::jboolean captureProgress) {
     if (routeMgr) {
         mbgl::route::RouteCaptureOptions captureOpts;
         captureOpts.routeGeometry = captureGeometry;
