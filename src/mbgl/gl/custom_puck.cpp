@@ -67,11 +67,12 @@ void main() {
 #version 310 es
 out mediump vec4 fragColor;
 in mediump vec2 uv;
+layout(location = 2) uniform mediump float innerFactor;
 void main() {
   mediump vec2 p = uv * 2.0 - vec2(1.0);
   mediump float outer = 1.0 - min(pow(dot(p, p), 4.0), 1.0);
-  mediump float inner = 1.0 - min(pow(dot(p, p) * 1.5, 4.0), 1.0);
-  mediump vec3 color = mix(vec3(0.3, 0.3, 0.3), vec3(0.3, 0.8, 0.3), inner);
+  mediump float inner = 1.0 - min(pow(dot(p, p) * innerFactor, 4.0), 1.0);
+  mediump vec3 color = mix(vec3(0.1, 0.2, 0.1), vec3(0.2, 0.7, 0.2), inner);
   fragColor = vec4(color, 1.0) * outer;
 }
     )";
@@ -194,9 +195,9 @@ gfx::CustomPuckState CustomPuck::getState() {
 void CustomPuck::drawChargerImpl(const std::vector<float>& vertices, float dx, float dy) {
     ScopedGlStates glStates;
 
-    Log::Error(Event::Render, "############################ DRAWING " + std::to_string(vertices.size() / 2));
+    // Log::Error(Event::Render, "############################ DRAWING " + std::to_string(vertices.size() / 2));
 
-    constexpr int maxPoint = 10000;
+    constexpr int maxPoint = 15000;
 
     if (vao == 0) {
         glGenVertexArrays(1, &vao);
@@ -219,6 +220,7 @@ void CustomPuck::drawChargerImpl(const std::vector<float>& vertices, float dx, f
 
     glUseProgram(chargerProgram);
     glUniform2f(1, dx, dy);
+    glUniform1f(2, 1.0f / 0.65f);
 
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, vertices.size() / 2);
 }

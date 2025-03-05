@@ -5,6 +5,7 @@
 #include <random>
 #include <mbgl/util/tile_coordinate.hpp>
 #include <mbgl/util/logging.hpp>
+#include <mbgl/math/clamp.hpp>
 
 #if ANDROID
 #include <sys/system_properties.h>
@@ -108,15 +109,15 @@ const PremultipliedImage& getPuckBitmap() {
 }
 
 void CustomPuck::debugChargers(const TransformState& transform) {
-    constexpr int pointCount = 10000;
+    constexpr int pointCount = 15000;
     constexpr int gridSize = 200;
 
     if (!isDebugChargersEnabled()) {
         return;
     }
 
-    std::mt19937 gen(static_cast<uint32_t>(transform.getLatLng().latitude()) ^
-                     static_cast<uint32_t>(transform.getLatLng().longitude()) ^
+    std::mt19937 gen(static_cast<uint32_t>(transform.getLatLng().latitude() * 1000) ^
+                     static_cast<uint32_t>(transform.getLatLng().longitude() * 1000) ^
                      static_cast<uint32_t>(transform.getIntegerZoom()));
     auto random = [&](double min, double max) {
         std::uniform_real_distribution<double> dis(min, max);
@@ -132,21 +133,22 @@ void CustomPuck::debugChargers(const TransformState& transform) {
     double maxLat = std::max(c1.latitude(), c2.latitude());
     double minLon = std::min(c1.longitude(), c2.longitude());
     double maxLon = std::max(c1.longitude(), c2.longitude());
+    double dLat = maxLat - minLat;
+    double dLon = maxLon - minLon;
 
     std::vector<char> grid(gridSize * gridSize, 0);
     std::vector<float> vertexBuffer;
     vertexBuffer.reserve(pointCount * 2);
-    for (int p = 0; p < pointCount * 3; p++) {
-        double lat = random(minLat, maxLat);
-        double lon = random(minLon, maxLon);
+    for (int p = 0; p < pointCount * 4; p++) {
+        double lat = random(std::max(minLat - dLat, -90.0), std::min(maxLat + dLat, 90.0));
+        double lon = random(minLon - dLon, maxLon + dLon);
         auto latlon = LatLng(lat, lon);
         auto screenCoord = transform.latLngToScreenCoordinate(latlon);
         screenCoord.x = screenCoord.x / screenSize.width;
         screenCoord.y = screenCoord.y / screenSize.height;
         screenCoord.x = screenCoord.x * 2 - 1;
         screenCoord.y = screenCoord.y * 2 - 1;
-        if (std::abs(screenCoord.x) < 0 || std::abs(screenCoord.x) > 1 || std::abs(screenCoord.y) < 0 ||
-            std::abs(screenCoord.y) > 1) {
+        if (std::abs(screenCoord.x) > 1.1 || std::abs(screenCoord.y) > 1.1) {
             continue;
         }
         int x = static_cast<int>((screenCoord.x + 1) / 2 * gridSize);
