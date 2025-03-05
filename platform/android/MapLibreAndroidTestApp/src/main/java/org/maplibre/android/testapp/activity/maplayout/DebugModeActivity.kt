@@ -2,6 +2,7 @@ package org.maplibre.android.testapp.activity.maplayout
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -19,6 +20,12 @@ import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.styles.TestStyles
 import timber.log.Timber
 import java.util.*
+
+import kotlin.random.Random
+import org.maplibre.android.maps.CustomDotsOptions
+import org.maplibre.geojson.MultiPoint
+import org.maplibre.geojson.Point
+import android.graphics.Color
 
 /**
  * Test activity showcasing the different debug modes and allows to cycle between the default map styles.
@@ -81,7 +88,30 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         maplibreMap = map
         maplibreMap.setStyle(
             Style.Builder().fromUri(STYLES[currentStyleIndex])
-        ) { style: Style -> setupNavigationView(style.layers) }
+        ) { style: Style ->
+            setupNavigationView(style.layers)
+            if (!mapView.isCustomDotsInitialized) {
+                Timber.e("###################### mapView CUSTOM DOTS NOT INITIALIZED YET !!!")
+            } else {
+                Timber.e( "###################### mapView CUSTOM DOTS INITIALIZED: OK")
+            }
+
+            var options : CustomDotsOptions = CustomDotsOptions()
+            options.innerColor = Color.valueOf(0.2f, 0.6f, 0.2f, 1.0f)
+            options.outerColor = Color.valueOf(0.1f, 0.2f, 0.1f, 1.0f)
+            options.innerRadius = 8.0f
+            options.outerRadius = 13.0f
+            mapView.setCustomDotsOptions(options)
+
+            mapView.setCustomDotsEnabled(true)
+
+            val pointList: MutableList<Point> = mutableListOf()
+            for (i in 1..10000) {
+                pointList.add(Point.fromLngLat(-121.0 - Random.nextDouble(0.0, 3.0), 35.0 + Random.nextDouble(0.0, 3.0)))
+            }
+            mapView.setCustomDotsPoints(MultiPoint.fromLngLats(pointList))
+
+        }
         setupZoomView()
         setFpsView()
     }

@@ -39,6 +39,7 @@ import org.maplibre.android.style.sources.Source;
 import org.maplibre.android.utils.BitmapUtils;
 import org.maplibre.android.tile.TileOperation;
 import org.maplibre.geojson.LineString;
+import org.maplibre.geojson.MultiPoint;
 import org.maplibre.geojson.Point;
 
 import java.util.ArrayList;
@@ -1201,6 +1202,33 @@ final class NativeMapView implements NativeMap {
     nativeRoutesClearStats();
   }
 
+  @Override
+  public void setCustomDotsPoints(MultiPoint points) {
+    nativeSetCustomDotsPoints(points);
+  }
+
+  @Override
+  public void setCustomDotsOptions(CustomDotsOptions options) {
+    nativeSetCustomDotsOptions(options.innerColor.red(),
+                               options.innerColor.green(),
+                               options.innerColor.blue(),
+                               options.outerColor.red(),
+                               options.outerColor.green(),
+                               options.outerColor.blue(),
+                               options.innerRadius,
+                               options.outerRadius);
+  }
+
+  @Override
+  public void setCustomDotsEnabled(boolean enabled) {
+    nativeSetCustomDotsEnabled(enabled);
+  }
+
+  @Override
+  public boolean isCustomDotsInitialized() {
+    return nativeIsCustomDotsInitialized();
+  }
+
   @NonNull
   @Override
   public RectF getDensityDependantRectangle(final RectF rectangle) {
@@ -1603,6 +1631,26 @@ final class NativeMapView implements NativeMap {
   private native String nativeRoutesGetStats();
 
   @Keep native void nativeRoutesClearStats();
+
+  //---------------------Custom Dots APIs---------------------
+  @Keep
+  private native void nativeSetCustomDotsPoints(MultiPoint points);
+
+  @Keep
+  private native void nativeSetCustomDotsOptions(float innerR,
+                                                 float innerG,
+                                                 float innerB,
+                                                 float outerR,
+                                                 float outerG,
+                                                 float outerB,
+                                                 float innerRadius,
+                                                 float outerRadius);
+
+  @Keep
+  private native void nativeSetCustomDotsEnabled(boolean enabled);
+
+  @Keep
+  private native boolean nativeIsCustomDotsInitialized();
 
   //---------------------------------------------------------
 
