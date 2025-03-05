@@ -16,6 +16,7 @@
 #include "geojson/feature.hpp"
 #include "geojson/geometry.hpp"
 #include "geojson/line_string.hpp"
+#include "geojson/multi_point.hpp"
 #include "geometry/lat_lng.hpp"
 #include "geometry/projected_meters.hpp"
 #include "style/layers/layer_manager.hpp"
@@ -352,6 +353,25 @@ public:
     jni::jdouble getTileLodZoomShift(JNIEnv&);
 
     jni::jint getLastRenderedTileCount(JNIEnv&);
+
+    void setCustomDotsPoints(JNIEnv&, const jni::Object<mbgl::android::geojson::MultiPoint>& points);
+
+    void clearCustomDotsVideoMemory(JNIEnv&);
+
+    void setCustomDotsOptions(JNIEnv&,
+                              const jni::String& nextLayer,
+                              jni::jfloat innerR,
+                              jni::jfloat innerG,
+                              jni::jfloat innerB,
+                              jni::jfloat outerR,
+                              jni::jfloat outerG,
+                              jni::jfloat outerB,
+                              jni::jfloat innerRadius,
+                              jni::jfloat outerRadius);
+
+    void setCustomDotsEnabled(JNIEnv&, jni::jboolean enabled);
+
+    jni::jboolean isCustomDotsInitialized(JNIEnv&);
 
     mbgl::Map& getMap();
 

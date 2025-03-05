@@ -13,6 +13,7 @@
 
 #include <jni/jni.hpp>
 
+#include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_options.hpp>
@@ -59,6 +60,8 @@
 #include "tile/tile_operation.hpp"
 #include "mbgl/route/route_manager.hpp"
 #include "mbgl/route/route.hpp"
+
+#include "android_renderer_backend.hpp"
 
 namespace mbgl {
 namespace android {
@@ -1279,6 +1282,47 @@ jni::jint NativeMapView::getLastRenderedTileCount(JNIEnv&) {
     return jni::jint(mapRenderer.getLastRenderedTileCount());
 }
 
+void NativeMapView::setCustomDotsPoints(JNIEnv& env, const jni::Object<mbgl::android::geojson::MultiPoint>& jniPoints) {
+    const auto& geojsonPoints = mbgl::android::geojson::MultiPoint::convert(env, jniPoints);
+    gfx::CustomDotsPoints points;
+    points.reserve(geojsonPoints.size());
+    for (const auto& point : geojsonPoints) {
+        points.emplace_back(point.y, point.x);
+    }
+    mapRenderer.getRendererBackend().setCustomDotsPoints(std::move(points));
+}
+
+void NativeMapView::clearCustomDotsVideoMemory(JNIEnv&) {
+    mapRenderer.getRendererBackend().clearCustomDotsVideoMemory();
+}
+
+void NativeMapView::setCustomDotsOptions(JNIEnv& env,
+                                         const jni::String& nextLayer,
+                                         jni::jfloat innerR,
+                                         jni::jfloat innerG,
+                                         jni::jfloat innerB,
+                                         jni::jfloat outerR,
+                                         jni::jfloat outerG,
+                                         jni::jfloat outerB,
+                                         jni::jfloat innerRadius,
+                                         jni::jfloat outerRadius) {
+    gfx::CustomDotsOptions options;
+    options.nextLayer = jni::Make<std::string>(env, nextLayer);
+    options.innerColor = {innerR, innerG, innerB, 1.f};
+    options.outerColor = {outerR, outerG, outerB, 1.f};
+    options.innerRadius = innerRadius;
+    options.outerRadius = outerRadius;
+    mapRenderer.getRendererBackend().setCustomDotsOptions(options);
+}
+
+void NativeMapView::setCustomDotsEnabled(JNIEnv&, jni::jboolean enabled) {
+    mapRenderer.getRendererBackend().setCustomDotsEnabled(enabled == jni::jni_true);
+}
+
+jni::jboolean NativeMapView::isCustomDotsInitialized(JNIEnv&) {
+    return mapRenderer.getRendererBackend().isCustomDotsInitialized();
+}
+
 mbgl::Map& NativeMapView::getMap() {
     return *map;
 }
@@ -1416,11 +1460,13 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeProgressSetPoint, "nativeRouteSetProgressPoint"),
         METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
-        METHOD(&NativeMapView::routesGetStats, "nativeRoutesGetStats"),
-        METHOD(&NativeMapView::routesClearStats, "nativeRoutesClearStats"),
-        METHOD(&NativeMapView::routesBeginCapture, "nativeRoutesBegineCapture"),
-        METHOD(&NativeMapView::routesEndCapture, "nativeRoutesEndCapture"),
-        METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
+        METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"),
+        // Custom Dots API
+        METHOD(&NativeMapView::setCustomDotsPoints, "nativeSetCustomDotsPoints"),
+        METHOD(&NativeMapView::clearCustomDotsVideoMemory, "nativeClearCustomDotsVideoMemory"),
+        METHOD(&NativeMapView::setCustomDotsOptions, "nativeSetCustomDotsOptions"),
+        METHOD(&NativeMapView::setCustomDotsEnabled, "nativeSetCustomDotsEnabled"),
+        METHOD(&NativeMapView::isCustomDotsInitialized, "nativeIsCustomDotsInitialized"));
 }
 
 jint NativeMapView::routeCreate(JNIEnv& env,
