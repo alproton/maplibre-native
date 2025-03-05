@@ -2,6 +2,7 @@
 
 #include <mbgl/actor/scheduler.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
+#include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/util/util.hpp>
 
 #include <memory>
@@ -60,6 +61,8 @@ public:
     const mbgl::util::SimpleIdentity uniqueID;
 
     std::unique_ptr<gfx::CustomPuck> customPuck = nullptr;
+
+    std::unique_ptr<gfx::CustomDots> customDots = nullptr;
 
 protected:
     virtual std::unique_ptr<Context> createContext() = 0;

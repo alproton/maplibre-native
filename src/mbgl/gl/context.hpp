@@ -170,6 +170,7 @@ public:
     RendererBackend& getBackend() { return backend; }
 
     std::unique_ptr<gfx::CustomPuck> createCustomPuck() override;
+    std::unique_ptr<gfx::CustomDots> createCustomDots() override;
 
 private:
     RendererBackend& backend;
