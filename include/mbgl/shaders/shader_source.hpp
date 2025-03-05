@@ -64,7 +64,9 @@ enum class BuiltIn {
     SymbolIconProgram,
     SymbolSDFTextProgram,
     SymbolSDFIconProgram,
-    SymbolTextAndIconProgram
+    SymbolTextAndIconProgram,
+    CustomDotsProgram,
+    CustomPuckProgram,
 };
 
 /// @brief Select shader source based on a program type and a desired

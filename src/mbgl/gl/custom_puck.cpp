@@ -1,6 +1,7 @@
 #include <mbgl/gl/custom_puck.hpp>
 #include <mbgl/gl/defines.hpp>
 #include <mbgl/gl/renderer_backend.hpp>
+#include <mbgl/shaders/gl/custom_puck.hpp>
 #include <mbgl/util/logging.hpp>
 #include <algorithm>
 
@@ -20,33 +21,9 @@ using namespace platform;
 namespace {
 
 UniqueProgram createPuckShader(gl::Context& context) {
-    const char* vs = R"(
-#version 310 es
-// Since this is a temporary workaround to issue #3135, we use
-// uniform vectors for the puck quad to simplify the GL side code
-layout(location = 0) uniform vec2 v0;
-layout(location = 1) uniform vec2 v1;
-layout(location = 2) uniform vec2 v2;
-layout(location = 3) uniform vec2 v3;
-out mediump vec2 uv;
-void main() {
-  vec2 pos[4] = vec2[4](v0, v1, v2, v3);
-  vec2 vertex_uv[4] = vec2[4](vec2(0,1), vec2(1,1), vec2(0,0), vec2(1,0));
-  gl_Position = vec4(pos[gl_VertexID], 0, 1);
-  uv = vertex_uv[gl_VertexID];
-}
-    )";
-    const char* ps = R"(
-#version 310 es
-in mediump vec2 uv;
-out mediump vec4 fragColor;
-uniform sampler2D tex;
-void main() {
-  fragColor = texture(tex, uv);
-}
-    )";
-    auto vertexShader = context.createShader(gl::ShaderType::Vertex, {vs});
-    auto fragmentShader = context.createShader(gl::ShaderType::Fragment, {ps});
+    using shader = shaders::ShaderSource<shaders::BuiltIn::CustomPuckProgram, gfx::Backend::Type::OpenGL>;
+    auto vertexShader = context.createShader(gl::ShaderType::Vertex, {shader::vertex});
+    auto fragmentShader = context.createShader(gl::ShaderType::Fragment, {shader::fragment});
     auto program = context.createProgram(vertexShader, fragmentShader, nullptr);
     return program;
 }
@@ -90,7 +67,7 @@ public:
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
         glGetIntegerv(GL_ACTIVE_TEXTURE, &textureUnit);
-
+        glGetIntegerv(GL_CURRENT_PROGRAM, &program);
         // Set custom puck states
         glBindVertexArray(0);
         glEnable(GL_BLEND);
@@ -98,7 +75,7 @@ public:
         glDisable(GL_STENCIL_TEST);
         glDisable(GL_CULL_FACE);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        glActiveTexture(0);
+        glActiveTexture(GL_TEXTURE0);
     }
 
     ~ScopedGlStates() {
@@ -107,6 +84,7 @@ public:
         enableGlSate(GL_DEPTH_TEST, depthTestEnabled);
         enableGlSate(GL_STENCIL_TEST, stencilTestEnabled);
         enableGlSate(GL_CULL_FACE, cullFaceEnabled);
+        glUseProgram(program);
         glBlendFunc(blendSrc, blendDst);
         glBindVertexArray(vao);
         glActiveTexture(textureUnit);
@@ -123,15 +101,16 @@ private:
     }
 
 private:
-    GLboolean blendEnabled;
-    GLboolean depthTestEnabled;
-    GLboolean stencilTestEnabled;
-    GLboolean cullFaceEnabled;
-    GLint blendSrc;
-    GLint blendDst;
-    GLint vao;
-    GLint textureBinding;
-    GLint textureUnit;
+    GLboolean blendEnabled = false;
+    GLboolean depthTestEnabled = false;
+    GLboolean stencilTestEnabled = false;
+    GLboolean cullFaceEnabled = false;
+    GLint program = 0;
+    GLint blendSrc = 0;
+    GLint blendDst = 0;
+    GLint vao = 0;
+    GLint textureBinding = 0;
+    GLint textureUnit = 0;
 };
 
 } // namespace
