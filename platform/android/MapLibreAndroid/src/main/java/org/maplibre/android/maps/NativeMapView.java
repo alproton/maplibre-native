@@ -39,6 +39,7 @@ import org.maplibre.android.style.sources.Source;
 import org.maplibre.android.utils.BitmapUtils;
 import org.maplibre.android.tile.TileOperation;
 import org.maplibre.geojson.LineString;
+import org.maplibre.geojson.MultiPoint;
 import org.maplibre.geojson.Point;
 
 import java.util.ArrayList;
@@ -1237,6 +1238,43 @@ final class NativeMapView implements NativeMap {
     return nativeRoutesCaptureSnapshot();
   }
 
+  @Override
+  public void setCustomDotsNextLayer(String layer) {
+    nativeSetCustomDotsNextLayer(layer);
+  }
+
+  @Override
+  public void setCustomDotsPoints(int id, MultiPoint points) {
+    nativeSetCustomDotsPoints(id, points);
+  }
+
+  @Override
+  public void clearCustomDotsVideoMemory() {
+    nativeClearCustomDotsVideoMemory();
+  }
+
+  @Override
+  public void setCustomDotsOptions(int id, CustomDotsOptions options) {
+    nativeSetCustomDotsOptions(id,
+                               options.innerColor.red(),
+                               options.innerColor.green(),
+                               options.innerColor.blue(),
+                               options.outerColor.red(),
+                               options.outerColor.green(),
+                               options.outerColor.blue(),
+                               options.innerRadius,
+                               options.outerRadius);
+  }
+
+  @Override
+  public void setCustomDotsEnabled(boolean enabled) {
+    nativeSetCustomDotsEnabled(enabled);
+  }
+
+  @Override
+  public boolean isCustomDotsInitialized() {
+    return nativeIsCustomDotsInitialized();
+  }
 
   @NonNull
   @Override
@@ -1650,6 +1688,33 @@ final class NativeMapView implements NativeMap {
   private native String nativeRoutesCaptureSnapshot();
 
   @Keep native void nativeRoutesClearStats();
+
+  //---------------------Custom Dots APIs---------------------
+  @Keep
+  private native void nativeSetCustomDotsNextLayer(String layer);
+
+  @Keep
+  private native void nativeSetCustomDotsPoints(int id, MultiPoint points);
+
+  @Keep
+  private native void nativeClearCustomDotsVideoMemory();
+
+  @Keep
+  private native void nativeSetCustomDotsOptions(int id,
+                                                 float innerR,
+                                                 float innerG,
+                                                 float innerB,
+                                                 float outerR,
+                                                 float outerG,
+                                                 float outerB,
+                                                 float innerRadius,
+                                                 float outerRadius);
+
+  @Keep
+  private native void nativeSetCustomDotsEnabled(boolean enabled);
+
+  @Keep
+  private native boolean nativeIsCustomDotsInitialized();
 
   //---------------------------------------------------------
 
