@@ -13,6 +13,7 @@
 
 #include <jni/jni.hpp>
 
+#include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_options.hpp>
@@ -57,8 +58,10 @@
 #include "run_loop_impl.hpp"
 #include "style/light.hpp"
 #include "tile/tile_operation.hpp"
-#include  "mbgl/route/route_manager.hpp"
+#include "mbgl/route/route_manager.hpp"
 #include "mbgl/route/route.hpp"
+
+#include "android_renderer_backend.hpp"
 
 namespace mbgl {
 namespace android {
@@ -313,7 +316,7 @@ jni::Local<jni::String> NativeMapView::getStyleUrl(jni::JNIEnv& env) {
 
 void NativeMapView::setStyleUrl(jni::JNIEnv& env, const jni::String& url) {
     map->getStyle().loadURL(jni::Make<std::string>(env, url));
-    if(routeMgr) {
+    if (routeMgr) {
         routeMgr->setStyle(map->getStyle());
     }
 }
@@ -324,7 +327,7 @@ jni::Local<jni::String> NativeMapView::getStyleJson(jni::JNIEnv& env) {
 
 void NativeMapView::setStyleJson(jni::JNIEnv& env, const jni::String& json) {
     map->getStyle().loadJSON(jni::Make<std::string>(env, json));
-    if(routeMgr) {
+    if (routeMgr) {
         routeMgr->setStyle(map->getStyle());
     }
 }
@@ -1279,6 +1282,41 @@ jni::jint NativeMapView::getLastRenderedTileCount(JNIEnv&) {
     return jni::jint(mapRenderer.getLastRenderedTileCount());
 }
 
+void NativeMapView::setCustomDotsPoints(JNIEnv& env, const jni::Object<mbgl::android::geojson::MultiPoint>& jniPoints) {
+    const auto& geojsonPoints = mbgl::android::geojson::MultiPoint::convert(env, jniPoints);
+    gfx::CustomDotsPoints points;
+    points.reserve(geojsonPoints.size());
+    for (const auto& point : geojsonPoints) {
+        points.emplace_back(point.y, point.x);
+    }
+    mapRenderer.getRendererBackend().setCustomDotsPoints(std::move(points));
+}
+
+void NativeMapView::setCustomDotsOptions(JNIEnv&,
+                                         jni::jfloat innerR,
+                                         jni::jfloat innerG,
+                                         jni::jfloat innerB,
+                                         jni::jfloat outerR,
+                                         jni::jfloat outerG,
+                                         jni::jfloat outerB,
+                                         jni::jfloat innerRadius,
+                                         jni::jfloat outerRadius) {
+    gfx::CustomDotsOptions options;
+    options.innerColor = {innerR, innerG, innerB, 1.f};
+    options.outerColor = {outerR, outerG, outerB, 1.f};
+    options.innerRadius = innerRadius;
+    options.outerRadius = outerRadius;
+    mapRenderer.getRendererBackend().setCustomDotsOptions(options);
+}
+
+void NativeMapView::setCustomDotsEnabled(JNIEnv&, jni::jboolean enabled) {
+    mapRenderer.getRendererBackend().setCustomDotsEnabled(enabled == jni::jni_true);
+}
+
+jni::jboolean NativeMapView::isCustomDotsInitialized(JNIEnv&) {
+    return mapRenderer.getRendererBackend().isCustomDotsInitialized();
+}
+
 mbgl::Map& NativeMapView::getMap() {
     return *map;
 }
@@ -1414,29 +1452,38 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
         METHOD(&NativeMapView::routesSetLayerBefore, "nativeRoutesSetLayerBefore"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
-        METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
+        METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"),
+        // Custom Dots API
+        METHOD(&NativeMapView::setCustomDotsPoints, "nativeSetCustomDotsPoints"),
+        METHOD(&NativeMapView::setCustomDotsOptions, "nativeSetCustomDotsOptions"),
+        METHOD(&NativeMapView::setCustomDotsEnabled, "nativeSetCustomDotsEnabled"),
+        METHOD(&NativeMapView::isCustomDotsInitialized, "nativeIsCustomDotsInitialized"));
 }
 
-
-jint NativeMapView::routeCreate(JNIEnv& env, const jni::Object<mbgl::android::geojson::LineString>& routeGeom, jint outerColor, jint innerColor, jdouble outerWidth, jdouble innerWidth) {
-    if(!routeMgr->hasStyle()) {
+jint NativeMapView::routeCreate(JNIEnv& env,
+                                const jni::Object<mbgl::android::geojson::LineString>& routeGeom,
+                                jint outerColor,
+                                jint innerColor,
+                                jdouble outerWidth,
+                                jdouble innerWidth) {
+    if (!routeMgr->hasStyle()) {
         routeMgr->setStyle(map->getStyle());
     }
 
     assert(routeMgr->hasStyle() && "style object has not been set");
     RouteID routeID;
-    if(routeMgr) {
-        if(routeMgr->hasStyle()) {
+    if (routeMgr) {
+        if (routeMgr->hasStyle()) {
             using namespace mbgl::android::conversion;
             const auto& linestring = mbgl::android::geojson::LineString::convert(env, routeGeom);
             mbgl::route::RouteOptions routeOptions;
             Converter<mbgl::Color, int> colorConverter;
             Result<Color> outerColorRes = colorConverter(env, outerColor);
             Result<Color> innerColorRes = colorConverter(env, innerColor);
-            if(outerColorRes) {
+            if (outerColorRes) {
                 routeOptions.outerColor = *outerColorRes;
             }
-            if(innerColorRes) {
+            if (innerColorRes) {
                 routeOptions.innerColor = *innerColorRes;
             }
             routeOptions.outerWidth = outerWidth;
@@ -1450,7 +1497,7 @@ jint NativeMapView::routeCreate(JNIEnv& env, const jni::Object<mbgl::android::ge
 
 jni::Local<jni::String> NativeMapView::routesGetStats(JNIEnv& env) {
     std::string stats;
-    if(routeMgr) {
+    if (routeMgr) {
         stats = routeMgr->getStats();
     }
 
@@ -1458,29 +1505,34 @@ jni::Local<jni::String> NativeMapView::routesGetStats(JNIEnv& env) {
 }
 
 void NativeMapView::routesClearStats(JNIEnv& env) {
-    if(routeMgr) {
+    if (routeMgr) {
         routeMgr->clearStats();
     }
 }
 
 void NativeMapView::routesSetLayerBefore(JNIEnv& env, const jni::String& layerBefore) {
-    if(routeMgr) {
+    if (routeMgr) {
         std::string layerBeforeStr = jni::Make<std::string>(env, layerBefore);
         routeMgr->setLayerBefore(layerBeforeStr);
     }
 }
 
 jboolean NativeMapView::routeDispose(JNIEnv& env, jint routeID) {
-    if(routeMgr) {
+    if (routeMgr) {
         return routeMgr->routeDispose(RouteID(routeID));
     }
 
     return false;
 }
 
-jboolean NativeMapView::routeSegmentCreate(JNIEnv& env, jint routeID, const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
-                                           jint sortOrder, jfloat red, jfloat green, jfloat blue) {
-    if(routeMgr) {
+jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
+                                           jint routeID,
+                                           const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
+                                           jint sortOrder,
+                                           jfloat red,
+                                           jfloat green,
+                                           jfloat blue) {
+    if (routeMgr) {
         const auto& linestring = mbgl::android::geojson::LineString::convert(env, segmentGeom);
         mbgl::route::RouteSegmentOptions rsegopts;
         rsegopts.geometry = linestring;
@@ -1495,7 +1547,7 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env, jint routeID, const jni:
 }
 
 jboolean NativeMapView::routeProgressSet(JNIEnv& env, jint routeID, double progress) {
-    if(routeMgr) {
+    if (routeMgr) {
         return routeMgr->routeSetProgress(RouteID(routeID), progress);
     }
 
@@ -1503,13 +1555,13 @@ jboolean NativeMapView::routeProgressSet(JNIEnv& env, jint routeID, double progr
 }
 
 void NativeMapView::routeSegmentsClear(JNIEnv& env, jint routeID) {
-    if(routeMgr) {
+    if (routeMgr) {
         routeMgr->routeClearSegments(RouteID(routeID));
     }
 }
 
 jboolean NativeMapView::routesFinalize(JNIEnv& env) {
-    if(routeMgr) {
+    if (routeMgr) {
         routeMgr->finalize();
 
         return true;

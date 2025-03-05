@@ -44,6 +44,8 @@ constexpr auto CaptureFrameCount = 1;
 #endif // MLN_DRAWABLE_RENDERER
 #endif // !MLN_RENDER_BACKEND_METAL
 
+#include <random>
+
 namespace mbgl {
 
 using namespace style;
@@ -531,6 +533,37 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
     orchestrator.visitLayerGroups([&](LayerGroupBase& layerGroup) { layerGroup.postRender(orchestrator, parameters); });
     context.unbindGlobalUniformBuffers(*parameters.renderPass);
 #endif
+
+    if (!backend.customDots) {
+        backend.customDots = context.createCustomDots();
+        if (backend.customDots == nullptr) {
+            Log::Error(
+                Event::Render,
+                "Failed to create a custom dots. Make sure CustomDots is implemented for the used rendering API.");
+        }
+        assert(backend.customDots != nullptr);
+
+        /*
+        // Debug code to test custom dots
+        std::mt19937 gen;
+        std::uniform_real_distribution<double> dis(0, 3);
+        gfx::CustomDotsPoints points(30000);
+        for (auto& p : points) {
+            p = LatLng(35 + dis(gen), -121 - dis(gen));
+        }
+        gfx::CustomDotsOptions options;
+        options.innerColor = Color(0.2f, 0.7f, 0.2f, 1.f);
+        options.outerColor = Color(0.1f, 0.2f, 0.1f, 1.f);
+        options.innerRadius = 8;
+        options.outerRadius = 12;
+        backend.customDots->setOptions(options);
+        backend.customDots->setEnabled(true);
+        backend.customDots->setPoints(std::move(points));
+        */
+    }
+    if (backend.customDots) {
+        backend.customDots->draw(updateParameters->transformState);
+    }
 
     if (!customPuck) {
         customPuck = context.createCustomPuck();

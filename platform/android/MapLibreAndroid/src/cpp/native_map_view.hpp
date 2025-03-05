@@ -16,6 +16,7 @@
 #include "geojson/feature.hpp"
 #include "geojson/geometry.hpp"
 #include "geojson/line_string.hpp"
+#include "geojson/multi_point.hpp"
 #include "geometry/lat_lng.hpp"
 #include "geometry/projected_meters.hpp"
 #include "style/layers/layer_manager.hpp"
@@ -232,11 +233,22 @@ public:
     void removeAnnotationIcon(JNIEnv&, const jni::String&);
 
     //--------------- route APIs ---------------
-    jint routeCreate(JNIEnv& env, const jni::Object<mbgl::android::geojson::LineString>& routeGeom, jint outerColor, jint innerColor, jdouble outerWidth, jdouble innerWidth);
+    jint routeCreate(JNIEnv& env,
+                     const jni::Object<mbgl::android::geojson::LineString>& routeGeom,
+                     jint outerColor,
+                     jint innerColor,
+                     jdouble outerWidth,
+                     jdouble innerWidth);
 
     jboolean routeDispose(JNIEnv& env, jint routeID);
 
-    jboolean routeSegmentCreate(JNIEnv& env, jint routeID, const jni::Object<mbgl::android::geojson::LineString>& segmentGeom, jint sortOrder, jfloat red, jfloat green, jfloat blue);
+    jboolean routeSegmentCreate(JNIEnv& env,
+                                jint routeID,
+                                const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
+                                jint sortOrder,
+                                jfloat red,
+                                jfloat green,
+                                jfloat blue);
 
     jboolean routeProgressSet(JNIEnv& env, jint routeID, double progress);
 
@@ -334,6 +346,19 @@ public:
     jni::jdouble getTileLodZoomShift(JNIEnv&);
 
     jni::jint getLastRenderedTileCount(JNIEnv&);
+
+    void setCustomDotsPoints(JNIEnv&, const jni::Object<mbgl::android::geojson::MultiPoint>& points);
+    void setCustomDotsOptions(JNIEnv&,
+                              jni::jfloat innerR,
+                              jni::jfloat innerG,
+                              jni::jfloat innerB,
+                              jni::jfloat outerR,
+                              jni::jfloat outerG,
+                              jni::jfloat outerB,
+                              jni::jfloat innerRadius,
+                              jni::jfloat outerRadius);
+    void setCustomDotsEnabled(JNIEnv&, jni::jboolean enabled);
+    jni::jboolean isCustomDotsInitialized(JNIEnv&);
 
     mbgl::Map& getMap();
 
