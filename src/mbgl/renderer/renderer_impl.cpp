@@ -44,6 +44,8 @@ constexpr auto CaptureFrameCount = 1;
 #endif // MLN_DRAWABLE_RENDERER
 #endif // !MLN_RENDER_BACKEND_METAL
 
+#include <random>
+
 namespace mbgl {
 
 using namespace style;
@@ -376,6 +378,24 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         }
     };
 
+    // Initialize Custom Dots
+    if (!backend.customDots) {
+        backend.customDots = context.createCustomDots();
+        if (backend.customDots == nullptr) {
+            Log::Error(
+                Event::Render,
+                "Failed to create a custom dots. Make sure CustomDots is implemented for the used rendering API.");
+        }
+        assert(backend.customDots != nullptr);
+    }
+    bool customDotsRendered = false;
+    auto drawCustomDots = [&](const std::string& nextLayer) {
+        if (backend.customDots && !customDotsRendered && backend.customDots->nextLayer() == nextLayer) {
+            backend.customDots->draw(updateParameters->transformState);
+            customDotsRendered = true;
+        }
+    };
+
     // Actually render the layers
 #if MLN_DRAWABLE_RENDERER
     // Drawables
@@ -388,6 +408,7 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         // draw layer groups, opaque pass
         parameters.currentLayer = 0;
         orchestrator.visitLayerGroupsReversed([&](LayerGroupBase& layerGroup) {
+            drawCustomDots(layerGroup.getName());
             layerGroup.render(orchestrator, parameters);
             parameters.currentLayer++;
         });
@@ -402,6 +423,7 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         // draw layer groups, translucent pass
         parameters.currentLayer = static_cast<uint32_t>(orchestrator.numLayerGroups()) - 1;
         orchestrator.visitLayerGroups([&](LayerGroupBase& layerGroup) {
+            drawCustomDots(layerGroup.getName());
             layerGroup.render(orchestrator, parameters);
             if (parameters.currentLayer > 0) {
                 parameters.currentLayer--;
@@ -416,6 +438,7 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         for (auto it = layerRenderItems.begin(); it != layerRenderItems.end() && i >= 0; ++it, --i) {
             parameters.currentLayer = i;
             const RenderItem& item = *it;
+            drawCustomDots(item.getName());
             if (item.hasRenderPass(parameters.pass)) {
                 item.render(parameters);
             }
@@ -435,6 +458,7 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         for (auto it = layerRenderItems.rbegin(); it != layerRenderItems.rend(); ++it, ++i) {
             parameters.currentLayer = i;
             const RenderItem& renderItem = it->get();
+            drawCustomDots(renderItem.getName());
             if (renderItem.hasRenderPass(parameters.pass)) {
                 const auto layerDebugGroup(parameters.renderPass->createDebugGroup(renderItem.getName().c_str()));
                 renderItem.render(parameters);
@@ -453,6 +477,7 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         for (auto it = layerRenderItems.begin(); it != layerRenderItems.end() && i >= 0; ++it, --i) {
             parameters.currentLayer = i;
             const RenderItem& renderItem = it->get();
+            drawCustomDots(renderItem.getName());
             if (renderItem.hasRenderPass(parameters.pass)) {
                 const auto layerDebugGroup(parameters.renderPass->createDebugGroup(renderItem.getName().c_str()));
                 renderItem.render(parameters);
@@ -531,6 +556,11 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
     orchestrator.visitLayerGroups([&](LayerGroupBase& layerGroup) { layerGroup.postRender(orchestrator, parameters); });
     context.unbindGlobalUniformBuffers(*parameters.renderPass);
 #endif
+
+    // Render custom dots if they are enabled but no next layer exists
+    if (!customDotsRendered && backend.customDots) {
+        backend.customDots->draw(updateParameters->transformState);
+    }
 
     if (!customPuck) {
         customPuck = context.createCustomPuck();
