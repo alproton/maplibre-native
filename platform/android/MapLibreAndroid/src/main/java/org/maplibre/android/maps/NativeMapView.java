@@ -40,6 +40,7 @@ import org.maplibre.android.utils.BitmapUtils;
 import org.maplibre.android.tile.TileOperation;
 import org.maplibre.geojson.LineString;
 import org.maplibre.geojson.Point;
+import org.maplibre.geojson.MultiPoint;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,7 +117,6 @@ final class NativeMapView implements NativeMap {
   //
   // Methods
   //
-
 
   private boolean checkState(String callingMethod) {
     // validate if invocation has occurred on the main thread
@@ -1242,6 +1242,44 @@ final class NativeMapView implements NativeMap {
     return nativeRoutesEndCapture();
   }
 
+  @Override
+  public void setCustomDotsNextLayer(String layer) {
+    nativeSetCustomDotsNextLayer(layer);
+  }
+
+  @Override
+  public void setCustomDotsPoints(int id, MultiPoint points) {
+    nativeSetCustomDotsPoints(id, points);
+  }
+
+  @Override
+  public void clearCustomDotsVideoMemory() {
+    nativeClearCustomDotsVideoMemory();
+  }
+
+  @Override
+  public void setCustomDotsOptions(int id, CustomDotsOptions options) {
+    nativeSetCustomDotsOptions(id,
+                               options.innerColor.red(),
+                               options.innerColor.green(),
+                               options.innerColor.blue(),
+                               options.outerColor.red(),
+                               options.outerColor.green(),
+                               options.outerColor.blue(),
+                               options.innerRadius,
+                               options.outerRadius);
+  }
+
+  @Override
+  public void setCustomDotsEnabled(boolean enabled) {
+    nativeSetCustomDotsEnabled(enabled);
+  }
+
+  @Override
+  public boolean isCustomDotsInitialized() {
+    return nativeIsCustomDotsInitialized();
+  }
+
   @NonNull
   @Override
   public RectF getDensityDependantRectangle(final RectF rectangle) {
@@ -1657,6 +1695,35 @@ final class NativeMapView implements NativeMap {
   private native String nativeRoutesEndCapture();
 
   @Keep native void nativeRoutesClearStats();
+
+  //---------------------------------------------------------
+
+  //---------------------Custom Dots APIs---------------------
+  @Keep
+  private native void nativeSetCustomDotsNextLayer(String layer);
+
+  @Keep
+  private native void nativeSetCustomDotsPoints(int id, MultiPoint points);
+
+  @Keep
+  private native void nativeClearCustomDotsVideoMemory();
+
+  @Keep
+  private native void nativeSetCustomDotsOptions(int id,
+                                                 float innerR,
+                                                 float innerG,
+                                                 float innerB,
+                                                 float outerR,
+                                                 float outerG,
+                                                 float outerB,
+                                                 float innerRadius,
+                                                 float outerRadius);
+
+  @Keep
+  private native void nativeSetCustomDotsEnabled(boolean enabled);
+
+  @Keep
+  private native boolean nativeIsCustomDotsInitialized();
 
   //---------------------------------------------------------
 

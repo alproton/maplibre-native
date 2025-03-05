@@ -24,6 +24,7 @@ import org.maplibre.android.style.light.Light;
 import org.maplibre.android.style.sources.Source;
 import org.maplibre.geojson.LineString;
 import org.maplibre.geojson.Point;
+import org.maplibre.geojson.MultiPoint;
 
 import java.util.List;
 
@@ -296,6 +297,22 @@ interface NativeMap {
   void beginRoutesCapture();
 
   String endRoutesCapture();
+
+
+  //
+  // Custom Dots API
+  //
+  void setCustomDotsNextLayer(String layer);
+
+  void setCustomDotsPoints(int id, MultiPoint points);
+
+  void clearCustomDotsVideoMemory();
+
+  void setCustomDotsOptions(int id, CustomDotsOptions options);
+
+  void setCustomDotsEnabled(boolean enabled);
+
+  boolean isCustomDotsInitialized();
 
   //
   // Deprecated Annotations API
