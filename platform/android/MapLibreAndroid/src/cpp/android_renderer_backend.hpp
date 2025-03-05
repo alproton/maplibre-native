@@ -2,6 +2,7 @@
 
 #include <mbgl/gfx/backend.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
+#include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/gfx/renderer_backend.hpp>
 #include <mbgl/gfx/renderable.hpp>
 #include <mbgl/util/image.hpp>
@@ -40,6 +41,18 @@ public:
     void setCustomPuckState(const gfx::CustomPuckState& state) noexcept { customPuckState = state; }
 
     const gfx::CustomPuckState& getCustomPuckState() const noexcept { return customPuckState; }
+
+    void setCustomDotsNextLayer(std::string layer);
+
+    void setCustomDotsPoints(int id, gfx::CustomDotsPoints points);
+
+    void clearCustomDotsVideoMemory();
+
+    void setCustomDotsOptions(int id, const gfx::CustomDotsOptions& options);
+
+    void setCustomDotsEnabled(bool enabled);
+
+    bool isCustomDotsInitialized();
 
 protected:
     gfx::Renderable::SwapBehaviour swapBehaviour = gfx::Renderable::SwapBehaviour::NoFlush;
