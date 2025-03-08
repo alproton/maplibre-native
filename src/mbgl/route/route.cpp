@@ -5,10 +5,15 @@
 #include <mbgl/util/math.hpp>
 
 #include <mbgl/route/route_segment.hpp>
+#include <mbgl/util/logging.hpp>
 
 namespace mbgl {
 
 namespace route {
+
+namespace {
+const double EPSILON = 1e-6;
+}
 
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     : routeOptions_(ropts), geometry_(geometry) {
@@ -52,60 +57,14 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
     return gradients;
 }
 
-// std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color& routeColor) {
-//     if (segments_.empty()) {
-//         return getRouteColorStops(routeColor);
-//     }
-//     if (segGradient_.empty()) {
-//         std::sort(segments_.begin(), segments_.end(), [](const RouteSegment& lhs, const RouteSegment& rhs) {
-//             return lhs.getRouteSegmentOptions().sortOrder <= rhs.getRouteSegmentOptions().sortOrder;
-//         });
-//         const double EPSILON = 0.00001;
-//
-//         //simply bake the colors
-//         for (size_t i = 0; i < segments_.size(); ++i) {
-//             const auto& segNormalizedPos = segments_[i].getNormalizedPositions();
-//             const auto& segColor = segments_[i].getRouteSegmentOptions().color;
-//
-//             for (size_t j = 0; j < segNormalizedPos.size(); ++j) {
-//                 const auto& segPos = segNormalizedPos[j];
-//
-//                 if(i == 0 && j == 0) {
-//                     if(segPos <  EPSILON) {
-//                         segGradient_[0.0] = segColor;
-//                     } else {
-//                         segGradient_[0.0] = routeColor;
-//                     }
-//                     continue;
-//
-//                 }
-//
-//                 size_t segmentSz = segments_.size() - 1;
-//                 if(i == segments_.size() - 1 && j == segmentSz) {
-//                     if(segPos > 1 - EPSILON) {
-//                         segGradient_[1.0] = segColor;
-//                     } else {
-//                         segGradient_[1.0] = routeColor;
-//                     }
-//                 }
-//
-//                 segGradient_[segPos] = segColor;
-//             }
-//         }
-//     }
-//
-//     return segGradient_;
-// }
-
 std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color& routeColor) {
-    const double EPSILON = 0.00001;
+
     if (segments_.empty()) {
         return getRouteColorStops(routeColor);
     }
-    std::sort(segments_.begin(), segments_.end(), [](const RouteSegment& lhs, const RouteSegment& rhs) {
-        return lhs.getRouteSegmentOptions().sortOrder <= rhs.getRouteSegmentOptions().sortOrder;
-    });
+
     if (segGradient_.empty()) {
+        mbgl::Log::Info(mbgl::Event::General, "Route Event Native: calculating route segment color stops, numSegments_: " +std::to_string(segments_.size()));
         for (size_t i = 0; i < segments_.size(); ++i) {
             const auto& segNormalizedPos = segments_[i].getNormalizedPositions();
             const auto& segColor = segments_[i].getRouteSegmentOptions().color;
@@ -235,6 +194,7 @@ std::vector<double> Route::getRouteSegmentDistances() const {
 
 bool Route::routeSegmentsClear() {
     segments_.clear();
+    segGradient_.clear();
 
     return true;
 }
@@ -250,8 +210,6 @@ Route& Route::operator=(Route& other) noexcept {
     geometry_ = other.geometry_;
     totalDistance_ = other.totalDistance_;
     segGradient_ = other.segGradient_;
-    routeSegTransitionDist_ = other.routeSegTransitionDist_;
-    progressColor_ = other.progressColor_;
     return *this;
 }
 

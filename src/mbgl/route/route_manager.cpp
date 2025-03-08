@@ -1,4 +1,6 @@
 
+#include "mbgl/util/math.hpp"
+
 #include <mbgl/style/layer.hpp>
 #include <mbgl/style/layers/line_layer.hpp>
 
@@ -16,7 +18,6 @@
 #include <mbgl/style/expression/type.hpp>
 #include <mbgl/style/expression/dsl.hpp>
 #include <chrono>
-#include <boost/geometry/algorithms/detail/overlay/get_turn_info.hpp>
 
 namespace mbgl {
 namespace route {
@@ -29,7 +30,7 @@ const std::string RouteManager::GEOJSON_ACTIVE_ROUTE_SOURCE_ID = "active_route_g
 namespace {
 
 #define TRACE_FUNCTION_CALL(stream, stubstr) \
-stream <<"Event "<<std::to_string(eventID_++)+": "<< __FUNCTION__ << std::endl << stubstr << std::endl << std::endl;
+stream <<"Route Event "<<std::to_string(eventID_++)+": "<< __FUNCTION__ << std::endl << stubstr << std::endl;
 
 std::string formatElapsedTime(long long value) {
     std::stringstream ss;
@@ -45,7 +46,6 @@ std::string toString(const LineString<double>& line) {
         ss<<"{"<<line[i].x<<", "<<line[i].y<<"},"<<std::endl;
     }
     ss<<"}"<<std::endl;
-    ss<<std::endl;
 
     return ss.str();
 }
@@ -59,6 +59,31 @@ std::string toString(const std::map<double, mbgl::Color>& gradient) {
     ss<<"}"<<std::endl;
 
     return ss.str();
+}
+
+LineString<double> removeDups(const LineString<double>& line, uint32_t* numDups) {
+    if(line.empty()) return {};
+    const double EPSILON = 1e-6;
+    LineString<double> result;
+    result.push_back(line[0]);
+    uint32_t dupsCounts = 0;
+    for(size_t i = 1; i < line.size(); i++) {
+        mbgl::Point<double> currpt = line[i];
+        mbgl::Point<double> prevpt = line[i-1];
+        double distance = mbgl::util::dist<double>(currpt, prevpt);
+        if(distance < EPSILON) {
+            dupsCounts++;
+        }
+        else {
+            result.push_back(line[i]);
+        }
+    }
+
+    if(numDups != nullptr) {
+        *numDups = dupsCounts;
+    }
+
+    return result;
 }
 
 }
@@ -110,12 +135,14 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
     RouteID rid;
     bool success = routeIDpool_.createID((rid.id));
     if (success && rid.isValid()) {
+        uint32_t numDups = 0;
+        const LineString<double> geom = removeDups(geometry, &numDups);
+
         if(capturing_) {
  //            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(rid.id)+"\n"+toString(geometry));
-            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(rid.id));
+            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(rid.id)+"\nnumDups: "+std::to_string(numDups)+"\nnumPoints: "+std::to_string(geom.size()));
         }
-
-        Route route(geometry, ropts);
+        Route route(geom, ropts);
         routeMap_[rid] = route;
         stats_.numRoutes++;
         dirtyRouteMap_[DirtyType::dtRouteGeometry].insert(rid);
@@ -124,17 +151,48 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
     return rid;
 }
 
-void RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
+bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
     if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        std::string captureStr;
         if(capturing_) {
-            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id)+"\n"+toString(routeSegOpts.geometry));
+            captureStr = "routeID: "+std::to_string(routeID.id)+"\ninput points: "+toString(routeSegOpts.geometry);
         }
 
-        routeMap_[routeID].routeSegmentCreate(routeSegOpts);
+        RouteSegmentOptions rsegopts;
+        rsegopts.color = routeSegOpts.color;
+        rsegopts.sortOrder = routeSegOpts.sortOrder;
+        uint32_t dupsCount = 0;
+        rsegopts.geometry = removeDups(routeSegOpts.geometry, &dupsCount);
+
+        if(capturing_) {
+            std::string successStr = "return: ";
+            if(rsegopts.geometry.size() < 2) {
+                successStr += "Failure due to less points";
+            } else {
+                successStr += "Success";
+            }
+
+            TRACE_FUNCTION_CALL(captureStream_, captureStr +"\nunique points: "+toString(rsegopts.geometry)+
+                                                            "\nnumDuplicates: "+std::to_string(dupsCount)+
+                                                            "\ncurrTotalSegments: "+std::to_string(routeMap_[routeID].getNumRouteSegments())+
+                                                            "\n"+successStr
+                                                            );
+        }
+
+        //route segments must have atleast 2 points
+        if(rsegopts.geometry.size() < 2) {
+            return false;
+        }
+
+        routeMap_[routeID].routeSegmentCreate(rsegopts);
         stats_.numRouteSegments++;
 
         validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
+
+        return true;
     }
+
+    return false;
 }
 
 void RouteManager::validateAddToDirtyBin(const RouteID& routeID, const DirtyType& dirtyBin) {
@@ -268,7 +326,7 @@ std::string RouteManager::getBaseGeoJSONsourceName(const RouteID& routeID) const
 const std::string RouteManager::getStats()  {
     statsStream_<<"Num Routes: "<<stats_.numRoutes<<std::endl;
     statsStream_<<"Num finalized invocations: "<<stats_.numFinalizedInvoked<<std::endl;
-//    statsStream_<<"Num traffic zones: "<<stats_.numRouteSegments<<std::endl;
+    statsStream_<<"Num traffic zones: "<<stats_.numRouteSegments<<std::endl;
 //    statsStream_<<"InconsistentAPIusage: "<<std::boolalpha<<stats_.inconsistentAPIusage<<std::endl;
 //    statsStream_<<"Routes finilize elapsed: "<<stats_.finalizeMillis<<std::endl;
 
@@ -287,13 +345,15 @@ void RouteManager::beginCapture() {
 const std::string RouteManager::endCapture() {
 //    capturing_ = false;
     std::string retStr = captureStream_.str();
+    //reset the stringstream
+    captureStream_.str(std::string());
     captureStream_.clear();
-//    eventID_ = 0;
 
     return retStr;
 }
 
 void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
+
     assert(routeID.isValid() && "invalid route ID");
     using namespace mbgl::style;
     using namespace mbgl::style::expression;
@@ -431,17 +491,19 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             std::map<double, mbgl::Color> gradientMap = route.getRouteSegmentColorStops(
                 routeOptions.innerColor);
             if(capturing_) {
-                captureStr += "\nGradient Map:\n"+toString(gradientMap);
+                captureStr += "\nActive gradient map:\n"+toString(gradientMap);
             }
             std::unique_ptr<expression::Expression> gradientExpression = createGradientExpression(
                 gradientMap);
-
 
             ColorRampPropertyValue activeColorRampProp(std::move(gradientExpression));
             activeRouteLineLayer->setLineGradient(activeColorRampProp);
 
             // create the gradient expression for the base route
             std::map<double, mbgl::Color> baseLayerGradient = route.getRouteColorStops(routeOptions.outerColor);
+            if(capturing_) {
+                captureStr += "\nBase gradient map:\n"+toString(baseLayerGradient);
+            }
             std::unique_ptr<expression::Expression> baseLayerExpression = createGradientExpression(
                 baseLayerGradient);
 
