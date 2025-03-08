@@ -9,6 +9,6 @@ final public class RouteID {
         return id;
     }
     public boolean isValid() {
-        return Integer.toUnsignedLong(id) != -1;
+        return id != -1;
     }
 }

@@ -64,7 +64,7 @@ std::string toString(const std::map<double, mbgl::Color>& gradient) {
 }
 
 RouteManager::RouteManager()
-    : routeIDpool_(100) {
+    : routeIDpool_(1000) {
     }
 
 void RouteManager::setStyle(style::Style& style) {
@@ -94,7 +94,7 @@ void RouteManager::setStyle(style::Style& style) {
             if (activeGeoJSONsrc) {
                 style.addSource(std::move(activeGeoJSONsrc));
             }
-            if(captureStream_) {
+            if(capturing_) {
                 TRACE_FUNCTION_CALL(captureStream_, "");
             }
         }
@@ -110,8 +110,9 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
     RouteID rid;
     bool success = routeIDpool_.createID((rid.id));
     if (success && rid.isValid()) {
-        if(captureStream_) {
-            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(rid.id)+"\n"+toString(geometry));
+        if(capturing_) {
+ //            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(rid.id)+"\n"+toString(geometry));
+            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(rid.id));
         }
 
         Route route(geometry, ropts);
@@ -125,7 +126,7 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
 
 void RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
     if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if(captureStream_) {
+        if(capturing_) {
             TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id)+"\n"+toString(routeSegOpts.geometry));
         }
 
@@ -153,7 +154,7 @@ void RouteManager::validateAddToDirtyBin(const RouteID& routeID, const DirtyType
 void RouteManager::routeClearSegments(const RouteID& routeID) {
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if(captureStream_) {
+        if(capturing_) {
             TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id));
         }
         stats_.numRouteSegments -= routeMap_[routeID].getNumRouteSegments();
@@ -168,12 +169,17 @@ bool RouteManager::routeDispose(const RouteID& routeID) {
     assert(style_ != nullptr && "Style not set!");
     assert(routeID.isValid() && "Invalid route ID");
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
+    if(capturing_) {
+        std::string validStyle = style_ != nullptr ? "true" : "false";
+        std::string routeResident = routeMap_.find(routeID) != routeMap_.end() ? "true" : "false";
+        TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id)+", validStyle: "+validStyle+", routeResident: "+routeResident);
+    }
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end() && style_ != nullptr) {
-        std::string baseLayerName = BASE_ROUTE_LAYER + std::to_string(routeID.id);
-        std::string activeLayerName = ACTIVE_ROUTE_LAYER + std::to_string(routeID.id);
-        std::string baseGeoJSONsrcName = GEOJSON_BASE_ROUTE_SOURCE_ID + std::to_string(routeID.id);
-        std::string activeGeoJSONsrcName = GEOJSON_ACTIVE_ROUTE_SOURCE_ID + std::to_string(routeID.id);
+        std::string baseLayerName = getBaseRouteLayerName(routeID);
+        std::string activeLayerName = getActiveRouteLayerName(routeID);
+        std::string baseGeoJSONsrcName = getBaseGeoJSONsourceName(routeID);
+        std::string activeGeoJSONsrcName = getActiveGeoJSONsourceName(routeID);
 
         if (style_->removeLayer(baseLayerName) != nullptr) {
             success = true;
@@ -190,9 +196,10 @@ bool RouteManager::routeDispose(const RouteID& routeID) {
         }
 
         routeMap_.erase(routeID);
+        routeIDpool_.destroyID(routeID.id);
         stats_.numRoutes--;
-        if(captureStream_) {
-            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id));
+        if(capturing_) {
+            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id)+" success");
         }
 
         return success;
@@ -211,7 +218,7 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const double progres
     double validProgress = std::clamp(progress, 0.0, 1.0);
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if(captureStream_) {
+        if(capturing_) {
             TRACE_FUNCTION_CALL(captureStream_, "progress: "+std::to_string(validProgress));
         }
 
@@ -229,7 +236,7 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const mbgl::Point<do
     assert(routeID.isValid() && "invalid route ID");
     bool success = false;
     if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if(captureStream_) {
+        if(capturing_) {
             TRACE_FUNCTION_CALL(captureStream_, "progress point: "+std::to_string(progressPoint.x)+", "+std::to_string(progressPoint.y));
         }
         double progressPercent = routeMap_.at(routeID).getProgressPercent(progressPoint);
@@ -261,9 +268,9 @@ std::string RouteManager::getBaseGeoJSONsourceName(const RouteID& routeID) const
 const std::string RouteManager::getStats()  {
     statsStream_<<"Num Routes: "<<stats_.numRoutes<<std::endl;
     statsStream_<<"Num finalized invocations: "<<stats_.numFinalizedInvoked<<std::endl;
-    statsStream_<<"Num traffic zones: "<<stats_.numRouteSegments<<std::endl;
-    statsStream_<<"InconsistentAPIusage: "<<std::boolalpha<<stats_.inconsistentAPIusage<<std::endl;
-    statsStream_<<"Routes finilize elapsed: "<<stats_.finalizeMillis<<std::endl;
+//    statsStream_<<"Num traffic zones: "<<stats_.numRouteSegments<<std::endl;
+//    statsStream_<<"InconsistentAPIusage: "<<std::boolalpha<<stats_.inconsistentAPIusage<<std::endl;
+//    statsStream_<<"Routes finilize elapsed: "<<stats_.finalizeMillis<<std::endl;
 
     return statsStream_.str();
 }
@@ -278,10 +285,10 @@ void RouteManager::beginCapture() {
 }
 
 const std::string RouteManager::endCapture() {
-    capturing_ = false;
+//    capturing_ = false;
     std::string retStr = captureStream_.str();
     captureStream_.clear();
-    eventID_ = 0;
+//    eventID_ = 0;
 
     return retStr;
 }
@@ -363,7 +370,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
                 updateRouteLayers = true;
                 updateGradients = true;
                 updateProgress = true;
-                if(captureStream_) {
+                if(capturing_) {
                     captureStr += "dirty route geometry";
                 }
             }
@@ -371,7 +378,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
             case DirtyType::dtRouteProgress: {
                 updateProgress = true;
-                if(captureStream_) {
+                if(capturing_) {
                     captureStr += "dirty route progress";
                 }
             }
@@ -379,7 +386,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
             case DirtyType::dtRouteSegments: {
                 updateGradients = true;
-                if(captureStream_) {
+                if(capturing_) {
                     captureStr += "dirty route segments";
                 }
             }
@@ -423,7 +430,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             // create the gradient expression for active route.
             std::map<double, mbgl::Color> gradientMap = route.getRouteSegmentColorStops(
                 routeOptions.innerColor);
-            if(captureStream_) {
+            if(capturing_) {
                 captureStr += "\nGradient Map:\n"+toString(gradientMap);
             }
             std::unique_ptr<expression::Expression> gradientExpression = createGradientExpression(
@@ -448,7 +455,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             baseRouteLineLayer->setGradientLineClip(progress);
         }
 
-        if(captureStream_) {
+        if(capturing_) {
             TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id)+"\n"+captureStr);
         }
     }
