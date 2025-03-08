@@ -1519,9 +1519,7 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env, jint routeID, const jni:
             rsegopts.color = *segmentColorRes;
         }
 
-        routeMgr->routeSegmentCreate(RouteID(routeID), rsegopts);
-
-        return true;
+        return routeMgr->routeSegmentCreate(RouteID(routeID), rsegopts);
     }
 
     return false;

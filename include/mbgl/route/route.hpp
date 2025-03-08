@@ -53,9 +53,6 @@ private:
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;
     double totalDistance_ = 0.0;
-    double routeSegTransitionDist_ = 1e-6;
-    mbgl::Color progressColor_ = Color(0.0, 0.0, 0.0, 0.0);
-
 };
 
 } // namespace route

@@ -26,7 +26,6 @@ struct RouteMgrStats {
 };
 
 
-
 /***
  * A route manager manages construction, disposal and updating of one or more routes. It is the API facade and is 1:1
  *with a map view. You can create and mutate multiple routes as many times and after you're done with mutating routes,
@@ -43,7 +42,7 @@ public:
     void clearStats();
     bool hasStyle() const;
     RouteID routeCreate(const LineString<double>& geometry, const RouteOptions& ropts);
-    void routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
+    bool routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
     bool routeSetProgress(const RouteID&, const double progress);
     bool routeSetProgress(const RouteID&, const mbgl::Point<double>& progressPoint);
     void routeClearSegments(const RouteID&);
@@ -62,7 +61,6 @@ private:
     static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
     std::stringstream statsStream_;
     std::stringstream captureStream_;
-
 
     enum class DirtyType {
         dtRouteSegments,

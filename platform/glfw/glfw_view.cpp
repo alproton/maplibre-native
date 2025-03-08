@@ -941,8 +941,7 @@ void GLFWView::addRoute() {
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
     routeList_[routeID] = route;
-    addTrafficViz();
-    // rmptr_->finalize();
+     rmptr_->finalize();
     lastRouteID_ = routeID;
 }
 
