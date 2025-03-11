@@ -1,4 +1,5 @@
 
+#include "mbgl/util/containers.hpp"
 #include "mbgl/util/math.hpp"
 
 #include <mbgl/style/layer.hpp>
@@ -18,6 +19,8 @@
 #include <mbgl/style/expression/type.hpp>
 #include <mbgl/style/expression/dsl.hpp>
 #include <chrono>
+#include <iomanip> // For formatting
+#include <iterator>
 
 namespace mbgl {
 namespace route {
@@ -29,8 +32,66 @@ const std::string RouteManager::GEOJSON_ACTIVE_ROUTE_SOURCE_ID = "active_route_g
 
 namespace {
 
-#define TRACE_FUNCTION_CALL(stream, stubstr) \
-stream <<"Route Event "<<std::to_string(eventID_++)+": "<< __FUNCTION__ << std::endl << stubstr << std::endl;
+std::string gentabs(uint32_t tabcount) {
+    std::string tabstr;
+    for(size_t i = 0; i < tabcount; ++i) {
+        tabstr += "\t";
+    }
+    return tabstr;
+}
+
+std::string embeddAPIcaptures(const std::vector<std::string>& apiCaptures) {
+    std::stringstream ss;
+    ss<<"{"<<std::endl;
+    ss<<gentabs(1)<<"\"apiCalls\":["<<std::endl;
+    for(size_t i = 0; i < apiCaptures.size(); ++i) {
+        ss<<gentabs(2)<<apiCaptures[i];
+        if(i == (apiCaptures.size()-1)) {
+            ss<<std::endl;
+        } else {
+            ss<<","<<std::endl;
+        }
+    }
+    ss<<gentabs(1)<<"]"<<std::endl;
+    ss<<"}"<<std::endl;
+
+    return ss.str();
+}
+
+std::string createAPIcapture(const std::string& fnname, const std::unordered_map<std::string, std::string>& args,
+    const std::string& resultType, const std::string& resultValue, const std::unordered_map<std::string, std::string>& extraDataMap,
+    const std::string& extraData = "") {
+    std::stringstream tss;
+    // Format the time as a string
+    static uint32_t eventID = 0;
+    std::stringstream ss;
+
+    ss<<"{"<<std::endl;
+    ss<<gentabs(2)<<"\"event_id\" : "<<std::to_string(eventID++)<<","<<std::endl;
+    ss<<gentabs(2)<<"\"api_name\" : \""<<fnname<<"\","<<std::endl;
+    ss<<gentabs(2)<<"\"parameters\" : {"<<std::endl;
+    for(auto iter = args.begin(); iter != args.end(); ++iter) {
+        std::string terminatingStr = std::next(iter) == args.end() ? "" : ",";
+        ss<<gentabs(3)<<"\""<<iter->first<<"\" : "<<iter->second<<terminatingStr<<std::endl;
+    }
+    ss<<gentabs(2)<<"},"<<std::endl;
+    ss<<gentabs(2)<<"\"extra_data\" : "<<"\""<<extraData<<"\","<<std::endl;
+    ss<<gentabs(2)<<"\"extra_data_map\" : "<<"{"<<std::endl;
+    for(auto iter = extraDataMap.begin(); iter != extraDataMap.end(); ++iter) {
+        std::string terminatingStr = std::next(iter) == extraDataMap.end() ? "" : ",";
+        ss<<gentabs(3)<<"\""<<iter->first<<"\" : "<<iter->second<<terminatingStr<<std::endl;
+    }
+    ss<<gentabs(2)<<"},"<<std::endl;
+    ss<<gentabs(2)<<"\"result\" : {"<<std::endl;
+    ss<<gentabs(2)<<"\"result_type\" : "<<"\""<<resultType<<"\","<<std::endl;
+    ss<<gentabs(2)<<"\"result_value\" : "<<"\""<<resultValue<<"\""<<std::endl;
+    ss<<gentabs(2)<<"}"<<std::endl;
+    ss<<gentabs(1)<<"}";
+    return ss.str();
+}
+
+#define TRACE_ROUTE_CALL(apiCaptures, functionParamMap, resultType, resultValue, extraDataMap, extraData) \
+apiCaptures.push_back(createAPIcapture(__FUNCTION__, functionParamMap, resultType, resultValue, extraDataMap, extraData));
 
 std::string formatElapsedTime(long long value) {
     std::stringstream ss;
@@ -39,24 +100,59 @@ std::string formatElapsedTime(long long value) {
     return ss.str();
 }
 
-std::string toString(const LineString<double>& line) {
-    std::stringstream ss;
-    ss<<"{"<<std::endl;
-    for(size_t i = 0; i < line.size(); i++) {
-        ss<<"{"<<line[i].x<<", "<<line[i].y<<"},"<<std::endl;
-    }
-    ss<<"}"<<std::endl;
+std::string toString(bool onOff) {
+    return onOff ? "true" : "false";
+}
 
+std::string toString(const LineString<double>& line, uint32_t tabcount) {
+    std::stringstream ss;
+    ss<<gentabs(tabcount)<<"["<<std::endl;
+    for(size_t i = 0; i < line.size(); i++) {
+        std::string terminatingCommaStr = i == line.size() - 1 ? "" : ", ";
+        ss<<gentabs(tabcount+1)<<"["<<std::to_string(line[i].x)<<", "<<std::to_string(line[i].y)<<"]"<<terminatingCommaStr<<std::endl;
+    }
+    ss<<gentabs(tabcount)<<"]";
+
+    return ss.str();
+}
+
+std::string toString(const RouteOptions& ropts, uint32_t tabcount) {
+    std::stringstream ss;
+    ss<<gentabs(tabcount)<<"{"<<std::endl;
+    ss<<gentabs(tabcount+1)<<"\"innerColor\": "<< "\"rgba("<<std::to_string(ropts.innerColor.r)<<", "<<std::to_string(ropts.innerColor.g)<<", "<<std::to_string(ropts.innerColor.b)<<", "<<std::to_string(ropts.innerColor.a)<<")\","<<std::endl;
+    ss<<gentabs(tabcount+1)<<"\"outerColor\": "<< "\"rgba("<<std::to_string(ropts.outerColor.r)<<", "<<std::to_string(ropts.outerColor.g)<<", "<<std::to_string(ropts.outerColor.b)<<", "<<std::to_string(ropts.outerColor.a)<<")\","<<std::endl;
+    ss<<gentabs(tabcount+1)<<"\"innerClipColor\": "<< "\"rgba("<<std::to_string(ropts.innerClipColor.r)<<", "<<std::to_string(ropts.innerClipColor.g)<<", "<<std::to_string(ropts.innerClipColor.b)<<", "<<std::to_string(ropts.innerClipColor.a)<<")\","<<std::endl;
+    ss<<gentabs(tabcount+1)<<"\"outerClipColor\": "<< "\"rgba("<<std::to_string(ropts.outerClipColor.r)<<", "<<std::to_string(ropts.outerClipColor.g)<<", "<<std::to_string(ropts.outerClipColor.b)<<", "<<std::to_string(ropts.outerClipColor.a)<<")\","<<std::endl;
+    ss<<gentabs(tabcount+1)<<"\"innerWidth\": "<< "\""<<std::to_string(ropts.innerWidth)<<"\","<<std::endl;
+    ss<<gentabs(tabcount+1)<<"\"outerWidth\": "<< "\""<<std::to_string(ropts.outerWidth)<<"\","<<std::endl;
+    ss<<gentabs(tabcount+1)<<"\"layerBefore\": "<< "\""<<(ropts.layerBefore)<<"\""<<std::endl;
+    ss <<gentabs(tabcount)<<"}";
+    return ss.str();
+}
+
+std::string toString(const RouteSegmentOptions& rsopts, uint32_t tabcount) {
+    std::stringstream ss;
+    ss<<gentabs(tabcount)<<"{"<<std::endl;
+    ss<<gentabs(tabcount+1)<<"\"color\" : "<< "["<<std::to_string(rsopts.color.r)<<", "<<std::to_string(rsopts.color.g)<<", "<<std::to_string(rsopts.color.b)<<", "<<std::to_string(rsopts.color.a)<<"],"<<std::endl;
+    ss<<gentabs(tabcount+1)<<"\"geometry\" : "<<toString(rsopts.geometry, tabcount+1)<<std::endl;
+    ss <<gentabs(tabcount)<<"}";
     return ss.str();
 }
 
 std::string toString(const std::map<double, mbgl::Color>& gradient) {
     std::stringstream ss;
-    ss<<"{"<<std::endl;
-    for(const auto& iter : gradient) {
-        ss<<"{ "<<iter.first<<", "<<"("<<iter.second.r<<", "<<iter.second.g<<", "<<iter.second.b<<", "<<iter.second.a<<") },"<<std::endl;
+    ss<<"["<<std::endl;
+    for(auto iter = gradient.begin(); iter != gradient.end(); iter++) {
+        std::string terminatingStr = std::next(iter) == gradient.end() ? "" : ", ";
+        ss<<"{\""<<std::to_string(iter->first)<<"\" : "<<"["
+        <<std::to_string(iter->second.r)<<", "
+        <<std::to_string(iter->second.g)<<", "
+        <<std::to_string(iter->second.b)<<", "
+        <<std::to_string(iter->second.a)<<"] }"
+        <<terminatingStr
+        <<std::endl;
     }
-    ss<<"}"<<std::endl;
+    ss<<"]";
 
     return ss.str();
 }
@@ -89,8 +185,21 @@ LineString<double> removeDups(const LineString<double>& line, uint32_t* numDups)
 }
 
 RouteManager::RouteManager()
-    : routeIDpool_(1000) {
+    : routeIDpool_(100) {
     }
+
+std::string RouteManager::dirtyTypeToString(const RouteManager::DirtyType& dt) const {
+    switch(dt) {
+        case DirtyType::dtRouteGeometry:
+            return "\"dtRouteGeometry\"";
+        case DirtyType::dtRouteProgress:
+            return "\"dtRouteProgress\"";
+        case DirtyType::dtRouteSegments:
+            return "\"dtRouteSegments\"";
+    }
+
+    return "";
+}
 
 void RouteManager::setStyle(style::Style& style) {
     if (style_ != nullptr && style_ != &style) {
@@ -120,7 +229,9 @@ void RouteManager::setStyle(style::Style& style) {
                 style.addSource(std::move(activeGeoJSONsrc));
             }
             if(capturing_) {
-                TRACE_FUNCTION_CALL(captureStream_, "");
+                std::string url = style.getURL();
+                const std::unordered_map<std::string, std::string> params = {{"style", url}};
+                TRACE_ROUTE_CALL(apiCalls_, params, "void", "NA", {}, "NA");
             }
         }
     }
@@ -139,8 +250,12 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
         const LineString<double> geom = removeDups(geometry, &numDups);
 
         if(capturing_) {
- //            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(rid.id)+"\n"+toString(geometry));
-            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(rid.id)+"\nnumDups: "+std::to_string(numDups)+"\nnumPoints: "+std::to_string(geom.size()));
+            const std::unordered_map<std::string, std::string> params = {
+                {"geometry", toString(geometry, 0)},
+                {"routeOptions", toString(ropts, 0)}
+            };
+            std::string extraData = "numDups: "+std::to_string(numDups)+", numPoints: "+std::to_string(geom.size());
+            TRACE_ROUTE_CALL(apiCalls_, params, "RouteID", std::to_string(rid.id), {}, extraData)
         }
         Route route(geom, ropts);
         routeMap_[rid] = route;
@@ -153,10 +268,6 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
 
 bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
     if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        std::string captureStr;
-        if(capturing_) {
-            captureStr = "routeID: "+std::to_string(routeID.id)+"\ninput points: "+toString(routeSegOpts.geometry);
-        }
 
         RouteSegmentOptions rsegopts;
         rsegopts.color = routeSegOpts.color;
@@ -165,18 +276,21 @@ bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
         rsegopts.geometry = removeDups(routeSegOpts.geometry, &dupsCount);
 
         if(capturing_) {
-            std::string successStr = "return: ";
+            std::string successStr;
             if(rsegopts.geometry.size() < 2) {
                 successStr += "Failure due to less points";
             } else {
                 successStr += "Success";
             }
 
-            TRACE_FUNCTION_CALL(captureStream_, captureStr +"\nunique points: "+toString(rsegopts.geometry)+
-                                                            "\nnumDuplicates: "+std::to_string(dupsCount)+
-                                                            "\ncurrTotalSegments: "+std::to_string(routeMap_[routeID].getNumRouteSegments())+
-                                                            "\n"+successStr
-                                                            );
+            std::string extraData = "numDuplicates: "+std::to_string(dupsCount)+
+                                    ", currTotalSegments: "+std::to_string(routeMap_[routeID].getNumRouteSegments());
+
+            const std::unordered_map<std::string, std::string> params = {
+                {"routeID", std::to_string(routeID.id)},
+                {"routeSegOpts", toString(routeSegOpts, 0)}
+            };
+            TRACE_ROUTE_CALL(apiCalls_, params, "bool", successStr, {}, extraData)
         }
 
         //route segments must have atleast 2 points
@@ -213,7 +327,10 @@ void RouteManager::routeClearSegments(const RouteID& routeID) {
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         if(capturing_) {
-            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id));
+            const std::unordered_map<std::string, std::string> params = {
+                {"routeID", std::to_string(routeID.id)}
+            };
+            TRACE_ROUTE_CALL(apiCalls_, params, "void", "NA", {}, "NA")
         }
         stats_.numRouteSegments -= routeMap_[routeID].getNumRouteSegments();
         if(routeMap_[routeID].hasRouteSegments()) {
@@ -228,9 +345,11 @@ bool RouteManager::routeDispose(const RouteID& routeID) {
     assert(routeID.isValid() && "Invalid route ID");
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
     if(capturing_) {
-        std::string validStyle = style_ != nullptr ? "true" : "false";
-        std::string routeResident = routeMap_.find(routeID) != routeMap_.end() ? "true" : "false";
-        TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id)+", validStyle: "+validStyle+", routeResident: "+routeResident);
+        std::string validStyleStr = style_ != nullptr ? "true" : "false";
+        std::string routeResidentStr = routeMap_.find(routeID) != routeMap_.end() ? "true" : "false";
+        const std::unordered_map<std::string, std::string> params = {{"routeID", std::to_string(routeID.id)}};
+        std::string extraData = "validStyle: "+validStyleStr+", routeResident: "+routeResidentStr;
+        TRACE_ROUTE_CALL(apiCalls_, params, "bool", "NA", {}, extraData);
     }
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end() && style_ != nullptr) {
@@ -257,7 +376,8 @@ bool RouteManager::routeDispose(const RouteID& routeID) {
         routeIDpool_.destroyID(routeID.id);
         stats_.numRoutes--;
         if(capturing_) {
-            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id)+" success");
+            const std::unordered_map<std::string, std::string> params = {{"routeID", std::to_string(routeID.id)}};
+            TRACE_ROUTE_CALL(apiCalls_, params, "bool", toString(success), {}, "NA");
         }
 
         return success;
@@ -277,7 +397,11 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const double progres
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         if(capturing_) {
-            TRACE_FUNCTION_CALL(captureStream_, "progress: "+std::to_string(validProgress));
+            const std::unordered_map<std::string, std::string> params = {
+                {"routeID", std::to_string(routeID.id)},
+                {"progress", std::to_string(progress)}
+            };
+            TRACE_ROUTE_CALL(apiCalls_, params, "bool", "true", {}, "NA");
         }
 
         routeMap_[routeID].routeSetProgress(validProgress);
@@ -294,12 +418,18 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const mbgl::Point<do
     assert(routeID.isValid() && "invalid route ID");
     bool success = false;
     if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if(capturing_) {
-            TRACE_FUNCTION_CALL(captureStream_, "progress point: "+std::to_string(progressPoint.x)+", "+std::to_string(progressPoint.y));
-        }
         double progressPercent = routeMap_.at(routeID).getProgressPercent(progressPoint);
-
         routeMap_[routeID].routeSetProgress(progressPercent);
+
+        if(capturing_) {
+            const std::unordered_map<std::string, std::string> params = {
+                {"routeID", std::to_string(routeID.id)},
+                {"progressPoint", std::to_string(progressPoint.x)+", "+std::to_string(progressPoint.y)}
+            };
+            const std::string extraData = "\nprogressPecent: "+std::to_string(progressPercent);
+            TRACE_ROUTE_CALL(apiCalls_, params, "bool", "true", {}, extraData);
+        }
+
         validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
         success = true;
     }
@@ -327,8 +457,8 @@ const std::string RouteManager::getStats()  {
     statsStream_<<"Num Routes: "<<stats_.numRoutes<<std::endl;
     statsStream_<<"Num finalized invocations: "<<stats_.numFinalizedInvoked<<std::endl;
     statsStream_<<"Num traffic zones: "<<stats_.numRouteSegments<<std::endl;
-//    statsStream_<<"InconsistentAPIusage: "<<std::boolalpha<<stats_.inconsistentAPIusage<<std::endl;
-//    statsStream_<<"Routes finilize elapsed: "<<stats_.finalizeMillis<<std::endl;
+    statsStream_<<"InconsistentAPIusage: "<<std::boolalpha<<stats_.inconsistentAPIusage<<std::endl;
+    statsStream_<<"Routes finilize elapsed: "<<stats_.finalizeMillis<<std::endl;
 
     return statsStream_.str();
 }
@@ -339,17 +469,11 @@ void RouteManager::clearStats() {
 
 void RouteManager::beginCapture() {
     capturing_ = true;
-    captureStream_.clear();
 }
 
 const std::string RouteManager::endCapture() {
 //    capturing_ = false;
-    std::string retStr = captureStream_.str();
-    //reset the stringstream
-    captureStream_.str(std::string());
-    captureStream_.clear();
-
-    return retStr;
+    return embeddAPIcaptures(apiCalls_);
 }
 
 void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
@@ -357,7 +481,6 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
     assert(routeID.isValid() && "invalid route ID");
     using namespace mbgl::style;
     using namespace mbgl::style::expression;
-    std::string captureStr;
     const auto& createLayer = [&](const std::string& sourceID, const std::string& layerID, const Route& route, const Color& color, const Color& clipColor, int width) {
         if (style_->getSource(sourceID) != nullptr) {
             return false;
@@ -389,7 +512,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         auto& routeOpts = route.getRouteOptions();
         if (routeOpts.layerBefore.empty()) {
             style_->addLayer(std::move(layer));
-        } else {
+        } else if(layerID != routeOpts.layerBefore) {
             style_->addLayer(std::move(layer), routeOpts.layerBefore);
         }
 
@@ -420,6 +543,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         return expression;
     };
 
+    std::string captureExtraDataStr;
     if(routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
 
         bool updateRouteLayers = false;
@@ -431,7 +555,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
                 updateGradients = true;
                 updateProgress = true;
                 if(capturing_) {
-                    captureStr += "dirty route geometry";
+                    captureExtraDataStr += "dirty route geometry";
                 }
             }
             break;
@@ -439,7 +563,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             case DirtyType::dtRouteProgress: {
                 updateProgress = true;
                 if(capturing_) {
-                    captureStr += "dirty route progress";
+                    captureExtraDataStr += "dirty route progress";
                 }
             }
             break;
@@ -447,7 +571,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             case DirtyType::dtRouteSegments: {
                 updateGradients = true;
                 if(capturing_) {
-                    captureStr += "dirty route segments";
+                    captureExtraDataStr += "dirty route segments";
                 }
             }
             break;
@@ -485,13 +609,13 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         }
 
         // Create the gradient colors expressions and set on the active layer
+        std::unordered_map<std::string, std::string> gradientDebugMap;
         if (updateGradients) {
-
             // create the gradient expression for active route.
-            std::map<double, mbgl::Color> gradientMap = route.getRouteSegmentColorStops(
-                routeOptions.innerColor);
+            std::map<double, mbgl::Color> gradientMap = route.getRouteSegmentColorStops(routeOptions.innerColor);
+
             if(capturing_) {
-                captureStr += "\nActive gradient map:\n"+toString(gradientMap);
+                gradientDebugMap["active_gradient_map"] = toString(gradientMap);
             }
             std::unique_ptr<expression::Expression> gradientExpression = createGradientExpression(
                 gradientMap);
@@ -502,7 +626,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             // create the gradient expression for the base route
             std::map<double, mbgl::Color> baseLayerGradient = route.getRouteColorStops(routeOptions.outerColor);
             if(capturing_) {
-                captureStr += "\nBase gradient map:\n"+toString(baseLayerGradient);
+                gradientDebugMap["base_gradient_map"] = toString(baseLayerGradient);
             }
             std::unique_ptr<expression::Expression> baseLayerExpression = createGradientExpression(
                 baseLayerGradient);
@@ -518,7 +642,11 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         }
 
         if(capturing_) {
-            TRACE_FUNCTION_CALL(captureStream_, "routeID: "+std::to_string(routeID.id)+"\n"+captureStr);
+            const std::unordered_map<std::string, std::string> params = {
+                {"routeID", std::to_string(routeID.id)},
+                {"dt", dirtyTypeToString(dt)}
+            };
+            TRACE_ROUTE_CALL(apiCalls_, params, "void", "NA", gradientDebugMap, captureExtraDataStr);
         }
     }
 }
