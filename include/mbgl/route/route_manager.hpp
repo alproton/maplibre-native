@@ -60,7 +60,6 @@ private:
     static const std::string GEOJSON_BASE_ROUTE_SOURCE_ID;
     static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
     std::stringstream statsStream_;
-    std::stringstream captureStream_;
 
     enum class DirtyType {
         dtRouteSegments,
@@ -69,10 +68,12 @@ private:
         //TODO: may be route puck position
     };
 
+    std::string dirtyTypeToString(const DirtyType& dt) const;
+
     std::unordered_map<DirtyType, std::unordered_set<RouteID, IDHasher<RouteID>>> dirtyRouteMap_;
+    std::vector<std::string> apiCalls_;
 
     RouteMgrStats stats_;
-    uint32_t eventID_ = 0;
     bool capturing_ = false;
     gfx::IDpool routeIDpool_ = gfx::IDpool(100);
     std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;

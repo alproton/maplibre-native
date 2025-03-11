@@ -1138,7 +1138,7 @@ void GLFWView::beginCapture() {
 
 void GLFWView::endCapture() {
     std::string captureStr = rmptr_->endCapture();
-    std::cout<<"Capture string: "<<captureStr<<std::endl;
+    std::cout<<"Capture string: "<<std::endl;
     std::cout<<"-----------------"<<std::endl;
     std::cout<<captureStr<<std::endl;
 }
