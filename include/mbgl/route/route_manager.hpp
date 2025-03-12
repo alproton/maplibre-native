@@ -16,7 +16,6 @@ class Style;
 
 namespace route {
 
-
 struct RouteMgrStats {
     uint32_t numFinalizedInvoked = 0;
     uint32_t numRoutes = 0;
@@ -24,7 +23,6 @@ struct RouteMgrStats {
     std::string finalizeMillis;
     bool inconsistentAPIusage = false;
 };
-
 
 /***
  * A route manager manages construction, disposal and updating of one or more routes. It is the API facade and is 1:1
@@ -65,7 +63,7 @@ private:
         dtRouteSegments,
         dtRouteProgress,
         dtRouteGeometry,
-        //TODO: may be route puck position
+        // TODO: may be route puck position
     };
 
     std::string dirtyTypeToString(const DirtyType& dt) const;
