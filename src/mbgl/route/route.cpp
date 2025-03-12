@@ -1,5 +1,3 @@
-
-
 #include <valarray>
 #include <mbgl/route/route.hpp>
 #include <mbgl/util/math.hpp>
@@ -12,7 +10,7 @@ namespace mbgl {
 namespace route {
 
 namespace {
-const double EPSILON = 1e-6;
+const double EPSILON = 1e-8;
 }
 
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
@@ -59,66 +57,37 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
 }
 
 std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color& routeColor) {
+    std::map<double, mbgl::Color> colorStops;
+
     if (segments_.empty()) {
         return getRouteColorStops(routeColor);
     }
 
-    if (segGradient_.empty()) {
-        mbgl::Log::Info(mbgl::Event::General,
-                        "Route Event Native: calculating route segment color stops, numSegments_: " +
-                            std::to_string(segments_.size()));
-        for (size_t i = 0; i < segments_.size(); ++i) {
-            const auto& segNormalizedPos = segments_[i].getNormalizedPositions();
-            const auto& segColor = segments_[i].getRouteSegmentOptions().color;
+    // Initialize the color ramp with the routeColor
+    colorStops[0.0] = routeColor;
+    colorStops[1.0] = routeColor;
 
-            // gradients need to start at 0.0 and end with 1.0.
-            // each route segment is padded with route color for a small transition gradient.
-            for (size_t j = 0; j < segNormalizedPos.size(); ++j) {
-                const auto& segPos = segNormalizedPos[j];
+    for (const auto& segment : segments_) {
+        const auto& normalizedPositions = segment.getNormalizedPositions();
+        const auto& segmentColor = segment.getRouteSegmentOptions().color;
 
-                if ((i == 0 && j == 0) || (i == segments_.size() - 1 && j == segNormalizedPos.size() - 1)) {
-                    continue;
-                }
-
-                if (j == 0) {
-                    segGradient_[segPos - EPSILON] = routeColor;
-                }
-
-                segGradient_[segPos] = segColor;
-
-                if (j == segNormalizedPos.size() - 1) {
-                    segGradient_[segPos + EPSILON] = routeColor;
-                }
+        for (size_t i = 0; i < normalizedPositions.size(); i++) {
+            const auto& pos = normalizedPositions[i];
+            if(i == 0) {
+                double validpos = pos-EPSILON < 0.0 ? 0.0 : pos-EPSILON;
+                colorStops[validpos] = routeColor;
             }
-        }
 
-        const auto& firstSegNormalizedPos = segments_[0].getNormalizedPositions();
-        const auto& lastSegNormalizedPos = segments_[segments_.size() - 1].getNormalizedPositions();
-        const auto& firstSegColor = segments_[0].getRouteSegmentOptions().color;
-        const auto& lastSegColor = segments_[segments_.size() - 1].getRouteSegmentOptions().color;
+            colorStops[pos] = segmentColor;
 
-        assert(firstSegNormalizedPos[0] >= 0.0 && "normalized positions cannot be < 0.0");
-        double firstNpos = firstSegNormalizedPos[0];
-        if (firstNpos < EPSILON) {
-            segGradient_[0.0] = firstSegColor;
-        } else {
-            segGradient_[0.0] = routeColor;
-
-            segGradient_[firstNpos - EPSILON] = routeColor;
-            segGradient_[firstNpos] = firstSegColor;
-        }
-
-        if (lastSegNormalizedPos[lastSegNormalizedPos.size() - 1] >= (1.0 - EPSILON)) {
-            segGradient_[1.0] = lastSegColor;
-        } else {
-            double lastNpos = lastSegNormalizedPos[lastSegNormalizedPos.size() - 1];
-            segGradient_[lastNpos] = lastSegColor;
-            segGradient_[lastNpos + EPSILON] = routeColor;
-            segGradient_[1.0] = routeColor;
+            if(i == normalizedPositions.size() - 1) {
+                double validpos = pos+EPSILON > 1.0f ? 1.0f : pos+EPSILON;
+                colorStops[validpos] = routeColor;
+            }
         }
     }
 
-    return segGradient_;
+    return colorStops;
 }
 
 void Route::routeSetProgress(const double t) {

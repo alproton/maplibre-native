@@ -248,7 +248,6 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
 
 bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-
         if (capturing_) {
             std::string successStr;
             if (routeSegOpts.geometry.size() < 2) {
