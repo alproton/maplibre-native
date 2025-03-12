@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.location.modes.CameraMode;
+import org.maplibre.android.log.Logger;
 import org.maplibre.android.maps.renderer.MapRenderer;
 
 import java.util.Timer;
@@ -16,6 +17,7 @@ import static org.maplibre.android.location.Utils.normalize;
 import static org.maplibre.android.location.Utils.shortestRotation;
 
 final class LocationAnimatorCustomPuck {
+  private static final String TAG = "Mbgl-LocationAnimatorCustomPuck";
 
   private Timer puckUpdateTimer;
   private StampedLatLon currentPuckLocation;
@@ -34,6 +36,18 @@ final class LocationAnimatorCustomPuck {
       this.lon = lon;
       this.bearing = bearing;
       this.time = time;
+      // We check for NaN to make the solution robust
+      // If a Nan appears it will stick since we keep interpolation locations
+      // A NaN bearing coming from the client has been detected
+      if (Double.isNaN(bearing)) {
+        Logger.e(TAG, "A NaN bearing is detected. The custom puck will not use this bearing sample");
+        this.bearing = 0.0;
+      }
+      if (Double.isNaN(lat) || Double.isNaN(lon)) {
+        Logger.e(TAG, "A NaN location is detected. The custom puck will not use this location");
+        this.lat = this.lon = -1000.0;
+      }
+
     }
 
     public StampedLatLon(StampedLatLon other) {
