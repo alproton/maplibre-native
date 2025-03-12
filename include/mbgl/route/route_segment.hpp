@@ -14,8 +14,6 @@ struct RouteSegmentOptions {
     uint32_t sortOrder = 0;
 };
 
-
-
 class RouteSegment {
 public:
     RouteSegment() = default;

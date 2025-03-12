@@ -232,8 +232,13 @@ public:
     void removeAnnotationIcon(JNIEnv&, const jni::String&);
 
     //--------------- route APIs ---------------
-    jint routeCreate(JNIEnv& env, const jni::Object<mbgl::android::geojson::LineString>& routeGeom,
-                     jint outerColor, jint innerColor, jdouble outerWidth, jdouble innerWidth, const jni::String& layerbefore);
+    jint routeCreate(JNIEnv& env,
+                     const jni::Object<mbgl::android::geojson::LineString>& routeGeom,
+                     jint outerColor,
+                     jint innerColor,
+                     jdouble outerWidth,
+                     jdouble innerWidth,
+                     const jni::String& layerbefore);
 
     jboolean routeDispose(JNIEnv& env, jint routeID);
 
@@ -241,7 +246,9 @@ public:
 
     jni::Local<jni::String> routeGetBaseLayerName(JNIEnv& env, const jint& routeID);
 
-    jboolean routeSegmentCreate(JNIEnv& env, jint routeID, const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
+    jboolean routeSegmentCreate(JNIEnv& env,
+                                jint routeID,
+                                const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
                                 jint color);
 
     jboolean routeProgressSet(JNIEnv& env, jint routeID, jdouble progress);

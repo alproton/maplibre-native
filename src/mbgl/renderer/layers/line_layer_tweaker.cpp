@@ -229,7 +229,8 @@ void LineLayerTweaker::execute(LayerGroupBase& layerGroup, const PaintParameters
             } break;
 
             case LineType::Gradient: {
-                std::array<float, 4> linecolor = {line_clip_color.r, line_clip_color.g, line_clip_color.b, line_clip_color.a};
+                std::array<float, 4> linecolor = {
+                    line_clip_color.r, line_clip_color.g, line_clip_color.b, line_clip_color.a};
 #if MLN_UBO_CONSOLIDATION
                 drawableUBOVector[i].lineGradientDrawableUBO = {
 #else
