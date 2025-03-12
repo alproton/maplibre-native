@@ -1521,12 +1521,10 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
         Result<Color> segmentColorRes = colorConverter(env, color);
         if (segmentColorRes) {
             rsegopts.color = *segmentColorRes;
-            if(rsegopts.color.a < 1.0) {
+            if (rsegopts.color.a < 1.0) {
                 double alpha = rsegopts.color.a;
-                rsegopts.color = mbgl::Color(rsegopts.color.r * alpha,
-                                             rsegopts.color.g * alpha,
-                                             rsegopts.color.b * alpha,
-                                             1.0);
+                rsegopts.color = mbgl::Color(
+                    rsegopts.color.r * alpha, rsegopts.color.g * alpha, rsegopts.color.b * alpha, 1.0);
             }
         }
 
