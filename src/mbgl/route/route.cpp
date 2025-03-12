@@ -73,15 +73,15 @@ std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color
 
         for (size_t i = 0; i < normalizedPositions.size(); i++) {
             const auto& pos = normalizedPositions[i];
-            if(i == 0) {
-                double validpos = pos-EPSILON < 0.0 ? 0.0 : pos-EPSILON;
+            if (i == 0) {
+                double validpos = pos - EPSILON < 0.0 ? 0.0 : pos - EPSILON;
                 colorStops[validpos] = routeColor;
             }
 
             colorStops[pos] = segmentColor;
 
-            if(i == normalizedPositions.size() - 1) {
-                double validpos = pos+EPSILON > 1.0f ? 1.0f : pos+EPSILON;
+            if (i == normalizedPositions.size() - 1) {
+                double validpos = pos + EPSILON > 1.0f ? 1.0f : pos + EPSILON;
                 colorStops[validpos] = routeColor;
             }
         }
