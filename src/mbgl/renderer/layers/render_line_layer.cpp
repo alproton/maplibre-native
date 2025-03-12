@@ -591,18 +591,18 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
             }
 
             const auto& currLineClipProp = impl_cast(baseImpl).paint.get<LineClip>().value;
-            if(currLineClipProp.isConstant()) {
+            if (currLineClipProp.isConstant()) {
                 double currLineClipPropValue = currLineClipProp.asConstant();
-                if(layerTweaker) {
-                    LineLayerTweakerPtr lineLayerTweaker =  std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
+                if (layerTweaker) {
+                    LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
                     lineLayerTweaker->setGradientLineClip(currLineClipPropValue);
                 }
             }
             const auto& currLineClipColor = impl_cast(baseImpl).paint.get<LineClipColor>().value;
-            if(currLineClipColor.isConstant()) {
+            if (currLineClipColor.isConstant()) {
                 Color currLineClipColorValue = currLineClipColor.asConstant();
-                if(layerTweaker) {
-                    LineLayerTweakerPtr lineLayerTweaker =  std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
+                if (layerTweaker) {
+                    LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
                     lineLayerTweaker->setGradientLineClipColor(currLineClipColorValue);
                 }
             }
@@ -622,7 +622,10 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                 // create texture. to be reused for all the tiles of the layer
                 colorRampTexture2D = context.createTexture2D();
                 colorRampTexture2D->setImage(colorRamp);
-                gfx::TextureFilterType filterType = impl_cast(baseImpl).gradientFilterType == LineGradientFilterType::Linear ? gfx::TextureFilterType::Linear : gfx::TextureFilterType::Nearest;
+                gfx::TextureFilterType filterType = impl_cast(baseImpl).gradientFilterType ==
+                                                            LineGradientFilterType::Linear
+                                                        ? gfx::TextureFilterType::Linear
+                                                        : gfx::TextureFilterType::Nearest;
                 colorRampTexture2D->setSamplerConfiguration(
                     {filterType, gfx::TextureWrapType::Clamp, gfx::TextureWrapType::Clamp});
             }

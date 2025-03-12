@@ -86,7 +86,7 @@ std::array<double, 3> toArray(const mbgl::LatLng &crd) {
 #endif // ENABLE_LOCATION_INDICATOR
 
 namespace {
-    const double ROUTE_PROGRESS_STEP = 0.001;
+const double ROUTE_PROGRESS_STEP = 0.001;
 }
 
 class SnapshotObserver final : public mbgl::MapSnapshotterObserver {
@@ -395,7 +395,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
     MLN_TRACE_FUNC();
 
     auto *view = reinterpret_cast<GLFWView *>(glfwGetWindowUserPointer(window));
-    bool isLeftShift =  glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+    bool isLeftShift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
 
     if (action == GLFW_RELEASE) {
         if (key != GLFW_KEY_R || key != GLFW_KEY_S) view->animateRouteCallback = nullptr;
@@ -646,84 +646,82 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
     }
 
     if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
-        if(isLeftShift) {
+        if (isLeftShift) {
             switch (key) {
                 case GLFW_KEY_1:
                     view->addRoute();
-                break;
+                    break;
                 case GLFW_KEY_2:
                     view->disposeRoute();
-                break;
+                    break;
                 case GLFW_KEY_3:
                     view->addTrafficViz();
-                break;
+                    break;
                 case GLFW_KEY_4:
                     view->modifyTrafficViz();
-                break;
+                    break;
                 case GLFW_KEY_5:
                     view->removeTrafficViz();
-                break;
+                    break;
                 case GLFW_KEY_6:
                     view->incrementRouteProgress();
-                break;
+                    break;
                 case GLFW_KEY_7:
                     view->decrementRouteProgress();
-                break;
+                    break;
                 case GLFW_KEY_8: {
                     view->beginCapture();
-                    std::cout<<"Begin route capture"<<std::endl;
+                    std::cout << "Begin route capture" << std::endl;
                     // view->printRouteStats();
-                }
-                break;
+                } break;
 
                 case GLFW_KEY_9: {
                     view->endCapture();
-                    std::cout<<"End route capture"<<std::endl;
-                }
-                break;
+                    std::cout << "End route capture" << std::endl;
+                } break;
 
                 case GLFW_KEY_0:
-                view->setRouteProgressUsage();
-                break;
+                    view->setRouteProgressUsage();
+                    break;
             }
         } else {
             switch (key) {
                 case GLFW_KEY_W:
                     view->popAnnotation();
-                break;
+                    break;
                 case GLFW_KEY_1:
                     view->addRandomPointAnnotations(1);
-                break;
+                    break;
                 case GLFW_KEY_2:
                     view->addRandomPointAnnotations(10);
-                break;
+                    break;
                 case GLFW_KEY_3:
                     view->addRandomPointAnnotations(100);
-                break;
+                    break;
                 case GLFW_KEY_4:
                     view->addRandomPointAnnotations(1000);
-                break;
+                    break;
                 case GLFW_KEY_5:
                     view->addRandomPointAnnotations(10000);
-                break;
+                    break;
                 case GLFW_KEY_6:
                     view->addRandomPointAnnotations(100000);
-                break;
+                    break;
                 case GLFW_KEY_7:
                     view->addRandomShapeAnnotations(1);
-                break;
+                    break;
                 case GLFW_KEY_8:
                     view->addRandomShapeAnnotations(10);
-                break;
+                    break;
                 case GLFW_KEY_9:
                     view->addRandomShapeAnnotations(100);
-                break;
+                    break;
                 case GLFW_KEY_0:
                     view->addRandomShapeAnnotations(1000);
-                break;
+                    break;
                 case GLFW_KEY_M:
                     view->addAnimatedAnnotation();
-                break;
+                    break;
             }
         }
     }
@@ -905,16 +903,14 @@ mbgl::Point<double> GLFWView::RouteCircle::getProgressPoint(double percent) {
 void GLFWView::addRoute() {
     using namespace mbgl::route;
 
-    std::vector<mbgl::Color> colors = {{0, 0, 1.0, 1.0}, 
-                                         {0.5, 0.5, 0.5, 1}
-                                         };
+    std::vector<mbgl::Color> colors = {{0, 0, 1.0, 1.0}, {0.5, 0.5, 0.5, 1}};
 
-    auto getRouteGeom = [](const RouteCircle& route)->mbgl::LineString<double> {
+    auto getRouteGeom = [](const RouteCircle &route) -> mbgl::LineString<double> {
         mbgl::LineString<double> linestring;
         float radius = 50.0f;
-        for(int i = 0; i < route.resolution; i++) {
-            float anglerad = (float(i) / float(route.resolution - 1))* 2 * 3.14f;
-            mbgl::Point<double> pt {route.xlate + radius * sin(anglerad), radius * cos(anglerad)};
+        for (int i = 0; i < route.resolution; i++) {
+            float anglerad = (float(i) / float(route.resolution - 1)) * 2 * 3.14f;
+            mbgl::Point<double> pt{route.xlate + radius * sin(anglerad), radius * cos(anglerad)};
             linestring.push_back(pt);
         }
 
@@ -924,7 +920,7 @@ void GLFWView::addRoute() {
     rmptr_->setStyle(map->getStyle());
     RouteCircle route;
     route.resolution = 30.0;
-    route.xlate = routeList_.size()*20.0;
+    route.xlate = routeList_.size() * 20.0;
     mbgl::LineString<double> geom = getRouteGeom(route);
     route.points = geom;
     assert(route.points.size() == route.resolution && "invalid number of points generated");
@@ -932,7 +928,7 @@ void GLFWView::addRoute() {
     int colorIdx = routeList_.size() % 2 == 0 ? 0 : 1;
     routeOpts.innerColor = colors[colorIdx];
     std::string layerbefore;
-    if(lastRouteID_.isValid()) {
+    if (lastRouteID_.isValid()) {
         layerbefore = rmptr_->getBaseRouteLayerName(lastRouteID_);
     }
     routeOpts.layerBefore = layerbefore;
@@ -941,18 +937,17 @@ void GLFWView::addRoute() {
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
     routeList_[routeID] = route;
-     rmptr_->finalize();
+    rmptr_->finalize();
     lastRouteID_ = routeID;
 }
 
 void GLFWView::addTrafficViz() {
-
-    const auto& getColorTable = [](uint32_t numColors)-> std::vector<mbgl::Color> {
+    const auto &getColorTable = [](uint32_t numColors) -> std::vector<mbgl::Color> {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<> distrib(0.0, 1.0);
         std::vector<mbgl::Color> colors;
-        for(uint32_t i = 0; i < numColors; i++) {
+        for (uint32_t i = 0; i < numColors; i++) {
             double rand_r = distrib(gen);
             double rand_g = distrib(gen);
             double rand_b = distrib(gen);
@@ -963,31 +958,33 @@ void GLFWView::addTrafficViz() {
         return colors;
     };
 
-    for(const auto& iter : routeList_) {
-        const auto& routeID = iter.first;
-        const auto& route = iter.second;
+    for (const auto &iter : routeList_) {
+        const auto &routeID = iter.first;
+        const auto &route = iter.second;
         std::vector<mbgl::Color> colors = getColorTable(route.numTrafficZones);
 
         size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
         size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
 
-        auto& routePts = route.points;
+        auto &routePts = route.points;
         std::vector<mbgl::LineString<double>> trafficBlks;
         mbgl::LineString<double> currTrafficBlk;
-        for(size_t i = 0; i < routePts.size(); i++) {
-            if(i % blockSize == 0 && !currTrafficBlk.empty()) {
+        for (size_t i = 0; i < routePts.size(); i++) {
+            if (i % blockSize == 0 && !currTrafficBlk.empty()) {
                 trafficBlks.push_back(currTrafficBlk);
                 currTrafficBlk.clear();
             }
 
-            if(i % blockSize < innerBlockSize) {
+            if (i % blockSize < innerBlockSize) {
                 currTrafficBlk.push_back(mbgl::Point<double>(routePts.at(i).x, routePts.at(i).y));
             }
         }
-        if(!currTrafficBlk.empty()) { trafficBlks.push_back(currTrafficBlk);}
+        if (!currTrafficBlk.empty()) {
+            trafficBlks.push_back(currTrafficBlk);
+        }
 
         rmptr_->routeClearSegments(routeID);
-        for(size_t i = 0; i < trafficBlks.size(); i++) {
+        for (size_t i = 0; i < trafficBlks.size(); i++) {
             mbgl::route::RouteSegmentOptions rsegopts;
             rsegopts.color = colors[i];
             rsegopts.geometry = trafficBlks[i];
@@ -1000,12 +997,12 @@ void GLFWView::addTrafficViz() {
 }
 
 void GLFWView::modifyTrafficViz() {
-    const auto& getColorTable = [](uint32_t numColors)-> std::vector<mbgl::Color> {
+    const auto &getColorTable = [](uint32_t numColors) -> std::vector<mbgl::Color> {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<> distrib(0.0, 1.0);
         std::vector<mbgl::Color> colors;
-        for(uint32_t i = 0; i < numColors; i++) {
+        for (uint32_t i = 0; i < numColors; i++) {
             double rand_r = distrib(gen);
             double rand_g = distrib(gen);
             double rand_b = distrib(gen);
@@ -1016,10 +1013,9 @@ void GLFWView::modifyTrafficViz() {
         return colors;
     };
 
-
-    for(const auto& iter : routeList_) {
-        const auto& routeID = iter.first;
-        const auto& route = iter.second;
+    for (const auto &iter : routeList_) {
+        const auto &routeID = iter.first;
+        const auto &route = iter.second;
         rmptr_->routeClearSegments(routeID);
 
         std::vector<mbgl::Color> colors = getColorTable(route.numTrafficZones);
@@ -1027,19 +1023,19 @@ void GLFWView::modifyTrafficViz() {
         size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
         size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
 
-        auto& routePts = route.points;
+        auto &routePts = route.points;
         std::vector<mbgl::LineString<double>> trafficBlks;
         mbgl::LineString<double> currTrafficBlk;
-        if(route.resolution > route.numTrafficZones) {
-            for(size_t i = 1; i < routePts.size()-1; i++) {
-                if(i % blockSize == 0 && !currTrafficBlk.empty()) {
+        if (route.resolution > route.numTrafficZones) {
+            for (size_t i = 1; i < routePts.size() - 1; i++) {
+                if (i % blockSize == 0 && !currTrafficBlk.empty()) {
                     trafficBlks.push_back(currTrafficBlk);
                     currTrafficBlk.clear();
                 }
 
-                if(i % blockSize < innerBlockSize) {
+                if (i % blockSize < innerBlockSize) {
                     mbgl::Point<double> non_aligned_pt;
-                    if(i == 0 || i == routePts.size()-1) {
+                    if (i == 0 || i == routePts.size() - 1) {
                         non_aligned_pt = routePts.at(i);
                     } else {
                         mbgl::Point<double> prevpt = routePts.at(i - 1);
@@ -1050,12 +1046,14 @@ void GLFWView::modifyTrafficViz() {
                 }
             }
         } else {
-            std::cout<<"need to have more number of sample points in the route!"<<std::endl;
+            std::cout << "need to have more number of sample points in the route!" << std::endl;
             exit(1);
         }
-        if(!currTrafficBlk.empty()) { trafficBlks.push_back(currTrafficBlk);}
+        if (!currTrafficBlk.empty()) {
+            trafficBlks.push_back(currTrafficBlk);
+        }
 
-        for(size_t i = 0; i < trafficBlks.size(); i++) {
+        for (size_t i = 0; i < trafficBlks.size(); i++) {
             mbgl::route::RouteSegmentOptions rsegopts;
             rsegopts.color = colors[i];
             rsegopts.geometry = trafficBlks[i];
@@ -1064,15 +1062,14 @@ void GLFWView::modifyTrafficViz() {
             rmptr_->routeSegmentCreate(routeID, rsegopts);
         }
     }
-
 }
 
 void GLFWView::setRouteProgressUsage() {
     useRouteProgressPercent_ = !useRouteProgressPercent_;
-    if(useRouteProgressPercent_) {
-        std::cout<<"Using route progress percent"<<std::endl;
+    if (useRouteProgressPercent_) {
+        std::cout << "Using route progress percent" << std::endl;
     } else {
-        std::cout<<"Using route progress point"<<std::endl;
+        std::cout << "Using route progress point" << std::endl;
     }
 }
 
@@ -1080,11 +1077,10 @@ void GLFWView::incrementRouteProgress() {
     routeProgress_ += ROUTE_PROGRESS_STEP;
     std::clamp<double>(routeProgress_, 0.0, 1.0f);
     // std::cout<<"Route progress: "<<routeProgress_<<std::endl;
-    for(const auto& iter : routeList_) {
-        const auto& routeID = iter.first;
-        if(useRouteProgressPercent_) {
-            
-            rmptr_->routeSetProgress(routeID, routeProgress_);    
+    for (const auto &iter : routeList_) {
+        const auto &routeID = iter.first;
+        if (useRouteProgressPercent_) {
+            rmptr_->routeSetProgress(routeID, routeProgress_);
         } else {
             mbgl::Point<double> progressPoint = routeList_[routeID].getProgressPoint(routeProgress_);
             rmptr_->routeSetProgress(routeID, progressPoint);
@@ -1096,28 +1092,26 @@ void GLFWView::incrementRouteProgress() {
 void GLFWView::decrementRouteProgress() {
     routeProgress_ -= ROUTE_PROGRESS_STEP;
     std::clamp<double>(routeProgress_, 0.0, 1.0f);
-    std::cout<<"Route progress: "<<routeProgress_<<std::endl;
-    for(const auto& iter : routeList_) {
-        const auto& routeID = iter.first;
+    std::cout << "Route progress: " << routeProgress_ << std::endl;
+    for (const auto &iter : routeList_) {
+        const auto &routeID = iter.first;
         rmptr_->routeSetProgress(routeID, routeProgress_);
     }
     rmptr_->finalize();
 }
 
-
 void GLFWView::removeTrafficViz() {
-    for(const auto& iter : routeList_) {
+    for (const auto &iter : routeList_) {
         rmptr_->routeClearSegments(iter.first);
     }
     rmptr_->finalize();
 }
 
-
 void GLFWView::disposeRoute() {
-    if(!routeList_.empty()) {
-        auto& routeID = routeList_.begin()->first;
+    if (!routeList_.empty()) {
+        auto &routeID = routeList_.begin()->first;
         bool success = rmptr_->routeDispose(routeID);
-        if(success) {
+        if (success) {
             routeList_.erase(routeID);
         }
         rmptr_->finalize();
@@ -1125,9 +1119,9 @@ void GLFWView::disposeRoute() {
 }
 
 void GLFWView::printRouteStats() {
-    if(rmptr_) {
-        std::cout<<"Route stats:"<<std::endl;
-        std::cout<<rmptr_->getStats()<<std::endl;
+    if (rmptr_) {
+        std::cout << "Route stats:" << std::endl;
+        std::cout << rmptr_->getStats() << std::endl;
         rmptr_->clearStats();
     }
 }
@@ -1138,9 +1132,9 @@ void GLFWView::beginCapture() {
 
 void GLFWView::endCapture() {
     std::string captureStr = rmptr_->endCapture();
-    std::cout<<"Capture string: "<<std::endl;
-    std::cout<<"-----------------"<<std::endl;
-    std::cout<<captureStr<<std::endl;
+    std::cout << "Capture string: " << std::endl;
+    std::cout << "-----------------" << std::endl;
+    std::cout << captureStr << std::endl;
 }
 
 void GLFWView::addRandomLineAnnotations(int count) {

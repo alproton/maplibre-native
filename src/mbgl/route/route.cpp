@@ -16,7 +16,8 @@ const double EPSILON = 1e-6;
 }
 
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
-    : routeOptions_(ropts), geometry_(geometry) {
+    : routeOptions_(ropts),
+      geometry_(geometry) {
     for (size_t i = 1; i < geometry_.size(); ++i) {
         mbgl::Point<double> a = geometry_[i];
         mbgl::Point<double> b = geometry_[i - 1];
@@ -41,7 +42,7 @@ bool Route::hasRouteSegments() const {
 void Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
     RouteSegment routeSeg(rsegopts, geometry_, segDistances_, totalDistance_);
     segments_.push_back(routeSeg);
-    //regenerate the gradients
+    // regenerate the gradients
     segGradient_.clear();
 }
 
@@ -51,20 +52,21 @@ mbgl::LineString<double> Route::getGeometry() const {
 
 std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& routeColor) const {
     std::map<double, mbgl::Color> gradients;
-        gradients[0.0] = routeColor;
-        gradients[1.0] = routeColor;
+    gradients[0.0] = routeColor;
+    gradients[1.0] = routeColor;
 
     return gradients;
 }
 
 std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color& routeColor) {
-
     if (segments_.empty()) {
         return getRouteColorStops(routeColor);
     }
 
     if (segGradient_.empty()) {
-        mbgl::Log::Info(mbgl::Event::General, "Route Event Native: calculating route segment color stops, numSegments_: " +std::to_string(segments_.size()));
+        mbgl::Log::Info(mbgl::Event::General,
+                        "Route Event Native: calculating route segment color stops, numSegments_: " +
+                            std::to_string(segments_.size()));
         for (size_t i = 0; i < segments_.size(); ++i) {
             const auto& segNormalizedPos = segments_[i].getNormalizedPositions();
             const auto& segColor = segments_[i].getRouteSegmentOptions().color;
@@ -161,10 +163,7 @@ double Route::getProgressPercent(const Point<double>& progressPoint) const {
         double closestY = p1.y + percentage * segmentY;
 
         // Calculate distance to the line segment
-        double distance = std::sqrt(
-            std::pow(progressPoint.x - closestX, 2) +
-            std::pow(progressPoint.y - closestY, 2)
-        );
+        double distance = std::sqrt(std::pow(progressPoint.x - closestX, 2) + std::pow(progressPoint.y - closestY, 2));
 
         // Update if this is the closest segment found
         if (distance < minDistance) {
