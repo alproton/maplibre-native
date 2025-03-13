@@ -927,13 +927,15 @@ void GLFWView::addRoute() {
     RouteOptions routeOpts;
     int colorIdx = routeList_.size() % 2 == 0 ? 0 : 1;
     routeOpts.innerColor = colors[colorIdx];
+    routeOpts.outerColor = mbgl::Color(0.2, 0.2, 0.2, 1);
+    routeOpts.useDyanamicWidths = false;
     std::string layerbefore;
     if (lastRouteID_.isValid()) {
         layerbefore = rmptr_->getBaseRouteLayerName(lastRouteID_);
     }
     routeOpts.layerBefore = layerbefore;
     routeOpts.outerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
-    routeOpts.innerClipColor = mbgl::Color(0.8, 0.8, 0.8, 1.0);
+    routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
     routeList_[routeID] = route;

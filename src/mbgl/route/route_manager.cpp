@@ -168,6 +168,40 @@ std::string toString(const std::map<double, mbgl::Color>& gradient) {
     return ss.str();
 }
 
+constexpr double CID_PIXEL_DENSITY = 1.6;
+
+constexpr double getZoomStepDownValue() {
+    return CID_PIXEL_DENSITY - 1.0;
+}
+
+constexpr double CID_PIXEL_DENSITY_FACTOR = 1.0 / CID_PIXEL_DENSITY;
+constexpr double CID_ROUTE_LINE_ZOOM_LEVEL_4 = 4 - getZoomStepDownValue();
+constexpr double CID_ROUTE_LINE_ZOOM_LEVEL_10 = 10 - getZoomStepDownValue();
+constexpr double CID_ROUTE_LINE_ZOOM_LEVEL_18 = 18 - getZoomStepDownValue();
+constexpr double CID_ROUTE_LINE_ZOOM_LEVEL_20 = 20 - getZoomStepDownValue();
+
+constexpr double CID_ROUTE_LINE_WEIGHT_6 = 6;
+constexpr double CID_ROUTE_LINE_WEIGHT_9 = 9;
+constexpr double CID_ROUTE_LINE_WEIGHT_16 = 16;
+constexpr double CID_ROUTE_LINE_WEIGHT_22 = 22;
+
+constexpr double CID_ROUTE_LINE_CASING_MULTIPLIER = 1.6 * CID_PIXEL_DENSITY_FACTOR;
+constexpr double CID_ROUTE_LINE_MULTIPLIER = 1.0 * CID_PIXEL_DENSITY_FACTOR;
+
+std::map<double, double> getRouteLineCasingWeights() {
+    return {{CID_ROUTE_LINE_ZOOM_LEVEL_4, CID_ROUTE_LINE_WEIGHT_6 * CID_ROUTE_LINE_CASING_MULTIPLIER},
+            {CID_ROUTE_LINE_ZOOM_LEVEL_10, CID_ROUTE_LINE_WEIGHT_9 * CID_ROUTE_LINE_CASING_MULTIPLIER},
+            {CID_ROUTE_LINE_ZOOM_LEVEL_18, CID_ROUTE_LINE_WEIGHT_16 * CID_ROUTE_LINE_CASING_MULTIPLIER},
+            {CID_ROUTE_LINE_ZOOM_LEVEL_20, CID_ROUTE_LINE_WEIGHT_22 * CID_ROUTE_LINE_CASING_MULTIPLIER}};
+}
+
+std::map<double, double> getRouteLineWeights() {
+    return {{CID_ROUTE_LINE_ZOOM_LEVEL_4, CID_ROUTE_LINE_WEIGHT_6 * CID_ROUTE_LINE_MULTIPLIER},
+            {CID_ROUTE_LINE_ZOOM_LEVEL_10, CID_ROUTE_LINE_WEIGHT_9 * CID_ROUTE_LINE_MULTIPLIER},
+            {CID_ROUTE_LINE_ZOOM_LEVEL_18, CID_ROUTE_LINE_WEIGHT_16 * CID_ROUTE_LINE_MULTIPLIER},
+            {CID_ROUTE_LINE_ZOOM_LEVEL_20, CID_ROUTE_LINE_WEIGHT_22 * CID_ROUTE_LINE_MULTIPLIER}};
+}
+
 } // namespace
 
 RouteManager::RouteManager()
@@ -446,12 +480,38 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
     assert(routeID.isValid() && "invalid route ID");
     using namespace mbgl::style;
     using namespace mbgl::style::expression;
+
+    const auto& createDynamicWidthExpression = [](const std::map<double, double>& zoomstops) {
+        ParsingContext pc;
+        ParseResult pr = dsl::zoom();
+        std::unique_ptr<Expression> zoomValueExp = std::move(pr.value());
+
+        Interpolator linearInterpolator = dsl::linear();
+
+        using namespace mbgl::style::expression;
+        std::map<double, std::unique_ptr<Expression>> stops;
+
+        for (auto& zoomstopIter : zoomstops) {
+            stops[zoomstopIter.first] = dsl::literal(zoomstopIter.second);
+        }
+
+        const auto& type = stops.begin()->second->getType();
+        ParsingContext ctx;
+        ParseResult result = createInterpolate(
+            type, std::move(linearInterpolator), std::move(zoomValueExp), std::move(stops), ctx);
+        assert(result);
+        std::unique_ptr<Expression> expression = std::move(*result);
+        PropertyExpression<float> expressionFloat = PropertyExpression<float>(std::move(expression));
+        return expressionFloat;
+    };
+
     const auto& createLayer = [&](const std::string& sourceID,
                                   const std::string& layerID,
                                   const Route& route,
                                   const Color& color,
                                   const Color& clipColor,
-                                  int width) {
+                                  int width,
+                                  const std::map<double, double>& zoomstops) {
         if (style_->getSource(sourceID) != nullptr) {
             return false;
         }
@@ -475,9 +535,16 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         layer->setLineColor(color);
         layer->setLineCap(LineCapType::Round);
         layer->setLineJoin(LineJoinType::Round);
-        layer->setLineWidth(width);
+
         layer->setGradientLineFilter(LineGradientFilterType::Nearest);
         layer->setGradientLineClipColor(clipColor);
+
+        if (zoomstops.empty()) {
+            layer->setLineWidth(width);
+        } else {
+            const PropertyExpression<float>& lineWidthExpression = createDynamicWidthExpression(zoomstops);
+            layer->setLineWidth(lineWidthExpression);
+        }
 
         auto& routeOpts = route.getRouteOptions();
         if (routeOpts.layerBefore.empty()) {
@@ -552,22 +619,32 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
         if (updateRouteLayers) {
             // create layer for casing/base
+            std::map<double, double> baseZoomStops;
+            if (routeOptions.useDyanamicWidths) {
+                baseZoomStops = getRouteLineCasingWeights();
+            }
             if (!createLayer(baseGeoJSONSourceName,
                              baseLayerName,
                              route,
                              routeOptions.outerColor,
                              routeOptions.outerClipColor,
-                             routeOptions.outerWidth)) {
+                             routeOptions.outerWidth,
+                             baseZoomStops)) {
                 stats_.inconsistentAPIusage = true;
             }
 
             // create layer for active/blue
+            std::map<double, double> activeLineWidthStops;
+            if (routeOptions.useDyanamicWidths) {
+                activeLineWidthStops = getRouteLineWeights();
+            }
             if (!createLayer(activeGeoJSONSourceName,
                              activeLayerName,
                              route,
                              routeOptions.innerColor,
                              routeOptions.innerClipColor,
-                             routeOptions.innerWidth)) {
+                             routeOptions.innerWidth,
+                             activeLineWidthStops)) {
                 stats_.inconsistentAPIusage = true;
             }
         }

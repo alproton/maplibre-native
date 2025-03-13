@@ -239,7 +239,8 @@ public:
                      jint innerColor,
                      jdouble outerWidth,
                      jdouble innerWidth,
-                     const jni::String& layerbefore);
+                     const jni::String& layerbefore,
+                     jboolean useDyanmicWidths);
 
     jboolean routeDispose(JNIEnv& env, jint routeID);
 
