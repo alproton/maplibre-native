@@ -1128,7 +1128,7 @@ final class NativeMapView implements NativeMap {
   @Override
   public RouteID createRoute(LineString routeGeom, RouteOptions routeOptions) {
     RouteID routeID = new RouteID(nativeRouteCreate(routeGeom, routeOptions.outerColor, routeOptions.innerColor,
-            routeOptions.outerWidth, routeOptions.innerWidth, routeOptions.layerBefore));
+            routeOptions.outerWidth, routeOptions.innerWidth, routeOptions.layerBefore, routeOptions.useDynamicWidths));
     return routeID;
   }
 
@@ -1584,7 +1584,8 @@ final class NativeMapView implements NativeMap {
   //---------------------Native route APIs---------------------
   @Keep
   private native int nativeRouteCreate(LineString routeGeometry, int outerColor, int innerColor,
-                                       double outerWidth, double innerWidth, String layerBefore);
+                                       double outerWidth, double innerWidth, String layerBefore,
+                                       boolean useDyanmicWidths);
   @Keep
   private native String nativeRouteGetActiveLayerName(int routeID);
 

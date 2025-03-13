@@ -19,6 +19,7 @@ struct RouteOptions {
     float outerWidth = 10;
     float innerWidth = 6;
     std::string layerBefore;
+    bool useDyanamicWidths = false;
 };
 
 /***

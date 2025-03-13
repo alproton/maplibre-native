@@ -1418,7 +1418,8 @@ jint NativeMapView::routeCreate(JNIEnv& env,
                                 jint innerColor,
                                 jdouble outerWidth,
                                 jdouble innerWidth,
-                                const jni::String& layerbefore) {
+                                const jni::String& layerbefore,
+                                jboolean useDyanmicWidths) {
     if (!routeMgr->hasStyle()) {
         routeMgr->setStyle(map->getStyle());
     }
@@ -1441,6 +1442,7 @@ jint NativeMapView::routeCreate(JNIEnv& env,
             }
             routeOptions.outerWidth = outerWidth;
             routeOptions.innerWidth = innerWidth;
+            routeOptions.useDyanamicWidths = useDyanmicWidths;
             if (layerbefore) {
                 routeOptions.layerBefore = jni::Make<std::string>(env, layerbefore);
             }

@@ -19,6 +19,11 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     for (size_t i = 1; i < geometry_.size(); ++i) {
         mbgl::Point<double> a = geometry_[i];
         mbgl::Point<double> b = geometry_[i - 1];
+
+        if (std::isnan(a.x) || std::isnan(a.y) || std::isnan(b.x) || std::isnan(b.y)) {
+            continue;
+        }
+
         double dist = std::abs(mbgl::util::dist<double>(a, b));
         segDistances_.push_back(dist);
         totalDistance_ += dist;
