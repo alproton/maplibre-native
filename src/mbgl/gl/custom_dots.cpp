@@ -117,9 +117,15 @@ void CustomDots::clearVertexBufferImpl() {
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     vboSize = 0;
+    vertexCount = 0;
 }
 
 void CustomDots::updateVertexBufferImpl(const CustomDotsVertexBuffer& vertices) {
+    if (vertices.empty()) {
+        vertexCount = 0;
+        return;
+    }
+
     ScopedGlStates glStates;
 
     if (vao == 0) {
@@ -127,10 +133,8 @@ void CustomDots::updateVertexBufferImpl(const CustomDotsVertexBuffer& vertices) 
         glBindVertexArray(vao);
         glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
-        vboSize = vertices.size();
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-        glVertexAttribDivisor(0, 6);
+        glVertexAttribDivisor(0, 1);
         glEnableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(2);
@@ -150,6 +154,10 @@ void CustomDots::updateVertexBufferImpl(const CustomDotsVertexBuffer& vertices) 
 }
 
 void CustomDots::drawImpl() {
+    if (vertexCount == 0) {
+        return;
+    }
+
     ScopedGlStates glStates;
 
     glBindVertexArray(vao);

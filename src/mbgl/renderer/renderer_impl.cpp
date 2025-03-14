@@ -408,7 +408,6 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         // draw layer groups, opaque pass
         parameters.currentLayer = 0;
         orchestrator.visitLayerGroupsReversed([&](LayerGroupBase& layerGroup) {
-            drawCustomDots(layerGroup.getName());
             layerGroup.render(orchestrator, parameters);
             parameters.currentLayer++;
         });
@@ -438,7 +437,6 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         for (auto it = layerRenderItems.begin(); it != layerRenderItems.end() && i >= 0; ++it, --i) {
             parameters.currentLayer = i;
             const RenderItem& item = *it;
-            drawCustomDots(item.getName());
             if (item.hasRenderPass(parameters.pass)) {
                 item.render(parameters);
             }
@@ -458,7 +456,6 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         for (auto it = layerRenderItems.rbegin(); it != layerRenderItems.rend(); ++it, ++i) {
             parameters.currentLayer = i;
             const RenderItem& renderItem = it->get();
-            drawCustomDots(renderItem.getName());
             if (renderItem.hasRenderPass(parameters.pass)) {
                 const auto layerDebugGroup(parameters.renderPass->createDebugGroup(renderItem.getName().c_str()));
                 renderItem.render(parameters);

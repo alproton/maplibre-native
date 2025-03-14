@@ -43,7 +43,8 @@ protected:
 
 protected:
     mutable std::mutex mux;
-    mat4 previousTransform = matrix::identity4();
+    int previousPointX = -1;
+    int previousPointY = -1;
     CustomDotsPoints points;
     CustomDotsOptions options;
     float iconDx = 0;

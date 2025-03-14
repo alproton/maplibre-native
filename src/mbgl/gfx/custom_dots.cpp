@@ -19,7 +19,16 @@ void CustomDots::draw(const TransformState& transform) {
     }
     auto screenSize = transform.getSize();
 
-    bool updateVertexBuffer = pointsChanged || transform.getProjectionMatrix() != previousTransform;
+    // check if transform has changed such as a dot moved at least one pixel
+    auto currentPoint = transform.latLngToScreenCoordinate(points[0]);
+    auto currentPointX = static_cast<int>(std::round(currentPoint.x));
+    auto currentPointY = static_cast<int>(std::round(currentPoint.y));
+    auto transformChanged = currentPointX != previousPointX || currentPointY != previousPointY;
+    previousPointX = currentPointX;
+    previousPointY = currentPointY;
+
+    bool updateVertexBuffer = pointsChanged || transformChanged;
+    pointsChanged = false;
     if (updateVertexBuffer) {
         CustomDotsVertexBuffer vertexBuffer;
         vertexBuffer.reserve(points.size() * 2);
@@ -34,9 +43,6 @@ void CustomDots::draw(const TransformState& transform) {
             }
             vertexBuffer.push_back(static_cast<float>(x));
             vertexBuffer.push_back(static_cast<float>(y));
-        }
-        if (vertexBuffer.empty()) {
-            return;
         }
         updateVertexBufferImpl(vertexBuffer);
     }
