@@ -16,10 +16,12 @@ struct RouteOptions {
     Color innerColor = Color(0, 0, 1, 1);
     Color outerClipColor = Color(0, 0, 0, 0);
     Color innerClipColor = Color(0, 0, 0, 0);
-    float outerWidth = 10;
-    float innerWidth = 6;
-    std::string layerBefore;
+    float outerWidth = 16;
+    float innerWidth = 14;
+    std::map<double, double> outerWidthZoomStops;
+    std::map<double, double> innerWidthZoomStops;
     bool useDyanamicWidths = false;
+    std::string layerBefore;
 };
 
 /***
