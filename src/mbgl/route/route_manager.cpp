@@ -121,6 +121,18 @@ std::string toString(const LineString<double>& line, uint32_t tabcount) {
     return ss.str();
 }
 
+std::string toString(const std::map<double, double>& mapdata) {
+    std::stringstream ss;
+    ss << "[" << std::endl;
+    for (auto iter = mapdata.begin(); iter != mapdata.end(); iter++) {
+        std::string terminatingStr = std::next(iter) == mapdata.end() ? "" : ", ";
+        ss << "{\"" << std::to_string(iter->first) << "\" : " << iter->second << " }" << terminatingStr << std::endl;
+    }
+    ss << "]";
+
+    return ss.str();
+}
+
 std::string toString(const RouteOptions& ropts, uint32_t tabcount) {
     std::stringstream ss;
     ss << gentabs(tabcount) << "{" << std::endl;
@@ -138,7 +150,12 @@ std::string toString(const RouteOptions& ropts, uint32_t tabcount) {
        << std::to_string(ropts.outerClipColor.a) << ")\"," << std::endl;
     ss << gentabs(tabcount + 1) << "\"innerWidth\": " << "\"" << std::to_string(ropts.innerWidth) << "\"," << std::endl;
     ss << gentabs(tabcount + 1) << "\"outerWidth\": " << "\"" << std::to_string(ropts.outerWidth) << "\"," << std::endl;
-    ss << gentabs(tabcount + 1) << "\"layerBefore\": " << "\"" << (ropts.layerBefore) << "\"" << std::endl;
+    ss << gentabs(tabcount + 1) << "\"layerBefore\": " << "\"" << (ropts.layerBefore) << "\"," << std::endl;
+    ss << gentabs(tabcount + 1) << "\"outerWidthZoomStops\": " << toString(ropts.outerWidthZoomStops) << ", "
+       << std::endl;
+    ss << gentabs(tabcount + 1) << "\"innerWidthZoomStops\": " << toString(ropts.innerWidthZoomStops) << ", "
+       << std::endl;
+    ss << gentabs(tabcount + 1) << "\"useDyanamicWidths\": " << toString(ropts.useDyanamicWidths) << std::endl;
     ss << gentabs(tabcount) << "}";
     return ss.str();
 }
@@ -168,38 +185,38 @@ std::string toString(const std::map<double, mbgl::Color>& gradient) {
     return ss.str();
 }
 
-constexpr double CID_PIXEL_DENSITY = 1.6;
+constexpr double PIXEL_DENSITY = 1.6;
 
 constexpr double getZoomStepDownValue() {
-    return CID_PIXEL_DENSITY - 1.0;
+    return PIXEL_DENSITY - 1.0;
 }
 
-constexpr double CID_PIXEL_DENSITY_FACTOR = 1.0 / CID_PIXEL_DENSITY;
-constexpr double CID_ROUTE_LINE_ZOOM_LEVEL_4 = 4 - getZoomStepDownValue();
-constexpr double CID_ROUTE_LINE_ZOOM_LEVEL_10 = 10 - getZoomStepDownValue();
-constexpr double CID_ROUTE_LINE_ZOOM_LEVEL_18 = 18 - getZoomStepDownValue();
-constexpr double CID_ROUTE_LINE_ZOOM_LEVEL_20 = 20 - getZoomStepDownValue();
+constexpr double PIXEL_DENSITY_FACTOR = 1.0 / PIXEL_DENSITY;
+constexpr double ROUTE_LINE_ZOOM_LEVEL_4 = 4 - getZoomStepDownValue();
+constexpr double ROUTE_LINE_ZOOM_LEVEL_10 = 10 - getZoomStepDownValue();
+constexpr double ROUTE_LINE_ZOOM_LEVEL_18 = 18 - getZoomStepDownValue();
+constexpr double ROUTE_LINE_ZOOM_LEVEL_20 = 20 - getZoomStepDownValue();
 
-constexpr double CID_ROUTE_LINE_WEIGHT_6 = 6;
-constexpr double CID_ROUTE_LINE_WEIGHT_9 = 9;
-constexpr double CID_ROUTE_LINE_WEIGHT_16 = 16;
-constexpr double CID_ROUTE_LINE_WEIGHT_22 = 22;
+constexpr double ROUTE_LINE_WEIGHT_6 = 6;
+constexpr double ROUTE_LINE_WEIGHT_9 = 9;
+constexpr double ROUTE_LINE_WEIGHT_16 = 16;
+constexpr double ROUTE_LINE_WEIGHT_22 = 22;
 
-constexpr double CID_ROUTE_LINE_CASING_MULTIPLIER = 1.6 * CID_PIXEL_DENSITY_FACTOR;
-constexpr double CID_ROUTE_LINE_MULTIPLIER = 1.0 * CID_PIXEL_DENSITY_FACTOR;
+constexpr double ROUTE_LINE_CASING_MULTIPLIER = 1.6 * PIXEL_DENSITY_FACTOR;
+constexpr double ROUTE_LINE_MULTIPLIER = 1.0 * PIXEL_DENSITY_FACTOR;
 
-std::map<double, double> getRouteLineCasingWeights() {
-    return {{CID_ROUTE_LINE_ZOOM_LEVEL_4, CID_ROUTE_LINE_WEIGHT_6 * CID_ROUTE_LINE_CASING_MULTIPLIER},
-            {CID_ROUTE_LINE_ZOOM_LEVEL_10, CID_ROUTE_LINE_WEIGHT_9 * CID_ROUTE_LINE_CASING_MULTIPLIER},
-            {CID_ROUTE_LINE_ZOOM_LEVEL_18, CID_ROUTE_LINE_WEIGHT_16 * CID_ROUTE_LINE_CASING_MULTIPLIER},
-            {CID_ROUTE_LINE_ZOOM_LEVEL_20, CID_ROUTE_LINE_WEIGHT_22 * CID_ROUTE_LINE_CASING_MULTIPLIER}};
+std::map<double, double> getDefaultRouteLineCasingWeights() {
+    return {{ROUTE_LINE_ZOOM_LEVEL_4, ROUTE_LINE_WEIGHT_6 * ROUTE_LINE_CASING_MULTIPLIER},
+            {ROUTE_LINE_ZOOM_LEVEL_10, ROUTE_LINE_WEIGHT_9 * ROUTE_LINE_CASING_MULTIPLIER},
+            {ROUTE_LINE_ZOOM_LEVEL_18, ROUTE_LINE_WEIGHT_16 * ROUTE_LINE_CASING_MULTIPLIER},
+            {ROUTE_LINE_ZOOM_LEVEL_20, ROUTE_LINE_WEIGHT_22 * ROUTE_LINE_CASING_MULTIPLIER}};
 }
 
-std::map<double, double> getRouteLineWeights() {
-    return {{CID_ROUTE_LINE_ZOOM_LEVEL_4, CID_ROUTE_LINE_WEIGHT_6 * CID_ROUTE_LINE_MULTIPLIER},
-            {CID_ROUTE_LINE_ZOOM_LEVEL_10, CID_ROUTE_LINE_WEIGHT_9 * CID_ROUTE_LINE_MULTIPLIER},
-            {CID_ROUTE_LINE_ZOOM_LEVEL_18, CID_ROUTE_LINE_WEIGHT_16 * CID_ROUTE_LINE_MULTIPLIER},
-            {CID_ROUTE_LINE_ZOOM_LEVEL_20, CID_ROUTE_LINE_WEIGHT_22 * CID_ROUTE_LINE_MULTIPLIER}};
+std::map<double, double> getDefaultRouteLineWeights() {
+    return {{ROUTE_LINE_ZOOM_LEVEL_4, ROUTE_LINE_WEIGHT_6 * ROUTE_LINE_MULTIPLIER},
+            {ROUTE_LINE_ZOOM_LEVEL_10, ROUTE_LINE_WEIGHT_9 * ROUTE_LINE_MULTIPLIER},
+            {ROUTE_LINE_ZOOM_LEVEL_18, ROUTE_LINE_WEIGHT_16 * ROUTE_LINE_MULTIPLIER},
+            {ROUTE_LINE_ZOOM_LEVEL_20, ROUTE_LINE_WEIGHT_22 * ROUTE_LINE_MULTIPLIER}};
 }
 
 } // namespace
@@ -281,6 +298,8 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
 }
 
 bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
+    assert(routeID.isValid() && "Invalid route ID");
+    assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         if (capturing_) {
             std::string successStr;
@@ -621,7 +640,8 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             // create layer for casing/base
             std::map<double, double> baseZoomStops;
             if (routeOptions.useDyanamicWidths) {
-                baseZoomStops = getRouteLineCasingWeights();
+                baseZoomStops = !routeOptions.outerWidthZoomStops.empty() ? routeOptions.outerWidthZoomStops
+                                                                          : getDefaultRouteLineCasingWeights();
             }
             if (!createLayer(baseGeoJSONSourceName,
                              baseLayerName,
@@ -636,7 +656,8 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             // create layer for active/blue
             std::map<double, double> activeLineWidthStops;
             if (routeOptions.useDyanamicWidths) {
-                activeLineWidthStops = getRouteLineWeights();
+                activeLineWidthStops = !routeOptions.innerWidthZoomStops.empty() ? routeOptions.innerWidthZoomStops
+                                                                                 : getDefaultRouteLineWeights();
             }
             if (!createLayer(activeGeoJSONSourceName,
                              activeLayerName,
