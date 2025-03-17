@@ -262,7 +262,7 @@ public:
 
     void routesClearStats(JNIEnv& env);
 
-    void routesBeginCapture(JNIEnv& env);
+    void routesBeginCapture(JNIEnv& env, jni::jboolean captureGeometry, jni::jboolean captureSegments, jni::jboolean captureProgress);
 
     jni::Local<jni::String> routesEndCapture(JNIEnv& env);
 

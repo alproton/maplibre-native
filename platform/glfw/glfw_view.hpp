@@ -122,7 +122,7 @@ private:
     void incrementRouteProgress();
     void decrementRouteProgress();
     void printRouteStats();
-    void beginCapture();
+    void beginCapture(const mbgl::route::RouteCaptureOptions& routeCaptureOpts);
     void endCapture();
     void setRouteProgressUsage();
 

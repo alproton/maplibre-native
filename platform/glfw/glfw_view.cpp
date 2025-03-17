@@ -670,9 +670,8 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                     view->decrementRouteProgress();
                     break;
                 case GLFW_KEY_8: {
-                    view->beginCapture();
+                    view->beginCapture({true, true, false});
                     std::cout << "Begin route capture" << std::endl;
-                    // view->printRouteStats();
                 } break;
 
                 case GLFW_KEY_9: {
@@ -1128,8 +1127,8 @@ void GLFWView::printRouteStats() {
     }
 }
 
-void GLFWView::beginCapture() {
-    rmptr_->beginCapture();
+void GLFWView::beginCapture(const mbgl::route::RouteCaptureOptions& routeCaptureOpts) {
+    rmptr_->beginCapture(routeCaptureOpts);
 }
 
 void GLFWView::endCapture() {

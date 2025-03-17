@@ -282,7 +282,7 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
     RouteID rid;
     bool success = routeIDpool_.createID((rid.id));
     if (success && rid.isValid()) {
-        if (capturing_) {
+        if (capturing_ && captureOptions_.routeGeometry) {
             const std::unordered_map<std::string, std::string> params = {{"geometry", toString(geometry, 0)},
                                                                          {"routeOptions", toString(ropts, 0)}};
             std::string extraData = "numPoints: " + std::to_string(geometry.size());
@@ -301,7 +301,7 @@ bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
     assert(routeID.isValid() && "Invalid route ID");
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if (capturing_) {
+        if (capturing_ && captureOptions_.routeSegments) {
             std::string successStr;
             if (routeSegOpts.geometry.size() < 2) {
                 successStr += "Failure due to less points";
@@ -350,7 +350,7 @@ void RouteManager::validateAddToDirtyBin(const RouteID& routeID, const DirtyType
 void RouteManager::routeClearSegments(const RouteID& routeID) {
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if (capturing_) {
+        if (capturing_ && captureOptions_.routeSegments) {
             const std::unordered_map<std::string, std::string> params = {{"routeID", std::to_string(routeID.id)}};
             TRACE_ROUTE_CALL(apiCalls_, params, "void", "NA", {}, "NA")
         }
@@ -366,7 +366,7 @@ bool RouteManager::routeDispose(const RouteID& routeID) {
     assert(style_ != nullptr && "Style not set!");
     assert(routeID.isValid() && "Invalid route ID");
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
-    if (capturing_) {
+    if (capturing_ && captureOptions_.routeGeometry) {
         std::string validStyleStr = style_ != nullptr ? "true" : "false";
         std::string routeResidentStr = routeMap_.find(routeID) != routeMap_.end() ? "true" : "false";
         const std::unordered_map<std::string, std::string> params = {{"routeID", std::to_string(routeID.id)}};
@@ -418,7 +418,7 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const double progres
     double validProgress = std::clamp(progress, 0.0, 1.0);
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if (capturing_) {
+        if (capturing_ && captureOptions_.routeProgress) {
             const std::unordered_map<std::string, std::string> params = {{"routeID", std::to_string(routeID.id)},
                                                                          {"progress", std::to_string(progress)}};
             TRACE_ROUTE_CALL(apiCalls_, params, "bool", "true", {}, "NA");
@@ -441,7 +441,7 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const mbgl::Point<do
         double progressPercent = routeMap_.at(routeID).getProgressPercent(progressPoint);
         routeMap_[routeID].routeSetProgress(progressPercent);
 
-        if (capturing_) {
+        if (capturing_ && captureOptions_.routeProgress) {
             const std::unordered_map<std::string, std::string> params = {
                 {"routeID", std::to_string(routeID.id)},
                 {"progressPoint", std::to_string(progressPoint.x) + ", " + std::to_string(progressPoint.y)}};
@@ -486,8 +486,9 @@ void RouteManager::clearStats() {
     statsStream_.clear();
 }
 
-void RouteManager::beginCapture() {
+void RouteManager::beginCapture(const RouteCaptureOptions& captureOptions) {
     capturing_ = true;
+    captureOptions_ = captureOptions;
 }
 
 const std::string RouteManager::endCapture() {
@@ -687,7 +688,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             // create the gradient expression for active route.
             std::map<double, mbgl::Color> gradientMap = route.getRouteSegmentColorStops(routeOptions.innerColor);
 
-            if (capturing_) {
+            if (capturing_ && captureOptions_.routeSegments) {
                 gradientDebugMap["active_gradient_map"] = toString(gradientMap);
             }
             std::unique_ptr<expression::Expression> gradientExpression = createGradientExpression(gradientMap);
@@ -697,7 +698,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
             // create the gradient expression for the base route
             std::map<double, mbgl::Color> baseLayerGradient = route.getRouteColorStops(routeOptions.outerColor);
-            if (capturing_) {
+            if (capturing_ && captureOptions_.routeSegments) {
                 gradientDebugMap["base_gradient_map"] = toString(baseLayerGradient);
             }
             std::unique_ptr<expression::Expression> baseLayerExpression = createGradientExpression(baseLayerGradient);
