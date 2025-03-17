@@ -1407,7 +1407,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
         METHOD(&NativeMapView::routesGetStats, "nativeRoutesGetStats"),
         METHOD(&NativeMapView::routesClearStats, "nativeRoutesClearStats"),
-        METHOD(&NativeMapView::routesBeginCapture, "nativeRoutesBegineCapture"),
+        METHOD(&NativeMapView::routesBeginCapture, "nativeRoutesBeginCapture"),
         METHOD(&NativeMapView::routesEndCapture, "nativeRoutesEndCapture"),
         METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
 }
