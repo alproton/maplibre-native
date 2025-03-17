@@ -1460,6 +1460,8 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeProgressSetPoint, "nativeRouteSetProgressPoint"),
         METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
+        METHOD(&NativeMapView::routesBeginCapture, "nativeRoutesBeginCapture"),
+        METHOD(&NativeMapView::routesEndCapture, "nativeRoutesEndCapture"),
         METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"),
         // Custom Dots API
         METHOD(&NativeMapView::setCustomDotsPoints, "nativeSetCustomDotsPoints"),
