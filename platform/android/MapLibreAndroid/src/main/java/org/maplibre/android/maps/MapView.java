@@ -569,8 +569,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     nativeMapView.clearRoutesStats();
   }
 
-  public void beginRoutesCapture() {
-    nativeMapView.beginRoutesCapture();
+  public void beginRoutesCapture(RouteCaptureOptions captureOptions) {
+    nativeMapView.beginRoutesCapture(captureOptions);
   }
 
   public String endRoutesCapture() {

@@ -1546,9 +1546,13 @@ void NativeMapView::routesClearStats(JNIEnv& env) {
     }
 }
 
-void NativeMapView::routesBeginCapture(JNIEnv& env) {
+void NativeMapView::routesBeginCapture(JNIEnv& env, jni::jboolean captureGeometry, jni::jboolean captureSegments, jni::jboolean captureProgress) {
     if (routeMgr) {
-        routeMgr->beginCapture();
+        mbgl::route::RouteCaptureOptions captureOpts;
+        captureOpts.routeGeometry = captureGeometry;
+        captureOpts.routeSegments = captureSegments;
+        captureOpts.routeProgress = captureProgress;
+        routeMgr->beginCapture(captureOpts);
     }
 }
 

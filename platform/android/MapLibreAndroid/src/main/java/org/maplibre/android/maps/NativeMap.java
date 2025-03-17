@@ -292,7 +292,7 @@ interface NativeMap {
 
   void clearRoutesStats();
 
-  void beginRoutesCapture();
+  void beginRoutesCapture(RouteCaptureOptions options);
 
   String endRoutesCapture();
 

@@ -1203,8 +1203,8 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public void beginRoutesCapture() {
-    nativeRoutesBeginCapture();
+  public void beginRoutesCapture(RouteCaptureOptions options) {
+    nativeRoutesBeginCapture(options.routeGeometry, options.routeSegment, options.routeProgress);
   }
 
   @Override
@@ -1648,7 +1648,7 @@ final class NativeMapView implements NativeMap {
   private native String nativeRoutesGetStats();
 
   @Keep
-  private native void nativeRoutesBeginCapture();
+  private native void nativeRoutesBeginCapture(boolean routeGeometry, boolean routeSegment, boolean routeProgress);
 
   @Keep
   private native String nativeRoutesEndCapture();
