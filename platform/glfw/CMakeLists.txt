@@ -33,6 +33,23 @@ if(MLN_WITH_OPENGL)
     target_sources(
         mbgl-glfw
         PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/glfw_gl_backend.cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imconfig.h
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imgui.cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imgui.h
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imgui_demo.cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imgui_draw.cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imgui_internal.h
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imgui_tables.cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imgui_widgets.cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imstb_rectpack.h
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imstb_textedit.h
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui/imstb_truetype.h
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui-backends/imgui_impl_glfw.cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui-backends/imgui_impl_glfw.h
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui-backends/imgui_impl_opengl3.cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui-backends/imgui_impl_opengl3.h
+        PRIVATE ${PROJECT_SOURCE_DIR}/platform/glfw/imgui-backends/imgui_impl_opengl3_loader.h
+
     )
     target_compile_definitions(
         mbgl-glfw
