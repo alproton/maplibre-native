@@ -13,6 +13,8 @@ PremultipliedImage& puckBitmap() {
     return image;
 }
 
+// The puck icon is sent to the rendering in UI thread and is rendered in the rendering thread
+// This ensures the puck is not modified by the UI thread while being rendered in the rendering thread
 std::mutex& puckBitmapMutex() {
     static std::mutex mutex;
     return mutex;

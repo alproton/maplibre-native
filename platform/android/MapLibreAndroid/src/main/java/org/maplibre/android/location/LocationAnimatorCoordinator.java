@@ -15,8 +15,8 @@ import androidx.annotation.VisibleForTesting;
 
 import org.maplibre.android.log.Logger;
 import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Projection;
-import org.maplibre.android.maps.renderer.MapRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +70,7 @@ final class LocationAnimatorCoordinator {
   final SparseArray<MapLibreAnimator.AnimationsValueChangeListener> listeners = new SparseArray<>();
 
   LocationAnimatorCoordinator(@NonNull Context context,
-                              @NonNull MapRenderer mapRenderer,
+                              MapView mapView,
                               @NonNull Projection projection,
                               @NonNull MapLibreAnimatorSetProvider animatorSetProvider,
                               @NonNull MapLibreAnimatorProvider animatorProvider,
@@ -82,9 +82,12 @@ final class LocationAnimatorCoordinator {
     this.animatorSetProvider = animatorSetProvider;
 
     if (customPuckAnimationOptions.customPuckAnimationEnabled) {
+      if (mapView == null) {
+        throw new IllegalArgumentException("Unexpected null MapView when using a custom puck.");
+      }
       customPuck = new LocationAnimatorCustomPuck(
         context,
-        mapRenderer,
+        mapView,
         locationLayerRenderer,
         locationCameraController,
         customPuckAnimationOptions);

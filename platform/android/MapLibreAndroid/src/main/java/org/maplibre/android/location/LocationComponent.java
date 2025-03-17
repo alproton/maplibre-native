@@ -33,7 +33,6 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapLibreMap.OnCameraIdleListener;
 import org.maplibre.android.maps.MapLibreMap.OnCameraMoveListener;
 import org.maplibre.android.maps.MapLibreMap.OnMapClickListener;
-import org.maplibre.android.maps.renderer.MapRenderer;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.Transform;
 import org.maplibre.android.style.layers.SymbolLayer;
@@ -102,10 +101,9 @@ import static org.maplibre.android.location.modes.RenderMode.GPS;
 public final class LocationComponent {
   private static final String TAG = "Mbgl-LocationComponent";
 
+  private final MapView mapView;
   @NonNull
   private final MapLibreMap maplibreMap;
-  @NonNull
-  private final MapRenderer mapRenderer;
   @NonNull
   private final Transform transform;
   private Style style;
@@ -198,12 +196,11 @@ public final class LocationComponent {
    * <p>
    * To get the component object use {@link MapLibreMap#getLocationComponent()}.
    */
-  public LocationComponent(@NonNull MapLibreMap maplibreMap,
-                           @NonNull MapRenderer mapRenderer,
+  public LocationComponent(@NonNull MapView mapView,
                            @NonNull Transform transform,
                            @NonNull List<MapLibreMap.OnDeveloperAnimationListener> developerAnimationListeners) {
-    this.maplibreMap = maplibreMap;
-    this.mapRenderer = mapRenderer;
+    this.mapView = mapView;
+    this.maplibreMap = mapView.getMapLibreMap();
     this.transform = transform;
     developerAnimationListeners.add(developerAnimationListener);
   }
@@ -211,14 +208,13 @@ public final class LocationComponent {
   // used for creating a spy
   LocationComponent() {
     //noinspection ConstantConditions
+    mapView = null;
     maplibreMap = null;
-    mapRenderer = null;
     transform = null;
   }
 
   @VisibleForTesting
   LocationComponent(@NonNull MapLibreMap maplibreMap,
-                    @NonNull MapRenderer mapRenderer,
                     @NonNull Transform transform,
                     @NonNull List<MapLibreMap.OnDeveloperAnimationListener> developerAnimationListeners,
                     @NonNull LocationEngineCallback<LocationEngineResult> currentListener,
@@ -229,8 +225,8 @@ public final class LocationComponent {
                     @NonNull StaleStateManager staleStateManager,
                     @NonNull CompassEngine compassEngine,
                     boolean useSpecializedLocationLayer) {
+    this.mapView = null;
     this.maplibreMap = maplibreMap;
-    this.mapRenderer = mapRenderer;
     this.transform = transform;
     developerAnimationListeners.add(developerAnimationListener);
     this.currentLocationEngineListener = currentListener;
@@ -1196,7 +1192,7 @@ public final class LocationComponent {
 
     locationAnimatorCoordinator = new LocationAnimatorCoordinator(
       context,
-      mapRenderer,
+      mapView,
       maplibreMap.getProjection(),
       MapLibreAnimatorSetProvider.getInstance(),
       MapLibreAnimatorProvider.getInstance(),

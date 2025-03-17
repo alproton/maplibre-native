@@ -1,8 +1,12 @@
 #include <mbgl/gl/custom_puck.hpp>
 #include <mbgl/gl/defines.hpp>
 #include <mbgl/gl/renderer_backend.hpp>
+#include <mbgl/util/logging.hpp>
 #include <algorithm>
 
+// This is a temporary workaround to issue #3135
+// We use glGetFloatv to get the max anisotropy instead of checking the existence of the extension
+// This extension is virtually supported by all GPUs since it's a D3D9 feature
 #ifndef GL_EXT_texture_filter_anisotropic
 #define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
@@ -66,6 +70,9 @@ TextureID createTexture(const PremultipliedImage& image) {
     if (maxAniso > 0) {
         constexpr float aniso = 8.0f;
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::min(maxAniso, aniso));
+    } else {
+        Log::Warning(Event::OpenGL,
+                     "Anisotropic filtering not supported: Puck texture will be renderer with tri-linear filtering.");
     }
     return texture;
 }
@@ -139,6 +146,8 @@ void CustomPuck::drawImpl(const ScreenQuad& quad) {
     if (!texture) {
         const auto& bitmap = gfx::getPuckBitmap();
         if (!bitmap.valid()) {
+            // The UI thread has not set the puck bitmap yet
+            // Skip puck rendering in this frame while MapView is being initialized
             return;
         }
         texture = createTexture(bitmap);
@@ -154,6 +163,14 @@ void CustomPuck::drawImpl(const ScreenQuad& quad) {
 
 gfx::CustomPuckState CustomPuck::getState() {
     return context.getBackend().getCurrentCustomPuckState();
+}
+
+CustomPuck::~CustomPuck() noexcept {
+    // Only the texture is deleted here when the program ends
+    // The shader is deleted by the context
+    if (texture) {
+        glDeleteTextures(1, &texture);
+    }
 }
 
 } // namespace gl

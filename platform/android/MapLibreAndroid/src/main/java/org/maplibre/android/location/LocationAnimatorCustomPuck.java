@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.location.modes.CameraMode;
-import org.maplibre.android.maps.renderer.MapRenderer;
+import org.maplibre.android.maps.MapView;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -62,7 +62,7 @@ final class LocationAnimatorCustomPuck {
   }
 
   LocationAnimatorCustomPuck(@NonNull Context context,
-                             @NonNull MapRenderer mapRenderer,
+                             @NonNull MapView mapView,
                              @NonNull LocationLayerRenderer locationLayerRenderer,
                              @NonNull LocationCameraController locationCameraController,
                              @NonNull LocationAnimatorCustomPuckOptions customPuckAnimationOptions) {
@@ -120,7 +120,7 @@ final class LocationAnimatorCustomPuck {
             }
 
             boolean tracking = locationCameraController.isLocationTracking() && !locationCameraController.isTransitioning();
-            mapRenderer.setCustomPuckState(
+            mapView.setCustomPuckState(
               location.lat,
               location.lon,
               location.bearing,

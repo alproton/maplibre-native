@@ -10,7 +10,7 @@ class CustomPuck final : public gfx::CustomPuck {
 public:
     CustomPuck(gl::Context&);
 
-    ~CustomPuck() noexcept override {}
+    ~CustomPuck() noexcept override;
 
     void drawImpl(const ScreenQuad& quad) override;
     gfx::CustomPuckState getState() override;
