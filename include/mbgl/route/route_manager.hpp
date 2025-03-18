@@ -24,6 +24,12 @@ struct RouteMgrStats {
     bool inconsistentAPIusage = false;
 };
 
+struct RouteCaptureOptions {
+    bool routeGeometry = true;
+    bool routeSegments = true;
+    bool routeProgress = false;
+};
+
 /***
  * A route manager manages construction, disposal and updating of one or more routes. It is the API facade and is 1:1
  *with a map view. You can create and mutate multiple routes as many times and after you're done with mutating routes,
@@ -35,7 +41,7 @@ public:
     RouteManager();
     void setStyle(style::Style&);
     const std::string getStats();
-    void beginCapture();
+    void beginCapture(const RouteCaptureOptions& captureOptions);
     const std::string endCapture();
     void clearStats();
     bool hasStyle() const;
@@ -73,6 +79,7 @@ private:
 
     RouteMgrStats stats_;
     bool capturing_ = false;
+    RouteCaptureOptions captureOptions_;
     gfx::IDpool routeIDpool_ = gfx::IDpool(100);
     std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
