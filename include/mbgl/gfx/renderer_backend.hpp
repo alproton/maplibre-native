@@ -60,6 +60,8 @@ public:
 #endif
     const mbgl::util::SimpleIdentity uniqueID;
 
+    std::unique_ptr<gfx::CustomPuck> customPuck = nullptr;
+
     std::unique_ptr<gfx::CustomDots> customDots = nullptr;
 
 protected:

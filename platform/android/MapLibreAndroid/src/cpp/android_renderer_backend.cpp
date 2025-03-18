@@ -19,6 +19,14 @@ void AndroidRendererBackend::setSwapBehavior(gfx::Renderable::SwapBehaviour swap
     swapBehaviour = swapBehaviour_;
 }
 
+void AndroidRendererBackend::setPuckBitmap(const PremultipliedImage& image) {
+    if (!getImpl().customPuck) {
+        Log::Debug(Event::Android, "Custom puck not enabled");
+        return;
+    }
+    getImpl().customPuck->setPuckBitmap(image);
+}
+
 void AndroidRendererBackend::setCustomDotsNextLayer(std::string layer) {
     if (!isCustomDotsInitialized()) {
         Log::Error(Event::Android, "Custom dots not initialized yet. Ignoring layer");

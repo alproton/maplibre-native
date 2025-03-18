@@ -1206,7 +1206,7 @@ void NativeMapView::addImages(JNIEnv& env, const jni::Array<jni::Object<mbgl::an
         // Workaround for issue #3135
         // We detect the puck bitmap and pass it to the renderer which generates a custom puck texture
         if (image.getID() == PUCK_ICON_NAME) {
-            gfx::setPuckBitmap(image.getImage());
+            mapRenderer.getRendererBackend().setPuckBitmap(image.getImage());
         }
     }
 }

@@ -143,14 +143,18 @@ CustomPuck::CustomPuck(gl::Context& context_)
 void CustomPuck::drawImpl(const ScreenQuad& quad) {
     ScopedGlStates glStates;
 
-    if (!texture) {
-        const auto& bitmap = gfx::getPuckBitmap();
-        if (!bitmap.valid()) {
-            // The UI thread has not set the puck bitmap yet
-            // Skip puck rendering in this frame while MapView is being initialized
-            return;
+    auto bitmap = getPuckBitmap();
+    if (bitmap.valid()) {
+        // Create or recreate the texture because the bitmap has changed
+        if (texture) {
+            glDeleteTextures(1, &texture);
         }
         texture = createTexture(bitmap);
+    }
+    if (!texture) {
+        // The UI thread has not set the puck bitmap yet
+        // Skip puck rendering in this frame while MapView is being initialized
+        return;
     }
 
     glBindTexture(GL_TEXTURE_2D, texture);

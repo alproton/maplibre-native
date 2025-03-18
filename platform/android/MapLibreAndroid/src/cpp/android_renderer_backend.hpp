@@ -36,6 +36,7 @@ public:
     gfx::Renderable::SwapBehaviour getSwapBehavior() const { return swapBehaviour; }
     virtual void setSwapBehavior(gfx::Renderable::SwapBehaviour swapBehaviour);
 
+    void setPuckBitmap(const PremultipliedImage& image);
     void setCustomPuckState(const gfx::CustomPuckState& state) noexcept { customPuckState = state; }
 
     const gfx::CustomPuckState& getCustomPuckState() const noexcept { return customPuckState; }

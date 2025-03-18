@@ -23,16 +23,23 @@ public:
 
     void draw(const TransformState& transform);
 
+    void setPuckBitmap(const PremultipliedImage& src);
+
+    PremultipliedImage getPuckBitmap();
+
 protected:
     using ScreenQuad = std::array<ScreenCoordinate, 4>;
 
     virtual void drawImpl(const ScreenQuad&) = 0;
 
     virtual CustomPuckState getState() = 0;
-};
 
-void setPuckBitmap(const PremultipliedImage& src);
-const PremultipliedImage& getPuckBitmap();
+private:
+    PremultipliedImage bitmap{};
+    // The puck icon is sent to the rendering in UI thread and is rendered in the rendering thread
+    // This ensures the puck is not modified by the UI thread while being rendered in the rendering thread
+    std::mutex bitmapMutex;
+};
 
 } // namespace gfx
 } // namespace mbgl

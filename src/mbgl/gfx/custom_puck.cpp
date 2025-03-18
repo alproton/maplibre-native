@@ -6,22 +6,6 @@
 namespace mbgl {
 namespace gfx {
 
-namespace {
-
-PremultipliedImage& puckBitmap() {
-    static PremultipliedImage image{};
-    return image;
-}
-
-// The puck icon is sent to the rendering in UI thread and is rendered in the rendering thread
-// This ensures the puck is not modified by the UI thread while being rendered in the rendering thread
-std::mutex& puckBitmapMutex() {
-    static std::mutex mutex;
-    return mutex;
-}
-
-} // namespace
-
 void CustomPuck::draw(const TransformState& transform) {
     const auto& state = getState();
     if (!state.enabled) {
@@ -68,21 +52,17 @@ void CustomPuck::draw(const TransformState& transform) {
     drawImpl(quad);
 }
 
-void setPuckBitmap(const PremultipliedImage& src) {
+void CustomPuck::setPuckBitmap(const PremultipliedImage& src) {
     assert(src.valid());
-    std::lock_guard<std::mutex> lock(puckBitmapMutex());
-    auto& dst = puckBitmap();
-    if (dst.valid()) {
-        return;
-    }
-    dst.size = src.size;
-    dst.data = std::make_unique<uint8_t[]>(src.bytes());
-    std::memcpy(dst.data.get(), src.data.get(), src.bytes());
+    std::lock_guard<std::mutex> lock(bitmapMutex);
+    bitmap.size = src.size;
+    bitmap.data = std::make_unique<uint8_t[]>(src.bytes());
+    std::memcpy(bitmap.data.get(), src.data.get(), src.bytes());
 }
 
-const PremultipliedImage& getPuckBitmap() {
-    std::lock_guard<std::mutex> lock(puckBitmapMutex());
-    return puckBitmap();
+PremultipliedImage CustomPuck::getPuckBitmap() {
+    std::lock_guard<std::mutex> lock(bitmapMutex);
+    return std::move(bitmap);
 }
 
 } // namespace gfx

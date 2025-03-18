@@ -65,8 +65,6 @@ private:
 #if MLN_RENDER_BACKEND_METAL
     mtl::MTLCaptureScopePtr commandCaptureScope;
 #endif // MLN_RENDER_BACKEND_METAL
-
-    std::unique_ptr<gfx::CustomPuck> customPuck = nullptr;
 };
 
 } // namespace mbgl
