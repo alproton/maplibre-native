@@ -946,15 +946,23 @@ jni::Local<jni::Array<jlong>> NativeMapView::queryShapeAnnotations(JNIEnv& env, 
 
 jint NativeMapView::routeQueryRendered(JNIEnv& env, jni::jdouble screenSpaceX, jni::jdouble screenSpaceY) {
     std::vector<RouteID> routeIDs = routeMgr->getAllRoutes();
-    std::optional<std::vector<std::string>> layers;
+    std::vector<std::string> layers;
     std::unordered_map<std::string, RouteID> baseLayerMapCache;
     std::unordered_map<std::string, RouteID> baseSourceMapCache;
     for (const auto& routeID : routeIDs) {
-        std::string baseLayer = routeMgr->getBaseRouteLayerName(routeID);
-        layers->push_back(baseLayer);
-        baseLayerMapCache[baseLayer] = routeID;
-        std::string baseSource = routeMgr->getBaseGeoJSONsourceName(routeID);
-        baseSourceMapCache[baseSource] = routeID;
+        if (routeID.isValid()) {
+            std::string baseLayer = routeMgr->getBaseRouteLayerName(routeID);
+            assert(!baseLayer.empty() && "base layer cannot be empty!");
+            if (!baseLayer.empty()) {
+                layers.push_back(baseLayer);
+                baseLayerMapCache[baseLayer] = routeID;
+            }
+            std::string baseSource = routeMgr->getBaseGeoJSONsourceName(routeID);
+            assert(!baseSource.empty() && "base source cannot be empty");
+            if (!baseSource.empty()) {
+                baseSourceMapCache[baseSource] = routeID;
+            }
+        }
     }
 
     mapbox::geometry::point<double> point = {screenSpaceX, screenSpaceY};
@@ -1451,6 +1459,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routesClearStats, "nativeRoutesClearStats"),
         METHOD(&NativeMapView::routesBeginCapture, "nativeRoutesBeginCapture"),
         METHOD(&NativeMapView::routesEndCapture, "nativeRoutesEndCapture"),
+        METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
 }
 

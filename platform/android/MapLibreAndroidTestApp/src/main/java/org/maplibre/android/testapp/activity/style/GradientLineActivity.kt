@@ -2,6 +2,7 @@ package org.maplibre.android.testapp.activity.style
 
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
@@ -107,6 +108,8 @@ class GradientLineActivity : AppCompatActivity(), OnMapReadyCallback {
             routeList = mutableListOf<RouteID>()
             routeList.add(routeID)
             mapView.finalizeRoutes()
+            val pickedRouteID : RouteID = mapView.queryRoute(100.0, 100.0)
+            Log.d("pickedRouteID", "$pickedRouteID.getId()")
 
         } catch (exception: IOException) {
             Timber.e(exception)
