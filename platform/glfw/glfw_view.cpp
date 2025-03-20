@@ -1142,7 +1142,7 @@ void GLFWView::printRouteStats() {
 }
 
 void GLFWView::beginCapture() {
-    rmptr_->beginCapture();
+    rmptr_->beginCapture({true, true, false});
 }
 
 void GLFWView::endCapture() {

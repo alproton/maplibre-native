@@ -1507,8 +1507,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routesBeginCapture, "nativeRoutesBeginCapture"),
         METHOD(&NativeMapView::routesEndCapture, "nativeRoutesEndCapture"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
-        METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation")
-            METHOD(&NativeMapView::triggerRepaint, "nativeTriggerRepaint"),
+        METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"),
         // Custom Dots API
         METHOD(&NativeMapView::setCustomDotsNextLayer, "nativeSetCustomDotsNextLayer"),
         METHOD(&NativeMapView::setCustomDotsPoints, "nativeSetCustomDotsPoints"),
@@ -1622,7 +1621,7 @@ void NativeMapView::routesClearStats(JNIEnv& env) {
 
 void NativeMapView::routesBeginCapture(JNIEnv& env) {
     if (routeMgr) {
-        routeMgr->beginCapture();
+        routeMgr->beginCapture({true, true, false});
     }
 }
 

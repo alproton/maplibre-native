@@ -495,7 +495,8 @@ void RouteManager::clearStats() {
     statsStream_.clear();
 }
 
-void RouteManager::beginCapture() {
+void RouteManager::beginCapture(const RouteCaptureOptions& captureOptions) {
+    captureOptions_ = captureOptions;
     capturing_ = true;
 }
 
