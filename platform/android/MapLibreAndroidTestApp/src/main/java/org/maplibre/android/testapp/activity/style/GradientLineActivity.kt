@@ -9,6 +9,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.RouteID
 import org.maplibre.android.maps.RouteOptions
+import org.maplibre.android.maps.RouteSegmentOptions
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.*
@@ -110,6 +111,12 @@ class GradientLineActivity : AppCompatActivity(), OnMapReadyCallback {
             mapView.finalizeRoutes()
             val pickedRouteID : RouteID = mapView.queryRoute(100.0, 100.0)
             Log.d("pickedRouteID", "$pickedRouteID.getId()")
+
+            val rsegopts : RouteSegmentOptions = RouteSegmentOptions();
+            rsegopts.color = ColorUtils.rgbaToColor("rgba(255, 0, 0, 1.0)")
+            rsegopts.priority = 2
+            mapView.clearRouteSegments(routeID)
+            mapView.createRouteSegment(routeID, rsegopts)
 
         } catch (exception: IOException) {
             Timber.e(exception)

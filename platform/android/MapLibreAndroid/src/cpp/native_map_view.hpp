@@ -255,7 +255,8 @@ public:
     jboolean routeSegmentCreate(JNIEnv& env,
                                 jint routeID,
                                 const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
-                                jint color);
+                                jint color,
+                                jint priority);
 
     jboolean routeProgressSet(JNIEnv& env, jint routeID, jdouble progress);
 

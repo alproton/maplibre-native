@@ -1186,7 +1186,7 @@ final class NativeMapView implements NativeMap {
   @Override
   public boolean createRouteSegment(RouteID routeID, RouteSegmentOptions rsopts) {
     if(routeID.isValid()) {
-      return nativeRouteSegmentCreate(routeID.getId(), rsopts.geometry, rsopts.color);
+      return nativeRouteSegmentCreate(routeID.getId(), rsopts.geometry, rsopts.color, rsopts.priority);
     }
 
     return false;
@@ -1671,7 +1671,7 @@ final class NativeMapView implements NativeMap {
   private native boolean nativeRouteDispose(int routeID);
 
   @Keep
-  private native boolean nativeRouteSegmentCreate(int routeID, LineString segmentGeometry, int color);
+  private native boolean nativeRouteSegmentCreate(int routeID, LineString segmentGeometry, int color, int priority);
 
   @Keep
   private native boolean nativeRouteSetProgress(int routeID, double progress);

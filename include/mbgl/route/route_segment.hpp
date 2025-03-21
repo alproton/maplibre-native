@@ -11,7 +11,7 @@ namespace route {
 struct RouteSegmentOptions {
     Color color = Color(1.0f, 1.f, 1.0f, 1.0f);
     LineString<double> geometry;
-    uint32_t sortOrder = 0;
+    uint32_t priority = 0;
 };
 
 class RouteSegment {
@@ -21,7 +21,7 @@ public:
                  const LineString<double>& routeGeometry,
                  const std::vector<double>& routeGeomDistances,
                  double routeTotalDistance);
-    const std::vector<double> getNormalizedPositions() const;
+    std::vector<double> getNormalizedPositions() const;
     RouteSegmentOptions getRouteSegmentOptions() const;
 
     ~RouteSegment();
