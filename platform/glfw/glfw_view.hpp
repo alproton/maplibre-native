@@ -119,7 +119,7 @@ private:
     void addRoute();
     void modifyRoute();
     void disposeRoute();
-    void addTrafficViz();
+    void addTrafficSegments();
     void modifyTrafficViz();
     void removeTrafficViz();
     void incrementRouteProgress();
@@ -163,13 +163,32 @@ private:
     struct RouteCircle {
         double resolution = 30;
         double xlate = 0;
+        double radius = 50;
         int numTrafficZones = 5;
         bool trafficZonesGridAligned = true;
         mbgl::LineString<double> points;
 
-        mbgl::Point<double> getProgressPoint(double percent);
+        mbgl::Point<double> getPoint(double percent) const;
     };
-    std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeList_;
+
+    struct TrafficBlock {
+        mbgl::LineString<double> block;
+        uint32_t priority = 0;
+        mbgl::Color color;
+    };
+
+    enum RouteSegmentTestCases {
+        Blk1LowPriorityIntersecting,
+        Blk1HighPriorityIntersecting,
+        Blk12SameColorIntersecting,
+        Blk12NonIntersecting,
+        Invalid
+    };
+
+    std::vector<TrafficBlock> testCases(const RouteSegmentTestCases &testcase,
+                                        const GLFWView::RouteCircle &route) const;
+
+    std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeMap_;
     RouteID lastRouteID_;
     double routeProgress_ = 0.0;
     bool useRouteProgressPercent_ = false;

@@ -1,3 +1,6 @@
+#include "mbgl/programs/attributes.hpp"
+#include "mbgl/programs/uniforms.hpp"
+
 #include <valarray>
 #include <mbgl/route/route.hpp>
 #include <mbgl/util/math.hpp>
@@ -11,7 +14,8 @@ namespace route {
 
 namespace {
 const double EPSILON = 1e-8;
-}
+const double HALF_EPSILON = EPSILON * 0.5;
+} // namespace
 
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     : routeOptions_(ropts),
@@ -56,35 +60,93 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
     return gradients;
 }
 
+std::vector<Route::SegmentRange> Route::compactSegments() const {
+    // TODO: perhaps we should use a std::set instead of an std::vector to store the sorted segments
+    std::vector<RouteSegment> segments = segments_;
+    std::sort(segments.begin(), segments.end(), [](const RouteSegment& a, const RouteSegment& b) {
+        return a.getNormalizedPositions()[0] < b.getNormalizedPositions()[0];
+    });
+
+    std::vector<SegmentRange> compacted;
+    // insert the first range
+    SegmentRange sr;
+    double firstPos = segments[0].getNormalizedPositions()[0];
+    double lastPos = segments[0].getNormalizedPositions()[segments[0].getNormalizedPositions().size() - 1];
+    sr.range = std::make_pair<double, double>(std::move(firstPos), std::move(lastPos));
+    sr.color = segments[0].getRouteSegmentOptions().color;
+    compacted.push_back(sr);
+
+    for (size_t i = 1; i < segments.size(); i++) {
+        const std::vector<double>& prevPositions = segments[i - 1].getNormalizedPositions();
+        const std::vector<double>& currPositions = segments[i].getNormalizedPositions();
+        const RouteSegmentOptions& prevOptions = segments[i - 1].getRouteSegmentOptions();
+        const RouteSegmentOptions& currOptions = segments[i].getRouteSegmentOptions();
+
+        const auto& prevDist = prevPositions[prevPositions.size() - 1];
+        const auto& currDist = currPositions[0];
+        const auto& prevColor = prevOptions.color;
+        const auto& currColor = currOptions.color;
+        bool isIntersecting = prevDist > currDist;
+        if (isIntersecting) {
+            if (prevColor == currColor) {
+                // merge the segments
+                compacted.rbegin()->range.second = currPositions[currPositions.size() - 1];
+                continue;
+
+            } else if (prevOptions.priority >= currOptions.priority) {
+                firstPos = prevPositions[prevPositions.size() - 1] + EPSILON;
+                lastPos = currPositions[currPositions.size() - 1];
+                sr.range = std::make_pair(firstPos, lastPos);
+                sr.color = currColor;
+
+            } else if (prevOptions.priority < currOptions.priority) {
+                // modify the previous segment and leave some space. We want all segments to be disjoint.
+                compacted.rbegin()->range.second = currPositions[0] - EPSILON;
+
+                // add the current segment
+                firstPos = currPositions[0];
+                lastPos = currPositions[currPositions.size() - 1];
+                sr.range = std::make_pair(firstPos, lastPos);
+                sr.color = currColor;
+            }
+        } else {
+            firstPos = currPositions[0];
+            lastPos = currPositions[currPositions.size() - 1];
+            sr.range = std::make_pair(firstPos, lastPos);
+            sr.color = currColor;
+        }
+
+        compacted.push_back(sr);
+    }
+
+    return compacted;
+}
+
 std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color& routeColor) {
     std::map<double, mbgl::Color> colorStops;
-
     if (segments_.empty()) {
         return getRouteColorStops(routeColor);
     }
 
+    std::vector<SegmentRange> compacted = compactSegments();
     // Initialize the color ramp with the routeColor
     colorStops[0.0] = routeColor;
-    colorStops[1.0] = routeColor;
 
-    for (const auto& segment : segments_) {
-        const auto& normalizedPositions = segment.getNormalizedPositions();
-        const auto& segmentColor = segment.getRouteSegmentOptions().color;
+    for (const auto& sr : compacted) {
+        double firstPos = sr.range.first;
+        double lastPos = sr.range.second;
 
-        for (size_t i = 0; i < normalizedPositions.size(); i++) {
-            const auto& pos = normalizedPositions[i];
-            if (i == 0) {
-                double validpos = pos - EPSILON < 0.0 ? 0.0 : pos - EPSILON;
-                colorStops[validpos] = routeColor;
-            }
+        double pre_pos = firstPos - HALF_EPSILON < 0.0 ? 0.0 : firstPos - HALF_EPSILON;
+        double post_pos = lastPos + HALF_EPSILON > 1.0f ? 1.0f : lastPos + HALF_EPSILON;
 
-            colorStops[pos] = segmentColor;
+        colorStops[pre_pos] = routeColor;
+        colorStops[firstPos] = sr.color;
+        colorStops[lastPos] = sr.color;
+        colorStops[post_pos] = routeColor;
+    }
 
-            if (i == normalizedPositions.size() - 1) {
-                double validpos = pos + EPSILON > 1.0f ? 1.0f : pos + EPSILON;
-                colorStops[validpos] = routeColor;
-            }
-        }
+    if (colorStops.rbegin()->first != 1.0) {
+        colorStops[1.0] = routeColor;
     }
 
     return colorStops;

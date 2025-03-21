@@ -56,6 +56,8 @@
 
 #define GL_GLEXT_PROTOTYPES
 
+#include "../../test/src/mbgl/test/sqlite3_test_fs.hpp"
+
 #include <GLFW/glfw3.h>
 
 #include <cassert>
@@ -200,6 +202,59 @@ void addFillExtrusionLayer(mbgl::style::Style &style, bool visible) {
     extrusionLayer->setFillExtrusionBase(PropertyExpression<float>(get("min_height")));
     style.addLayer(std::move(extrusionLayer));
 }
+
+mbgl::Color convert(std::string hexcolor) {
+    std::stringstream ss;
+    ss << std::hex << hexcolor;
+    int color;
+    ss >> color;
+    float r = (color >> 16) & 0xFF;
+    float g = (color >> 8) & 0xFF;
+    float b = (color) & 0xFF;
+    float a = 1.0f;
+    return {mbgl::Color(r / 255.0f, g / 255.0f, b / 255.0f, a)};
+}
+
+enum RouteColorType {
+    RouteMapAlternative,
+    RouteMapAlternativeCasing,
+    RouteMapAlternativeLowTrafficColor,
+    RouteMapAlternativeModerateTrafficColor,
+    RouteMapAlternativeHeavyTrafficColor,
+    RouteMapAlternativeSevereTrafficColor,
+    RouteMapColor,
+    RouteMapCasingColor,
+    RouteMapLowTrafficColor,
+    RouteMapModerateTrafficColor,
+    RouteMapHeavyTrafficColor,
+    RouteMapSevereTrafficColor,
+    InactiveLegRouteColor,
+    InactiveRouteLowTrafficColor,
+    InactiveRouteModerateTrafficColor,
+    InactiveRouteHeavyTrafficColor,
+    InactiveRouteSevereTrafficColor
+};
+
+const std::unordered_map<RouteColorType, mbgl::Color> routeColorTable = {
+    {RouteMapAlternative, convert("7A7A7A")},
+    {RouteMapAlternativeCasing, convert("FFFFFF")},
+    {RouteMapAlternativeLowTrafficColor, convert("FFCC5B")},
+    {RouteMapAlternativeModerateTrafficColor, convert("F0691D")},
+    {RouteMapAlternativeHeavyTrafficColor, convert("DB0000")},
+    {RouteMapAlternativeSevereTrafficColor, convert("9B0000")},
+    {RouteMapColor, convert("2F70A9")},
+    {RouteMapCasingColor, convert("FFFFFF")},
+    {RouteMapLowTrafficColor, convert("FFBC2D")},
+    {RouteMapModerateTrafficColor, convert("ED6D4A")},
+    {RouteMapHeavyTrafficColor, convert("DB0000")},
+    {RouteMapSevereTrafficColor, convert("9B0000")},
+    {InactiveLegRouteColor, convert("76A7D1")},
+    {InactiveRouteLowTrafficColor, convert("FFE5AD")},
+    {InactiveRouteModerateTrafficColor, convert("F39F7E")},
+    {InactiveRouteHeavyTrafficColor, convert("EE7676")},
+    {InactiveRouteSevereTrafficColor, convert("E64747")}
+
+};
 } // namespace
 
 void glfwError(int error, const char *description) {
@@ -658,7 +713,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                     break;
                 case GLFW_KEY_3:
                     std::cout << "Adding Route Traffic Viz" << std::endl;
-                    view->addTrafficViz();
+                    view->addTrafficSegments();
                     break;
                 case GLFW_KEY_4:
                     std::cout << "Removing Route Traffic Viz" << std::endl;
@@ -863,7 +918,7 @@ void GLFWView::addRandomPointAnnotations(int count) {
     }
 }
 
-mbgl::Point<double> GLFWView::RouteCircle::getProgressPoint(double percent) {
+mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
     if (points.empty()) {
         return {0.0, 0.0};
     }
@@ -907,11 +962,13 @@ mbgl::Point<double> GLFWView::RouteCircle::getProgressPoint(double percent) {
 void GLFWView::addRoute() {
     using namespace mbgl::route;
 
-    std::vector<mbgl::Color> colors = {{0, 0, 1.0, 1.0}, {0.5, 0.5, 0.5, 1}};
+    mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
+    mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
+    std::vector<mbgl::Color> colors = {color0, color1};
 
     auto getRouteGeom = [](const RouteCircle &route) -> mbgl::LineString<double> {
         mbgl::LineString<double> linestring;
-        float radius = 50.0f;
+        float radius = route.radius;
         for (int i = 0; i < route.resolution; i++) {
             float anglerad = (float(i) / float(route.resolution - 1)) * 2 * 3.14f;
             mbgl::Point<double> pt{route.xlate + radius * sin(anglerad), radius * cos(anglerad)};
@@ -924,12 +981,12 @@ void GLFWView::addRoute() {
     rmptr_->setStyle(map->getStyle());
     RouteCircle route;
     route.resolution = 30.0;
-    route.xlate = routeList_.size() * 20.0;
+    route.xlate = routeMap_.size() * route.radius * 2.0;
     mbgl::LineString<double> geom = getRouteGeom(route);
     route.points = geom;
     assert(route.points.size() == route.resolution && "invalid number of points generated");
     RouteOptions routeOpts;
-    int colorIdx = routeList_.size() % 2 == 0 ? 0 : 1;
+    int colorIdx = routeMap_.size() == 0 ? 0 : 1;
     routeOpts.innerColor = colors[colorIdx];
     routeOpts.outerColor = mbgl::Color(0.2, 0.2, 0.2, 1);
     routeOpts.useDyanamicWidths = false;
@@ -937,59 +994,125 @@ void GLFWView::addRoute() {
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
-    routeList_[routeID] = route;
+    routeMap_[routeID] = route;
     rmptr_->finalize();
     lastRouteID_ = routeID;
 }
 
-void GLFWView::addTrafficViz() {
-    const auto &getColorTable = [](uint32_t numColors) -> std::vector<mbgl::Color> {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_real_distribution<> distrib(0.0, 1.0);
-        std::vector<mbgl::Color> colors;
-        for (uint32_t i = 0; i < numColors; i++) {
-            double rand_r = distrib(gen);
-            double rand_g = distrib(gen);
-            double rand_b = distrib(gen);
-            mbgl::Color color(rand_r, rand_g, rand_b, 1.0);
-            // mbgl::Color color(1.0, 0.0, 0.0, 1.0);
-            colors.push_back(color);
-        }
-        return colors;
+std::vector<GLFWView::TrafficBlock> GLFWView::testCases(const RouteSegmentTestCases &testcase,
+                                                        const GLFWView::RouteCircle &route) const {
+    TrafficBlock block1;
+    TrafficBlock block2;
+
+    std::vector<GLFWView::TrafficBlock> fixture;
+    switch (testcase) {
+        case RouteSegmentTestCases::Blk1LowPriorityIntersecting: {
+            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
+            block1.priority = 0;
+            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
+
+            block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
+            block2.priority = 1;
+            block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
+        } break;
+
+        case RouteSegmentTestCases::Blk1HighPriorityIntersecting: {
+            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
+            block1.priority = 1;
+            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
+
+            block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
+            block2.priority = 0;
+            block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
+        } break;
+
+        case RouteSegmentTestCases::Blk12SameColorIntersecting: {
+            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
+            block1.priority = 0;
+            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
+
+            block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
+            block2.priority = 1;
+            block2.color = routeColorTable.at(RouteMapLowTrafficColor);
+
+        } break;
+
+        case RouteSegmentTestCases::Blk12NonIntersecting: {
+            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
+            block1.priority = 0;
+            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
+
+            block2.block = {route.getPoint(0.6), route.getPoint(0.7), route.getPoint(0.8)};
+            block2.priority = 0;
+            block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
+
+        } break;
+
+        default:
+            break;
+    }
+
+    fixture.push_back(block1);
+    fixture.push_back(block2);
+
+    return fixture;
+}
+
+void GLFWView::addTrafficSegments() {
+    const auto &getActiveColors = []() -> std::vector<mbgl::Color> {
+        return {routeColorTable.at(RouteColorType::RouteMapLowTrafficColor),
+                routeColorTable.at(RouteColorType::RouteMapModerateTrafficColor),
+                routeColorTable.at(RouteColorType::RouteMapHeavyTrafficColor),
+                routeColorTable.at(RouteColorType::RouteMapSevereTrafficColor)};
     };
 
-    for (const auto &iter : routeList_) {
+    const auto &getAlternativeColors = []() -> std::vector<mbgl::Color> {
+        return {routeColorTable.at(RouteColorType::InactiveRouteLowTrafficColor),
+                routeColorTable.at(RouteColorType::InactiveRouteModerateTrafficColor),
+                routeColorTable.at(RouteColorType::InactiveRouteHeavyTrafficColor),
+                routeColorTable.at(RouteColorType::InactiveRouteHeavyTrafficColor)};
+    };
+
+    std::vector<TrafficBlock> trafficBlks;
+
+    for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         const auto &route = iter.second;
-        std::vector<mbgl::Color> colors = getColorTable(route.numTrafficZones);
+        std::vector<mbgl::Color> colors = routeID == routeMap_.begin()->first ? getActiveColors()
+                                                                              : getAlternativeColors();
 
-        size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
-        size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
+        // TODO: we have run out of hot keys :( . one of these days, need to create graphics tests for nav.
+        bool useTestCode = false;
+        if (useTestCode) {
+            trafficBlks = testCases(RouteSegmentTestCases::Blk12SameColorIntersecting, route);
+        } else {
+            size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
+            size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
 
-        auto &routePts = route.points;
-        std::vector<mbgl::LineString<double>> trafficBlks;
-        mbgl::LineString<double> currTrafficBlk;
-        for (size_t i = 0; i < routePts.size(); i++) {
-            if (i % blockSize == 0 && !currTrafficBlk.empty()) {
+            auto &routePts = route.points;
+            TrafficBlock currTrafficBlk;
+            for (size_t i = 0; i < routePts.size(); i++) {
+                if (i % blockSize == 0 && !currTrafficBlk.block.empty()) {
+                    trafficBlks.push_back(currTrafficBlk);
+                    currTrafficBlk.block.clear();
+                }
+
+                if (i % blockSize < innerBlockSize) {
+                    currTrafficBlk.block.push_back(mbgl::Point<double>(routePts.at(i).x, routePts.at(i).y));
+                }
+            }
+            if (!currTrafficBlk.block.empty()) {
                 trafficBlks.push_back(currTrafficBlk);
-                currTrafficBlk.clear();
-            }
-
-            if (i % blockSize < innerBlockSize) {
-                currTrafficBlk.push_back(mbgl::Point<double>(routePts.at(i).x, routePts.at(i).y));
             }
         }
-        if (!currTrafficBlk.empty()) {
-            trafficBlks.push_back(currTrafficBlk);
-        }
 
+        // clear the route segments and create new ones from the traffic blocks
         rmptr_->routeClearSegments(routeID);
         for (size_t i = 0; i < trafficBlks.size(); i++) {
             mbgl::route::RouteSegmentOptions rsegopts;
-            rsegopts.color = colors[i];
-            rsegopts.geometry = trafficBlks[i];
-            rsegopts.sortOrder = i;
+            rsegopts.color = trafficBlks[i].color;
+            rsegopts.geometry = trafficBlks[i].block;
+            rsegopts.priority = trafficBlks[i].priority;
 
             rmptr_->routeSegmentCreate(routeID, rsegopts);
         }
@@ -1014,7 +1137,7 @@ void GLFWView::modifyTrafficViz() {
         return colors;
     };
 
-    for (const auto &iter : routeList_) {
+    for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         const auto &route = iter.second;
         rmptr_->routeClearSegments(routeID);
@@ -1058,7 +1181,7 @@ void GLFWView::modifyTrafficViz() {
             mbgl::route::RouteSegmentOptions rsegopts;
             rsegopts.color = colors[i];
             rsegopts.geometry = trafficBlks[i];
-            rsegopts.sortOrder = i;
+            rsegopts.priority = i;
 
             rmptr_->routeSegmentCreate(routeID, rsegopts);
         }
@@ -1092,12 +1215,12 @@ void GLFWView::incrementRouteProgress() {
     routeProgress_ += ROUTE_PROGRESS_STEP;
     std::clamp<double>(routeProgress_, 0.0, 1.0f);
     // std::cout<<"Route progress: "<<routeProgress_<<std::endl;
-    for (const auto &iter : routeList_) {
+    for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         if (useRouteProgressPercent_) {
             rmptr_->routeSetProgress(routeID, routeProgress_);
         } else {
-            mbgl::Point<double> progressPoint = routeList_[routeID].getProgressPoint(routeProgress_);
+            mbgl::Point<double> progressPoint = routeMap_[routeID].getPoint(routeProgress_);
             rmptr_->routeSetProgress(routeID, progressPoint);
         }
     }
@@ -1108,7 +1231,7 @@ void GLFWView::decrementRouteProgress() {
     routeProgress_ -= ROUTE_PROGRESS_STEP;
     std::clamp<double>(routeProgress_, 0.0, 1.0f);
     std::cout << "Route progress: " << routeProgress_ << std::endl;
-    for (const auto &iter : routeList_) {
+    for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         rmptr_->routeSetProgress(routeID, routeProgress_);
     }
@@ -1116,18 +1239,18 @@ void GLFWView::decrementRouteProgress() {
 }
 
 void GLFWView::removeTrafficViz() {
-    for (const auto &iter : routeList_) {
+    for (const auto &iter : routeMap_) {
         rmptr_->routeClearSegments(iter.first);
     }
     rmptr_->finalize();
 }
 
 void GLFWView::disposeRoute() {
-    if (!routeList_.empty()) {
-        auto &routeID = routeList_.begin()->first;
+    if (!routeMap_.empty()) {
+        auto &routeID = routeMap_.begin()->first;
         bool success = rmptr_->routeDispose(routeID);
         if (success) {
-            routeList_.erase(routeID);
+            routeMap_.erase(routeID);
         }
         rmptr_->finalize();
     }

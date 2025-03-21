@@ -1578,12 +1578,14 @@ jboolean NativeMapView::routeDispose(JNIEnv& env, jint routeID) {
 jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
                                            jint routeID,
                                            const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
-                                           jint color) {
+                                           jint color,
+                                           jint priority) {
     if (routeMgr) {
         using namespace mbgl::android::conversion;
         const auto& linestring = mbgl::android::geojson::LineString::convert(env, segmentGeom);
         mbgl::route::RouteSegmentOptions rsegopts;
         rsegopts.geometry = linestring;
+        rsegopts.priority = static_cast<uint32_t>(priority);
         Converter<mbgl::Color, int> colorConverter;
         Result<Color> segmentColorRes = colorConverter(env, color);
         if (segmentColorRes) {

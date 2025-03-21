@@ -74,7 +74,7 @@ RouteSegment::RouteSegment(const RouteSegmentOptions& routeSegOptions,
     }
 }
 
-const std::vector<double> RouteSegment::getNormalizedPositions() const {
+std::vector<double> RouteSegment::getNormalizedPositions() const {
     return normalizedPositions_;
 }
 

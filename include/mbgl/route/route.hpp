@@ -49,6 +49,13 @@ public:
     uint32_t getNumRouteSegments() const;
 
 private:
+    struct SegmentRange {
+        std::pair<double, double> range;
+        Color color;
+    };
+
+    std::vector<SegmentRange> compactSegments() const;
+
     RouteOptions routeOptions_;
     double progress_ = 0.0;
     std::vector<double> segDistances_;
