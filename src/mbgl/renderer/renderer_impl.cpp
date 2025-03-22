@@ -20,6 +20,8 @@
 #include <mbgl/util/logging.hpp>
 #include <mbgl/util/instrumentation.hpp>
 
+#include <random>
+
 #if MLN_DRAWABLE_RENDERER
 #include <mbgl/gfx/drawable_tweaker.hpp>
 #include <mbgl/renderer/layer_tweaker.hpp>
@@ -387,6 +389,22 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
                 "Failed to create a custom dots. Make sure CustomDots is implemented for the used rendering API.");
         }
         assert(backend.customDots != nullptr);
+
+        // Debug code to test custom dots
+        std::mt19937 gen;
+        std::uniform_real_distribution<double> dis(0, 3);
+        gfx::CustomDotsPoints points(30000);
+        for (auto& p : points) {
+            p = LatLng(35 + dis(gen), -121 - dis(gen));
+        }
+        gfx::CustomDotsOptions options;
+        options.innerColor = Color(0.2f, 0.7f, 0.2f, 1.f);
+        options.outerColor = Color(0.1f, 0.2f, 0.1f, 1.f);
+        options.innerRadius = 8;
+        options.outerRadius = 12;
+        backend.customDots->setOptions(0, options);
+        backend.customDots->setEnabled(true);
+        backend.customDots->setPoints(0, std::move(points));
     }
     bool customDotsRendered = false;
     auto drawCustomDots = [&](const std::string& nextLayer) {
@@ -567,6 +585,15 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
                 "Failed to create a custom puck. Make sure CustomPuck is implemented for the used rendering API.");
         }
         assert(backend.customPuck != nullptr);
+
+        // debug code
+        PremultipliedImage image({1, 1});
+        image.data = std::make_unique<uint8_t[]>(4);
+        image.data[0] = 255;
+        image.data[1] = 255;
+        image.data[2] = 255;
+        image.data[3] = 255;
+        backend.customPuck->setPuckBitmap(image);
     }
     if (backend.customPuck) {
         backend.customPuck->draw(updateParameters->transformState);
