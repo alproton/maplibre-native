@@ -4,6 +4,8 @@
 #include <mbgl/gl/defines.hpp>
 #include <mbgl/gl/enum.hpp>
 #include <mbgl/util/instrumentation.hpp>
+#include <mbgl/util/logging.hpp>
+#include <string>
 
 namespace mbgl {
 namespace gl {
@@ -324,6 +326,13 @@ const constexpr ActiveTextureUnit::Type ActiveTextureUnit::Default;
 void ActiveTextureUnit::Set(const Type& value) {
     MLN_TRACE_ZONE(ActiveTextureUnit::Set);
     MLN_TRACE_FUNC_GL();
+    GLint maxUnits = 0;
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxUnits);
+    if (value >= maxUnits) {
+        Log::Error(Event::OpenGL,
+                   "Setting texture unit " + std::to_string(value) + " failed: limit is " + std::to_string(maxUnits));
+        return;
+    }
     MBGL_CHECK_ERROR(glActiveTexture(GL_TEXTURE0 + value));
 }
 

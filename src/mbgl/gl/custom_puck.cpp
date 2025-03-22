@@ -90,7 +90,7 @@ public:
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
         glGetIntegerv(GL_ACTIVE_TEXTURE, &textureUnit);
-
+        glGetIntegerv(GL_CURRENT_PROGRAM, &program);
         // Set custom puck states
         glBindVertexArray(0);
         glEnable(GL_BLEND);
@@ -98,7 +98,7 @@ public:
         glDisable(GL_STENCIL_TEST);
         glDisable(GL_CULL_FACE);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        glActiveTexture(0);
+        glActiveTexture(GL_TEXTURE0);
     }
 
     ~ScopedGlStates() {
@@ -107,6 +107,7 @@ public:
         enableGlSate(GL_DEPTH_TEST, depthTestEnabled);
         enableGlSate(GL_STENCIL_TEST, stencilTestEnabled);
         enableGlSate(GL_CULL_FACE, cullFaceEnabled);
+        glUseProgram(program);
         glBlendFunc(blendSrc, blendDst);
         glBindVertexArray(vao);
         glActiveTexture(textureUnit);
@@ -123,15 +124,16 @@ private:
     }
 
 private:
-    GLboolean blendEnabled;
-    GLboolean depthTestEnabled;
-    GLboolean stencilTestEnabled;
-    GLboolean cullFaceEnabled;
-    GLint blendSrc;
-    GLint blendDst;
-    GLint vao;
-    GLint textureBinding;
-    GLint textureUnit;
+    GLboolean blendEnabled = false;
+    GLboolean depthTestEnabled = false;
+    GLboolean stencilTestEnabled = false;
+    GLboolean cullFaceEnabled = false;
+    GLint program = 0;
+    GLint blendSrc = 0;
+    GLint blendDst = 0;
+    GLint vao = 0;
+    GLint textureBinding = 0;
+    GLint textureUnit = 0;
 };
 
 } // namespace

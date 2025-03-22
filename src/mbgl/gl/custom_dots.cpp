@@ -72,6 +72,8 @@ public:
         glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
         glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDst);
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
+        glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vbo);
+        glGetIntegerv(GL_CURRENT_PROGRAM, &program);
 
         // Set custom puck states
         glBindVertexArray(0);
@@ -88,7 +90,9 @@ public:
         enableGlSate(GL_DEPTH_TEST, depthTestEnabled);
         enableGlSate(GL_STENCIL_TEST, stencilTestEnabled);
         enableGlSate(GL_CULL_FACE, cullFaceEnabled);
+        glUseProgram(program);
         glBlendFunc(blendSrc, blendDst);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBindVertexArray(vao);
     }
 
@@ -102,13 +106,15 @@ private:
     }
 
 private:
-    GLboolean blendEnabled;
-    GLboolean depthTestEnabled;
-    GLboolean stencilTestEnabled;
-    GLboolean cullFaceEnabled;
-    GLint blendSrc;
-    GLint blendDst;
-    GLint vao;
+    GLboolean blendEnabled = false;
+    GLboolean depthTestEnabled = false;
+    GLboolean stencilTestEnabled = false;
+    GLboolean cullFaceEnabled = false;
+    GLint program = 0;
+    GLint blendSrc = 0;
+    GLint blendDst = 0;
+    GLint vao = 0;
+    GLint vbo = 0;
 };
 
 } // namespace
