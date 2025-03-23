@@ -730,13 +730,11 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                     view->decrementRouteProgress();
                     break;
                 case GLFW_KEY_8: {
-                    view->beginCapture();
-                    std::cout << "Begin route capture" << std::endl;
+                    view->captureSnapshot();
+                    std::cout << "captured snapshot" << std::endl;
                 } break;
 
                 case GLFW_KEY_9: {
-                    view->endCapture();
-                    std::cout << "End route capture" << std::endl;
                 } break;
 
                 case GLFW_KEY_0:
@@ -1264,15 +1262,13 @@ void GLFWView::printRouteStats() {
     }
 }
 
-void GLFWView::beginCapture() {
-    rmptr_->beginCapture();
-}
-
-void GLFWView::endCapture() {
-    std::string captureStr = rmptr_->endCapture();
-    std::cout << "Capture string: " << std::endl;
-    std::cout << "-----------------" << std::endl;
-    std::cout << captureStr << std::endl;
+void GLFWView::captureSnapshot() {
+    if (rmptr_) {
+        std::string snapshot = rmptr_->captureSnapshot();
+        std::cout << "Snapshot" << std::endl;
+        std::cout << "--------" << std::endl;
+        std::cout << snapshot << std::endl;
+    }
 }
 
 void GLFWView::addRandomLineAnnotations(int count) {

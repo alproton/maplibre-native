@@ -1,3 +1,4 @@
+#include <boost/qvm/mat_operations.hpp>
 #include <mbgl/util/math.hpp>
 #include <mbgl/util/geometry.hpp>
 #include <mbgl/route/route_segment.hpp>

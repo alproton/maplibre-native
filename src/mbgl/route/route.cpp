@@ -13,8 +13,49 @@ namespace mbgl {
 namespace route {
 
 namespace {
+
 const double EPSILON = 1e-8;
 const double HALF_EPSILON = EPSILON * 0.5;
+
+std::string tabs(uint32_t tabcount) {
+    std::string tabstr;
+    for (size_t i = 0; i < tabcount; ++i) {
+        tabstr += "\t";
+    }
+    return tabstr;
+};
+
+[[maybe_unused]] std::string toString(const RouteSegmentOptions& rsopts,
+                                      const std::vector<double> normalizedPositions,
+                                      uint32_t tabcount) {
+    std::stringstream ss;
+
+    ss << tabs(tabcount) << "{" << std::endl;
+    ss << tabs(tabcount + 1) << "\"route_segment_options\" : {" << std::endl;
+    ss << tabs(tabcount + 2) << "\"color\" : [" << std::to_string(rsopts.color.r) << ", "
+       << std::to_string(rsopts.color.g) << ", " << std::to_string(rsopts.color.b) << ", "
+       << std::to_string(rsopts.color.a) << "]," << std::endl;
+    ss << tabs(tabcount + 2) << "\"priority\" : " << std::to_string(rsopts.priority) << "," << std::endl;
+    ss << tabs(tabcount + 2) << "\"geometry\" : [" << std::endl;
+    for (size_t i = 0; i < rsopts.geometry.size(); i++) {
+        mbgl::Point<double> pt = rsopts.geometry[i];
+        std::string terminating = i == rsopts.geometry.size() - 1 ? "" : ",";
+        ss << tabs(tabcount + 3) << "[" << std::to_string(pt.x) << ", " << std::to_string(pt.y) << "]" << terminating
+           << std::endl;
+    }
+    ss << tabs(tabcount + 2) << "]," << std::endl; // end of options
+
+    ss << tabs(tabcount + 2) << "\"normalized_positions\" : [";
+    for (size_t i = 0; i < normalizedPositions.size(); i++) {
+        std::string terminating = i == normalizedPositions.size() - 1 ? "]\n" : " ,";
+        ss << std::to_string(normalizedPositions[i]) << terminating;
+    }
+    ss << tabs(tabcount + 1) << "}" << std::endl;
+    ss << tabs(tabcount) << "}";
+
+    return ss.str();
+}
+
 } // namespace
 
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
@@ -229,7 +270,21 @@ bool Route::routeSegmentsClear() {
     return true;
 }
 
-Route& Route::operator=(Route& other) noexcept {
+std::string Route::segmentsToString(uint32_t tabcount) const {
+    std::stringstream ss;
+    ss << tabs(tabcount) << "[" << std::endl;
+    for (size_t i = 0; i < segments_.size(); i++) {
+        const auto& segment = segments_[i];
+        std::string terminatingCommaStr = i == segments_.size() - 1 ? "" : ",";
+        ss << toString(segment.getRouteSegmentOptions(), segment.getNormalizedPositions(), tabcount + 1)
+           << terminatingCommaStr << std::endl;
+    }
+    ss << tabs(tabcount) << "]";
+
+    return ss.str();
+}
+
+Route& Route::operator=(const Route& other) noexcept {
     if (this == &other) {
         return *this;
     }

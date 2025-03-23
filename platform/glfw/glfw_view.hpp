@@ -125,8 +125,7 @@ private:
     void incrementRouteProgress();
     void decrementRouteProgress();
     void printRouteStats();
-    void beginCapture();
-    void endCapture();
+    void captureSnapshot();
     void setRouteProgressUsage();
     void setRoutePickMode();
 

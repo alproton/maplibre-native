@@ -35,8 +35,6 @@ public:
     RouteManager();
     void setStyle(style::Style&);
     const std::string getStats();
-    void beginCapture();
-    const std::string endCapture();
     void clearStats();
     bool hasStyle() const;
     RouteID routeCreate(const LineString<double>& geometry, const RouteOptions& ropts);
@@ -50,6 +48,7 @@ public:
     std::string getBaseRouteLayerName(const RouteID& routeID) const;
     std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
+    std::string captureSnapshot() const;
 
     bool hasRoutes() const;
     void finalize();
@@ -76,7 +75,6 @@ private:
     std::vector<std::string> apiCalls_;
 
     RouteMgrStats stats_;
-    bool capturing_ = false;
     gfx::IDpool routeIDpool_ = gfx::IDpool(100);
 
     void finalizeRoute(const RouteID& routeID, const DirtyType& dt);
