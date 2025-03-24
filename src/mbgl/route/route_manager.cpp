@@ -136,18 +136,18 @@ std::string formatElapsedTime(long long value) {
 [[maybe_unused]] std::string toString(const RouteOptions& ropts, uint32_t tabcount) {
     std::stringstream ss;
     ss << tabs(tabcount) << "{" << std::endl;
-    ss << tabs(tabcount + 1) << "\"innerColor\": " << "\"rgba(" << std::to_string(ropts.innerColor.r) << ", "
+    ss << tabs(tabcount + 1) << "\"innerColor\": " << "[" << std::to_string(ropts.innerColor.r) << ", "
        << std::to_string(ropts.innerColor.g) << ", " << std::to_string(ropts.innerColor.b) << ", "
-       << std::to_string(ropts.innerColor.a) << ")\"," << std::endl;
-    ss << tabs(tabcount + 1) << "\"outerColor\": " << "\"rgba(" << std::to_string(ropts.outerColor.r) << ", "
+       << std::to_string(ropts.innerColor.a) << "]," << std::endl;
+    ss << tabs(tabcount + 1) << "\"outerColor\": " << "[" << std::to_string(ropts.outerColor.r) << ", "
        << std::to_string(ropts.outerColor.g) << ", " << std::to_string(ropts.outerColor.b) << ", "
-       << std::to_string(ropts.outerColor.a) << ")\"," << std::endl;
-    ss << tabs(tabcount + 1) << "\"innerClipColor\": " << "\"rgba(" << std::to_string(ropts.innerClipColor.r) << ", "
+       << std::to_string(ropts.outerColor.a) << "]," << std::endl;
+    ss << tabs(tabcount + 1) << "\"innerClipColor\": " << "[" << std::to_string(ropts.innerClipColor.r) << ", "
        << std::to_string(ropts.innerClipColor.g) << ", " << std::to_string(ropts.innerClipColor.b) << ", "
-       << std::to_string(ropts.innerClipColor.a) << ")\"," << std::endl;
-    ss << tabs(tabcount + 1) << "\"outerClipColor\": " << "\"rgba(" << std::to_string(ropts.outerClipColor.r) << ", "
+       << std::to_string(ropts.innerClipColor.a) << "]," << std::endl;
+    ss << tabs(tabcount + 1) << "\"outerClipColor\": " << "[" << std::to_string(ropts.outerClipColor.r) << ", "
        << std::to_string(ropts.outerClipColor.g) << ", " << std::to_string(ropts.outerClipColor.b) << ", "
-       << std::to_string(ropts.outerClipColor.a) << ")\"," << std::endl;
+       << std::to_string(ropts.outerClipColor.a) << "]," << std::endl;
     ss << tabs(tabcount + 1) << "\"innerWidth\": " << "\"" << std::to_string(ropts.innerWidth) << "\"," << std::endl;
     ss << tabs(tabcount + 1) << "\"outerWidth\": " << "\"" << std::to_string(ropts.outerWidth) << "\"," << std::endl;
     ss << tabs(tabcount + 1) << "\"layerBefore\": " << "\"" << (ropts.layerBefore) << "\"," << std::endl;
@@ -159,7 +159,7 @@ std::string formatElapsedTime(long long value) {
         ss << tabs(tabcount + 1) << "\"innerWidthZoomStops\": " << toString(ropts.innerWidthZoomStops) << ", "
            << std::endl;
     }
-    ss << tabs(tabcount + 1) << "\"useDynamicWidths\": " << toString(ropts.useDyanamicWidths) << std::endl;
+    ss << tabs(tabcount + 1) << "\"useDynamicWidths\": " << toString(ropts.useDynamicWidths) << std::endl;
     ss << tabs(tabcount) << "}";
     return ss.str();
 }
@@ -244,18 +244,19 @@ std::string RouteManager::captureSnapshot() const {
     ss << "{" << std::endl;
     ss << tabs(1) << "\"num_routes\" : " << std::to_string(routeMap_.size()) << "," << std::endl;
     ss << tabs(1) << "\"routes\": " << "[" << std::endl;
-    for (const auto& iter : routeMap_) {
+    for (auto iter = routeMap_.begin(); iter != routeMap_.end(); ++iter) {
+        std::string terminatingStr = std::next(iter) == routeMap_.end() ? "" : ",";
         ss << tabs(2) << "{" << std::endl;
-        ss << tabs(3) << "\"route_id\" : " << std::to_string(iter.first.id) << "," << std::endl;
+        ss << tabs(3) << "\"route_id\" : " << std::to_string(iter->first.id) << "," << std::endl;
         ss << tabs(3) << "\"route\" : {" << std::endl;
         ss << tabs(4) << "\"route_options\" : " << std::endl;
-        ss << toString(iter.second.getRouteOptions(), 5) << "," << std::endl;
+        ss << toString(iter->second.getRouteOptions(), 5) << "," << std::endl;
         ss << tabs(4) << "\"geometry\" : " << std::endl;
-        ss << toString(iter.second.getGeometry(), 4) << "," << std::endl;
+        ss << toString(iter->second.getGeometry(), 4) << "," << std::endl;
         ss << tabs(4) << "\"route_segments\" : " << std::endl;
-        ss << iter.second.segmentsToString(5) << std::endl;
+        ss << iter->second.segmentsToString(5) << std::endl;
         ss << tabs(3) << "}" << std::endl;
-        ss << tabs(2) << "}" << std::endl;
+        ss << tabs(2) << "}" << terminatingStr << std::endl;
     }
     ss << tabs(1) << "]" << std::endl;
     ss << "}" << std::endl;
@@ -591,7 +592,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         if (updateRouteLayers) {
             // create layer for casing/base
             std::map<double, double> baseZoomStops;
-            if (routeOptions.useDyanamicWidths) {
+            if (routeOptions.useDynamicWidths) {
                 baseZoomStops = !routeOptions.outerWidthZoomStops.empty() ? routeOptions.outerWidthZoomStops
                                                                           : getDefaultRouteLineCasingWeights();
             }
@@ -607,7 +608,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
             // create layer for active/blue
             std::map<double, double> activeLineWidthStops;
-            if (routeOptions.useDyanamicWidths) {
+            if (routeOptions.useDynamicWidths) {
                 activeLineWidthStops = !routeOptions.innerWidthZoomStops.empty() ? routeOptions.innerWidthZoomStops
                                                                                  : getDefaultRouteLineWeights();
             }

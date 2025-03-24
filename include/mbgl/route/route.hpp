@@ -20,7 +20,7 @@ struct RouteOptions {
     float innerWidth = 14;
     std::map<double, double> outerWidthZoomStops;
     std::map<double, double> innerWidthZoomStops;
-    bool useDyanamicWidths = false;
+    bool useDynamicWidths = false;
     std::string layerBefore;
 };
 

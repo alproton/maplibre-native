@@ -3,6 +3,8 @@
 #include "glfw_renderer_frontend.hpp"
 #include "ny_route.hpp"
 #include "test_writer.hpp"
+#include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
 
 #include <mbgl/annotation/annotation.hpp>
 #include <mbgl/gfx/backend.hpp>
@@ -67,6 +69,8 @@
 #include <utility>
 #include <sstream>
 #include <numbers>
+#include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
 
 using namespace std::numbers;
 
@@ -735,6 +739,12 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 } break;
 
                 case GLFW_KEY_9: {
+                    int lastCapturedIdx = view->getCaptureIdx() - 1;
+                    if (lastCapturedIdx == -1) lastCapturedIdx = 0;
+                    // std::string capture_file_name =
+                    // "/home/spalaniappan/mln-proton/cmake-build-debug/platform/glfw/snapshot_0.json";
+                    std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
+                    view->readAndLoadCapture(capture_file_name);
                 } break;
 
                 case GLFW_KEY_0:
@@ -987,7 +997,7 @@ void GLFWView::addRoute() {
     int colorIdx = routeMap_.size() == 0 ? 0 : 1;
     routeOpts.innerColor = colors[colorIdx];
     routeOpts.outerColor = mbgl::Color(0.2, 0.2, 0.2, 1);
-    routeOpts.useDyanamicWidths = false;
+    routeOpts.useDynamicWidths = false;
     routeOpts.outerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
 
@@ -1265,9 +1275,195 @@ void GLFWView::printRouteStats() {
 void GLFWView::captureSnapshot() {
     if (rmptr_) {
         std::string snapshot = rmptr_->captureSnapshot();
-        std::cout << "Snapshot" << std::endl;
-        std::cout << "--------" << std::endl;
-        std::cout << snapshot << std::endl;
+        std::string snapshot_file_name = "snapshot" + std::to_string(lastCaptureIdx_++) + ".json";
+        writeCapture(snapshot, snapshot_file_name);
+
+        std::cout << "Snapshot created: " << snapshot_file_name << std::endl;
+    }
+}
+
+int GLFWView::getCaptureIdx() const {
+    return lastCaptureIdx_;
+}
+
+void GLFWView::writeCapture(const std::string &capture, const std::string &capture_file_name) const {
+    std::ofstream outfile(capture_file_name);
+
+    if (outfile.is_open()) {
+        outfile << capture;
+        outfile.close();
+        std::cout << "Successfully wrote capture to file: " << capture_file_name << std::endl;
+    } else {
+        std::cout << "Failed to write capture to file: " << capture_file_name << std::endl;
+    }
+}
+
+void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
+    for (size_t i = 0; i < routeMap_.size(); i++) {
+        disposeRoute();
+    }
+    lastRouteID_ = RouteID();
+    rmptr_->setStyle(map->getStyle());
+
+    std::ifstream jsonfile(capture_file_name);
+    if (!jsonfile.is_open()) {
+        std::cerr << "Failed to open the file." << std::endl;
+        return;
+    }
+
+    std::stringstream buffer;
+    buffer << jsonfile.rdbuf();
+
+    rapidjson::Document document;
+    rapidjson::ParseResult result = document.Parse(buffer.str());
+
+    if (document.HasParseError()) {
+        const auto errorCode = document.GetParseError();
+        std::cerr << "JSON parse error: " << rapidjson::GetParseError_En(result.Code()) << " (" << result.Offset()
+                  << ")" << std::endl;
+
+        std::cerr << "Error parsing JSON: " << errorCode << std::endl;
+
+        return;
+    }
+
+    uint32_t numRoutes = 0;
+    if (document.HasMember("num_routes") && document["num_routes"].IsInt()) {
+        numRoutes = document["num_routes"].GetInt();
+        std::cout << "De-serializing " << numRoutes << " routes" << std::endl;
+    }
+
+    if (document.HasMember("routes") && document["routes"].IsArray()) {
+        const rapidjson::Value &routes = document["routes"];
+        for (rapidjson::SizeType i = 0; i < routes.Size(); i++) {
+            const rapidjson::Value &route = routes[i];
+
+            if (route.HasMember("route") && route["route"].IsObject()) {
+                const rapidjson::Value &route_obj = route["route"];
+
+                mbgl::route::RouteOptions routeOpts;
+                const auto &mbglColor = [](const rapidjson::Value &jsonColor) -> mbgl::Color {
+                    std::array<float, 4> innerColorArr;
+                    for (rapidjson::SizeType j = 0; j < jsonColor.Size(); j++) {
+                        innerColorArr[j] = jsonColor[j].GetFloat();
+                    }
+                    mbgl::Color color(innerColorArr[0], innerColorArr[1], innerColorArr[2], innerColorArr[3]);
+
+                    return color;
+                };
+
+                if (route_obj.HasMember("route_options") && route_obj["route_options"].IsObject()) {
+                    const rapidjson::Value &route_options = route_obj["route_options"];
+
+                    // innerColor
+                    if (route_options.HasMember("innerColor") && route_options["innerColor"].IsArray()) {
+                        const rapidjson::Value &innerColor = route_options["innerColor"];
+                        routeOpts.innerColor = mbglColor(innerColor);
+                    }
+
+                    // outerColor
+                    if (route_options.HasMember("outerColor") && route_options["outerColor"].IsArray()) {
+                        const rapidjson::Value &outerColor = route_options["outerColor"];
+                        routeOpts.outerColor = mbglColor(outerColor);
+                    }
+
+                    // innerClipColor
+                    if (route_options.HasMember("innerClipColor") && route_options["innerClipColor"].IsArray()) {
+                        const rapidjson::Value &innerClipColor = route_options["innerClipColor"];
+                        routeOpts.innerClipColor = mbglColor(innerClipColor);
+                    }
+
+                    // outerClipColor
+                    if (route_options.HasMember("outerClipColor") && route_options["outerClipColor"].IsArray()) {
+                        const rapidjson::Value &outerClipColor = route_options["outerClipColor"];
+                        routeOpts.outerClipColor = mbglColor(outerClipColor);
+                    }
+
+                    // innerWidth
+                    if (route_options.HasMember("innerWidth") && route_options["innerWidth"].IsArray()) {
+                        const rapidjson::Value &innerWidth = route_options["innerWidth"];
+                        routeOpts.innerWidth = innerWidth.GetFloat();
+                    }
+
+                    // outerWidth
+                    if (route_options.HasMember("outerWidth") && route_options["outerWidth"].IsArray()) {
+                        const rapidjson::Value &outerWidth = route_options["outerWidth"];
+                        routeOpts.outerWidth = outerWidth.GetFloat();
+                    }
+
+                    // layerBefore
+                    if (route_options.HasMember("layerBefore") && route_options["layerBefore"].IsArray()) {
+                        const rapidjson::Value &layerBefore = route_options["layerBefore"];
+                        routeOpts.layerBefore = layerBefore.GetString();
+                    }
+
+                    // useDynamicWidths
+                    if (route_options.HasMember("useDynamicWidths") && route_options["useDynamicWidths"].IsArray()) {
+                        const rapidjson::Value &useDynamicWidths = route_options["useDynamicWidths"];
+                        routeOpts.useDynamicWidths = useDynamicWidths.GetBool();
+                    }
+                }
+
+                mbgl::LineString<double> route_geom;
+                if (route_obj.HasMember("geometry") && route_obj["geometry"].IsArray()) {
+                    const rapidjson::Value &geometry = route_obj["geometry"];
+                    for (rapidjson::SizeType j = 0; j < geometry.Size(); j++) {
+                        const rapidjson::Value &point = geometry[j];
+                        if (point.IsArray() && point.Size() == 2) {
+                            double x = point[0].GetDouble();
+                            double y = point[1].GetDouble();
+                            route_geom.push_back({x, y});
+                        }
+                    }
+                }
+
+                auto routeID = rmptr_->routeCreate(route_geom, routeOpts);
+                RouteCircle routeCircle;
+                routeCircle.points = route_geom;
+                routeCircle.resolution = route_geom.size();
+                routeCircle.radius = 50;
+                routeCircle.xlate = 0; // TODO fixme later
+                routeMap_[routeID] = routeCircle;
+
+                rmptr_->finalize();
+                lastRouteID_ = routeID;
+
+                // create route segments
+                if (route_obj.HasMember("route_segments") && route_obj["route_segments"].IsArray()) {
+                    const rapidjson::Value &route_segments = route_obj["route_segments"];
+                    for (rapidjson::SizeType j = 0; j < route_segments.Size(); j++) {
+                        mbgl::route::RouteSegmentOptions rsopts;
+                        const rapidjson::Value &segment = route_segments[j];
+                        if (segment.HasMember("route_segment_options") && segment["route_segment_options"].IsObject()) {
+                            const rapidjson::Value &segment_options = segment["route_segment_options"];
+                            if (segment_options.HasMember("color") && segment_options["color"].IsArray()) {
+                                const rapidjson::Value &color = segment_options["color"];
+                                rsopts.color = mbglColor(color);
+                            }
+
+                            if (segment_options.HasMember("geometry") && segment_options["geometry"].IsArray()) {
+                                const rapidjson::Value &geometry = segment_options["geometry"];
+                                for (rapidjson::SizeType k = 0; k < geometry.Size(); k++) {
+                                    const rapidjson::Value &point = geometry[k];
+                                    if (point.IsArray() && point.Size() == 2) {
+                                        double x = point[0].GetDouble();
+                                        double y = point[1].GetDouble();
+                                        rsopts.geometry.push_back({x, y});
+                                    }
+                                }
+                            }
+
+                            if (segment_options.HasMember("priority")) {
+                                rsopts.priority = segment_options["priority"].GetInt();
+                            }
+                        }
+
+                        rmptr_->routeSegmentCreate(routeID, rsopts);
+                    }
+                }
+                rmptr_->finalize();
+            }
+        }
     }
 }
 

@@ -186,8 +186,12 @@ private:
 
     std::vector<TrafficBlock> testCases(const RouteSegmentTestCases &testcase,
                                         const GLFWView::RouteCircle &route) const;
+    void writeCapture(const std::string &capture, const std::string &capture_file_name) const;
+    void readAndLoadCapture(const std::string &capture_file_name);
+    int getCaptureIdx() const;
 
     std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeMap_;
+    int lastCaptureIdx_ = 0;
     RouteID lastRouteID_;
     double routeProgress_ = 0.0;
     bool useRouteProgressPercent_ = false;
