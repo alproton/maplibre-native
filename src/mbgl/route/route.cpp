@@ -61,11 +61,11 @@ std::string tabs(uint32_t tabcount) {
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     : routeOptions_(ropts),
       geometry_(geometry) {
-    assert((std::isnan(geometry_[0].x) || std::isnan(geometry_[0].y)) && "invalid geometry point");
+    assert((!std::isnan(geometry_[0].x) && !std::isnan(geometry_[0].y)) && "invalid geometry point");
     for (size_t i = 1; i < geometry_.size(); ++i) {
         mbgl::Point<double> a = geometry_[i];
         mbgl::Point<double> b = geometry_[i - 1];
-        assert((std::isnan(a.x) || std::isnan(a.y)) && "invalid geometry point");
+        assert((!std::isnan(a.x) && !std::isnan(a.y)) && "invalid geometry point");
         double dist = std::abs(mbgl::util::dist<double>(a, b));
         segDistances_.push_back(dist);
         totalDistance_ += dist;

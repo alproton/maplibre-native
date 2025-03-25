@@ -38,21 +38,6 @@ class GradientLineActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.getMapAsync(this)
     }
 
-    private fun createRouteGeometry() : LineString {
-        val radius : Double = 5.0
-        val resolution = 20
-        var pointList : MutableList<Point> = mutableListOf<Point>()
-        val xlate = 0
-        for(i in 0..resolution) {
-            val anglerad = (i.toDouble() / (resolution - 1))* 2 * 3.14f
-            val pt : Point = Point.fromLngLat(xlate + radius * Math.sin(anglerad), radius * Math.cos(anglerad))
-            pointList.add(pt);
-        }
-
-        var routeGeom : LineString = LineString.fromLngLats(pointList);
-        return routeGeom;
-    }
-
     override fun onMapReady(maplibreMap: MapLibreMap) {
         try {
             val geoJson = ResourceUtils.readRawResource(
@@ -87,41 +72,6 @@ class GradientLineActivity : AppCompatActivity(), OnMapReadyCallback {
                             )
                     )
             )
-
-            //TODO: move this to another activity
-            var ropts : org.maplibre.android.maps.RouteOptions = RouteOptions()
-            ropts.outerColor = ColorUtils.rgbaToColor("rgba(255, 255, 255, 1.0)")
-            ropts.innerColor = ColorUtils.rgbaToColor("rgba(0, 0, 255, 1.0)")
-            ropts.outerWidth = 10.0
-            ropts.innerWidth = 6.0
-            ropts.innerDynamicWidthZoomStops.put(3.0, 4.0);
-            ropts.innerDynamicWidthZoomStops.put(5.0, 6.0);
-            ropts.innerDynamicWidthZoomStops.put(7.0, 8.0);
-            ropts.innerDynamicWidthZoomStops.put(9.0, 10.0);
-
-            ropts.outerDynamicWidthZoomStops.put(9.0, 10.0);
-            ropts.outerDynamicWidthZoomStops.put(12.0, 13.0);
-            ropts.outerDynamicWidthZoomStops.put(15.0, 16.0);
-            ropts.outerDynamicWidthZoomStops.put(18.0, 19.0);
-
-            val routeGeom = createRouteGeometry()
-            val routeID : RouteID = mapView.createRoute(routeGeom, ropts)
-            routeList = mutableListOf<RouteID>()
-            routeList.add(routeID)
-            mapView.finalizeRoutes()
-            val pickedRouteID : RouteID = mapView.queryRoute(100.0, 100.0)
-            Log.d("MLN_ROUTES", "$pickedRouteID.getId()")
-
-            val rsegopts : RouteSegmentOptions = RouteSegmentOptions();
-            rsegopts.color = ColorUtils.rgbaToColor("rgba(255, 0, 0, 1.0)")
-            rsegopts.priority = 2
-            mapView.clearRouteSegments(routeID)
-            mapView.createRouteSegment(routeID, rsegopts)
-            mapView.finalizeRoutes()
-
-            val capture : String = mapView.getSnapshotCapture()
-            Log.d("MLN_ROUTES", "$capture")
-
         } catch (exception: IOException) {
             Timber.e(exception)
         }
