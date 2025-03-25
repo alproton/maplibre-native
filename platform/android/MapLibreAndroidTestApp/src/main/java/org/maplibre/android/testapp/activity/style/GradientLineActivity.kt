@@ -2,14 +2,10 @@ package org.maplibre.android.testapp.activity.style
 
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
-import org.maplibre.android.maps.RouteID
-import org.maplibre.android.maps.RouteOptions
-import org.maplibre.android.maps.RouteSegmentOptions
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.*
@@ -17,9 +13,6 @@ import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ResourceUtils
-import org.maplibre.android.utils.ColorUtils
-import org.maplibre.geojson.LineString
-import org.maplibre.geojson.Point
 import timber.log.Timber
 import java.io.IOException
 
@@ -28,7 +21,6 @@ import java.io.IOException
  */
 class GradientLineActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
-    private lateinit var routeList: MutableList<RouteID>
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
