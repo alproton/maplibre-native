@@ -250,9 +250,9 @@ interface NativeMap {
 
   double getTileLodPitchThreshold();
 
-  void setTileLodZoomShift(double shift);
+  void setTileLodZoomShift(double[] shift);
 
-  double getTileLodZoomShift();
+  double getTileLodZoomShift(double zoom);
 
   void setGestureInProgress(boolean inProgress);
 
