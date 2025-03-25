@@ -1233,14 +1233,10 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public void beginRoutesCapture() {
-    nativeRoutesBeginCapture();
+  public String getSnapshotCapture() {
+    return nativeRoutesCaptureSnapshot();
   }
 
-  @Override
-  public String endRoutesCapture() {
-    return nativeRoutesEndCapture();
-  }
 
   @NonNull
   @Override
@@ -1651,10 +1647,7 @@ final class NativeMapView implements NativeMap {
   private native String nativeRoutesGetStats();
 
   @Keep
-  private native void nativeRoutesBeginCapture();
-
-  @Keep
-  private native String nativeRoutesEndCapture();
+  private native String nativeRoutesCaptureSnapshot();
 
   @Keep native void nativeRoutesClearStats();
 

@@ -1444,9 +1444,8 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
         METHOD(&NativeMapView::routesGetStats, "nativeRoutesGetStats"),
         METHOD(&NativeMapView::routesClearStats, "nativeRoutesClearStats"),
-        METHOD(&NativeMapView::routesBeginCapture, "nativeRoutesBeginCapture"),
-        METHOD(&NativeMapView::routesEndCapture, "nativeRoutesEndCapture"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
+        METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
         METHOD(&NativeMapView::routesFinalize, "nativeFinalizeValidation"));
 }
 
@@ -1502,7 +1501,7 @@ jint NativeMapView::routeCreate(JNIEnv& env,
             }
             routeOptions.outerWidth = outerWidth;
             routeOptions.innerWidth = innerWidth;
-            routeOptions.useDyanamicWidths = useDynamicWidths;
+            routeOptions.useDynamicWidths = useDynamicWidths;
             if (layerbefore) {
                 routeOptions.layerBefore = jni::Make<std::string>(env, layerbefore);
             }
@@ -1552,19 +1551,13 @@ void NativeMapView::routesClearStats(JNIEnv& env) {
     }
 }
 
-void NativeMapView::routesBeginCapture(JNIEnv& env) {
+jni::Local<jni::String> NativeMapView::routesGetCaptureSnapshot(JNIEnv& env) {
+    std::string captureStr;
     if (routeMgr) {
-        routeMgr->beginCapture();
-    }
-}
-
-jni::Local<jni::String> NativeMapView::routesEndCapture(JNIEnv& env) {
-    std::string capture;
-    if (routeMgr) {
-        capture = routeMgr->endCapture();
+        captureStr = routeMgr->captureSnapshot();
     }
 
-    return jni::Make<jni::String>(env, capture);
+    return jni::Make<jni::String>(env, captureStr);
 }
 
 jboolean NativeMapView::routeDispose(JNIEnv& env, jint routeID) {

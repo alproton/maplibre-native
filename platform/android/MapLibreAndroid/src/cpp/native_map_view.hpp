@@ -265,13 +265,11 @@ public:
 
     jni::Local<jni::String> routesGetStats(JNIEnv& env);
 
+    jni::Local<jni::String> routesGetCaptureSnapshot(JNIEnv& env);
+
     void routesClearStats(JNIEnv& env);
 
     jint routeQueryRendered(JNIEnv& env, jni::jdouble screenSpaceX, jni::jdouble screenSpaceY);
-
-    void routesBeginCapture(JNIEnv& env);
-
-    jni::Local<jni::String> routesEndCapture(JNIEnv& env);
 
     jboolean routesFinalize(JNIEnv& env);
     //------------------------------------------------

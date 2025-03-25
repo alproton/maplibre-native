@@ -110,13 +110,17 @@ class GradientLineActivity : AppCompatActivity(), OnMapReadyCallback {
             routeList.add(routeID)
             mapView.finalizeRoutes()
             val pickedRouteID : RouteID = mapView.queryRoute(100.0, 100.0)
-            Log.d("pickedRouteID", "$pickedRouteID.getId()")
+            Log.d("MLN_ROUTES", "$pickedRouteID.getId()")
 
             val rsegopts : RouteSegmentOptions = RouteSegmentOptions();
             rsegopts.color = ColorUtils.rgbaToColor("rgba(255, 0, 0, 1.0)")
             rsegopts.priority = 2
             mapView.clearRouteSegments(routeID)
             mapView.createRouteSegment(routeID, rsegopts)
+            mapView.finalizeRoutes()
+
+            val capture : String = mapView.getSnapshotCapture()
+            Log.d("MLN_ROUTES", "$capture")
 
         } catch (exception: IOException) {
             Timber.e(exception)

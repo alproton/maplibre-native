@@ -567,6 +567,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     nativeMapView.clearRoutesStats();
   }
 
+  public String getSnapshotCapture() {
+    return nativeMapView.getSnapshotCapture();
+  }
+
   /***
    * Queries map libre native is a screen space point is over a route.
    *
@@ -577,14 +581,6 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    */
   public RouteID queryRoute(double x, double y) {
     return nativeMapView.queryRoute(x, y);
-  }
-
-  public void beginRoutesCapture() {
-    nativeMapView.beginRoutesCapture();
-  }
-
-  public String endRoutesCapture() {
-    return nativeMapView.endRoutesCapture();
   }
 
   /**

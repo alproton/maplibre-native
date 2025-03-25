@@ -293,9 +293,7 @@ interface NativeMap {
 
   void clearRoutesStats();
 
-  void beginRoutesCapture();
-
-  String endRoutesCapture();
+  String getSnapshotCapture();
 
   //
   // Deprecated Annotations API
