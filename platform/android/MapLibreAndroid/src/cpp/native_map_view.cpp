@@ -13,6 +13,7 @@
 
 #include <jni/jni.hpp>
 
+#include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_options.hpp>
 #include <mbgl/math/minmax.hpp>
@@ -59,8 +60,14 @@
 #include "mbgl/route/route_manager.hpp"
 #include "mbgl/route/route.hpp"
 
+#include "android_renderer_backend.hpp"
+
 namespace mbgl {
 namespace android {
+
+namespace {
+constexpr const char* PUCK_ICON_NAME = "mapbox-location-icon";
+} // namespace
 
 NativeMapView::NativeMapView(jni::JNIEnv& _env,
                              const jni::Object<NativeMapView>& _obj,
@@ -1231,6 +1238,12 @@ void NativeMapView::addImages(JNIEnv& env, const jni::Array<jni::Object<mbgl::an
     for (std::size_t i = 0; i < len; i++) {
         auto image = mbgl::android::Image::getImage(env, jimages.Get(env, i));
         map->getStyle().addImage(std::make_unique<mbgl::style::Image>(image));
+
+        // Workaround for issue #3135
+        // We detect the puck bitmap and pass it to the renderer which generates a custom puck texture
+        if (image.getID() == PUCK_ICON_NAME) {
+            mapRenderer.getRendererBackend().setPuckBitmap(image.getImage());
+        }
     }
 }
 

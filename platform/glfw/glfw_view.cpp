@@ -57,9 +57,6 @@
 #endif
 
 #define GL_GLEXT_PROTOTYPES
-
-#include "../../test/src/mbgl/test/sqlite3_test_fs.hpp"
-
 #include <GLFW/glfw3.h>
 
 #include <cassert>
@@ -75,6 +72,7 @@
 using namespace std::numbers;
 
 #ifdef ENABLE_LOCATION_INDICATOR
+
 namespace {
 const std::string mbglPuckAssetsPath{MAPBOX_PUCK_ASSETS_PATH};
 
