@@ -584,8 +584,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return a route ID. The routeID will always be non null but client needs to check if its
    *         valid by calling isValid() on it.
    */
-  public RouteID queryRoute(double x, double y) {
-    return nativeMapView.queryRoute(x, y);
+  public RouteID queryRoute(double x, double y, int radius) {
+    return nativeMapView.queryRoute(x, y, radius);
   }
 
   /***
