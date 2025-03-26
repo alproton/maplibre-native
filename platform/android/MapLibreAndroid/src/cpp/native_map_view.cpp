@@ -951,19 +951,23 @@ jint NativeMapView::routeQueryRendered(JNIEnv& env,
                                        jni::jdouble screenSpaceX,
                                        jni::jdouble screenSpaceY,
                                        jni::jint radius) {
-    std::vector<RouteID> routeIDs = routeMgr->getAllRoutes();
-    std::vector<std::string> layers;
-    // we specifically create caches for base layer since base route is wider than the active layer.
-    // we also check against source name as well as source layer name, since I've seen cases where the source layer name
-    // is not set.
-    std::unordered_map<std::string, RouteID> baseLayerMapCache;
-    std::unordered_map<std::string, RouteID> baseSourceMapCache;
-    for (const auto& routeID : routeIDs) {
-        if (routeID.isValid()) {
+    if (routeMgr) {
+        if (!routeMgr->hasRoutes()) {
+            return -1;
+        }
+
+        std::vector<RouteID> routeIDs = routeMgr->getAllRoutes();
+        std::vector<std::string> baseLayers;
+        // we specifically create caches for base layer since base route is wider than the active layer.
+        // we also check against source name as well as source layer name, since I've seen cases where the source layer
+        // name is not set in Feature.
+        std::unordered_map<std::string, RouteID> baseLayerMapCache;
+        std::unordered_map<std::string, RouteID> baseSourceMapCache;
+        for (const auto& routeID : routeIDs) {
             std::string baseLayer = routeMgr->getBaseRouteLayerName(routeID);
             assert(!baseLayer.empty() && "base layer cannot be empty!");
             if (!baseLayer.empty()) {
-                layers.push_back(baseLayer);
+                baseLayers.push_back(baseLayer);
                 baseLayerMapCache[baseLayer] = routeID;
             }
             std::string baseSource = routeMgr->getBaseGeoJSONsourceName(routeID);
@@ -972,55 +976,61 @@ jint NativeMapView::routeQueryRendered(JNIEnv& env,
                 baseSourceMapCache[baseSource] = routeID;
             }
         }
-    }
 
-    std::unordered_map<RouteID, int, IDHasher<RouteID>> routeCoverage;
-    // sample multiple ray picks over an radius
-    for (int i = -radius; i < radius; i++) {
-        for (int j = -radius; j < radius; j++) {
-            mbgl::ScreenCoordinate screenpoint = {screenSpaceX + i, screenSpaceY + j};
-            std::vector<mbgl::Feature> features = rendererFrontend->queryRenderedFeatures(screenpoint, {});
-            for (const auto& feature : features) {
-                if (baseLayerMapCache.find(feature.sourceLayer) != baseLayerMapCache.end()) {
-                    RouteID baseRouteID = baseLayerMapCache[feature.sourceLayer];
-                    routeCoverage[baseRouteID]++;
-                }
+        std::unordered_map<RouteID, int, IDHasher<RouteID>> routeCoverage;
+        // sample multiple ray picks over an radius
+        for (int i = -radius; i < radius; i++) {
+            for (int j = -radius; j < radius; j++) {
+                mbgl::ScreenCoordinate screenpoint = {screenSpaceX + i, screenSpaceY + j};
+                std::vector<mbgl::Feature> features = rendererFrontend->queryRenderedFeatures(screenpoint,
+                                                                                              {baseLayers});
+                for (const auto& feature : features) {
+                    if (baseLayerMapCache.find(feature.sourceLayer) != baseLayerMapCache.end()) {
+                        RouteID baseRouteID = baseLayerMapCache[feature.sourceLayer];
+                        routeCoverage[baseRouteID]++;
+                    }
 
-                // also check cache of geojson source names if the source layer is not set.
-                if (baseSourceMapCache.find(feature.source) != baseSourceMapCache.end()) {
-                    RouteID baseRouteID = baseSourceMapCache[feature.source];
-                    routeCoverage[baseRouteID]++;
+                    // also check cache of geojson source names if the source layer is not set.
+                    if (baseSourceMapCache.find(feature.source) != baseSourceMapCache.end()) {
+                        RouteID baseRouteID = baseSourceMapCache[feature.source];
+                        routeCoverage[baseRouteID]++;
+                    }
                 }
             }
         }
-    }
 
-    // when you do a touch at a location, the radius can cover multiple routes.
-    // find the RouteID that has the maximum touch weight value
-    int maxTouchWeight = 0;
-    std::vector<RouteID> maxRouteIDs;
-    for (const auto& [routeID, weight] : routeCoverage) {
-        if (weight > maxTouchWeight) {
-            maxTouchWeight = weight;
+        // when you do a touch at a location, the radius can cover multiple routes.
+        // find the RouteID that has the maximum touch weight value
+        int maxTouchWeight = 0;
+        std::vector<RouteID> maxRouteIDs;
+        for (const auto& [routeID, weight] : routeCoverage) {
+            if (weight > maxTouchWeight) {
+                maxTouchWeight = weight;
+            }
+        }
+
+        for (const auto& [routeID, weight] : routeCoverage) {
+            if (weight == maxTouchWeight) {
+                maxRouteIDs.push_back(routeID);
+            }
+        }
+
+        if (maxRouteIDs.size() == 1) {
+            return maxRouteIDs[0].id;
+        }
+
+        if (!maxRouteIDs.empty()) {
+            int top = routeMgr->getTopMost(maxRouteIDs);
+            RouteID topRouteID;
+            if (top >= 0 && top < static_cast<int>(maxRouteIDs.size())) {
+                topRouteID = maxRouteIDs[top];
+            }
+
+            return topRouteID.id;
         }
     }
-    for (const auto& [routeID, weight] : routeCoverage) {
-        if (weight == maxTouchWeight) {
-            maxRouteIDs.push_back(routeID);
-        }
-    }
 
-    if (maxRouteIDs.size() == 1) {
-        return maxRouteIDs[0].id;
-    }
-
-    int top = routeMgr->getTopMost(maxRouteIDs);
-    RouteID topRouteID;
-    if (top >= 0 && top < static_cast<int>(maxRouteIDs.size())) {
-        topRouteID = maxRouteIDs[top];
-    }
-
-    return topRouteID.id;
+    return -1;
 }
 
 jni::Local<jni::Array<jni::Object<geojson::Feature>>> NativeMapView::queryRenderedFeaturesForPoint(
