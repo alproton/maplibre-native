@@ -277,7 +277,7 @@ interface NativeMap {
 
   boolean disposeRoute(RouteID routeID);
 
-  RouteID queryRoute(double x, double y);
+  RouteID queryRoute(double x, double y, int radius);
 
   boolean createRouteSegment(RouteID routeID, RouteSegmentOptions rsopts);
 

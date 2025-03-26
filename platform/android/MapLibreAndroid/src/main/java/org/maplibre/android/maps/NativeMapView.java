@@ -1178,8 +1178,8 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public RouteID queryRoute(double x, double y) {
-    RouteID routeID = new RouteID(nativeRouteQuery(x, y));
+  public RouteID queryRoute(double x, double y, int radius) {
+    RouteID routeID = new RouteID(nativeRouteQuery(x, y, radius));
     return routeID;
   }
 
@@ -1617,7 +1617,7 @@ final class NativeMapView implements NativeMap {
                                        double[] innerDynamicWidths);
 
   @Keep
-  private native int nativeRouteQuery(double x, double y);
+  private native int nativeRouteQuery(double x, double y, int radius);
 
   @Keep
   private native String nativeRouteGetActiveLayerName(int routeID);
