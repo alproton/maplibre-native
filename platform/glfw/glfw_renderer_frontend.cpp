@@ -4,6 +4,7 @@
 #include <mbgl/gfx/backend_scope.hpp>
 #include <mbgl/gfx/renderer_backend.hpp>
 #include <mbgl/util/instrumentation.hpp>
+#include <mbgl/renderer/query.hpp>
 
 GLFWRendererFrontend::GLFWRendererFrontend(std::unique_ptr<mbgl::Renderer> renderer_, GLFWView& glfwView_)
     : glfwView(glfwView_),
@@ -18,8 +19,8 @@ void GLFWRendererFrontend::reset() {
     renderer.reset();
 }
 
-std::vector<mbgl::Feature> GLFWRendererFrontend::queryFeatures(double screenspaceX, double screenspaceY) {
-    mbgl::ScreenCoordinate screen_point(screenspaceX, screenspaceY);
+std::vector<mbgl::Feature> GLFWRendererFrontend::queryFeatures(double screenSpaceX, double screenSpaceY) {
+    mbgl::ScreenCoordinate screen_point(screenSpaceX, screenSpaceY);
     std::vector<mbgl::Feature> features = renderer->queryRenderedFeatures(screen_point);
     return features;
 }
