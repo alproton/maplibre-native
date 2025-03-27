@@ -1755,13 +1755,17 @@ void GLFWView::onMouseClick(GLFWwindow *window, int button, int action, int modi
             std::cout << "Clicked routeID: " << std::to_string(maxRouteIDs[0].id) << std::endl;
         }
 
-        int top = view->getTopMost(maxRouteIDs);
-        RouteID topRouteID;
-        if (top >= 0 && top < static_cast<int>(maxRouteIDs.size())) {
-            topRouteID = maxRouteIDs[top];
-        }
+        if (!maxRouteIDs.empty()) {
+            int top = view->getTopMost(maxRouteIDs);
+            RouteID topRouteID;
+            if (top >= 0 && top < static_cast<int>(maxRouteIDs.size())) {
+                topRouteID = maxRouteIDs[top];
+            }
 
-        std::cout << "Clicked routeID: " << std::to_string(topRouteID.id) << std::endl;
+            std::cout << "Clicked routeID: " << std::to_string(topRouteID.id) << std::endl;
+        } else {
+            std::cout << "Clicked on no routes" << std::endl;
+        }
 
     } else {
         if (button == GLFW_MOUSE_BUTTON_RIGHT || (button == GLFW_MOUSE_BUTTON_LEFT && modifiers & GLFW_MOD_CONTROL)) {
