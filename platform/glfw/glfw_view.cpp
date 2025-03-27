@@ -3,8 +3,6 @@
 #include "glfw_renderer_frontend.hpp"
 #include "ny_route.hpp"
 #include "test_writer.hpp"
-#include "rapidjson/document.h"
-#include "rapidjson/error/en.h"
 
 #include <mbgl/annotation/annotation.hpp>
 #include <mbgl/gfx/backend.hpp>
@@ -68,6 +66,7 @@
 #include <numbers>
 #include <rapidjson/document.h>
 #include <rapidjson/rapidjson.h>
+#include <rapidjson/error/en.h>
 
 using namespace std::numbers;
 
@@ -164,10 +163,10 @@ void cycleTileLodMode(mbgl::Map &map) {
 void tileLodZoomShift(mbgl::Map &map, bool positive) {
     constexpr auto tileLodZoomShiftStep = 0.25;
     auto shift = positive ? tileLodZoomShiftStep : -tileLodZoomShiftStep;
-    shift = map.getTileLodZoomShift() + shift;
+    shift = map.getTileLodZoomShift(0) + shift;
     shift = mbgl::util::clamp(shift, -2.5, 2.5);
     mbgl::Log::Info(mbgl::Event::OpenGL, "Zoom shift: " + std::to_string(shift));
-    map.setTileLodZoomShift(shift);
+    map.setTileLodZoomShift({0, shift});
     map.triggerRepaint();
 }
 

@@ -1,4 +1,3 @@
-
 #include "mbgl/util/containers.hpp"
 #include "mbgl/util/math.hpp"
 
