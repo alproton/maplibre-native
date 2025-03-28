@@ -49,7 +49,7 @@ public:
     std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
     std::string captureSnapshot() const;
-    int getTopMost(const std::vector<RouteID> routeList) const;
+    int getTopMost(const std::vector<RouteID>& routeList) const;
 
     bool hasRoutes() const;
     void finalize();

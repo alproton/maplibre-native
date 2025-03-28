@@ -239,20 +239,22 @@ std::vector<RouteID> RouteManager::getAllRoutes() const {
     return routeIDs;
 }
 
-int RouteManager::getTopMost(const std::vector<RouteID> routeList) const {
+int RouteManager::getTopMost(const std::vector<RouteID>& routeList) const {
     assert(style_ != nullptr && "style not set");
 
     if (style_ != nullptr) {
         std::vector<style::Layer*> layers = style_->getLayers();
 
-        for (size_t i = layers.size() - 1; i >= 0; i--) {
-            const std::string currLayerName = layers[i]->getID();
+        if (!layers.empty()) {
+            for (size_t i = layers.size() - 1; i >= 0; i--) {
+                const std::string currLayerName = layers[i]->getID();
 
-            for (size_t j = 0; j < routeList.size(); j++) {
-                const RouteID routeID = routeList[j];
-                const std::string& layerName = getBaseRouteLayerName(routeID);
-                if (layerName == currLayerName) {
-                    return j;
+                for (size_t j = 0; j < routeList.size(); j++) {
+                    const RouteID routeID = routeList[j];
+                    const std::string& layerName = getBaseRouteLayerName(routeID);
+                    if (layerName == currLayerName) {
+                        return j;
+                    }
                 }
             }
         }
