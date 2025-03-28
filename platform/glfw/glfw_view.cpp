@@ -976,7 +976,7 @@ std::string GLFWView::getBaseGeoJSONsourceName(const RouteID &routeID) const {
     return rmptr_->getBaseGeoJSONsourceName(routeID);
 }
 
-int GLFWView::getTopMost(const std::vector<RouteID> routeList) const {
+int GLFWView::getTopMost(const std::vector<RouteID> &routeList) const {
     return rmptr_->getTopMost(routeList);
 }
 
@@ -1013,9 +1013,10 @@ void GLFWView::addRoute() {
     routeOpts.useDynamicWidths = false;
     routeOpts.outerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
-    // if(lastRouteID_.isValid()) {
-    //     routeOpts.layerBefore = getBaseRouteLayerName(lastRouteID_);
-    // }
+    // Testing the layerBefore option
+    //  if(lastRouteID_.isValid()) {
+    //      routeOpts.layerBefore = getBaseRouteLayerName(lastRouteID_);
+    //  }
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
     routeMap_[routeID] = route;
