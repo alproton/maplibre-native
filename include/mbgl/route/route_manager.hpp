@@ -22,6 +22,8 @@ struct RouteMgrStats {
     uint32_t numRouteSegments = 0;
     std::string finalizeMillis;
     bool inconsistentAPIusage = false;
+    double avgRouteCreationInterval = 0.0;
+    double avgRouteSegmentCreationInterval = 0.0;
 };
 
 /***
@@ -35,7 +37,6 @@ public:
     RouteManager();
     void setStyle(style::Style&);
     const std::string getStats();
-    void clearStats();
     bool hasStyle() const;
     RouteID routeCreate(const LineString<double>& geometry, const RouteOptions& ropts);
     bool routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
@@ -60,7 +61,6 @@ private:
     static const std::string ACTIVE_ROUTE_LAYER;
     static const std::string GEOJSON_BASE_ROUTE_SOURCE_ID;
     static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
-    std::stringstream statsStream_;
 
     enum class DirtyType {
         dtRouteSegments,
@@ -68,7 +68,6 @@ private:
         dtRouteGeometry,
         // TODO: may be route puck position
     };
-
     std::string dirtyTypeToString(const DirtyType& dt) const;
 
     std::unordered_map<DirtyType, std::unordered_set<RouteID, IDHasher<RouteID>>> dirtyRouteMap_;

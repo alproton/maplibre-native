@@ -55,6 +55,8 @@
 #endif
 
 #define GL_GLEXT_PROTOTYPES
+#include "mbgl/gfx/renderer_backend.hpp"
+
 #include <GLFW/glfw3.h>
 
 #include <cassert>
@@ -65,8 +67,10 @@
 #include <sstream>
 #include <numbers>
 #include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
 
 using namespace std::numbers;
 
@@ -730,22 +734,25 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_7:
                     view->decrementRouteProgress();
                     break;
-                case GLFW_KEY_8: {
+
+                case GLFW_KEY_P:
+                    view->setRouteProgressUsage();
+                    break;
+
+                case GLFW_KEY_S: {
                     view->captureSnapshot();
                     std::cout << "captured snapshot" << std::endl;
                 } break;
 
-                case GLFW_KEY_9: {
+                case GLFW_KEY_L: {
                     int lastCapturedIdx = view->getCaptureIdx() - 1;
                     if (lastCapturedIdx == -1) lastCapturedIdx = 0;
-                    // std::string capture_file_name =
-                    // "/home/spalaniappan/mln-proton/cmake-build-debug/platform/glfw/snapshot_0.json";
                     std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
-                case GLFW_KEY_0:
-                    view->setRouteProgressUsage();
+                case GLFW_KEY_Q:
+                    view->writeStats();
                     break;
             }
         } else {
@@ -962,6 +969,33 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
     }
 
     return points.back();
+}
+
+void GLFWView::writeStats() {
+    std::stringstream ss;
+    std::string renderingStats = backend->getRendererBackend().getRenderingStats().toJSONString();
+    std::string routeStats = rmptr_->getStats();
+    rapidjson::Document renderStatsDoc;
+    renderStatsDoc.Parse(renderingStats.c_str());
+    rapidjson::Document routeStatsDoc;
+    routeStatsDoc.Parse(routeStats.c_str());
+
+    rapidjson::Document combined;
+    combined.SetObject();
+
+    rapidjson::Document::AllocatorType &combinedAllocator = combined.GetAllocator();
+
+    rapidjson::Value copiedRenderingStats(renderStatsDoc, combinedAllocator);
+    rapidjson::Value copiedRouteStats(routeStatsDoc, combinedAllocator);
+
+    combined.AddMember("rendering_stats", copiedRenderingStats, combinedAllocator);
+    combined.AddMember("route_stats", copiedRouteStats, combinedAllocator);
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+    combined.Accept(writer);
+
+    std::cout << buffer.GetString() << std::endl;
 }
 
 void GLFWView::addRoute() {
@@ -1258,14 +1292,6 @@ void GLFWView::disposeRoute() {
             routeMap_.erase(routeID);
         }
         rmptr_->finalize();
-    }
-}
-
-void GLFWView::printRouteStats() {
-    if (rmptr_) {
-        std::cout << "Route stats:" << std::endl;
-        std::cout << rmptr_->getStats() << std::endl;
-        rmptr_->clearStats();
     }
 }
 

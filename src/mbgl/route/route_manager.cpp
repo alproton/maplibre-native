@@ -18,6 +18,9 @@
 #include <mbgl/style/expression/compound_expression.hpp>
 #include <mbgl/style/expression/type.hpp>
 #include <mbgl/style/expression/dsl.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 #include <chrono>
 #include <iomanip> // For formatting
 #include <iterator>
@@ -212,6 +215,16 @@ std::map<double, double> getDefaultRouteLineWeights() {
             {ROUTE_LINE_ZOOM_LEVEL_20, ROUTE_LINE_WEIGHT_22 * ROUTE_LINE_MULTIPLIER}};
 }
 
+struct AvgIntervalStat {
+    std::chrono::steady_clock::time_point lastStartTime;
+    std::chrono::duration<double> totalIntervalDuration{0.0};
+    long long intervalCount = 0;
+    bool firstCall = true;
+};
+
+AvgIntervalStat routeCreateStat;
+AvgIntervalStat routeSegmentCreateStat;
+
 } // namespace
 
 RouteManager::RouteManager()
@@ -307,6 +320,22 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
         routeMap_[rid] = route;
         stats_.numRoutes++;
         dirtyRouteMap_[DirtyType::dtRouteGeometry].insert(rid);
+
+        auto now = std::chrono::steady_clock::now();
+        if (!routeCreateStat.firstCall) {
+            auto interval = now - routeCreateStat.lastStartTime;
+            routeCreateStat.totalIntervalDuration += interval;
+            routeCreateStat.intervalCount++;
+            if (routeCreateStat.intervalCount > 0) {
+                stats_.avgRouteCreationInterval =
+                    std::chrono::duration<double>(routeCreateStat.totalIntervalDuration).count() /
+                    routeCreateStat.intervalCount;
+            }
+
+        } else {
+            routeCreateStat.firstCall = false;
+        }
+        routeCreateStat.lastStartTime = now;
     }
 
     return rid;
@@ -355,6 +384,22 @@ void RouteManager::routeClearSegments(const RouteID& routeID) {
             routeMap_[routeID].routeSegmentsClear();
             validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
         }
+
+        auto now = std::chrono::steady_clock::now();
+        if (!routeSegmentCreateStat.firstCall) {
+            auto interval = now - routeSegmentCreateStat.lastStartTime;
+            routeSegmentCreateStat.totalIntervalDuration += interval;
+            routeSegmentCreateStat.intervalCount++;
+            if (routeSegmentCreateStat.intervalCount > 0) {
+                stats_.avgRouteSegmentCreationInterval =
+                    std::chrono::duration<double>(routeSegmentCreateStat.totalIntervalDuration).count() /
+                    routeSegmentCreateStat.intervalCount;
+            }
+
+        } else {
+            routeSegmentCreateStat.firstCall = false;
+        }
+        routeSegmentCreateStat.lastStartTime = now;
     }
 }
 
@@ -444,17 +489,27 @@ std::string RouteManager::getBaseGeoJSONsourceName(const RouteID& routeID) const
 }
 
 const std::string RouteManager::getStats() {
-    statsStream_ << "Num Routes: " << stats_.numRoutes << std::endl;
-    statsStream_ << "Num finalized invocations: " << stats_.numFinalizedInvoked << std::endl;
-    statsStream_ << "Num traffic zones: " << stats_.numRouteSegments << std::endl;
-    statsStream_ << "InconsistentAPIusage: " << std::boolalpha << stats_.inconsistentAPIusage << std::endl;
-    statsStream_ << "Routes finilize elapsed: " << stats_.finalizeMillis << std::endl;
+    rapidjson::Document document;
+    document.SetObject();
+    rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
 
-    return statsStream_.str();
-}
+    rapidjson::Value route_stats(rapidjson::kObjectType);
+    route_stats.AddMember("num_routes", stats_.numRoutes, allocator);
+    route_stats.AddMember("num_traffic_zones", stats_.numRouteSegments, allocator);
+    route_stats.AddMember("num_finalize_invocations", stats_.numFinalizedInvoked, allocator);
+    route_stats.AddMember("inconsistant_route_API_usages", stats_.inconsistentAPIusage, allocator);
+    route_stats.AddMember("avg_route_finalize_elapse_millis", stats_.finalizeMillis, allocator);
+    route_stats.AddMember("avg_route_create_interval_seconds", stats_.avgRouteCreationInterval, allocator);
+    route_stats.AddMember(
+        "avg_route_segment_create_interval_seconds", stats_.avgRouteSegmentCreationInterval, allocator);
 
-void RouteManager::clearStats() {
-    statsStream_.clear();
+    document.AddMember("route_stats", route_stats, allocator);
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+    document.Accept(writer);
+
+    return buffer.GetString();
 }
 
 void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
