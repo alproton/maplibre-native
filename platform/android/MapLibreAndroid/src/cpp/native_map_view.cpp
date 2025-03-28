@@ -1660,6 +1660,8 @@ jni::Local<jni::String> NativeMapView::routesGetStats(JNIEnv& env) {
         stats = routeMgr->getStats();
     }
 
+    const auto& backend = mapRenderer.getRendererBackend();
+
     return jni::Make<jni::String>(env, stats);
 }
 
