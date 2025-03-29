@@ -1224,13 +1224,8 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public String getRoutesStats() {
-    return nativeRoutesGetStats();
-  }
-
-  @Override
-  public void clearRoutesStats() {
-    nativeRoutesClearStats();
+  public String getRenderingStats() {
+    return nativeGetRenderingStats();
   }
 
   @Override
@@ -1682,12 +1677,10 @@ final class NativeMapView implements NativeMap {
   private native boolean nativeRoutesFinalize();
 
   @Keep
-  private native String nativeRoutesGetStats();
-
-  @Keep
   private native String nativeRoutesCaptureSnapshot();
 
-  @Keep native void nativeRoutesClearStats();
+  @Keep
+  native void nativeRoutesClearStats();
 
   //---------------------Custom Dots APIs---------------------
   @Keep
@@ -1717,6 +1710,9 @@ final class NativeMapView implements NativeMap {
   private native boolean nativeIsCustomDotsInitialized();
 
   //---------------------------------------------------------
+
+  @Keep
+  private native String nativeGetRenderingStats();
 
   @Keep
   private native void nativeOnLowMemory();

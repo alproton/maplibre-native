@@ -124,7 +124,6 @@ private:
     void removeTrafficViz();
     void incrementRouteProgress();
     void decrementRouteProgress();
-    void printRouteStats();
     void captureSnapshot();
     void setRouteProgressUsage();
     void setRoutePickMode();
@@ -193,6 +192,7 @@ private:
     std::string getBaseRouteLayerName(const RouteID &routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID &routeID) const;
     int getTopMost(const std::vector<RouteID> &routeList) const;
+    void writeStats();
 
     std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeMap_;
     int lastCaptureIdx_ = 0;

@@ -39,7 +39,6 @@ public:
 
     // Return the background thread pool assigned to this backend
     TaggedScheduler& getThreadPool() noexcept { return threadPool; }
-
     /// Returns the device's context.
     Context& getContext();
 
@@ -55,7 +54,7 @@ public:
 
     virtual CustomPuckState getCurrentCustomPuckState() const { return {}; }
 
-    virtual mbgl::gfx::RenderingStats getRenderingStats();
+    virtual mbgl::gfx::RenderingStats getRenderingStats() { return {}; };
 
 #if MLN_DRAWABLE_RENDERER
     /// One-time shader initialization
