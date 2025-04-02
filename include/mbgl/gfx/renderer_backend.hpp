@@ -4,6 +4,7 @@
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/util/util.hpp>
+#include <mbgl/gfx/rendering_stats.hpp>
 
 #include <memory>
 #include <mutex>
@@ -38,9 +39,16 @@ public:
 
     // Return the background thread pool assigned to this backend
     TaggedScheduler& getThreadPool() noexcept { return threadPool; }
-
     /// Returns the device's context.
     Context& getContext();
+
+    /**
+     * @brief  this method is to be used when the context is needed outside of the rendering scope and should
+     * be called only at such times. An example of this would be to get the RenderingStats from the context.
+     *
+     * @return the context for the backend
+     */
+    Context& getContextOutsideRenderingScope();
 
     template <typename T>
     T& getContext() {
@@ -53,6 +61,8 @@ public:
     virtual Renderable& getDefaultRenderable() = 0;
 
     virtual CustomPuckState getCurrentCustomPuckState() const { return {}; }
+
+    virtual mbgl::gfx::RenderingStats getRenderingStats() { return {}; };
 
 #if MLN_DRAWABLE_RENDERER
     /// One-time shader initialization
