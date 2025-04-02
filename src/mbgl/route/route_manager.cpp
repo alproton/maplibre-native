@@ -1,4 +1,3 @@
-
 #include "mbgl/util/containers.hpp"
 #include "mbgl/util/math.hpp"
 
@@ -237,6 +236,30 @@ std::vector<RouteID> RouteManager::getAllRoutes() const {
     }
 
     return routeIDs;
+}
+
+int RouteManager::getTopMost(const std::vector<RouteID>& routeList) const {
+    assert(style_ != nullptr && "style not set");
+
+    if (style_ != nullptr) {
+        std::vector<style::Layer*> layers = style_->getLayers();
+
+        if (!layers.empty()) {
+            for (size_t i = layers.size() - 1; i >= 0; i--) {
+                const std::string currLayerName = layers[i]->getID();
+
+                for (size_t j = 0; j < routeList.size(); j++) {
+                    const RouteID routeID = routeList[j];
+                    const std::string& layerName = getBaseRouteLayerName(routeID);
+                    if (layerName == currLayerName) {
+                        return j;
+                    }
+                }
+            }
+        }
+    }
+
+    return -1;
 }
 
 std::string RouteManager::captureSnapshot() const {

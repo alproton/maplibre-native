@@ -189,6 +189,10 @@ private:
     void writeCapture(const std::string &capture, const std::string &capture_file_name) const;
     void readAndLoadCapture(const std::string &capture_file_name);
     int getCaptureIdx() const;
+    std::vector<RouteID> getAllRoutes() const;
+    std::string getBaseRouteLayerName(const RouteID &routeID) const;
+    std::string getBaseGeoJSONsourceName(const RouteID &routeID) const;
+    int getTopMost(const std::vector<RouteID> &routeList) const;
 
     std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeMap_;
     int lastCaptureIdx_ = 0;

@@ -270,7 +270,7 @@ public:
 
     void routesClearStats(JNIEnv& env);
 
-    jint routeQueryRendered(JNIEnv& env, jni::jdouble screenSpaceX, jni::jdouble screenSpaceY);
+    jint routeQueryRendered(JNIEnv& env, jni::jdouble screenSpaceX, jni::jdouble screenSpaceY, jni::jint radius);
 
     jboolean routesFinalize(JNIEnv& env);
     //------------------------------------------------
