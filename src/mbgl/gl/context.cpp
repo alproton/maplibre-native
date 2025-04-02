@@ -2,6 +2,7 @@
 
 #include <mbgl/gfx/shader_registry.hpp>
 #include <mbgl/gl/command_encoder.hpp>
+#include <mbgl/gl/custom_dots.hpp>
 #include <mbgl/gl/custom_puck.hpp>
 #include <mbgl/gl/defines.hpp>
 #include <mbgl/gl/draw_scope_resource.hpp>
@@ -276,6 +277,10 @@ void Context::verifyProgramLinkage(ProgramID program_) {
 
 std::unique_ptr<gfx::CustomPuck> Context::createCustomPuck() {
     return std::make_unique<gl::CustomPuck>(*this);
+}
+
+std::unique_ptr<gfx::CustomDots> Context::createCustomDots() {
+    return std::make_unique<gl::CustomDots>(*this);
 }
 
 UniqueTexture Context::createUniqueTexture(const Size& size,

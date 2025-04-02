@@ -19,6 +19,7 @@ private:
     gl::Context& context;
     UniqueProgram program;
     TextureID texture = 0;
+    int storage = 0;
 };
 
 } // namespace gl
