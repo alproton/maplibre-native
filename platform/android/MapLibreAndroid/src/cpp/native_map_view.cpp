@@ -1628,7 +1628,6 @@ jboolean NativeMapView::routesFinalize(JNIEnv& env) {
 
 jni::Local<jni::String> NativeMapView::getRenderingStats(JNIEnv& env) {
     std::stringstream ss;
-    static mbgl::util::ThreadLocal<mbgl::gfx::BackendScope> backendScope;
     gfx::RenderingStats stats = mapRenderer.getRenderingStats();
     ss << stats.toJSONString();
     if (routeMgr) {

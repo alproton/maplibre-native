@@ -41,6 +41,14 @@ public:
     /// Returns the device's context.
     Context& getContext();
 
+    /**
+     * @brief  this method is to be used when the context is needed outside of the rendering scope and should
+     * be called only at such times. An example of this would be to get the RenderingStats from the context.
+     *
+     * @return the context for the backend
+     */
+    Context& getContextOutsideRenderingScope();
+
     template <typename T>
     T& getContext() {
         return static_cast<T&>(getContext());

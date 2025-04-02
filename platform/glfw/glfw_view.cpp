@@ -751,7 +751,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
-                case GLFW_KEY_R:
+                case GLFW_KEY_Q:
                     view->writeStats();
                     break;
             }
@@ -972,7 +972,6 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
 }
 
 void GLFWView::writeStats() {
-    mbgl::gfx::BackendScope scope{backend->getRendererBackend()};
     std::stringstream ss;
     std::string renderingStats = backend->getRendererBackend().getRenderingStats().toJSONString();
     std::string routeStats = rmptr_->getStats();
