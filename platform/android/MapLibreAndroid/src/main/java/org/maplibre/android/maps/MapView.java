@@ -35,6 +35,7 @@ import org.maplibre.android.storage.FileSource;
 import org.maplibre.android.utils.BitmapUtils;
 import org.maplibre.android.tile.TileOperation;
 import org.maplibre.geojson.LineString;
+import org.maplibre.geojson.MultiPoint;
 import org.maplibre.geojson.Point;
 
 import java.util.ArrayList;
@@ -576,8 +577,50 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return a route ID. The routeID will always be non null but client needs to check if its
    *         valid by calling isValid() on it.
    */
-  public RouteID queryRoute(double x, double y) {
-    return nativeMapView.queryRoute(x, y);
+  public RouteID queryRoute(double x, double y, int radius) {
+    return nativeMapView.queryRoute(x, y, radius);
+  }
+
+  /***
+   * Set the layer that get rendered after the custom dots
+   */
+  public void setCustomDotsNextLayer(String layer) {
+    nativeMapView.setCustomDotsNextLayer(layer);
+  }
+
+  /***
+   * Set the list of Lat/Lon dots to render on the map when custom dots are enabled.
+   */
+  public void setCustomDotsPoints(int id, MultiPoint points) {
+    nativeMapView.setCustomDotsPoints(id, points);
+  }
+
+  /***
+   * Clear video memory used by custom dots
+   */
+  public void clearCustomDotsVideoMemory() {
+    nativeMapView.clearCustomDotsVideoMemory();
+  }
+
+  /***
+   * Set the custom dots options
+   */
+  public void setCustomDotsOptions(int id, CustomDotsOptions options) {
+    nativeMapView.setCustomDotsOptions(id, options);
+  }
+
+  /***
+   * Enable or disable custom dots rendering
+   */
+  public void setCustomDotsEnabled(boolean enabled) {
+    nativeMapView.setCustomDotsEnabled(enabled);
+  }
+
+  /***
+   * Check if the renderer is initialized for custom dots
+   */
+  public boolean isCustomDotsInitialized() {
+    return nativeMapView.isCustomDotsInitialized();
   }
 
   /**

@@ -754,6 +754,10 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_Q:
                     view->writeStats();
                     break;
+
+                case GLFW_KEY_0:
+                    view->setRouteProgressUsage();
+                    break;
             }
         } else {
             switch (key) {
@@ -998,6 +1002,22 @@ void GLFWView::writeStats() {
     std::cout << buffer.GetString() << std::endl;
 }
 
+std::vector<RouteID> GLFWView::getAllRoutes() const {
+    return rmptr_->getAllRoutes();
+}
+
+std::string GLFWView::getBaseRouteLayerName(const RouteID &routeID) const {
+    return rmptr_->getBaseRouteLayerName(routeID);
+}
+
+std::string GLFWView::getBaseGeoJSONsourceName(const RouteID &routeID) const {
+    return rmptr_->getBaseGeoJSONsourceName(routeID);
+}
+
+int GLFWView::getTopMost(const std::vector<RouteID> &routeList) const {
+    return rmptr_->getTopMost(routeList);
+}
+
 void GLFWView::addRoute() {
     using namespace mbgl::route;
 
@@ -1031,6 +1051,10 @@ void GLFWView::addRoute() {
     routeOpts.useDynamicWidths = false;
     routeOpts.outerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
+    // Testing the layerBefore option
+    //  if(lastRouteID_.isValid()) {
+    //      routeOpts.layerBefore = getBaseRouteLayerName(lastRouteID_);
+    //  }
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
     routeMap_[routeID] = route;
@@ -1696,11 +1720,84 @@ void GLFWView::onMouseClick(GLFWwindow *window, int button, int action, int modi
     if (view->getRoutePickMode()) {
         std::cout << "onClick(): last: " << std::to_string(view->lastX) << ", " << std::to_string(view->lastY)
                   << std::endl;
-        std::vector<mbgl::Feature> features = view->getRenderFrontend()->queryFeatures(view->lastX, view->lastY);
-        for (const auto &feature : features) {
-            const std::string sourceName = feature.source;
-            std::cout << "source : " << sourceName << std::endl;
+        std::vector<RouteID> routeIDs = view->getAllRoutes();
+        std::vector<std::string> layers;
+        // we specifically create caches for base layer since base route is wider than the active layer.
+        // we also check against source name as well as source layer name, since I've seen cases where the source layer
+        // name is not set.
+        std::unordered_map<std::string, RouteID> baseLayerMapCache;
+        std::unordered_map<std::string, RouteID> baseSourceMapCache;
+        for (const auto &routeID : routeIDs) {
+            if (routeID.isValid()) {
+                std::string baseLayer = view->getBaseRouteLayerName(routeID);
+                assert(!baseLayer.empty() && "base layer cannot be empty!");
+                if (!baseLayer.empty()) {
+                    layers.push_back(baseLayer);
+                    baseLayerMapCache[baseLayer] = routeID;
+                }
+                std::string baseSource = view->getBaseGeoJSONsourceName(routeID);
+                assert(!baseSource.empty() && "base source cannot be empty");
+                if (!baseSource.empty()) {
+                    baseSourceMapCache[baseSource] = routeID;
+                }
+            }
         }
+
+        double screenSpaceX = view->lastX, screenSpaceY = view->lastY;
+        int radius = 5;
+        std::unordered_map<RouteID, int, IDHasher<RouteID>> routeCoverage;
+        // sample multiple ray picks over an radius
+        for (int i = -radius; i < radius; i++) {
+            for (int j = -radius; j < radius; j++) {
+                mapbox::geometry::point<double> screenpoint = {screenSpaceX + i, screenSpaceY + j};
+                std::vector<mbgl::Feature> features = view->getRenderFrontend()->queryFeatures(screenpoint.x,
+                                                                                               screenpoint.y);
+                for (const auto &feature : features) {
+                    if (baseLayerMapCache.find(feature.sourceLayer) != baseLayerMapCache.end()) {
+                        RouteID baseRouteID = baseLayerMapCache[feature.sourceLayer];
+                        routeCoverage[baseRouteID]++;
+                    }
+
+                    // also check cache of geojson source names if the source layer is not set.
+                    if (baseSourceMapCache.find(feature.source) != baseSourceMapCache.end()) {
+                        RouteID baseRouteID = baseSourceMapCache[feature.source];
+                        routeCoverage[baseRouteID]++;
+                    }
+                }
+            }
+        }
+
+        // when you do a touch at a location, the radius can cover multiple routes.
+        // find the RouteID that has the maximum touch weight value
+        int maxTouchWeight = 0;
+        std::vector<RouteID> maxRouteIDs;
+        for (const auto &[routeID, weight] : routeCoverage) {
+            if (weight > maxTouchWeight) {
+                maxTouchWeight = weight;
+            }
+        }
+        for (const auto &[routeID, weight] : routeCoverage) {
+            if (weight == maxTouchWeight) {
+                maxRouteIDs.push_back(routeID);
+            }
+        }
+
+        if (maxRouteIDs.size() == 1) {
+            std::cout << "Clicked routeID: " << std::to_string(maxRouteIDs[0].id) << std::endl;
+        }
+
+        if (!maxRouteIDs.empty()) {
+            int top = view->getTopMost(maxRouteIDs);
+            RouteID topRouteID;
+            if (top >= 0 && top < static_cast<int>(maxRouteIDs.size())) {
+                topRouteID = maxRouteIDs[top];
+            }
+
+            std::cout << "Clicked routeID: " << std::to_string(topRouteID.id) << std::endl;
+        } else {
+            std::cout << "Clicked on no routes" << std::endl;
+        }
+
     } else {
         if (button == GLFW_MOUSE_BUTTON_RIGHT || (button == GLFW_MOUSE_BUTTON_LEFT && modifiers & GLFW_MOD_CONTROL)) {
             view->rotating = action == GLFW_PRESS;

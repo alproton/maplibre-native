@@ -13,6 +13,7 @@
 
 #include <jni/jni.hpp>
 
+#include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_options.hpp>
@@ -60,6 +61,8 @@
 #include "tile/tile_operation.hpp"
 #include "mbgl/route/route_manager.hpp"
 #include "mbgl/route/route.hpp"
+
+#include "android_renderer_backend.hpp"
 
 #include "android_renderer_backend.hpp"
 
@@ -945,17 +948,27 @@ jni::Local<jni::Array<jlong>> NativeMapView::queryShapeAnnotations(JNIEnv& env, 
     return result;
 }
 
-jint NativeMapView::routeQueryRendered(JNIEnv& env, jni::jdouble screenSpaceX, jni::jdouble screenSpaceY) {
-    std::vector<RouteID> routeIDs = routeMgr->getAllRoutes();
-    std::vector<std::string> layers;
-    std::unordered_map<std::string, RouteID> baseLayerMapCache;
-    std::unordered_map<std::string, RouteID> baseSourceMapCache;
-    for (const auto& routeID : routeIDs) {
-        if (routeID.isValid()) {
+jint NativeMapView::routeQueryRendered(JNIEnv& env,
+                                       jni::jdouble screenSpaceX,
+                                       jni::jdouble screenSpaceY,
+                                       jni::jint radius) {
+    if (routeMgr) {
+        if (!routeMgr->hasRoutes()) {
+            return -1;
+        }
+
+        std::vector<RouteID> routeIDs = routeMgr->getAllRoutes();
+        std::vector<std::string> baseLayers;
+        // we specifically create caches for base layer since base route is wider than the active layer.
+        // we also check against source name as well as source layer name, since I've seen cases where the source layer
+        // name is not set in Feature.
+        std::unordered_map<std::string, RouteID> baseLayerMapCache;
+        std::unordered_map<std::string, RouteID> baseSourceMapCache;
+        for (const auto& routeID : routeIDs) {
             std::string baseLayer = routeMgr->getBaseRouteLayerName(routeID);
             assert(!baseLayer.empty() && "base layer cannot be empty!");
             if (!baseLayer.empty()) {
-                layers.push_back(baseLayer);
+                baseLayers.push_back(baseLayer);
                 baseLayerMapCache[baseLayer] = routeID;
             }
             std::string baseSource = routeMgr->getBaseGeoJSONsourceName(routeID);
@@ -964,18 +977,57 @@ jint NativeMapView::routeQueryRendered(JNIEnv& env, jni::jdouble screenSpaceX, j
                 baseSourceMapCache[baseSource] = routeID;
             }
         }
-    }
 
-    mapbox::geometry::point<double> point = {screenSpaceX, screenSpaceY};
+        std::unordered_map<RouteID, int, IDHasher<RouteID>> routeCoverage;
+        // sample multiple ray picks over an radius
+        for (int i = -radius; i < radius; i++) {
+            for (int j = -radius; j < radius; j++) {
+                mbgl::ScreenCoordinate screenpoint = {screenSpaceX + i, screenSpaceY + j};
+                std::vector<mbgl::Feature> features = rendererFrontend->queryRenderedFeatures(screenpoint,
+                                                                                              {baseLayers});
+                for (const auto& feature : features) {
+                    if (baseLayerMapCache.find(feature.sourceLayer) != baseLayerMapCache.end()) {
+                        RouteID baseRouteID = baseLayerMapCache[feature.sourceLayer];
+                        routeCoverage[baseRouteID]++;
+                    }
 
-    const std::vector<Feature>& features = rendererFrontend->queryRenderedFeatures(point, {layers});
-    for (const auto& feature : features) {
-        if (baseLayerMapCache.find(feature.sourceLayer) != baseLayerMapCache.end()) {
-            return baseLayerMapCache[feature.sourceLayer].id;
+                    // also check cache of geojson source names if the source layer is not set.
+                    if (baseSourceMapCache.find(feature.source) != baseSourceMapCache.end()) {
+                        RouteID baseRouteID = baseSourceMapCache[feature.source];
+                        routeCoverage[baseRouteID]++;
+                    }
+                }
+            }
         }
-        // also check cache of geojson source names if the source layer is not set.
-        if (baseSourceMapCache.find(feature.source) != baseSourceMapCache.end()) {
-            return baseSourceMapCache[feature.source].id;
+
+        // when you do a touch at a location, the radius can cover multiple routes.
+        // find the RouteID that has the maximum touch weight value
+        int maxTouchWeight = 0;
+        std::vector<RouteID> maxRouteIDs;
+        for (const auto& [routeID, weight] : routeCoverage) {
+            if (weight > maxTouchWeight) {
+                maxTouchWeight = weight;
+            }
+        }
+
+        for (const auto& [routeID, weight] : routeCoverage) {
+            if (weight == maxTouchWeight) {
+                maxRouteIDs.push_back(routeID);
+            }
+        }
+
+        if (maxRouteIDs.size() == 1) {
+            return maxRouteIDs[0].id;
+        }
+
+        if (!maxRouteIDs.empty()) {
+            int top = routeMgr->getTopMost(maxRouteIDs);
+            RouteID topRouteID;
+            if (top >= 0 && top < static_cast<int>(maxRouteIDs.size())) {
+                topRouteID = maxRouteIDs[top];
+            }
+
+            return topRouteID.id;
         }
     }
 
@@ -1324,6 +1376,52 @@ jni::jint NativeMapView::getLastRenderedTileCount(JNIEnv&) {
     return jni::jint(mapRenderer.getLastRenderedTileCount());
 }
 
+void NativeMapView::setCustomDotsNextLayer(JNIEnv& env, const jni::String& layer) {
+    mapRenderer.getRendererBackend().setCustomDotsNextLayer(jni::Make<std::string>(env, layer));
+}
+
+void NativeMapView::setCustomDotsPoints(JNIEnv& env,
+                                        jni::jint id,
+                                        const jni::Object<mbgl::android::geojson::MultiPoint>& jniPoints) {
+    const auto& geojsonPoints = mbgl::android::geojson::MultiPoint::convert(env, jniPoints);
+    gfx::CustomDotsPoints points;
+    points.reserve(geojsonPoints.size());
+    for (const auto& point : geojsonPoints) {
+        points.emplace_back(point.y, point.x);
+    }
+    mapRenderer.getRendererBackend().setCustomDotsPoints(id, std::move(points));
+}
+
+void NativeMapView::clearCustomDotsVideoMemory(JNIEnv&) {
+    mapRenderer.getRendererBackend().clearCustomDotsVideoMemory();
+}
+
+void NativeMapView::setCustomDotsOptions(JNIEnv&,
+                                         jni::jint id,
+                                         jni::jfloat innerR,
+                                         jni::jfloat innerG,
+                                         jni::jfloat innerB,
+                                         jni::jfloat outerR,
+                                         jni::jfloat outerG,
+                                         jni::jfloat outerB,
+                                         jni::jfloat innerRadius,
+                                         jni::jfloat outerRadius) {
+    gfx::CustomDotsOptions options;
+    options.innerColor = {innerR, innerG, innerB, 1.f};
+    options.outerColor = {outerR, outerG, outerB, 1.f};
+    options.innerRadius = innerRadius;
+    options.outerRadius = outerRadius;
+    mapRenderer.getRendererBackend().setCustomDotsOptions(id, options);
+}
+
+void NativeMapView::setCustomDotsEnabled(JNIEnv&, jni::jboolean enabled) {
+    mapRenderer.getRendererBackend().setCustomDotsEnabled(enabled == jni::jni_true);
+}
+
+jni::jboolean NativeMapView::isCustomDotsInitialized(JNIEnv&) {
+    return mapRenderer.getRendererBackend().isCustomDotsInitialized();
+}
+
 mbgl::Map& NativeMapView::getMap() {
     return *map;
 }
@@ -1464,7 +1562,14 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::getRenderingStats, "nativeGetRenderingStats"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
-        METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"));
+        METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
+        // Custom Dots API
+        METHOD(&NativeMapView::setCustomDotsNextLayer, "nativeSetCustomDotsNextLayer"),
+        METHOD(&NativeMapView::setCustomDotsPoints, "nativeSetCustomDotsPoints"),
+        METHOD(&NativeMapView::clearCustomDotsVideoMemory, "nativeClearCustomDotsVideoMemory"),
+        METHOD(&NativeMapView::setCustomDotsOptions, "nativeSetCustomDotsOptions"),
+        METHOD(&NativeMapView::setCustomDotsEnabled, "nativeSetCustomDotsEnabled"),
+        METHOD(&NativeMapView::isCustomDotsInitialized, "nativeIsCustomDotsInitialized"));
 }
 
 std::map<double, double> NativeMapView::convert(JNIEnv& env,
