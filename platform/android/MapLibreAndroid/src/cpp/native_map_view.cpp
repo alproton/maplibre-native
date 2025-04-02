@@ -1630,9 +1630,9 @@ jni::Local<jni::String> NativeMapView::getRenderingStats(JNIEnv& env) {
     std::stringstream ss;
     static mbgl::util::ThreadLocal<mbgl::gfx::BackendScope> backendScope;
     gfx::RenderingStats stats = mapRenderer.getRenderingStats();
-    ss << stats.toString(",");
+    ss << stats.toJSONString();
     if (routeMgr) {
-        ss << routeMgr->getStats(0);
+        ss << routeMgr->getStats();
     }
     return jni::Make<jni::String>(env, ss.str());
 }

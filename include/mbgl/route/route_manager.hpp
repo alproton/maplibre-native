@@ -36,7 +36,7 @@ class RouteManager final {
 public:
     RouteManager();
     void setStyle(style::Style&);
-    const std::string getStats(uint32_t tabcount);
+    const std::string getStats();
     bool hasStyle() const;
     RouteID routeCreate(const LineString<double>& geometry, const RouteOptions& ropts);
     bool routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);

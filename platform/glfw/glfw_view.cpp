@@ -67,8 +67,10 @@
 #include <sstream>
 #include <numbers>
 #include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
 
 using namespace std::numbers;
 
@@ -972,13 +974,29 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
 void GLFWView::writeStats() {
     mbgl::gfx::BackendScope scope{backend->getRendererBackend()};
     std::stringstream ss;
-    std::string renderingStats = backend->getRendererBackend().getRenderingStats().toJSONString(1);
-    ss << "{" << std::endl;
-    ss << "\"rendering_stats\": " << renderingStats << ",\n";
-    ss << "\"route_stats\": " << rmptr_->getStats(1) << "\n";
-    ss << "}" << std::endl;
+    std::string renderingStats = backend->getRendererBackend().getRenderingStats().toJSONString();
+    std::string routeStats = rmptr_->getStats();
+    rapidjson::Document renderStatsDoc;
+    renderStatsDoc.Parse(renderingStats.c_str());
+    rapidjson::Document routeStatsDoc;
+    routeStatsDoc.Parse(routeStats.c_str());
 
-    std::cout << ss.str() << std::endl;
+    rapidjson::Document combined;
+    combined.SetObject();
+
+    rapidjson::Document::AllocatorType &combinedAllocator = combined.GetAllocator();
+
+    rapidjson::Value copiedRenderingStats(renderStatsDoc, combinedAllocator);
+    rapidjson::Value copiedRouteStats(routeStatsDoc, combinedAllocator);
+
+    combined.AddMember("rendering_stats", copiedRenderingStats, combinedAllocator);
+    combined.AddMember("route_stats", copiedRouteStats, combinedAllocator);
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+    combined.Accept(writer);
+
+    std::cout << buffer.GetString() << std::endl;
 }
 
 void GLFWView::addRoute() {

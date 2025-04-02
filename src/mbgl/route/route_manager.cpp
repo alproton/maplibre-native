@@ -18,6 +18,9 @@
 #include <mbgl/style/expression/compound_expression.hpp>
 #include <mbgl/style/expression/type.hpp>
 #include <mbgl/style/expression/dsl.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 #include <chrono>
 #include <iomanip> // For formatting
 #include <iterator>
@@ -485,31 +488,28 @@ std::string RouteManager::getBaseGeoJSONsourceName(const RouteID& routeID) const
     return GEOJSON_BASE_ROUTE_SOURCE_ID + std::to_string(routeID.id);
 }
 
-const std::string RouteManager::getStats(uint32_t tabcount) {
-    const auto& tabgen = [](uint32_t tabcount) {
-        std::string tabstr;
-        for (size_t i = 0; i < tabcount; i++) {
-            tabstr += "\t";
-        }
+const std::string RouteManager::getStats() {
+    rapidjson::Document document;
+    document.SetObject();
+    rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
 
-        return tabstr;
-    };
-    std::stringstream ss;
-    ss << tabgen(tabcount) << "{\n";
-    ss << tabgen(tabcount + 1) << "\"num_routes\" : " << std::to_string(stats_.numRoutes) << ",\n";
-    ss << tabgen(tabcount + 1) << "\"num_traffic_zones\" : " << std::to_string(stats_.numRouteSegments) << ",\n";
-    ss << tabgen(tabcount + 1) << "\"num_finalize_invocations\" : " << std::to_string(stats_.numFinalizedInvoked)
-       << ",\n";
-    ss << tabgen(tabcount + 1) << "\"inconsistant_route_API_usages\" : " << std::to_string(stats_.inconsistentAPIusage)
-       << ",\n";
-    ss << tabgen(tabcount + 1) << "\"avg_route_finalize_elapse_millis\" : " << stats_.finalizeMillis << "\n";
-    ss << tabgen(tabcount + 1) << "\"avg_route_create_interval_seconds\" : " << stats_.avgRouteCreationInterval << "\n";
-    ss << tabgen(tabcount + 1)
-       << "\"avg_route_segment_create_interval_seconds\" : " << stats_.avgRouteSegmentCreationInterval << "\n";
+    rapidjson::Value route_stats(rapidjson::kObjectType);
+    route_stats.AddMember("num_routes", stats_.numRoutes, allocator);
+    route_stats.AddMember("num_traffic_zones", stats_.numRouteSegments, allocator);
+    route_stats.AddMember("num_finalize_invocations", stats_.numFinalizedInvoked, allocator);
+    route_stats.AddMember("inconsistant_route_API_usages", stats_.inconsistentAPIusage, allocator);
+    route_stats.AddMember("avg_route_finalize_elapse_millis", stats_.finalizeMillis, allocator);
+    route_stats.AddMember("avg_route_create_interval_seconds", stats_.avgRouteCreationInterval, allocator);
+    route_stats.AddMember(
+        "avg_route_segment_create_interval_seconds", stats_.avgRouteSegmentCreationInterval, allocator);
 
-    ss << tabgen(tabcount) << "}";
+    document.AddMember("route_stats", route_stats, allocator);
 
-    return ss.str();
+    rapidjson::StringBuffer buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+    document.Accept(writer);
+
+    return buffer.GetString();
 }
 
 void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
