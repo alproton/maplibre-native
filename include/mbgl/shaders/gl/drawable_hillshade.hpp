@@ -38,17 +38,43 @@ layout (std140) uniform HillshadeEvaluatedPropsUBO {
 
 #define PI 3.141592653589793
 
+float quantize(float x, float n) {
+    return floor(x * n + 0.5) / n;
+}
+
+vec2 quantize(vec2 x, float n) {
+    return vec2(quantize(x.x, n), quantize(x.y, n));
+}
+
+vec3 quantize(vec3 x, float n) {
+    return vec3(quantize(x.r, n), quantize(x.g, n), quantize(x.b, n));
+}
+
+vec4 quantize(vec4 x, float n) {
+    return vec4(quantize(x.rgb, n), quantize(x.a, n));
+}
+
 void main() {
     vec4 pixel = texture(u_image, v_pos);
+    pixel = quantize(pixel, 6.0);
 
     vec2 deriv = ((pixel.rg * 2.0) - 1.0);
+
+    // deriv = quantize(deriv, 8.0);
+
+    float lenDeriv = length(deriv);
+
+    // lenDeriv = quantize(lenDeriv, 5.0);
 
     // We divide the slope by a scale factor based on the cosin of the pixel's approximate latitude
     // to account for mercator projection distortion. see #4807 for details
     float scaleFactor = cos(radians((u_latrange[0] - u_latrange[1]) * (1.0 - v_pos.y) + u_latrange[1]));
     // We also multiply the slope by an arbitrary z-factor of 1.25
-    float slope = atan(1.25 * length(deriv) / scaleFactor);
+    float slope = atan(1.25 * lenDeriv / scaleFactor);
     float aspect = deriv.x != 0.0 ? atan(deriv.y, -deriv.x) : PI / 2.0 * (deriv.y > 0.0 ? 1.0 : -1.0);
+
+    // slope = quantize(slope, 7.0);
+    // aspect = quantize(aspect, 7.0);
 
     float intensity = u_light.x;
     // We add PI to make this property match the global light object, which adds PI/2 to the light's azimuthal
@@ -74,6 +100,8 @@ void main() {
     float shade = abs(mod((aspect + azimuth) / PI + 0.5, 2.0) - 1.0);
     vec4 shade_color = mix(u_shadow, u_highlight, shade) * sin(scaledSlope) * clamp(intensity * 2.0, 0.0, 1.0);
     fragColor = accent_color * (1.0 - shade_color.a) + shade_color;
+
+    fragColor = quantize(fragColor, 12.0);
 
 #ifdef OVERDRAW_INSPECTOR
     fragColor = vec4(1.0);
