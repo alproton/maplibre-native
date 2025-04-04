@@ -55,6 +55,7 @@ RouteSegment::RouteSegment(const RouteSegmentOptions& routeSegOptions,
     // calculate the normalized points and the expressions
     double currDist = 0.0;
     for (const auto& pt : routeSegOptions.geometry) {
+        bool ptIntersectionFound = false;
         for (size_t i = 1; i < routeGeometry.size(); ++i) {
             const mbgl::Point<double>& pt1 = routeGeometry[i - 1];
             const mbgl::Point<double>& pt2 = pt;
@@ -63,13 +64,17 @@ RouteSegment::RouteSegment(const RouteSegmentOptions& routeSegOptions,
             if (isPointBetween(pt2, pt1, pt3)) {
                 double partialDist = mbgl::util::dist<double>(pt1, pt2);
                 currDist += partialDist;
+                ptIntersectionFound = true;
                 break;
             } else {
                 currDist += routeGeomDistances[i - 1];
             }
         }
-        double normalizedDist = currDist / routeTotalDistance;
-        normalizedPositions_.push_back(normalizedDist);
+
+        if (ptIntersectionFound) {
+            double normalizedDist = currDist / routeTotalDistance;
+            normalizedPositions_.push_back(normalizedDist);
+        }
 
         currDist = 0.0;
     }
