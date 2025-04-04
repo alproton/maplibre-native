@@ -1,10 +1,14 @@
 
 #pragma once
 
+#include <mbgl/route/route_segment.hpp>
+
 #include <mbgl/util/geometry.hpp>
 #include <mbgl/util/color.hpp>
 #include <vector>
 #include <map>
+#include <set>
+
 namespace mbgl {
 namespace route {
 
@@ -56,12 +60,18 @@ private:
         Color color;
     };
 
+    struct SegmentComparator {
+        bool operator()(const RouteSegment& lhs, const RouteSegment& rhs) const {
+            return lhs.getNormalizedPositions()[0] < rhs.getNormalizedPositions()[0];
+        }
+    };
+
     std::vector<SegmentRange> compactSegments() const;
 
     RouteOptions routeOptions_;
     double progress_ = 0.0;
     std::vector<double> segDistances_;
-    std::vector<RouteSegment> segments_;
+    std::set<RouteSegment, SegmentComparator> segments_;
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;
     double totalDistance_ = 0.0;
