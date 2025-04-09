@@ -1136,13 +1136,13 @@ void GLFWView::addTrafficSegments() {
                 routeColorTable.at(RouteColorType::InactiveRouteHeavyTrafficColor)};
     };
 
-    std::vector<TrafficBlock> trafficBlks;
-
     for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         const auto &route = iter.second;
         std::vector<mbgl::Color> colors = routeID == routeMap_.begin()->first ? getActiveColors()
                                                                               : getAlternativeColors();
+
+        std::vector<TrafficBlock> trafficBlks;
 
         // TODO: we have run out of hot keys :( . one of these days, need to create graphics tests for nav.
         bool useTestCode = false;

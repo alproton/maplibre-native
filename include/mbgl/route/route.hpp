@@ -62,6 +62,10 @@ private:
 
     struct SegmentComparator {
         bool operator()(const RouteSegment& lhs, const RouteSegment& rhs) const {
+            if (lhs.getNormalizedPositions().empty() || rhs.getNormalizedPositions().empty()) {
+                return true;
+            }
+
             return lhs.getNormalizedPositions()[0] < rhs.getNormalizedPositions()[0];
         }
     };
