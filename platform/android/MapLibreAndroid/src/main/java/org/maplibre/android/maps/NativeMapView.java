@@ -1224,8 +1224,8 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public String getRenderingStats() {
-    return nativeGetRenderingStats();
+  public String getRenderingStats(boolean oneline) {
+    return nativeGetRenderingStats(oneline);
   }
 
   @Override
@@ -1712,7 +1712,7 @@ final class NativeMapView implements NativeMap {
   //---------------------------------------------------------
 
   @Keep
-  private native String nativeGetRenderingStats();
+  private native String nativeGetRenderingStats(boolean oneline);
 
   @Keep
   private native void nativeOnLowMemory();

@@ -290,7 +290,7 @@ interface NativeMap {
 
   boolean finalizeRoutes();
 
-  String getRenderingStats();
+  String getRenderingStats(boolean oneline);
 
   String getSnapshotCapture();
 

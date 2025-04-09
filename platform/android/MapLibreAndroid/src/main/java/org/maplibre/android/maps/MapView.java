@@ -559,10 +559,12 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * Gets statistics of the underlying health of routes management and includes stats on various
    * constructs built in native code, such as memory and time take for such constructs.
    *
+   * @param oneline if true, the stats are returned in a single line, else they are returned in pretty format
+   *
    * @return a formatted string containing the statistics
    */
-  public String getRenderingStats() {
-    return nativeMapView.getRenderingStats();
+  public String getRenderingStats(boolean oneline) {
+    return nativeMapView.getRenderingStats(oneline);
   }
 
   public String getSnapshotCapture() {
