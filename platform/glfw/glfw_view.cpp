@@ -757,7 +757,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 } break;
 
                 case GLFW_KEY_Q:
-                    view->writeStats();
+                    view->writeStats(true);
                     break;
 
                 case GLFW_KEY_0:
@@ -980,7 +980,7 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
     return points.back();
 }
 
-void GLFWView::writeStats() {
+void GLFWView::writeStats(bool oneline) const {
     std::stringstream ss;
     std::string renderingStats = backend->getRendererBackend().getRenderingStats().toJSONString();
     std::string routeStats = rmptr_->getStats();
@@ -1004,7 +1004,13 @@ void GLFWView::writeStats() {
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
     combined.Accept(writer);
 
-    std::cout << buffer.GetString() << std::endl;
+    std::string jsonString = buffer.GetString();
+    if (oneline) {
+        jsonString.erase(std::remove(jsonString.begin(), jsonString.end(), '\n'), jsonString.end());
+        jsonString.erase(std::remove(jsonString.begin(), jsonString.end(), '\t'), jsonString.end());
+    }
+
+    std::cout << jsonString << std::endl;
 }
 
 std::vector<RouteID> GLFWView::getAllRoutes() const {
