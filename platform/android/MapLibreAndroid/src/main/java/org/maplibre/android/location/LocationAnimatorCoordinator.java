@@ -94,6 +94,14 @@ final class LocationAnimatorCoordinator {
     }
   }
 
+  public void onDestroy() {
+    if (customPuck == null) {
+      return;
+    }
+    customPuck.onDestroy();
+    customPuck = null;
+  }
+
   void updateAnimatorListenerHolders(@NonNull Set<AnimatorListenerHolder> listenerHolders) {
     listeners.clear();
     for (AnimatorListenerHolder holder : listenerHolders) {

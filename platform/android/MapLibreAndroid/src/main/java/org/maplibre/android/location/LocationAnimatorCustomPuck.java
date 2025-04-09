@@ -95,13 +95,13 @@ final class LocationAnimatorCustomPuck {
         }
         double t = (double)(elapsed) / (double)(customPuckAnimationOptions.lagMS);
         StampedLatLon location = lerp(previousPuckLocation, targetPuckLocation, t);
-        
+
         if (!targetPuckLocation.equals(currentPuckLocation)) {
           puckInterpolationStartTime = SystemClock.elapsedRealtime();
           previousPuckLocation = new StampedLatLon(location);
           targetPuckLocation = new StampedLatLon(currentPuckLocation);
         }
-        
+
         // Get a handler that can be used to post to the main thread
         Handler mainHandler = new Handler(context.getMainLooper());
 
@@ -134,5 +134,11 @@ final class LocationAnimatorCustomPuck {
         mainHandler.post(myRunnable);
       }
     }, 0, customPuckAnimationOptions.animationIntervalMS);
+  }
+
+  public void onDestroy() {
+    puckUpdateTimer.cancel();
+    puckUpdateTimer.purge();
+    puckUpdateTimer = null;
   }
 }

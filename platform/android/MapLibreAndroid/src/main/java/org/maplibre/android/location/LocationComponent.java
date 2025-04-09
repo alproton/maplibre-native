@@ -1087,6 +1087,7 @@ public final class LocationComponent {
    * Internal use.
    */
   public void onDestroy() {
+    locationAnimatorCoordinator.onDestroy();
   }
 
   /**
