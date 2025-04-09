@@ -116,6 +116,7 @@ std::vector<Route::SegmentRange> Route::compactSegments() const {
     compacted.push_back(sr);
 
     for (auto iter = std::next(segments_.begin()); iter != segments_.end(); ++iter) {
+        if (iter->getNormalizedPositions().empty()) continue;
         const std::vector<double>& currPositions = iter->getNormalizedPositions();
         const RouteSegmentOptions& currOptions = iter->getRouteSegmentOptions();
 
