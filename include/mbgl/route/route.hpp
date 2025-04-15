@@ -33,7 +33,7 @@ class Route {
 public:
     Route() = default;
     Route(const LineString<double>& geometry, const RouteOptions& ropts);
-    void routeSegmentCreate(const RouteSegmentOptions&);
+    bool routeSegmentCreate(const RouteSegmentOptions&);
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;
@@ -45,7 +45,6 @@ public:
     bool hasRouteSegments() const;
     const RouteOptions& getRouteOptions() const;
     bool routeSegmentsClear();
-    Route& operator=(const Route& other) noexcept;
     uint32_t getNumRouteSegments() const;
 
     std::string segmentsToString(uint32_t tabcount) const;
