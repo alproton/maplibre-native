@@ -16,7 +16,7 @@ struct RouteSegmentOptions {
 
 class RouteSegment {
 public:
-    RouteSegment() = default;
+    RouteSegment() = delete;
     RouteSegment(const RouteSegmentOptions& routeSegOptions,
                  const LineString<double>& routeGeometry,
                  const std::vector<double>& routeGeomDistances,

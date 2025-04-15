@@ -373,12 +373,13 @@ bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
             return false;
         }
 
-        routeMap_[routeID].routeSegmentCreate(routeSegOpts);
-        stats_.numRouteSegments++;
+        bool success = routeMap_[routeID].routeSegmentCreate(routeSegOpts);
+        if (success) {
+            stats_.numRouteSegments++;
+            validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
+        }
 
-        validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
-
-        return true;
+        return success;
     }
 
     return false;
@@ -525,7 +526,8 @@ const std::string RouteManager::getStats() {
     route_stats.AddMember("avg_route_create_interval_seconds", stats_.avgRouteCreationInterval, allocator);
     route_stats.AddMember(
         "avg_route_segment_create_interval_seconds", stats_.avgRouteSegmentCreationInterval, allocator);
-
+    route_stats.AddMember("num_layers", style_->getLayers().size(), allocator);
+    route_stats.AddMember("num_sources", style_->getSources().size(), allocator);
     document.AddMember("route_stats", route_stats, allocator);
 
     rapidjson::StringBuffer buffer;
