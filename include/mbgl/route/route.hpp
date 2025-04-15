@@ -49,7 +49,6 @@ public:
     bool hasRouteSegments() const;
     const RouteOptions& getRouteOptions() const;
     bool routeSegmentsClear();
-    Route& operator=(const Route& other) noexcept;
     uint32_t getNumRouteSegments() const;
 
     std::string segmentsToString(uint32_t tabcount) const;
