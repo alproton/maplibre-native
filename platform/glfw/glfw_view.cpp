@@ -1179,6 +1179,7 @@ void GLFWView::addTrafficSegments() {
 
             rmptr_->routeSegmentCreate(routeID, rsegopts);
         }
+        trafficBlks.clear();
     }
     rmptr_->finalize();
 }
