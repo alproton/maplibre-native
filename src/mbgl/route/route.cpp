@@ -104,7 +104,6 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
 }
 
 std::vector<Route::SegmentRange> Route::compactSegments() const {
-    // TODO: perhaps we should use a std::set instead of an std::vector to store the sorted segments
     std::vector<RouteSegment> segments = segments_;
     std::sort(segments.begin(), segments.end(), [](const RouteSegment& a, const RouteSegment& b) {
         return a.getNormalizedPositions()[0] < b.getNormalizedPositions()[0];
@@ -115,7 +114,7 @@ std::vector<Route::SegmentRange> Route::compactSegments() const {
     SegmentRange sr;
     double firstPos = segments[0].getNormalizedPositions()[0];
     double lastPos = segments[0].getNormalizedPositions()[segments[0].getNormalizedPositions().size() - 1];
-    sr.range = std::make_pair<double, double>(std::move(firstPos), std::move(lastPos));
+    sr.range = {firstPos, lastPos};
     sr.color = segments[0].getRouteSegmentOptions().color;
     compacted.push_back(sr);
 
@@ -129,7 +128,7 @@ std::vector<Route::SegmentRange> Route::compactSegments() const {
         const auto& currDist = currPositions[0];
         const auto& prevColor = prevOptions.color;
         const auto& currColor = currOptions.color;
-        bool isIntersecting = prevDist > currDist;
+        bool isIntersecting = prevDist >= currDist;
         if (isIntersecting) {
             if (prevColor == currColor) {
                 // merge the segments
@@ -139,7 +138,7 @@ std::vector<Route::SegmentRange> Route::compactSegments() const {
             } else if (prevOptions.priority >= currOptions.priority) {
                 firstPos = prevPositions[prevPositions.size() - 1] + EPSILON;
                 lastPos = currPositions[currPositions.size() - 1];
-                sr.range = std::make_pair(firstPos, lastPos);
+                sr.range = {firstPos, lastPos};
                 sr.color = currColor;
 
             } else if (prevOptions.priority < currOptions.priority) {
@@ -149,13 +148,13 @@ std::vector<Route::SegmentRange> Route::compactSegments() const {
                 // add the current segment
                 firstPos = currPositions[0];
                 lastPos = currPositions[currPositions.size() - 1];
-                sr.range = std::make_pair(firstPos, lastPos);
+                sr.range = {firstPos, lastPos};
                 sr.color = currColor;
             }
         } else {
             firstPos = currPositions[0];
             lastPos = currPositions[currPositions.size() - 1];
-            sr.range = std::make_pair(firstPos, lastPos);
+            sr.range = {firstPos, lastPos};
             sr.color = currColor;
         }
 
@@ -284,20 +283,6 @@ std::string Route::segmentsToString(uint32_t tabcount) const {
     ss << tabs(tabcount) << "]";
 
     return ss.str();
-}
-
-Route& Route::operator=(const Route& other) noexcept {
-    if (this == &other) {
-        return *this;
-    }
-    routeOptions_ = other.routeOptions_;
-    progress_ = other.progress_;
-    segDistances_ = other.segDistances_;
-    segments_ = other.segments_;
-    geometry_ = other.geometry_;
-    totalDistance_ = other.totalDistance_;
-    segGradient_ = other.segGradient_;
-    return *this;
 }
 
 } // namespace route
