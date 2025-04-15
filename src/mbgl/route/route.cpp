@@ -86,7 +86,7 @@ bool Route::hasRouteSegments() const {
 
 void Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
     RouteSegment routeSeg(rsegopts, geometry_, segDistances_, totalDistance_);
-    segments_.insert(routeSeg);
+    segments_.push_back(routeSeg);
     // regenerate the gradients
     segGradient_.clear();
 }
@@ -115,16 +115,14 @@ std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeTy
     double firstPos = segments[0].getNormalizedPositions()[0];
     double lastPos = segments[0].getNormalizedPositions()[segments[0].getNormalizedPositions().size() - 1];
     sr.range = {firstPos, lastPos};
-    sr.color = routeType == RouteType::Inner ? segments[0].getRouteSegmentOptions().color
-                                             : segments[0].getRouteSegmentOptions().outerColor;
+    sr.color = segments[0].getRouteSegmentOptions().color;
     compacted.push_back(sr);
 
-    for (auto iter = std::next(segments_.begin()); iter != segments_.end(); ++iter) {
-        const std::vector<double>& currPositions = iter->getNormalizedPositions();
-        const RouteSegmentOptions& currOptions = iter->getRouteSegmentOptions();
-
-        const std::vector<double>& prevPositions = std::prev(iter)->getNormalizedPositions();
-        const RouteSegmentOptions& prevOptions = std::prev(iter)->getRouteSegmentOptions();
+    for (size_t i = 1; i < segments.size(); i++) {
+        const std::vector<double>& prevPositions = segments[i - 1].getNormalizedPositions();
+        const std::vector<double>& currPositions = segments[i].getNormalizedPositions();
+        const RouteSegmentOptions& prevOptions = segments[i - 1].getRouteSegmentOptions();
+        const RouteSegmentOptions& currOptions = segments[i].getRouteSegmentOptions();
 
         const auto& prevDist = prevPositions[prevPositions.size() - 1];
         const auto& currDist = currPositions[0];
@@ -277,9 +275,9 @@ bool Route::routeSegmentsClear() {
 std::string Route::segmentsToString(uint32_t tabcount) const {
     std::stringstream ss;
     ss << tabs(tabcount) << "[" << std::endl;
-    for (auto iter = segments_.begin(); iter != segments_.end(); ++iter) {
-        auto segment = *iter;
-        std::string terminatingCommaStr = std::next(iter) == segments_.end() ? "" : ",";
+    for (size_t i = 0; i < segments_.size(); i++) {
+        const auto& segment = segments_[i];
+        std::string terminatingCommaStr = i == segments_.size() - 1 ? "" : ",";
         ss << toString(segment.getRouteSegmentOptions(), segment.getNormalizedPositions(), tabcount + 1)
            << terminatingCommaStr << std::endl;
     }
