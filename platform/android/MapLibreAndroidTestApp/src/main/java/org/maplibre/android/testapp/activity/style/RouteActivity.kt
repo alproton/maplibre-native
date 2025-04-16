@@ -23,7 +23,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_routes)
+        // setContentView(R.layout.activity_routes)
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
@@ -51,7 +51,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         for (i in 0..route_resolution) {
             val anglerad : Double = (i / route_resolution) * 2.0 * Math.PI
 
-            
+
             val pt : Point = Point.fromLngLat(radius * Math.sin(anglerad),
                                                     radius * Math.cos(anglerad))
             points.add(pt)
