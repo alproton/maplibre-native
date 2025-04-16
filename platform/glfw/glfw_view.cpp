@@ -1173,10 +1173,11 @@ void GLFWView::addTrafficSegments() {
         rmptr_->routeClearSegments(routeID);
         for (size_t i = 0; i < trafficBlks.size(); i++) {
             mbgl::route::RouteSegmentOptions rsegopts;
-            rsegopts.color = trafficBlks[i].color;
+            uint32_t coloridx = i % (trafficBlks.size() - 1);
+            rsegopts.color = colors[coloridx];
             rsegopts.geometry = trafficBlks[i].block;
             rsegopts.priority = trafficBlks[i].priority;
-
+            rsegopts.outerColor = mbgl::Color(float(i) / float(trafficBlks.size() - 1), 0.0, 0.0, 1.0);
             rmptr_->routeSegmentCreate(routeID, rsegopts);
         }
         trafficBlks.clear();
@@ -1278,7 +1279,7 @@ GLFWRendererFrontend *GLFWView::getRenderFrontend() const {
 void GLFWView::incrementRouteProgress() {
     routeProgress_ += ROUTE_PROGRESS_STEP;
     std::clamp<double>(routeProgress_, 0.0, 1.0f);
-    // std::cout<<"Route progress: "<<routeProgress_<<std::endl;
+    std::cout << "Route progress: " << routeProgress_ << std::endl;
     for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         if (useRouteProgressPercent_) {
