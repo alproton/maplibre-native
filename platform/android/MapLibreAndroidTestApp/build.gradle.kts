@@ -107,6 +107,8 @@ dependencies {
     implementation(libs.okhttp3)
     implementation(libs.kotlinxCoroutinesCore)
     implementation(libs.kotlinxCoroutinesAndroid)
+    implementation(libs.appcompat)
+    implementation(libs.activity)
 
     debugImplementation(libs.leakCanary)
 

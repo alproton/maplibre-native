@@ -28,6 +28,11 @@ struct RouteOptions {
     std::string layerBefore;
 };
 
+enum class RouteType {
+    Casing,
+    Inner
+};
+
 /***
  * A route is a polyline that represents a road between two locations. There can be multiple routes in the case of
  * multiple stops. Each route can have route segments. Routes segments represents a traffic zone. A route must have a
@@ -38,7 +43,7 @@ public:
     Route() = default;
     Route(const LineString<double>& geometry, const RouteOptions& ropts);
     void routeSegmentCreate(const RouteSegmentOptions&);
-    std::map<double, mbgl::Color> getRouteSegmentColorStops(const mbgl::Color& routeColor);
+    std::map<double, mbgl::Color> getRouteSegmentColorStops(const RouteType& routeType, const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;
     void routeSetProgress(const double t);
@@ -65,12 +70,12 @@ private:
         }
     };
 
-    std::vector<SegmentRange> compactSegments() const;
+    std::vector<SegmentRange> compactSegments(const RouteType& routeType) const;
 
     RouteOptions routeOptions_;
     double progress_ = 0.0;
     std::vector<double> segDistances_;
-    std::set<RouteSegment, SegmentComparator> segments_;
+    std::vector<RouteSegment> segments_;
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;
     double totalDistance_ = 0.0;
