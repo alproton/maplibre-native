@@ -1,5 +1,6 @@
 package org.maplibre.android.testapp.activity.style
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.annotation.IntegerRes
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +10,7 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.RouteID
 import org.maplibre.android.maps.RouteOptions
+import org.maplibre.android.maps.RouteSegmentOptions
 import org.maplibre.android.maps.Style
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ApiKeyUtils
@@ -60,12 +62,28 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         var route_options : RouteOptions = RouteOptions();
         route_options.innerWidth = 14.0
         route_options.outerWidth = 16.0
-        route_options.innerColor = 0xFF0000
-        route_options.outerColor = 0x00FF00
+        route_options.innerColor = Color.argb(255, 0, 0, 255)
+        route_options.outerColor = Color.argb(255, 0, 255, 0)
 
         routeID = mapView.createRoute(route_geometry, route_options)
-        mapView.finalizeRoutes()
 
+        var route_segment_geom = mutableListOf<Point>()
+        for(i in 0..route_resolution/2) {
+            val anglerad : Double = (i / route_resolution) * 2.0 * Math.PI
+
+
+            val pt : Point = Point.fromLngLat(radius * Math.sin(anglerad),
+                radius * Math.cos(anglerad))
+            route_segment_geom.add(pt)
+        }
+        var rsopts = RouteSegmentOptions()
+        rsopts.color = Color.argb(255, 120, 0, 0)
+        rsopts.outerColor = Color.argb(255, 0, 122, 0)
+        rsopts.priority = 0
+        rsopts.geometry = LineString.fromLngLats(route_segment_geom)
+        mapView.createRouteSegment(routeID, rsopts)
+
+        mapView.finalizeRoutes()
     }
 
     override fun onStart() {
