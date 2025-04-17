@@ -33,6 +33,8 @@ kotlinxSerializationJson = "1.6.0"
 kotlinxCoroutines = { strictly = "[1.0, 2.0[" }
 
 androidGradlePlugin = "8.6.0"
+appcompatVersion = "1.7.0"
+activity = "1.8.0"
 
 [libraries]
 kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
@@ -83,6 +85,8 @@ androidxTestCoreKtx = { group = "androidx.test", name = "core-ktx", version = "1
 kotlinxSerializationJson = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.7.2" }
 
 androidGradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompatVersion" }
+activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 
 
 [plugins]

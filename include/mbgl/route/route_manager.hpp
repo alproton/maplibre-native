@@ -58,9 +58,9 @@ public:
     ~RouteManager();
 
 private:
-    static const std::string BASE_ROUTE_LAYER;
+    static const std::string CASING_ROUTE_LAYER;
     static const std::string ACTIVE_ROUTE_LAYER;
-    static const std::string GEOJSON_BASE_ROUTE_SOURCE_ID;
+    static const std::string GEOJSON_CASING_ROUTE_SOURCE_ID;
     static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
 
     enum class DirtyType {
