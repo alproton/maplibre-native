@@ -27,9 +27,9 @@
 namespace mbgl {
 namespace route {
 
-const std::string RouteManager::BASE_ROUTE_LAYER = "base_route_layer_";
+const std::string RouteManager::CASING_ROUTE_LAYER = "base_route_layer_";
 const std::string RouteManager::ACTIVE_ROUTE_LAYER = "active_route_layer_";
-const std::string RouteManager::GEOJSON_BASE_ROUTE_SOURCE_ID = "base_route_geojson_source_";
+const std::string RouteManager::GEOJSON_CASING_ROUTE_SOURCE_ID = "base_route_geojson_source_";
 const std::string RouteManager::GEOJSON_ACTIVE_ROUTE_SOURCE_ID = "active_route_geojson_source_";
 
 namespace {
@@ -501,7 +501,7 @@ std::string RouteManager::getActiveRouteLayerName(const RouteID& routeID) const 
 }
 
 std::string RouteManager::getBaseRouteLayerName(const RouteID& routeID) const {
-    return BASE_ROUTE_LAYER + std::to_string(routeID.id);
+    return CASING_ROUTE_LAYER + std::to_string(routeID.id);
 }
 
 std::string RouteManager::getActiveGeoJSONsourceName(const RouteID& routeID) const {
@@ -509,7 +509,7 @@ std::string RouteManager::getActiveGeoJSONsourceName(const RouteID& routeID) con
 }
 
 std::string RouteManager::getBaseGeoJSONsourceName(const RouteID& routeID) const {
-    return GEOJSON_BASE_ROUTE_SOURCE_ID + std::to_string(routeID.id);
+    return GEOJSON_CASING_ROUTE_SOURCE_ID + std::to_string(routeID.id);
 }
 
 const std::string RouteManager::getStats() {
@@ -662,8 +662,8 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             } break;
         }
 
-        std::string baseLayerName = getBaseRouteLayerName(routeID);
-        std::string baseGeoJSONSourceName = getBaseGeoJSONsourceName(routeID);
+        std::string casingLayerName = getBaseRouteLayerName(routeID);
+        std::string casingGeoJSONSourceName = getBaseGeoJSONsourceName(routeID);
         std::string activeLayerName = getActiveRouteLayerName(routeID);
         std::string activeGeoJSONSourceName = getActiveGeoJSONsourceName(routeID);
         auto& route = routeMap_.at(routeID);
@@ -676,8 +676,8 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
                 baseZoomStops = !routeOptions.outerWidthZoomStops.empty() ? routeOptions.outerWidthZoomStops
                                                                           : getDefaultRouteLineCasingWeights();
             }
-            if (!createLayer(baseGeoJSONSourceName,
-                             baseLayerName,
+            if (!createLayer(casingGeoJSONSourceName,
+                             casingLayerName,
                              route,
                              routeOptions.outerColor,
                              routeOptions.outerClipColor,
@@ -711,9 +711,9 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             stats_.inconsistentAPIusage = true;
             mbgl::Log::Info(mbgl::Event::Style, "Trying to update a layer that is not created");
         }
-        Layer* baseRouteLayer = style_->getLayer(baseLayerName);
-        LineLayer* baseRouteLineLayer = static_cast<LineLayer*>(baseRouteLayer);
-        if (!baseRouteLineLayer) {
+        Layer* baseRouteLayer = style_->getLayer(casingLayerName);
+        LineLayer* casingRouteLineLayer = static_cast<LineLayer*>(baseRouteLayer);
+        if (!casingRouteLineLayer) {
             stats_.inconsistentAPIusage = true;
             mbgl::Log::Info(mbgl::Event::Style, "Trying to update a layer that is not created");
         }
@@ -722,25 +722,30 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         std::unordered_map<std::string, std::string> gradientDebugMap;
         if (updateGradients) {
             // create the gradient expression for active route.
-            std::map<double, mbgl::Color> gradientMap = route.getRouteSegmentColorStops(routeOptions.innerColor);
+            std::map<double, mbgl::Color> innerGradientMap = route.getRouteSegmentColorStops(RouteType::Inner,
+                                                                                             routeOptions.innerColor);
 
-            std::unique_ptr<expression::Expression> gradientExpression = createGradientExpression(gradientMap);
+            std::unique_ptr<expression::Expression> innerGradientExpression = createGradientExpression(
+                innerGradientMap);
 
-            ColorRampPropertyValue activeColorRampProp(std::move(gradientExpression));
+            ColorRampPropertyValue activeColorRampProp(std::move(innerGradientExpression));
             activeRouteLineLayer->setLineGradient(activeColorRampProp);
 
             // create the gradient expression for the base route
-            std::map<double, mbgl::Color> baseLayerGradient = route.getRouteColorStops(routeOptions.outerColor);
-            std::unique_ptr<expression::Expression> baseLayerExpression = createGradientExpression(baseLayerGradient);
+            std::map<double, mbgl::Color> casingLayerGradient = route.getRouteSegmentColorStops(
+                RouteType::Casing, routeOptions.outerColor);
+            // std::map<double, mbgl::Color> casingLayerGradient = route.getRouteColorStops(routeOptions.outerColor);
+            std::unique_ptr<expression::Expression> casingLayerExpression = createGradientExpression(
+                casingLayerGradient);
 
-            ColorRampPropertyValue baseColorRampProp(std::move(baseLayerExpression));
-            baseRouteLineLayer->setLineGradient(baseColorRampProp);
+            ColorRampPropertyValue casingColorRampProp(std::move(casingLayerExpression));
+            casingRouteLineLayer->setLineGradient(casingColorRampProp);
         }
 
         if (updateProgress) {
             double progress = route.routeGetProgress();
             activeRouteLineLayer->setGradientLineClip(progress);
-            baseRouteLineLayer->setGradientLineClip(progress);
+            casingRouteLineLayer->setGradientLineClip(progress);
         }
     }
 }
@@ -755,7 +760,7 @@ void RouteManager::finalize() {
     {
         assert(style_ != nullptr);
         if (style_ != nullptr) {
-            // create the layers and geojsonsource for base route
+            // create the layers and geojsonsource for casing route
             for (const auto& iter : dirtyRouteMap_) {
                 DirtyType dirtyType = iter.first;
                 for (const auto& routeID : iter.second) {

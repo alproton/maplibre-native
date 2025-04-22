@@ -109,7 +109,7 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
     return gradients;
 }
 
-std::vector<Route::SegmentRange> Route::compactSegments() const {
+std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeType) const {
     std::vector<RouteSegment> segments = segments_;
 
     std::sort(segments.begin(), segments.end(), [](const RouteSegment& a, const RouteSegment& b) {
@@ -130,7 +130,8 @@ std::vector<Route::SegmentRange> Route::compactSegments() const {
     double firstPos = segments[0].getNormalizedPositions()[0];
     double lastPos = segments[0].getNormalizedPositions()[segments[0].getNormalizedPositions().size() - 1];
     sr.range = {firstPos, lastPos};
-    sr.color = segments[0].getRouteSegmentOptions().color;
+    sr.color = routeType == RouteType::Inner ? segments[0].getRouteSegmentOptions().color
+                                             : segments[0].getRouteSegmentOptions().outerColor;
     compacted.push_back(sr);
 
     for (size_t i = 1; i < segments.size(); i++) {
@@ -141,8 +142,8 @@ std::vector<Route::SegmentRange> Route::compactSegments() const {
 
         const auto& prevDist = prevPositions[prevPositions.size() - 1];
         const auto& currDist = currPositions[0];
-        const auto& prevColor = prevOptions.color;
-        const auto& currColor = currOptions.color;
+        const auto& prevColor = routeType == RouteType::Inner ? prevOptions.color : prevOptions.outerColor;
+        const auto& currColor = routeType == RouteType::Inner ? currOptions.color : prevOptions.outerColor;
         bool isIntersecting = prevDist >= currDist;
         if (isIntersecting) {
             if (prevColor == currColor) {
@@ -179,13 +180,14 @@ std::vector<Route::SegmentRange> Route::compactSegments() const {
     return compacted;
 }
 
-std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color& routeColor) {
+std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& routeType,
+                                                               const mbgl::Color& routeColor) {
     std::map<double, mbgl::Color> colorStops;
     if (segments_.empty()) {
         return getRouteColorStops(routeColor);
     }
 
-    std::vector<SegmentRange> compacted = compactSegments();
+    std::vector<SegmentRange> compacted = compactSegments(routeType);
     // Initialize the color ramp with the routeColor
     colorStops[0.0] = routeColor;
 
