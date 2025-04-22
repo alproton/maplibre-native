@@ -1685,6 +1685,7 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
                                            jint routeID,
                                            const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
                                            jint color,
+                                           jint outerColor,
                                            jint priority) {
     if (routeMgr) {
         using namespace mbgl::android::conversion;
@@ -1693,9 +1694,14 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
         rsegopts.geometry = linestring;
         rsegopts.priority = static_cast<uint32_t>(priority);
         Converter<mbgl::Color, int> colorConverter;
-        Result<Color> segmentColorRes = colorConverter(env, color);
-        if (segmentColorRes) {
-            rsegopts.color = *segmentColorRes;
+        Result<Color> innerSegmentColorRes = colorConverter(env, color);
+        if (innerSegmentColorRes) {
+            rsegopts.color = *innerSegmentColorRes;
+        }
+
+        Result<Color> outerSegmentColorRes = colorConverter(env, outerColor);
+        if (outerSegmentColorRes) {
+            rsegopts.outerColor = *outerSegmentColorRes;
         }
 
         return routeMgr->routeSegmentCreate(RouteID(routeID), rsegopts);
