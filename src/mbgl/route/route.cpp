@@ -116,6 +116,8 @@ std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeTy
 
         if (!a.getNormalizedPositions().empty() && !b.getNormalizedPositions().empty()) {
             return a.getNormalizedPositions()[0] < b.getNormalizedPositions()[0];
+        } else {
+            Log::Error(Event::General, "RouteSegment::compactSegments: empty segment positions");
         }
 
         return false;
