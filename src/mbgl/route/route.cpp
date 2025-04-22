@@ -84,11 +84,17 @@ bool Route::hasRouteSegments() const {
     return !segments_.empty();
 }
 
-void Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
+bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
     RouteSegment routeSeg(rsegopts, geometry_, segDistances_, totalDistance_);
-    segments_.insert(routeSeg);
+    // client may send invalid segment geometry that is not on the route at all. only add valid segments with segment
+    // positions lying on the route.
+    if (routeSeg.getNormalizedPositions().empty()) return false;
+
+    segments_.push_back(routeSeg);
     // regenerate the gradients
     segGradient_.clear();
+
+    return true;
 }
 
 mbgl::LineString<double> Route::getGeometry() const {
@@ -103,29 +109,41 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
     return gradients;
 }
 
-std::vector<Route::SegmentRange> Route::compactSegments() const {
+std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeType) const {
+    std::vector<RouteSegment> segments = segments_;
+
+    std::sort(segments.begin(), segments.end(), [](const RouteSegment& a, const RouteSegment& b) {
+        assert(!a.getNormalizedPositions().empty() && !b.getNormalizedPositions().empty());
+
+        if (!a.getNormalizedPositions().empty() && !b.getNormalizedPositions().empty()) {
+            return a.getNormalizedPositions()[0] < b.getNormalizedPositions()[0];
+        } else {
+            Log::Error(Event::Route, "Route::compactSegments() : Invalid route segment positions");
+        }
+
+        return false;
+    });
+
     std::vector<SegmentRange> compacted;
     // insert the first range
     SegmentRange sr;
-    const auto& firstSegment = segments_.begin();
-    uint32_t firstSegmentNormalizedSize = firstSegment->getNormalizedPositions().size();
-    double firstPos = firstSegment->getNormalizedPositions()[0];
-    double lastPos = firstSegment->getNormalizedPositions()[firstSegmentNormalizedSize - 1];
+    double firstPos = segments[0].getNormalizedPositions()[0];
+    double lastPos = segments[0].getNormalizedPositions()[segments[0].getNormalizedPositions().size() - 1];
     sr.range = {firstPos, lastPos};
-    sr.color = segments_.begin()->getRouteSegmentOptions().color;
+    sr.color = routeType == RouteType::Inner ? segments[0].getRouteSegmentOptions().color
+                                             : segments[0].getRouteSegmentOptions().outerColor;
     compacted.push_back(sr);
 
-    for (auto iter = std::next(segments_.begin()); iter != segments_.end(); ++iter) {
-        const std::vector<double>& currPositions = iter->getNormalizedPositions();
-        const RouteSegmentOptions& currOptions = iter->getRouteSegmentOptions();
-
-        const std::vector<double>& prevPositions = std::prev(iter)->getNormalizedPositions();
-        const RouteSegmentOptions& prevOptions = std::prev(iter)->getRouteSegmentOptions();
+    for (size_t i = 1; i < segments.size(); i++) {
+        const std::vector<double>& prevPositions = segments[i - 1].getNormalizedPositions();
+        const std::vector<double>& currPositions = segments[i].getNormalizedPositions();
+        const RouteSegmentOptions& prevOptions = segments[i - 1].getRouteSegmentOptions();
+        const RouteSegmentOptions& currOptions = segments[i].getRouteSegmentOptions();
 
         const auto& prevDist = prevPositions[prevPositions.size() - 1];
         const auto& currDist = currPositions[0];
-        const auto& prevColor = prevOptions.color;
-        const auto& currColor = currOptions.color;
+        const auto& prevColor = routeType == RouteType::Inner ? prevOptions.color : prevOptions.outerColor;
+        const auto& currColor = routeType == RouteType::Inner ? currOptions.color : prevOptions.outerColor;
         bool isIntersecting = prevDist >= currDist;
         if (isIntersecting) {
             if (prevColor == currColor) {
@@ -162,13 +180,14 @@ std::vector<Route::SegmentRange> Route::compactSegments() const {
     return compacted;
 }
 
-std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const mbgl::Color& routeColor) {
+std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& routeType,
+                                                               const mbgl::Color& routeColor) {
     std::map<double, mbgl::Color> colorStops;
     if (segments_.empty()) {
         return getRouteColorStops(routeColor);
     }
 
-    std::vector<SegmentRange> compacted = compactSegments();
+    std::vector<SegmentRange> compacted = compactSegments(routeType);
     // Initialize the color ramp with the routeColor
     colorStops[0.0] = routeColor;
 
@@ -272,29 +291,15 @@ bool Route::routeSegmentsClear() {
 std::string Route::segmentsToString(uint32_t tabcount) const {
     std::stringstream ss;
     ss << tabs(tabcount) << "[" << std::endl;
-    for (auto iter = segments_.begin(); iter != segments_.end(); ++iter) {
-        auto segment = *iter;
-        std::string terminatingCommaStr = std::next(iter) == segments_.end() ? "" : ",";
+    for (size_t i = 0; i < segments_.size(); i++) {
+        const auto& segment = segments_[i];
+        std::string terminatingCommaStr = i == segments_.size() - 1 ? "" : ",";
         ss << toString(segment.getRouteSegmentOptions(), segment.getNormalizedPositions(), tabcount + 1)
            << terminatingCommaStr << std::endl;
     }
     ss << tabs(tabcount) << "]";
 
     return ss.str();
-}
-
-Route& Route::operator=(const Route& other) noexcept {
-    if (this == &other) {
-        return *this;
-    }
-    routeOptions_ = other.routeOptions_;
-    progress_ = other.progress_;
-    segDistances_ = other.segDistances_;
-    segments_ = other.segments_;
-    geometry_ = other.geometry_;
-    totalDistance_ = other.totalDistance_;
-    segGradient_ = other.segGradient_;
-    return *this;
 }
 
 } // namespace route

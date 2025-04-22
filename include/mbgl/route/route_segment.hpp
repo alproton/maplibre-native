@@ -10,13 +10,14 @@ namespace route {
 
 struct RouteSegmentOptions {
     Color color = Color(1.0f, 1.f, 1.0f, 1.0f);
+    Color outerColor = Color(1.0f, 0.f, 0.0f, 1.0f);
     LineString<double> geometry;
     uint32_t priority = 0;
 };
 
 class RouteSegment {
 public:
-    RouteSegment() = default;
+    RouteSegment() = delete;
     RouteSegment(const RouteSegmentOptions& routeSegOptions,
                  const LineString<double>& routeGeometry,
                  const std::vector<double>& routeGeomDistances,

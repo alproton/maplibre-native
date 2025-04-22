@@ -757,7 +757,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 } break;
 
                 case GLFW_KEY_Q:
-                    view->writeStats();
+                    view->writeStats(true);
                     break;
 
                 case GLFW_KEY_0:
@@ -980,7 +980,7 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
     return points.back();
 }
 
-void GLFWView::writeStats() {
+void GLFWView::writeStats(bool oneline) const {
     std::stringstream ss;
     std::string renderingStats = backend->getRendererBackend().getRenderingStats().toJSONString();
     std::string routeStats = rmptr_->getStats();
@@ -1004,7 +1004,13 @@ void GLFWView::writeStats() {
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
     combined.Accept(writer);
 
-    std::cout << buffer.GetString() << std::endl;
+    std::string jsonString = buffer.GetString();
+    if (oneline) {
+        jsonString.erase(std::remove(jsonString.begin(), jsonString.end(), '\n'), jsonString.end());
+        jsonString.erase(std::remove(jsonString.begin(), jsonString.end(), '\t'), jsonString.end());
+    }
+
+    std::cout << jsonString << std::endl;
 }
 
 std::vector<RouteID> GLFWView::getAllRoutes() const {
@@ -1178,12 +1184,14 @@ void GLFWView::addTrafficSegments() {
         rmptr_->routeClearSegments(routeID);
         for (size_t i = 0; i < trafficBlks.size(); i++) {
             mbgl::route::RouteSegmentOptions rsegopts;
-            rsegopts.color = trafficBlks[i].color;
+            uint32_t coloridx = i % (trafficBlks.size() - 1);
+            rsegopts.color = colors[coloridx];
             rsegopts.geometry = trafficBlks[i].block;
             rsegopts.priority = trafficBlks[i].priority;
-
+            rsegopts.outerColor = mbgl::Color(float(i) / float(trafficBlks.size() - 1), 0.0, 0.0, 1.0);
             rmptr_->routeSegmentCreate(routeID, rsegopts);
         }
+        trafficBlks.clear();
     }
     rmptr_->finalize();
 }
@@ -1282,7 +1290,7 @@ GLFWRendererFrontend *GLFWView::getRenderFrontend() const {
 void GLFWView::incrementRouteProgress() {
     routeProgress_ += ROUTE_PROGRESS_STEP;
     std::clamp<double>(routeProgress_, 0.0, 1.0f);
-    // std::cout<<"Route progress: "<<routeProgress_<<std::endl;
+    std::cout << "Route progress: " << routeProgress_ << std::endl;
     for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         if (useRouteProgressPercent_) {

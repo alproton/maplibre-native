@@ -61,6 +61,11 @@
 #include "tile/tile_operation.hpp"
 #include "mbgl/route/route_manager.hpp"
 #include "mbgl/route/route.hpp"
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/error/en.h>
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
 
 #include "android_renderer_backend.hpp"
 
@@ -1680,6 +1685,7 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
                                            jint routeID,
                                            const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
                                            jint color,
+                                           jint outerColor,
                                            jint priority) {
     if (routeMgr) {
         using namespace mbgl::android::conversion;
@@ -1688,9 +1694,14 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
         rsegopts.geometry = linestring;
         rsegopts.priority = static_cast<uint32_t>(priority);
         Converter<mbgl::Color, int> colorConverter;
-        Result<Color> segmentColorRes = colorConverter(env, color);
-        if (segmentColorRes) {
-            rsegopts.color = *segmentColorRes;
+        Result<Color> innerSegmentColorRes = colorConverter(env, color);
+        if (innerSegmentColorRes) {
+            rsegopts.color = *innerSegmentColorRes;
+        }
+
+        Result<Color> outerSegmentColorRes = colorConverter(env, outerColor);
+        if (outerSegmentColorRes) {
+            rsegopts.outerColor = *outerSegmentColorRes;
         }
 
         return routeMgr->routeSegmentCreate(RouteID(routeID), rsegopts);
@@ -1731,14 +1742,38 @@ jboolean NativeMapView::routesFinalize(JNIEnv& env) {
     return false;
 }
 
-jni::Local<jni::String> NativeMapView::getRenderingStats(JNIEnv& env) {
+jni::Local<jni::String> NativeMapView::getRenderingStats(JNIEnv& env, jni::jboolean oneline) {
     std::stringstream ss;
-    gfx::RenderingStats stats = mapRenderer.getRenderingStats();
-    ss << stats.toJSONString();
-    if (routeMgr) {
-        ss << routeMgr->getStats();
+    std::string renderingStats = mapRenderer.getRenderingStats().toJSONString();
+    std::string routeStats = routeMgr->getStats();
+    rapidjson::Document renderStatsDoc;
+    renderStatsDoc.Parse(renderingStats.c_str());
+    rapidjson::Document routeStatsDoc;
+    routeStatsDoc.Parse(routeStats.c_str());
+
+    rapidjson::Document combined;
+    combined.SetObject();
+
+    rapidjson::Document::AllocatorType& combinedAllocator = combined.GetAllocator();
+
+    rapidjson::Value copiedRenderingStats(renderStatsDoc, combinedAllocator);
+    rapidjson::Value copiedRouteStats(routeStatsDoc, combinedAllocator);
+
+    combined.AddMember("rendering_stats", copiedRenderingStats, combinedAllocator);
+    combined.AddMember("route_stats", copiedRouteStats, combinedAllocator);
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+    combined.Accept(writer);
+
+    std::string jsonString = buffer.GetString();
+
+    if (oneline) {
+        jsonString.erase(std::remove(jsonString.begin(), jsonString.end(), '\n'), jsonString.end());
+        jsonString.erase(std::remove(jsonString.begin(), jsonString.end(), '\t'), jsonString.end());
     }
-    return jni::Make<jni::String>(env, ss.str());
+
+    return jni::Make<jni::String>(env, jsonString);
 }
 
 void NativeMapView::onRegisterShaders(gfx::ShaderRegistry&) {};

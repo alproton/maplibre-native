@@ -256,6 +256,7 @@ public:
                                 jint routeID,
                                 const jni::Object<mbgl::android::geojson::LineString>& segmentGeom,
                                 jint color,
+                                jint outerColor,
                                 jint priority);
 
     jboolean routeProgressSet(JNIEnv& env, jint routeID, jdouble progress);
@@ -275,7 +276,7 @@ public:
     jboolean routesFinalize(JNIEnv& env);
     //------------------------------------------------
 
-    jni::Local<jni::String> getRenderingStats(JNIEnv& env);
+    jni::Local<jni::String> getRenderingStats(JNIEnv& env, jni::jboolean oneline);
 
     jni::jdouble getTopOffsetPixelsForAnnotationSymbol(JNIEnv&, const jni::String&);
 
