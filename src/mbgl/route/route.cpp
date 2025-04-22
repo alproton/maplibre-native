@@ -302,19 +302,5 @@ std::string Route::segmentsToString(uint32_t tabcount) const {
     return ss.str();
 }
 
-Route& Route::operator=(const Route& other) noexcept {
-    if (this == &other) {
-        return *this;
-    }
-    routeOptions_ = other.routeOptions_;
-    progress_ = other.progress_;
-    segDistances_ = other.segDistances_;
-    segments_ = other.segments_;
-    geometry_ = other.geometry_;
-    totalDistance_ = other.totalDistance_;
-    segGradient_ = other.segGradient_;
-    return *this;
-}
-
 } // namespace route
 } // namespace mbgl
