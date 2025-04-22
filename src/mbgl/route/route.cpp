@@ -111,13 +111,14 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
 
 std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeType) const {
     std::vector<RouteSegment> segments = segments_;
+
     std::sort(segments.begin(), segments.end(), [](const RouteSegment& a, const RouteSegment& b) {
         assert(!a.getNormalizedPositions().empty() && !b.getNormalizedPositions().empty());
 
         if (!a.getNormalizedPositions().empty() && !b.getNormalizedPositions().empty()) {
             return a.getNormalizedPositions()[0] < b.getNormalizedPositions()[0];
         } else {
-            Log::Error(Event::General, "RouteSegment::compactSegments: empty segment positions");
+            Log::Error(Event::Route, "Route::compactSegments() : Invalid route segment positions");
         }
 
         return false;
@@ -299,6 +300,20 @@ std::string Route::segmentsToString(uint32_t tabcount) const {
     ss << tabs(tabcount) << "]";
 
     return ss.str();
+}
+
+Route& Route::operator=(const Route& other) noexcept {
+    if (this == &other) {
+        return *this;
+    }
+    routeOptions_ = other.routeOptions_;
+    progress_ = other.progress_;
+    segDistances_ = other.segDistances_;
+    segments_ = other.segments_;
+    geometry_ = other.geometry_;
+    totalDistance_ = other.totalDistance_;
+    segGradient_ = other.segGradient_;
+    return *this;
 }
 
 } // namespace route

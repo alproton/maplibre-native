@@ -29,7 +29,8 @@ enum class Event : uint8_t {
     Android,
     Crash,
     Glyph,
-    Timing
+    Timing,
+    Route
 };
 
 struct EventPermutation {
