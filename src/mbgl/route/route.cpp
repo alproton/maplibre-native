@@ -84,11 +84,17 @@ bool Route::hasRouteSegments() const {
     return !segments_.empty();
 }
 
-void Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
+bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
     RouteSegment routeSeg(rsegopts, geometry_, segDistances_, totalDistance_);
+    // client may send invalid segment geometry that is not on the route at all. only add valid segments with segment
+    // positions lying on the route.
+    if (routeSeg.getNormalizedPositions().empty()) return false;
+
     segments_.push_back(routeSeg);
     // regenerate the gradients
     segGradient_.clear();
+
+    return true;
 }
 
 mbgl::LineString<double> Route::getGeometry() const {
@@ -106,7 +112,13 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
 std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeType) const {
     std::vector<RouteSegment> segments = segments_;
     std::sort(segments.begin(), segments.end(), [](const RouteSegment& a, const RouteSegment& b) {
-        return a.getNormalizedPositions()[0] < b.getNormalizedPositions()[0];
+        assert(!a.getNormalizedPositions().empty() && !b.getNormalizedPositions().empty());
+
+        if (!a.getNormalizedPositions().empty() && !b.getNormalizedPositions().empty()) {
+            return a.getNormalizedPositions()[0] < b.getNormalizedPositions()[0];
+        }
+
+        return false;
     });
 
     std::vector<SegmentRange> compacted;
