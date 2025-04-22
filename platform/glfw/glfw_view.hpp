@@ -188,7 +188,7 @@ private:
     void writeCapture(const std::string &capture, const std::string &capture_file_name) const;
     void readAndLoadCapture(const std::string &capture_file_name);
     int getCaptureIdx() const;
-    void writeStats();
+    void writeStats(bool oneline = false) const;
     std::vector<RouteID> getAllRoutes() const;
     std::string getBaseRouteLayerName(const RouteID &routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID &routeID) const;
