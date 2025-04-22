@@ -41,11 +41,7 @@ public:
     Route() = default;
     Route(const LineString<double>& geometry, const RouteOptions& ropts);
     bool routeSegmentCreate(const RouteSegmentOptions&);
-<<<<<<< HEAD
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const RouteType& routeType, const mbgl::Color& routeColor);
-=======
-    std::map<double, mbgl::Color> getRouteSegmentColorStops(const mbgl::Color& routeColor);
->>>>>>> route-crash-fix
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;
     void routeSetProgress(const double t);
