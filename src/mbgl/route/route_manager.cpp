@@ -374,12 +374,13 @@ bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
             return false;
         }
 
-        routeMap_[routeID].routeSegmentCreate(routeSegOpts);
-        stats_.numRouteSegments++;
+        bool success = routeMap_[routeID].routeSegmentCreate(routeSegOpts);
+        if (success) {
+            stats_.numRouteSegments++;
+            validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
+        }
 
-        validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
-
-        return true;
+        return success;
     }
 
     return false;
