@@ -1278,7 +1278,7 @@ GLFWRendererFrontend *GLFWView::getRenderFrontend() const {
 void GLFWView::incrementRouteProgress() {
     routeProgress_ += ROUTE_PROGRESS_STEP;
     std::clamp<double>(routeProgress_, 0.0, 1.0f);
-    // std::cout<<"Route progress: "<<routeProgress_<<std::endl;
+    std::cout << "Route progress: " << routeProgress_ << std::endl;
     for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         if (useRouteProgressPercent_) {
