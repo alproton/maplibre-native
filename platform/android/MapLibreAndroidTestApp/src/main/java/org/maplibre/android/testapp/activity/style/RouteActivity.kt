@@ -2,6 +2,7 @@ package org.maplibre.android.testapp.activity.style
 
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import androidx.annotation.IntegerRes
 import androidx.appcompat.app.AppCompatActivity
 import okhttp3.Route
@@ -31,35 +32,33 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(maplibreMap: MapLibreMap) {
         // Set up the map and add route data here
-        val key = ApiKeyUtils.getApiKey(applicationContext)
-        if (key == null || key == "YOUR_API_KEY_GOES_HERE") {
-            maplibreMap.setStyle(
-                Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")
-            )
-        } else {
-            val styles = Style.getPredefinedStyles()
-            if (styles.isNotEmpty()) {
-                val styleUrl = styles[0].url
-                maplibreMap.setStyle(Style.Builder().fromUri(styleUrl))
-            }
-        }
+//        val key = ApiKeyUtils.getApiKey(applicationContext)
+//        if (key == null || key == "YOUR_API_KEY_GOES_HERE") {
+//            maplibreMap.setStyle(
+//                Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")
+//            )
+//        } else {
+//            val styles = Style.getPredefinedStyles()
+//            if (styles.isNotEmpty()) {
+//                val styleUrl = styles[0].url
+//                maplibreMap.setStyle(Style.Builder().fromUri(styleUrl))
+//            }
+//        }
 
         val route_resolution = 50;
-        val radius : Double = 5.0
+        val radius : Double = 50.0
         val route_geometry : LineString
         val points = mutableListOf<Point>()
-        for (i in 0..route_resolution) {
-            val anglerad : Double = (i / route_resolution) * 2.0 * Math.PI
-
-            
+        for (i in 0..route_resolution-1) {
+            val anglerad : Double = (i.toDouble() / (route_resolution-1).toDouble()) * 2.0 * Math.PI
             val pt : Point = Point.fromLngLat(radius * Math.sin(anglerad),
-                                                    radius * Math.cos(anglerad))
+                radius * Math.cos(anglerad))
             points.add(pt)
         }
 
         route_geometry = LineString.fromLngLats(points)
 
-        var route_options : RouteOptions = RouteOptions();
+        var route_options = RouteOptions();
         route_options.innerWidth = 14.0
         route_options.outerWidth = 16.0
         route_options.innerColor = Color.argb(255, 0, 0, 255)
@@ -68,10 +67,8 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         routeID = mapView.createRoute(route_geometry, route_options)
 
         var route_segment_geom = mutableListOf<Point>()
-        for(i in 0..route_resolution/2) {
-            val anglerad : Double = (i / route_resolution) * 2.0 * Math.PI
-
-
+        for(i in 0..(route_resolution-1)/2) {
+            val anglerad : Double = (i.toDouble() / (route_resolution-1).toDouble()) * 2.0 * Math.PI
             val pt : Point = Point.fromLngLat(radius * Math.sin(anglerad),
                 radius * Math.cos(anglerad))
             route_segment_geom.add(pt)
@@ -84,6 +81,9 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.createRouteSegment(routeID, rsopts)
 
         mapView.finalizeRoutes()
+//        maplibreMap.style?.layers?.forEach { layer ->
+//            Log.d("Layer", "Layer ID: ${layer.id}")
+//        }
     }
 
     override fun onStart() {
