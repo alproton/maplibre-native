@@ -1720,7 +1720,7 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
     return false;
 }
 
-jboolean NativeMapView::routeProgressSet(JNIEnv& env, jint routeID, jdouble progress) {
+jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {
     if (routeMgr) {
         return routeMgr->routeSetProgress(RouteID(routeID), progress);
     }
@@ -1728,12 +1728,17 @@ jboolean NativeMapView::routeProgressSet(JNIEnv& env, jint routeID, jdouble prog
     return false;
 }
 
-jboolean NativeMapView::routeProgressSetPoint(JNIEnv& env, jint routeID, jdouble x, jdouble y) {
+jdouble NativeMapView::routeProgressSetPoint(
+    JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean capture) {
     if (routeMgr) {
-        return routeMgr->routeSetProgress(RouteID(routeID), mbgl::Point<double>(x, y));
+        route::RouteProjectionResult rpr = routeMgr->routeSetProgressProject(
+            RouteID(routeID), mbgl::Point<double>(x, y), capture);
+        if (rpr.success) {
+            return rpr.percentageAlongRoute;
+        }
     }
 
-    return false;
+    return -1.0;
 }
 
 void NativeMapView::routeSegmentsClear(JNIEnv& env, jint routeID) {

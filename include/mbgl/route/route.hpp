@@ -7,6 +7,8 @@
 #include <mbgl/util/color.hpp>
 #include <vector>
 #include <map>
+#include <algorithm>
+
 namespace mbgl {
 namespace route {
 
@@ -31,6 +33,12 @@ enum class RouteType {
     Inner
 };
 
+struct RouteProjectionResult {
+    mbgl::Point<double> closestPoint;
+    double percentageAlongRoute = 0.0;
+    bool success = false;
+};
+
 /***
  * A route is a polyline that represents a road between two locations. There can be multiple routes in the case of
  * multiple stops. Each route can have route segments. Routes segments represents a traffic zone. A route must have a
@@ -44,15 +52,18 @@ public:
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const RouteType& routeType, const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;
-    void routeSetProgress(const double t);
+    void routeSetProgress(const double t, bool capture = false);
     double routeGetProgress() const;
     double getTotalDistance() const;
-    double getProgressPercent(const Point<double>& progressPoint) const;
+    double getProgressPercent(const Point<double>& progressPoint, bool capture = false);
+    RouteProjectionResult getProgressProjection(const Point<double>& progressPoint, bool capture = false);
     mbgl::LineString<double> getGeometry() const;
     bool hasRouteSegments() const;
     const RouteOptions& getRouteOptions() const;
     bool routeSegmentsClear();
     uint32_t getNumRouteSegments() const;
+    const std::vector<Point<double>>& getCapturedNavStops() const;
+    const std::vector<double>& getCapturedNavPercent() const;
 
     std::string segmentsToString(uint32_t tabcount) const;
 
@@ -71,6 +82,8 @@ private:
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;
     double totalDistance_ = 0.0;
+    std::vector<Point<double>> capturedNavStops_;
+    std::vector<double> capturedNavPercent_;
 };
 
 } // namespace route

@@ -61,6 +61,7 @@ std::string tabs(uint32_t tabcount) {
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     : routeOptions_(ropts),
       geometry_(geometry) {
+    assert(!geometry_.empty() && "route geometry cannot be empty");
     assert((!std::isnan(geometry_[0].x) && !std::isnan(geometry_[0].y)) && "invalid geometry point");
     for (size_t i = 1; i < geometry_.size(); ++i) {
         mbgl::Point<double> a = geometry_[i];
@@ -211,7 +212,10 @@ std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& 
     return colorStops;
 }
 
-void Route::routeSetProgress(const double t) {
+void Route::routeSetProgress(const double t, bool capture) {
+    if (capture) {
+        capturedNavPercent_.push_back(t);
+    }
     progress_ = t;
 }
 
@@ -219,7 +223,135 @@ double Route::routeGetProgress() const {
     return progress_;
 }
 
-double Route::getProgressPercent(const Point<double>& progressPoint) const {
+RouteProjectionResult Route::getProgressProjection(const Point<double>& progressPoint, bool capture) {
+    RouteProjectionResult result;
+    result.success = false;
+
+    if (geometry_.size() < 2) {
+        return result; // Cannot form segments
+    }
+
+    double totalRouteLength = 0.0;
+    std::vector<double> segmentLengths;
+    segmentLengths.reserve(geometry_.size() - 1);
+
+    // Calculate total length and individual segment lengths
+    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
+        double segLen = mbgl::util::dist<double>(geometry_[i], geometry_[i + 1]);
+        segmentLengths.push_back(segLen);
+        totalRouteLength += segLen;
+    }
+
+    // Handle zero-length route
+    if (totalRouteLength <= std::numeric_limits<double>::epsilon()) {
+        // If the route has no length, the closest point is the first point,
+        // and percentage is arguably 0 or undefined. We'll return 0.
+        result.closestPoint = geometry_[0];
+        result.percentageAlongRoute = 0.0;
+        result.success = true; // Technically successful, though degenerate case
+        // Check if query point *is* the single point location
+        if (mbgl::util::dist<double>(geometry_[0], progressPoint) > std::numeric_limits<double>::epsilon()) {
+            // If query point is different, maybe success should be false? Depends on requirements.
+            // Let's keep it true but maybe add a warning/note.
+            Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");
+        }
+        return result;
+    }
+
+    double minDistanceSq = std::numeric_limits<double>::max();
+    double distanceToBestSegmentStart = 0.0; // Accumulates distance up to the start of the 'best' segment
+    double distanceAlongBestSegment = 0.0;
+
+    double currentDistanceAlongRoute = 0.0; // Accumulates distance as we iterate
+                                            // Iterate through each segment of the route
+    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
+        const mbgl::Point<double>& p1 = geometry_[i];     // Start point of the segment
+        const mbgl::Point<double>& p2 = geometry_[i + 1]; // End point of the segment
+        double currentSegmentLength = segmentLengths[i];
+
+        mbgl::Point<double> segmentVector = p2 - p1;
+        mbgl::Point<double> queryVector = progressPoint - p1;
+
+        mbgl::Point<double> closestPointOnSegment;
+        double distAlongCurrentSegment = 0.0;
+
+        // Calculate the squared length of the segment vector
+        double segmentLenSq = mbgl::util::distSqr<double>(
+            p1, p2); // segmentVector.x * segmentVector.x + segmentVector.y * segmentVector.y;
+
+        if (segmentLenSq < std::numeric_limits<double>::epsilon()) {
+            // Segment has zero length, closest point on segment is just p1 (or p2)
+            closestPointOnSegment = p1;
+            distAlongCurrentSegment = 0.0; // No distance along a zero-length segment
+        } else {
+            // Project queryVector onto segmentVector
+            // t = dot(queryVector, segmentVector) / dot(segmentVector, segmentVector)
+            double dotProduct = queryVector.x * segmentVector.x + queryVector.y * segmentVector.y;
+            double t = dotProduct / segmentLenSq;
+
+            // Clamp t to the range [0, 1] to stay within the segment
+            if (t < 0.0) {
+                closestPointOnSegment = p1; // Closest point is the start of the segment
+                distAlongCurrentSegment = 0.0;
+            } else if (t > 1.0) {
+                closestPointOnSegment = p2;                     // Closest point is the end of the segment
+                distAlongCurrentSegment = currentSegmentLength; // Full length of this segment
+            } else {
+                // Projection lies within the segment
+                closestPointOnSegment = p1 + (segmentVector * t);
+                // Calculate distance from p1 to the projected point
+                distAlongCurrentSegment = mbgl::util::dist<double>(p1, closestPointOnSegment);
+            }
+        }
+
+        // Check if the closest point on this segment is the closest overall found so far
+        double currentDistSq = mbgl::util::distSqr<double>(progressPoint, closestPointOnSegment);
+        if (currentDistSq < minDistanceSq) {
+            minDistanceSq = currentDistSq;
+            result.closestPoint = closestPointOnSegment;
+            distanceToBestSegmentStart = currentDistanceAlongRoute; // Store distance up to the start of this segment
+            distanceAlongBestSegment = distAlongCurrentSegment;     // Store distance along this segment
+            result.success = true;
+        }
+
+        // Accumulate distance for the next iteration
+        currentDistanceAlongRoute += currentSegmentLength;
+    }
+
+    // Calculate the final percentage
+    if (result.success) {
+        double totalDistanceToClosestPoint = distanceToBestSegmentStart + distanceAlongBestSegment;
+        result.percentageAlongRoute = (totalDistanceToClosestPoint / totalRouteLength);
+
+        // Clamp percentage just in case of floating point inaccuracies near ends
+        if (result.percentageAlongRoute < 0.0) result.percentageAlongRoute = 0.0;
+        if (result.percentageAlongRoute > 1.0) result.percentageAlongRoute = 1.0;
+    }
+
+    Log::Info(Event::Route,
+              "ROUTE_PROGRESS_LOG: Route::getProgressProjection() pt: " + std::to_string(progressPoint.x) + ", " +
+                  std::to_string(progressPoint.y) +
+                  ", capturedNavStops.size: " + std::to_string(capturedNavStops_.size()));
+    if (capture) {
+        capturedNavStops_.push_back(result.closestPoint);
+    }
+
+    return result;
+}
+
+const std::vector<Point<double>>& Route::getCapturedNavStops() const {
+    return capturedNavStops_;
+}
+
+const std::vector<double>& Route::getCapturedNavPercent() const {
+    return capturedNavPercent_;
+}
+
+double Route::getProgressPercent(const Point<double>& progressPoint, bool capture) {
+    if (capture) {
+        capturedNavStops_.push_back(progressPoint);
+    }
+
     if (geometry_.size() < 2) {
         return 0.0;
     }
