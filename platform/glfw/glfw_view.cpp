@@ -62,6 +62,7 @@
 
 #define GL_GLEXT_PROTOTYPES
 #include "mbgl/gfx/renderer_backend.hpp"
+#include "mbgl/util/math.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -698,7 +699,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 view->freeCameraDemoStartTime = mbgl::Clock::now();
                 view->invalidate();
             } break;
-            case GLFW_KEY_V: {
+            case GLFW_KEY_M: {
                 cycleTileLodMode(*view->map);
             } break;
             case GLFW_KEY_F7: {
@@ -761,7 +762,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                     break;
 
                 case GLFW_KEY_0:
-                    view->setRouteProgressUsage();
+                    view->replayNavStops();
                     break;
             }
         } else {
@@ -957,9 +958,8 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
 
     // Calculate the length of each segment and the total length of the polyline
     for (size_t i = 0; i < points.size() - 1; ++i) {
-        double dx = points[i + 1].x - points[i].x;
-        double dy = points[i + 1].y - points[i].y;
-        segmentLengths[i] = std::sqrt(dx * dx + dy * dy);
+        double dist = mbgl::util::dist<double>(points[i], points[i + 1]);
+        segmentLengths[i] = dist;
         totalLength += segmentLengths[i];
     }
 
@@ -967,7 +967,7 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
     double accumulatedLength = 0.0;
 
     // Find the segment where the target length falls
-    for (size_t i = 0; i < segmentLengths.size(); ++i) {
+    for (size_t i = 0; i < segmentLengths.size() - 1; ++i) {
         if (accumulatedLength + segmentLengths[i] >= targetLength) {
             double segmentPercent = (targetLength - accumulatedLength) / segmentLengths[i];
             double x = points[i].x + segmentPercent * (points[i + 1].x - points[i].x);
@@ -1050,7 +1050,6 @@ void GLFWView::addRoute() {
 
     rmptr_->setStyle(map->getStyle());
     RouteCircle route;
-    route.resolution = 30.0;
     route.xlate = routeMap_.size() * route.radius * 2.0;
     mbgl::LineString<double> geom = getRouteGeom(route);
     route.points = geom;
@@ -1062,15 +1061,13 @@ void GLFWView::addRoute() {
     routeOpts.useDynamicWidths = false;
     routeOpts.outerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
-    // Testing the layerBefore option
-    //  if(lastRouteID_.isValid()) {
-    //      routeOpts.layerBefore = getBaseRouteLayerName(lastRouteID_);
-    //  }
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
+    if (!firstRouteID_.isValid()) {
+        firstRouteID_ = routeID;
+    }
     routeMap_[routeID] = route;
     rmptr_->finalize();
-    lastRouteID_ = routeID;
 }
 
 std::vector<GLFWView::TrafficBlock> GLFWView::testCases(const RouteSegmentTestCases &testcase,
@@ -1160,23 +1157,38 @@ void GLFWView::addTrafficSegments() {
         if (useTestCode) {
             trafficBlks = testCases(RouteSegmentTestCases::Blk12SameColorIntersecting, route);
         } else {
-            size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
-            size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
+            if (route.numTrafficZones * 3 > route.resolution) {
+                float blockSize = 1.0f / float(route.numTrafficZones);
+                float innerBlockSize = blockSize / 2.0f;
+                for (int i = 0; i < route.numTrafficZones; i++) {
+                    TrafficBlock currTrafficBlk;
+                    float startPercent = float(i) * blockSize;
+                    float endPercent = startPercent + innerBlockSize;
+                    currTrafficBlk.block.push_back(route.getPoint(startPercent));
+                    currTrafficBlk.block.push_back(route.getPoint(endPercent));
+                    currTrafficBlk.color = mbgl::Color(float(i) / float(route.numTrafficZones - 1), 0.0, 0.0, 1.0);
 
-            auto &routePts = route.points;
-            TrafficBlock currTrafficBlk;
-            for (size_t i = 0; i < routePts.size(); i++) {
-                if (i % blockSize == 0 && !currTrafficBlk.block.empty()) {
                     trafficBlks.push_back(currTrafficBlk);
-                    currTrafficBlk.block.clear();
                 }
+            } else {
+                size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
+                size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
 
-                if (i % blockSize < innerBlockSize) {
-                    currTrafficBlk.block.push_back(mbgl::Point<double>(routePts.at(i).x, routePts.at(i).y));
+                auto &routePts = route.points;
+                TrafficBlock currTrafficBlk;
+                for (size_t i = 0; i < routePts.size(); i++) {
+                    if (i % blockSize == 0 && !currTrafficBlk.block.empty()) {
+                        trafficBlks.push_back(currTrafficBlk);
+                        currTrafficBlk.block.clear();
+                    }
+
+                    if (i % blockSize < innerBlockSize) {
+                        currTrafficBlk.block.push_back(mbgl::Point<double>(routePts.at(i).x, routePts.at(i).y));
+                    }
                 }
-            }
-            if (!currTrafficBlk.block.empty()) {
-                trafficBlks.push_back(currTrafficBlk);
+                if (!currTrafficBlk.block.empty()) {
+                    trafficBlks.push_back(currTrafficBlk);
+                }
             }
         }
 
@@ -1189,7 +1201,8 @@ void GLFWView::addTrafficSegments() {
             rsegopts.geometry = trafficBlks[i].block;
             rsegopts.priority = trafficBlks[i].priority;
             rsegopts.outerColor = mbgl::Color(float(i) / float(trafficBlks.size() - 1), 0.0, 0.0, 1.0);
-            rmptr_->routeSegmentCreate(routeID, rsegopts);
+            const bool success = rmptr_->routeSegmentCreate(routeID, rsegopts);
+            assert(success && "failed to create route segment");
         }
         trafficBlks.clear();
     }
@@ -1265,8 +1278,8 @@ void GLFWView::modifyTrafficViz() {
 }
 
 void GLFWView::setRouteProgressUsage() {
-    useRouteProgressPercent_ = !useRouteProgressPercent_;
-    if (useRouteProgressPercent_) {
+    generateRouteProgressPercent_ = !generateRouteProgressPercent_;
+    if (generateRouteProgressPercent_) {
         std::cout << "Using route progress percent" << std::endl;
     } else {
         std::cout << "Using route progress point" << std::endl;
@@ -1288,30 +1301,48 @@ GLFWRendererFrontend *GLFWView::getRenderFrontend() const {
 }
 
 void GLFWView::incrementRouteProgress() {
-    routeProgress_ += ROUTE_PROGRESS_STEP;
-    std::clamp<double>(routeProgress_, 0.0, 1.0f);
-    std::cout << "Route progress: " << routeProgress_ << std::endl;
-    for (const auto &iter : routeMap_) {
-        const auto &routeID = iter.first;
-        if (useRouteProgressPercent_) {
-            rmptr_->routeSetProgress(routeID, routeProgress_);
+    if (firstRouteID_.isValid() && routeMap_.find(firstRouteID_) != routeMap_.end()) {
+        routeProgress_ += ROUTE_PROGRESS_STEP;
+        routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
+        if (generateRouteProgressPercent_) {
+            rmptr_->routeSetProgressPercent(firstRouteID_, routeProgress_);
         } else {
-            mbgl::Point<double> progressPoint = routeMap_[routeID].getPoint(routeProgress_);
-            rmptr_->routeSetProgress(routeID, progressPoint);
+            const mbgl::Point<double> &progressPoint = rmptr_->getPoint(
+                firstRouteID_, routeProgress_, mbgl::route::Precision::Fine);
+            // TODO: test out which algorithm works in nav app before removing dead code
+            //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
+            //  std::cout<<", calculated percent: "<<percent<<std::endl;
+
+            rmptr_->routeSetProgressPoint(
+                firstRouteID_, progressPoint, mbgl::route::Precision::Fine, captureNavPoints_);
+            // std::cout << "Route progress: " << std::to_string(routeProgress_) << ", calculated percent: " <<
+            // std::to_string(percentage) << std::endl;
         }
+        rmptr_->finalize();
     }
-    rmptr_->finalize();
 }
 
 void GLFWView::decrementRouteProgress() {
-    routeProgress_ -= ROUTE_PROGRESS_STEP;
-    std::clamp<double>(routeProgress_, 0.0, 1.0f);
-    std::cout << "Route progress: " << routeProgress_ << std::endl;
-    for (const auto &iter : routeMap_) {
-        const auto &routeID = iter.first;
-        rmptr_->routeSetProgress(routeID, routeProgress_);
+    if (firstRouteID_.isValid() && routeMap_.find(firstRouteID_) != routeMap_.end()) {
+        routeProgress_ -= ROUTE_PROGRESS_STEP;
+        routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
+
+        if (generateRouteProgressPercent_) {
+            rmptr_->routeSetProgressPercent(firstRouteID_, routeProgress_, captureNavPoints_);
+        } else {
+            mbgl::Point<double> progressPoint = routeMap_[firstRouteID_].getPoint(routeProgress_);
+            // TODO: test out which algorithm works in nav app before removing dead code
+            //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
+            //  std::cout<<", calculated percent: "<<percent<<std::endl;
+
+            rmptr_->routeSetProgressPoint(
+                firstRouteID_, progressPoint, mbgl::route::Precision::Coarse, captureNavPoints_);
+            // std::cout << "Route progress: " << std::to_string(routeProgress_) << ", calculated percent: " <<
+            // std::to_string(percentage) << std::endl;
+        }
+
+        rmptr_->finalize();
     }
-    rmptr_->finalize();
 }
 
 void GLFWView::removeTrafficViz() {
@@ -1326,6 +1357,9 @@ void GLFWView::disposeRoute() {
         auto &routeID = routeMap_.begin()->first;
         bool success = rmptr_->routeDispose(routeID);
         if (success) {
+            if (firstRouteID_ == routeID) {
+                firstRouteID_ = RouteID();
+            }
             routeMap_.erase(routeID);
         }
         rmptr_->finalize();
@@ -1362,7 +1396,7 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
     for (size_t i = 0; i < routeMap_.size(); i++) {
         disposeRoute();
     }
-    lastRouteID_ = RouteID();
+    firstRouteID_ = RouteID();
     rmptr_->setStyle(map->getStyle());
 
     std::ifstream jsonfile(capture_file_name);
@@ -1393,10 +1427,40 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
         std::cout << "De-serializing " << numRoutes << " routes" << std::endl;
     }
 
+    // iterate through the document and get the minimum and maximum routeIDs, lets pre-create these IDs in the route
+    // manager.
+    uint32_t minRoute = INT_MAX;
+    uint32_t maxRoute = 0;
     if (document.HasMember("routes") && document["routes"].IsArray()) {
         const rapidjson::Value &routes = document["routes"];
         for (rapidjson::SizeType i = 0; i < routes.Size(); i++) {
             const rapidjson::Value &route = routes[i];
+            if (route.HasMember("route_id") && route["route_id"].IsInt()) {
+                const rapidjson::Value &routeIDval = route["route_id"];
+                uint32_t rid = routeIDval.GetInt();
+                RouteID routeID = RouteID(rid);
+                routeMap_[routeID] = {};
+
+                if (minRoute > rid) minRoute = rid;
+                if (maxRoute < rid) maxRoute = rid;
+            }
+        }
+        RouteID minRouteID = RouteID(minRoute);
+        uint32_t numRoutesIDs = maxRoute - minRoute + 1;
+        rmptr_->routePreCreate(minRouteID, numRoutesIDs);
+    }
+
+    if (document.HasMember("routes") && document["routes"].IsArray()) {
+        const rapidjson::Value &routes = document["routes"];
+        for (rapidjson::SizeType i = 0; i < routes.Size(); i++) {
+            const rapidjson::Value &route = routes[i];
+            RouteID routeID;
+            if (route.HasMember("route_id") && route["route_id"].IsInt()) {
+                const rapidjson::Value &routeIDval = route["route_id"];
+                uint32_t rid = routeIDval.GetInt();
+                routeID = RouteID(rid);
+            }
+            assert(routeID.isValid() && "captured route ID not valid");
 
             if (route.HasMember("route") && route["route"].IsObject()) {
                 const rapidjson::Value &route_obj = route["route"];
@@ -1477,7 +1541,8 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                     }
                 }
 
-                auto routeID = rmptr_->routeCreate(route_geom, routeOpts);
+                bool success = rmptr_->routeSet(routeID, route_geom, routeOpts);
+                assert(success && "failed to create route on pre-created route ID");
                 RouteCircle routeCircle;
                 routeCircle.points = route_geom;
                 routeCircle.resolution = route_geom.size();
@@ -1485,8 +1550,31 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                 routeCircle.xlate = 0; // TODO fixme later
                 routeMap_[routeID] = routeCircle;
 
+                if (route_obj.HasMember("nav_stops") && route_obj["nav_stops"].IsArray()) {
+                    const rapidjson::Value &nav_stops = route_obj["nav_stops"];
+                    for (rapidjson::SizeType j = 0; j < nav_stops.Size(); j++) {
+                        const rapidjson::Value &point = nav_stops[j];
+                        if (point.IsArray() && point.Size() == 2) {
+                            double x = point[0].GetDouble();
+                            double y = point[1].GetDouble();
+                            capturedNavStopMap_[routeID].push_back({x, y});
+                        }
+                    }
+                    if (!firstRouteID_.isValid()) firstRouteID_ = routeID;
+                }
+
+                if (route_obj.HasMember("nav_stops_percent") && route_obj["nav_stops_percent"].IsArray()) {
+                    const rapidjson::Value &nav_stops_percent = route_obj["nav_stops_percent"];
+                    for (rapidjson::SizeType j = 0; j < nav_stops_percent.Size(); j++) {
+                        const rapidjson::Value &percent_value = nav_stops_percent[j];
+                        if (percent_value.IsDouble()) {
+                            double percent = percent_value.GetDouble();
+                            capturedNavPercentMap_[routeID].push_back(percent);
+                        }
+                    }
+                }
+
                 rmptr_->finalize();
-                lastRouteID_ = routeID;
 
                 // create route segments
                 if (route_obj.HasMember("route_segments") && route_obj["route_segments"].IsArray()) {
@@ -1522,7 +1610,42 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                     }
                 }
                 rmptr_->finalize();
+                loadedCapture_ = true;
+                std::cout << "Loaded route with ID: " << routeID.id << std::endl;
             }
+        }
+    }
+}
+
+void GLFWView::replayNavStops() {
+    if (loadedCapture_ && firstRouteID_.isValid()) {
+        if (capturedNavStopMap_.find(firstRouteID_) != capturedNavStopMap_.end()) {
+            const mbgl::LineString<double> &navstops = capturedNavStopMap_[firstRouteID_];
+            const uint32_t sz = navstops.size();
+            const auto &navStop = navstops[lastNavStop_++ % sz];
+            double percentage = rmptr_->routeSetProgressPoint(firstRouteID_, navStop, mbgl::route::Precision::Coarse);
+            rmptr_->finalize();
+            std::cout << "replayNavStop - Route: " << firstRouteID_.id << ", NavStop: " << navStop.x << ", "
+                      << navStop.y << ", percent: " << std::to_string(percentage) << std::endl;
+        } else if (capturedNavPercentMap_.find(firstRouteID_) != capturedNavPercentMap_.end()) {
+            const auto &navstops = capturedNavPercentMap_[firstRouteID_];
+            const uint32_t sz = navstops.size();
+            const double percent = navstops[lastNavStop_++ % sz];
+            rmptr_->routeSetProgressPercent(firstRouteID_, percent);
+            rmptr_->finalize();
+        }
+    } else if (loadedCapture_) {
+        // perhaps the capture file did not have nav stops, lets just pick the first route we see and traverse it.
+        if (!routeMap_.empty()) {
+            const auto &routeID = routeMap_.begin()->first;
+            routeProgress_ += ROUTE_PROGRESS_STEP;
+            routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
+            const auto &navstop = rmptr_->getPoint(routeID, routeProgress_, mbgl::route::Precision::Coarse);
+            double percentage = rmptr_->routeSetProgressPoint(routeID, navstop, mbgl::route::Precision::Coarse);
+            std::cout << "replayNavStop - Route: " << routeID.id << ", i/p %: " << std::to_string(routeProgress_)
+                      << ", calculated %: " << std::to_string(percentage) << std::endl;
+
+            rmptr_->finalize();
         }
     }
 }
