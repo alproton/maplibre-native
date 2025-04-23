@@ -1,11 +1,8 @@
-package org.maplibre.android.testapp.activity.style
+package org.maplibre.android.testapp.activity.routes
 
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
-import androidx.annotation.IntegerRes
 import androidx.appcompat.app.AppCompatActivity
-import okhttp3.Route
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.OnMapReadyCallback
@@ -21,6 +18,9 @@ import org.maplibre.geojson.Point
 class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
     private var routeID : RouteID = RouteID(0);
+    private val DELAY_SECONDS = 3L // Delay in seconds
+    private val DELAY_MILLISECONDS = DELAY_SECONDS * 1000 // Convert to milliseconds
+    private lateinit var maplibreMap : MapLibreMap
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,23 +28,15 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
-    }
 
-    override fun onMapReady(maplibreMap: MapLibreMap) {
-        // Set up the map and add route data here
-        val key = ApiKeyUtils.getApiKey(applicationContext)
-        if (key == null || key == "YOUR_API_KEY_GOES_HERE") {
-            maplibreMap.setStyle(
-                Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")
-            )
-        } else {
-            val styles = Style.getPredefinedStyles()
-            if (styles.isNotEmpty()) {
-                val styleUrl = styles[0].url
-                maplibreMap.setStyle(Style.Builder().fromUri(styleUrl))
+        mapView.addOnDidFinishLoadingStyleListener {
+            if(this::maplibreMap.isInitialized) {
+                setupRoutes()
             }
         }
+    }
 
+    fun setupRoutes() {
         val route_resolution = 50;
         val radius : Double = 50.0
         val route_geometry : LineString
@@ -81,6 +73,29 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.createRouteSegment(routeID, rsopts)
 
         mapView.finalizeRoutes()
+    }
+
+    override fun onMapReady(map: MapLibreMap) {
+        // Set up the map and add route data here
+        maplibreMap = map
+        val key = ApiKeyUtils.getApiKey(applicationContext)
+        if (key == null || key == "YOUR_API_KEY_GOES_HERE") {
+            maplibreMap.setStyle(
+                Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")
+            )
+        } else {
+            val styles = Style.getPredefinedStyles()
+            if (styles.isNotEmpty()) {
+                val styleUrl = styles[0].url
+                maplibreMap.setStyle(Style.Builder().fromUri(styleUrl))
+            }
+        }
+
+
+//        lifecycleScope.launch {
+//            delay(DELAY_MILLISECONDS) // Delay before executing the code
+//
+//        }
     }
 
     override fun onStart() {
