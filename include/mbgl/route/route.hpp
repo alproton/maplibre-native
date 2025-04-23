@@ -1,12 +1,17 @@
 
 #pragma once
 
+#include "mbgl/util/geo.hpp"
+
 #include <mbgl/route/route_segment.hpp>
 
 #include <mbgl/util/geometry.hpp>
 #include <mbgl/util/color.hpp>
+#include <mbgl/route/route_enums.hpp>
 #include <vector>
 #include <map>
+#include <algorithm>
+
 namespace mbgl {
 namespace route {
 
@@ -26,11 +31,6 @@ struct RouteOptions {
     std::string layerBefore;
 };
 
-enum class RouteType {
-    Casing,
-    Inner
-};
-
 /***
  * A route is a polyline that represents a road between two locations. There can be multiple routes in the case of
  * multiple stops. Each route can have route segments. Routes segments represents a traffic zone. A route must have a
@@ -44,15 +44,19 @@ public:
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const RouteType& routeType, const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;
-    void routeSetProgress(const double t);
+    void routeSetProgress(const double t, bool capture = false);
     double routeGetProgress() const;
     double getTotalDistance() const;
-    double getProgressPercent(const Point<double>& progressPoint) const;
+    double getProgressPercent(const Point<double>& queryPoint, const Precision& precision, bool capture = false);
+    Point<double> getPoint(double percent, const Precision& precision) const;
+
     mbgl::LineString<double> getGeometry() const;
     bool hasRouteSegments() const;
     const RouteOptions& getRouteOptions() const;
     bool routeSegmentsClear();
     uint32_t getNumRouteSegments() const;
+    const std::vector<Point<double>>& getCapturedNavStops() const;
+    const std::vector<double>& getCapturedNavPercent() const;
 
     std::string segmentsToString(uint32_t tabcount) const;
 
@@ -63,14 +67,23 @@ private:
     };
 
     std::vector<SegmentRange> compactSegments(const RouteType& routeType) const;
+    Point<double> getPointCoarse(double percent) const;
+    Point<double> getPointFine(double percent) const;
+    double getProgressProjectionLERP(const Point<double>& queryPoint, bool capture = false);
+    double getProgressProjectionSLERP(const Point<double>& queryPoint, bool capture = false);
 
     RouteOptions routeOptions_;
     double progress_ = 0.0;
-    std::vector<double> segDistances_;
+    std::vector<double> intervalLengths_;
+    std::vector<double> cumulativeIntervalDistances_;
     std::vector<RouteSegment> segments_;
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;
-    double totalDistance_ = 0.0;
+    double totalLength_ = 0.0;
+    uint32_t bestIntervalIndex_ = uint32_t(~0);
+    std::vector<double> capturedNavPercent_;
+    std::vector<Point<double>> capturedNavStops_;
+    bool logPrecision = true;
 };
 
 } // namespace route
