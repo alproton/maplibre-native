@@ -261,9 +261,10 @@ public:
                                 jint outerColor,
                                 jint priority);
 
-    jboolean routeProgressSet(JNIEnv& env, jint routeID, jdouble progress);
+    jboolean routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress);
 
-    jboolean routeProgressSetPoint(JNIEnv& env, jint routeID, jdouble x, jdouble y);
+    jdouble routeProgressSetPoint(
+        JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean course, jni::jboolean capture);
 
     void routeSegmentsClear(JNIEnv& env, jint routeID);
 
