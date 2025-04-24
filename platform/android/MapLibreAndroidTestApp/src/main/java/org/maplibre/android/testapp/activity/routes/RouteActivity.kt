@@ -18,9 +18,8 @@ import org.maplibre.geojson.Point
 class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
     private var routeID : RouteID = RouteID(0);
-    private val DELAY_SECONDS = 3L // Delay in seconds
-    private val DELAY_MILLISECONDS = DELAY_SECONDS * 1000 // Convert to milliseconds
     private lateinit var maplibreMap : MapLibreMap
+    
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
