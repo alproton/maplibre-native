@@ -17,9 +17,11 @@ import org.maplibre.geojson.Point
 
 class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
-    private var routeID : RouteID = RouteID(0);
+    private var routeID = RouteID(0);
+    private var lastRouteID = RouteID(-1)
+    private var routePickMode : Boolean = false
     private lateinit var maplibreMap : MapLibreMap
-    
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
