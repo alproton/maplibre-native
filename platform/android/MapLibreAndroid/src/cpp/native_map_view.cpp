@@ -1718,12 +1718,12 @@ jboolean NativeMapView::routeProgressSet(JNIEnv& env, jint routeID, jdouble prog
     return false;
 }
 
-jboolean NativeMapView::routeProgressSetPoint(JNIEnv& env, jint routeID, jdouble x, jdouble y) {
+jdouble NativeMapView::routeProgressSetPoint(JNIEnv& env, jint routeID, jdouble x, jdouble y) {
     if (routeMgr) {
         return routeMgr->routeSetProgress(RouteID(routeID), mbgl::Point<double>(x, y));
     }
 
-    return false;
+    return -1.0;
 }
 
 void NativeMapView::routeSegmentsClear(JNIEnv& env, jint routeID) {

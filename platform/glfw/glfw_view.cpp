@@ -56,6 +56,7 @@
 
 #define GL_GLEXT_PROTOTYPES
 #include "mbgl/gfx/renderer_backend.hpp"
+#include "mbgl/util/math.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -952,9 +953,7 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
 
     // Calculate the length of each segment and the total length of the polyline
     for (size_t i = 0; i < points.size() - 1; ++i) {
-        double dx = points[i + 1].x - points[i].x;
-        double dy = points[i + 1].y - points[i].y;
-        segmentLengths[i] = std::sqrt(dx * dx + dy * dy);
+        segmentLengths[i] = mbgl::util::dist<double>(points[i + 1], points[i]);
         totalLength += segmentLengths[i];
     }
 
@@ -1045,7 +1044,7 @@ void GLFWView::addRoute() {
 
     rmptr_->setStyle(map->getStyle());
     RouteCircle route;
-    route.resolution = 30.0;
+    route.resolution = 10.0;
     route.xlate = routeMap_.size() * route.radius * 2.0;
     mbgl::LineString<double> geom = getRouteGeom(route);
     route.points = geom;
@@ -1285,14 +1284,18 @@ GLFWRendererFrontend *GLFWView::getRenderFrontend() const {
 void GLFWView::incrementRouteProgress() {
     routeProgress_ += ROUTE_PROGRESS_STEP;
     std::clamp<double>(routeProgress_, 0.0, 1.0f);
-    std::cout << "Route progress: " << routeProgress_ << std::endl;
+    std::cout << "Route progress: " << routeProgress_;
     for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         if (useRouteProgressPercent_) {
             rmptr_->routeSetProgress(routeID, routeProgress_);
         } else {
             mbgl::Point<double> progressPoint = routeMap_[routeID].getPoint(routeProgress_);
-            rmptr_->routeSetProgress(routeID, progressPoint);
+            // double percent = rmptr_->routeSetProgress(routeID, progressPoint);
+            // std::cout<<", calculated percent: "<<percent<<std::endl;
+
+            mbgl::route::RouteProjectionResult rpr = rmptr_->routeSetProgressProject(routeID, progressPoint);
+            std::cout << ", calculated percent: " << rpr.percentageAlongRoute << std::endl;
         }
     }
     rmptr_->finalize();
