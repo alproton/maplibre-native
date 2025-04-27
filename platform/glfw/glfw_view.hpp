@@ -127,6 +127,7 @@ private:
     void captureSnapshot();
     void setRouteProgressUsage();
     void setRoutePickMode();
+    void replayNavStops();
 
     void cycleDebugOptions();
     void clearAnnotations();
@@ -159,7 +160,7 @@ private:
     bool show3DExtrusions = false;
 
     struct RouteCircle {
-        double resolution = 10;
+        double resolution = 30;
         double xlate = 0;
         double radius = 50;
         int numTrafficZones = 5;
@@ -195,10 +196,14 @@ private:
     int getTopMost(const std::vector<RouteID> &routeList) const;
 
     std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeMap_;
+    std::unordered_map<RouteID, mbgl::LineString<double>, IDHasher<RouteID>> capturedNavStopMap_;
+    std::unordered_map<RouteID, std::vector<double>, IDHasher<RouteID>> capturedNavPercentMap_;
     int lastCaptureIdx_ = 0;
-    RouteID lastRouteID_;
+    uint32_t lastNavStop_ = 0;
+    RouteID firstRouteID_;
+    bool loadedCapture_ = false;
     double routeProgress_ = 0.0;
-    bool useRouteProgressPercent_ = false;
+    bool generateRouteProgressPercent_ = false;
     bool routePickMode_ = false;
 
     // Frame timer

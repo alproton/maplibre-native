@@ -230,7 +230,10 @@ std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& 
     return colorStops;
 }
 
-void Route::routeSetProgress(const double t) {
+void Route::routeSetProgress(const double t, bool capture) {
+    if (capture) {
+        capturedNavPercent_.push_back(t);
+    }
     progress_ = t;
 }
 
@@ -238,7 +241,7 @@ double Route::routeGetProgress() const {
     return progress_;
 }
 
-RouteProjectionResult Route::getProgressProjection(const Point<double>& progressPoint) const {
+RouteProjectionResult Route::getProgressProjection(const Point<double>& progressPoint, bool capture) {
     RouteProjectionResult result;
     result.success = false;
 
@@ -341,12 +344,26 @@ RouteProjectionResult Route::getProgressProjection(const Point<double>& progress
         // Clamp percentage just in case of floating point inaccuracies near ends
         if (result.percentageAlongRoute < 0.0) result.percentageAlongRoute = 0.0;
         if (result.percentageAlongRoute > 1.0) result.percentageAlongRoute = 1.0;
+        if (capture) {
+            capturedNavStops_.push_back(result.closestPoint);
+        }
     }
 
     return result;
 }
 
-double Route::getProgressPercent(const Point<double>& progressPoint) const {
+const std::vector<Point<double>>& Route::getCapturedNavStops() const {
+    return capturedNavStops_;
+}
+
+const std::vector<double>& Route::getCapturedNavPercent() const {
+    return capturedNavPercent_;
+}
+
+double Route::getProgressPercent(const Point<double>& progressPoint, bool capture) {
+    if (capture) {
+        capturedNavStops_.push_back(progressPoint);
+    }
     const auto isInside = [&](const Point<double>& pt) {
         if (routeBounds_.first.x <= pt.x && routeBounds_.first.y <= pt.y && routeBounds_.second.x >= pt.x &&
             routeBounds_.second.y >= pt.y) {

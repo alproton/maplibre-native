@@ -123,6 +123,18 @@ std::string formatElapsedTime(long long value) {
     return ss.str();
 }
 
+[[maybe_unused]] std::string toString(const std::vector<double>& dlistl, uint32_t tabcount) {
+    std::stringstream ss;
+    ss << tabs(tabcount) << "[" << std::endl;
+    for (size_t i = 0; i < dlistl.size(); i++) {
+        std::string terminatingCommaStr = i == dlistl.size() - 1 ? "" : ",";
+        ss << tabs(tabcount + 1) << std::to_string(dlistl[i]) << terminatingCommaStr << std::endl;
+    }
+    ss << tabs(tabcount) << "]";
+
+    return ss.str();
+}
+
 [[maybe_unused]] std::string toString(const std::map<double, double>& mapdata) {
     std::stringstream ss;
     ss << "[" << std::endl;
@@ -276,25 +288,36 @@ int RouteManager::getTopMost(const std::vector<RouteID>& routeList) const {
 }
 
 std::string RouteManager::captureSnapshot() const {
+    // TODO: use rapidjson to create the json string
     std::stringstream ss;
     ss << "{" << std::endl;
     ss << tabs(1) << "\"num_routes\" : " << std::to_string(routeMap_.size()) << "," << std::endl;
     ss << tabs(1) << "\"routes\": " << "[" << std::endl;
     for (auto iter = routeMap_.begin(); iter != routeMap_.end(); ++iter) {
+        const RouteID& routeID = iter->first;
+        const auto& capturedNavStops = iter->second.getCapturedNavStops();
+        const auto& capturedNavPercents = iter->second.getCapturedNavPercent();
+        std::string segmentCommaStr = !capturedNavStops.empty() || !capturedNavPercents.empty() ? "," : "";
+        std::string geomCommaStr = segmentCommaStr;
         std::string terminatingStr = std::next(iter) == routeMap_.end() ? "" : ",";
         ss << tabs(2) << "{" << std::endl;
-        ss << tabs(3) << "\"route_id\" : " << std::to_string(iter->first.id) << "," << std::endl;
+        ss << tabs(3) << "\"route_id\" : " << std::to_string(routeID.id) << "," << std::endl;
         ss << tabs(3) << "\"route\" : {" << std::endl;
         ss << tabs(4) << "\"route_options\" : " << std::endl;
         ss << toString(iter->second.getRouteOptions(), 5) << "," << std::endl;
         ss << tabs(4) << "\"geometry\" : " << std::endl;
-        ss << toString(iter->second.getGeometry(), 4) << "," << std::endl;
-        ss << tabs(4) << "\"route_segments\" : " << std::endl;
-        ss << iter->second.segmentsToString(5) << std::endl;
-        if (!capturedNavStopMap_.empty()) {
-            const LineString<double>& navstops = capturedNavStopMap_.at(iter->first);
+
+        ss << toString(iter->second.getGeometry(), 4) << geomCommaStr << std::endl;
+        if (iter->second.hasRouteSegments()) {
+            ss << tabs(4) << "\"route_segments\" : " << std::endl;
+            ss << iter->second.segmentsToString(5) << segmentCommaStr << std::endl;
+        }
+        if (!capturedNavStops.empty()) {
             ss << tabs(4) << "\"nav_stops\" : " << std::endl;
-            ss << toString(navstops, 5);
+            ss << toString(capturedNavStops, 5);
+        } else if (!capturedNavPercents.empty()) {
+            ss << tabs(4) << "\"nav_stops_percent\" : " << std::endl;
+            ss << toString(capturedNavPercents, 5);
         }
         ss << tabs(3) << "}" << std::endl;
         ss << tabs(2) << "}" << terminatingStr << std::endl;
@@ -471,14 +494,13 @@ bool RouteManager::hasRoutes() const {
     return !routeMap_.empty();
 }
 
-bool RouteManager::routeSetProgress(const RouteID& routeID, const double progress) {
+bool RouteManager::routeSetProgress(const RouteID& routeID, const double progress, bool capture) {
     assert(style_ != nullptr && "Style not set!");
     assert(routeID.isValid() && "invalid route ID");
     double validProgress = std::clamp(progress, 0.0, 1.0);
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        routeMap_[routeID].routeSetProgress(validProgress);
-
+        routeMap_[routeID].routeSetProgress(validProgress, capture);
         validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
 
         success = true;
@@ -490,10 +512,7 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const double progres
 double RouteManager::routeSetProgress(const RouteID& routeID, const mbgl::Point<double>& progressPoint, bool capture) {
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if (capture) {
-            capturedNavStopMap_[routeID].push_back(progressPoint);
-        }
-        double progressPercent = routeMap_.at(routeID).getProgressPercent(progressPoint);
+        double progressPercent = routeMap_.at(routeID).getProgressPercent(progressPoint, capture);
         if (progressPercent >= 0.0 && progressPercent <= 1.0) {
             routeMap_[routeID].routeSetProgress(progressPercent);
             validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
@@ -511,10 +530,7 @@ RouteProjectionResult RouteManager::routeSetProgressProject(const RouteID& route
     assert(routeID.isValid() && "invalid route ID");
     RouteProjectionResult rpr;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        if (capture) {
-            capturedNavStopMap_[routeID].push_back(progressPoint);
-        }
-        rpr = routeMap_.at(routeID).getProgressProjection(progressPoint);
+        rpr = routeMap_.at(routeID).getProgressProjection(progressPoint, capture);
         if (rpr.success) {
             routeMap_[routeID].routeSetProgress(rpr.percentageAlongRoute);
             validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
