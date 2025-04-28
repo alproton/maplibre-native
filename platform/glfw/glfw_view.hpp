@@ -205,6 +205,7 @@ private:
     double routeProgress_ = 0.0;
     bool generateRouteProgressPercent_ = false;
     bool routePickMode_ = false;
+    bool captureNavPoints_ = true;
 
     // Frame timer
     int frames = 0;

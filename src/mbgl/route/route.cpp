@@ -70,24 +70,6 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
         double dist = std::abs(mbgl::util::dist<double>(a, b));
         segDistances_.push_back(dist);
         totalDistance_ += dist;
-
-        expandBounds(a);
-    }
-}
-
-void Route::expandBounds(const mbgl::Point<double>& pt) {
-    if (routeBounds_.first.x > pt.x) {
-        routeBounds_.first.x = pt.x;
-    }
-    if (routeBounds_.first.y > pt.y) {
-        routeBounds_.first.y = pt.y;
-    }
-
-    if (routeBounds_.second.x < pt.x) {
-        routeBounds_.second.x = pt.x;
-    }
-    if (routeBounds_.second.y < pt.y) {
-        routeBounds_.second.y = pt.y;
     }
 }
 
@@ -363,17 +345,6 @@ const std::vector<double>& Route::getCapturedNavPercent() const {
 double Route::getProgressPercent(const Point<double>& progressPoint, bool capture) {
     if (capture) {
         capturedNavStops_.push_back(progressPoint);
-    }
-    const auto isInside = [&](const Point<double>& pt) {
-        if (routeBounds_.first.x <= pt.x && routeBounds_.first.y <= pt.y && routeBounds_.second.x >= pt.x &&
-            routeBounds_.second.y >= pt.y) {
-            return true;
-        }
-        return false;
-    };
-
-    if (!isInside(progressPoint)) {
-        return -1.0;
     }
 
     if (geometry_.size() < 2) {

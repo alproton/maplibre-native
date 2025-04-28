@@ -392,6 +392,34 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
     return rid;
 }
 
+RouteID RouteManager::routePreCreate(const RouteID& routeID, uint32_t numRoutes) {
+    assert(routeID.isValid() && "Invalid route ID");
+    if (routeID.isValid()) {
+        uint32_t id = routeID.id;
+        bool success = routeIDpool_.createRangeID(id, numRoutes);
+        if (success) {
+            return routeID;
+        }
+    }
+
+    return RouteID();
+}
+
+bool RouteManager::routeSet(const RouteID& routeID, const LineString<double>& geometry, const RouteOptions& ropts) {
+    assert(routeID.isValid() && "Invalid route ID");
+    assert(!geometry.empty() && "Invalid route geometry");
+    if (routeID.isValid() && !geometry.empty()) {
+        Route route(geometry, ropts);
+        routeMap_[routeID] = route;
+        stats_.numRoutes++;
+        dirtyRouteMap_[DirtyType::dtRouteGeometry].insert(routeID);
+
+        return true;
+    }
+
+    return false;
+}
+
 bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
     assert(routeID.isValid() && "Invalid route ID");
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");

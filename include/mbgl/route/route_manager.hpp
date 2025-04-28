@@ -38,6 +38,24 @@ public:
     void setStyle(style::Style&);
     const std::string getStats();
     bool hasStyle() const;
+    /**
+     * This method is currently used when we need to create multiple routes at once when de-serializing from a snapshot
+     * captured.
+     * @param routeID the specified starting route ID
+     * @param numRoutes the number of route containers to create
+     * @return the starting routeID, which typically should be same as input routeID, invalid route ID is returned
+     * if consecutive range of routes cannot be created.
+     */
+    RouteID routePreCreate(const RouteID& routeID, uint32_t numRoutes);
+
+    /***
+     * Sets the route data on a pre-created routeID that was allocated in batch using routeCreateGroup.
+     * @param routeID the specified routeID.
+     * @param geometry the specified geometry of the route.
+     * @param ropts the specified route options.
+     */
+    bool routeSet(const RouteID& routeID, const LineString<double>& geometry, const RouteOptions& ropts);
+
     RouteID routeCreate(const LineString<double>& geometry, const RouteOptions& ropts);
     bool routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
     bool routeSetProgress(const RouteID&, const double progress, bool capture = false);

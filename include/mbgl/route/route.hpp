@@ -73,8 +73,6 @@ private:
         Color color;
     };
 
-    void expandBounds(const mbgl::Point<double>& pt);
-
     std::vector<SegmentRange> compactSegments(const RouteType& routeType) const;
 
     RouteOptions routeOptions_;
@@ -84,7 +82,6 @@ private:
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;
     double totalDistance_ = 0.0;
-    std::pair<mbgl::Point<double>, mbgl::Point<double>> routeBounds_;
     std::vector<Point<double>> capturedNavStops_;
     std::vector<double> capturedNavPercent_;
 };
