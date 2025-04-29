@@ -326,9 +326,10 @@ RouteProjectionResult Route::getProgressProjection(const Point<double>& progress
         // Clamp percentage just in case of floating point inaccuracies near ends
         if (result.percentageAlongRoute < 0.0) result.percentageAlongRoute = 0.0;
         if (result.percentageAlongRoute > 1.0) result.percentageAlongRoute = 1.0;
-        if (capture) {
-            capturedNavStops_.push_back(result.closestPoint);
-        }
+    }
+
+    if (capture) {
+        capturedNavStops_.push_back(result.closestPoint);
     }
 
     return result;
