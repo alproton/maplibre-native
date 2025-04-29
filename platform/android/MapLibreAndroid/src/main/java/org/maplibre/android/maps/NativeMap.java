@@ -284,7 +284,7 @@ interface NativeMap {
 
   boolean setRouteProgress(RouteID routeID, double progress);
 
-  boolean setRouteProgressPoint(RouteID routeID, Point point);
+  double setRouteProgressPoint(RouteID routeID, Point point, boolean capture);
 
   void clearRouteSegments(RouteID routeID);
 

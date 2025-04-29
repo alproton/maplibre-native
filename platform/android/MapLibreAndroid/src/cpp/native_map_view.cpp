@@ -1718,9 +1718,13 @@ jboolean NativeMapView::routeProgressSet(JNIEnv& env, jint routeID, jdouble prog
     return false;
 }
 
-jdouble NativeMapView::routeProgressSetPoint(JNIEnv& env, jint routeID, jdouble x, jdouble y) {
+jdouble NativeMapView::routeProgressSetPoint(JNIEnv& env, jint routeID, jdouble x, jdouble y, jni::jboolean capture) {
     if (routeMgr) {
-        return routeMgr->routeSetProgress(RouteID(routeID), mbgl::Point<double>(x, y));
+        route::RouteProjectionResult rpr = routeMgr->routeSetProgressProject(
+            RouteID(routeID), mbgl::Point<double>(x, y), capture);
+        if (rpr.success) {
+            return rpr.percentageAlongRoute;
+        }
     }
 
     return -1.0;

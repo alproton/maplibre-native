@@ -509,10 +509,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    *
    * @param routeID the specified routeID for the corresponding route.
    * @param point the specified point which lies close enough on the route
+   * @param capture if true, the points sent downstream will be cached so that they can logged into the snapshot capture
    * @return true if successful, false otherwise. If the route does not exist, false is returned.
    */
-  public boolean setRouteProgressPoint(RouteID routeID, Point point) {
-    return nativeMapView.setRouteProgressPoint(routeID, point);
+  public double setRouteProgressPoint(RouteID routeID, Point point, boolean capture) {
+    return nativeMapView.setRouteProgressPoint(routeID, point, capture);
   }
 
   /***

@@ -1203,12 +1203,12 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public boolean setRouteProgressPoint(RouteID routeID, Point point) {
+  public double setRouteProgressPoint(RouteID routeID, Point point, boolean capture) {
     if(routeID.isValid()) {
-      return nativeRouteSetProgressPoint(routeID.getId(), point.latitude(), point.longitude());
+      return nativeRouteSetProgressPoint(routeID.getId(), point.latitude(), point.longitude(), capture);
     }
 
-    return false;
+    return -1.0;
   }
 
   @Override
@@ -1668,7 +1668,7 @@ final class NativeMapView implements NativeMap {
   private native boolean nativeRouteSetProgress(int routeID, double progress);
 
   @Keep
-  private native boolean nativeRouteSetProgressPoint(int routeID, double x, double y);
+  private native double nativeRouteSetProgressPoint(int routeID, double x, double y, boolean capture);
 
   @Keep
   private native void nativeRouteClearSegments(int routeID);
