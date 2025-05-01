@@ -330,8 +330,8 @@ RouteProjectionResult Route::getProgressProjection(const Point<double>& progress
 
     Log::Info(Event::Route,
               "ROUTE_PROGRESS_LOG: Route::getProgressProjection() pt: " + std::to_string(progressPoint.x) + ", " +
-                  std::to_string(progressPoint.y) +
-                  ", capturedNavStops.size: " + std::to_string(capturedNavStops_.size()));
+                  std::to_string(progressPoint.y) + ", capturedNavStops.size: " +
+                  std::to_string(capturedNavStops_.size()) + "percent: " + std::to_string(result.percentageAlongRoute));
     if (capture) {
         capturedNavStops_.push_back(result.closestPoint);
     }
