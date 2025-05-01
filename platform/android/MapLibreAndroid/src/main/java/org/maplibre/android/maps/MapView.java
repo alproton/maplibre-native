@@ -64,7 +64,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   private final MapChangeReceiver mapChangeReceiver = new MapChangeReceiver();
   private final MapCallback mapCallback = new MapCallback();
   private final InitialRenderCallback initialRenderCallback = new InitialRenderCallback();
-
+  private RouteID activeRouteID = new RouteID(-1);
   @Nullable
   private NativeMap nativeMapView;
   @Nullable
@@ -501,7 +501,9 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if setting the progress was a success
    */
   public boolean setRouteProgress(RouteID routeID, double progress) {
-    return nativeMapView.setRouteProgress(routeID, progress);
+    //return nativeMapView.setRouteProgress(routeID, progress);
+    activeRouteID = routeID;
+    return true;
   }
 
   /***
@@ -513,7 +515,9 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if successful, false otherwise. If the route does not exist, false is returned.
    */
   public double setRouteProgressPoint(RouteID routeID, Point point, boolean capture) {
-    return nativeMapView.setRouteProgressPoint(routeID, point, capture);
+    activeRouteID = routeID;
+    //return nativeMapView.setRouteProgressPoint(routeID, point, capture);
+    return 0.0;
   }
 
   /***
@@ -636,6 +640,14 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
                                  float iconScale,
                                  boolean cameraTracking) {
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
+    if(activeRouteID.isValid()) {
+      double percent = nativeMapView.setRouteProgressPoint(activeRouteID, Point.fromLngLat(lon, lat), false);
+      nativeMapView.finalizeRoutes();
+      Timber.i("Map_View_Route_Progress: route percent: "+ percent);
+    } else {
+      Timber.i("Map_View_Route_Progress: invalid active route");
+    }
+
     customPuckLatestLat = lat;
     customPuckLatestLon = lon;
     customPuckLatestBearing = bearing;
