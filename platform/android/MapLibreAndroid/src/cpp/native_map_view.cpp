@@ -1599,6 +1599,8 @@ jint NativeMapView::routeCreate(JNIEnv& env,
                                 const jni::Object<mbgl::android::geojson::LineString>& routeGeom,
                                 jint outerColor,
                                 jint innerColor,
+                                jint outerClipColor,
+                                jint innerClipColor,
                                 jdouble outerWidth,
                                 jdouble innerWidth,
                                 const jni::String& layerbefore,
@@ -1621,11 +1623,19 @@ jint NativeMapView::routeCreate(JNIEnv& env,
             Converter<mbgl::Color, int> colorConverter;
             Result<Color> outerColorRes = colorConverter(env, outerColor);
             Result<Color> innerColorRes = colorConverter(env, innerColor);
+            Result<Color> outerClipColorRes = colorConverter(env, outerClipColor);
+            Result<Color> innerClipColorRes = colorConverter(env, innerClipColor);
             if (outerColorRes) {
                 routeOptions.outerColor = *outerColorRes;
             }
             if (innerColorRes) {
                 routeOptions.innerColor = *innerColorRes;
+            }
+            if (outerClipColorRes) {
+                routeOptions.outerClipColor = *outerClipColorRes;
+            }
+            if (innerClipColorRes) {
+                routeOptions.innerClipColor = *innerClipColorRes;
             }
             routeOptions.outerWidth = outerWidth;
             routeOptions.innerWidth = innerWidth;

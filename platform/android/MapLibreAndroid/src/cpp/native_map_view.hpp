@@ -237,6 +237,8 @@ public:
                      const jni::Object<mbgl::android::geojson::LineString>& routeGeom,
                      jint outerColor,
                      jint innerColor,
+                     jint outerClipColor,
+                     jint innerClipColor,
                      jdouble outerWidth,
                      jdouble innerWidth,
                      const jni::String& layerbefore,

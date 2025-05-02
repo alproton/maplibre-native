@@ -1,10 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.maplibre.android.maps.MapView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@id/mapView"
-    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:maplibre_cameraTargetLat="45.38301927899065"
-    app:maplibre_cameraTargetLng="8.63525390625"
-    app:maplibre_cameraZoom="7"/>
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_gravity="center"
+    tools:context=".activity.style.RouteActivity" >
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Route"
+        android:id="@+id/addRouteButton"
+        tools:ignore="HardcodedText" />
+
+    <org.maplibre.android.maps.MapView
+        android:id="@id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:maplibre_cameraTargetLat="45.38301927899065"
+        app:maplibre_cameraTargetLng="8.63525390625"
+        app:maplibre_cameraZoom="7">
+    </org.maplibre.android.maps.MapView>
+</LinearLayout>
