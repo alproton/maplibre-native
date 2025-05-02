@@ -3,6 +3,7 @@ package org.maplibre.android.testapp.activity.style
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import androidx.annotation.IntegerRes
 import androidx.appcompat.app.AppCompatActivity
 import okhttp3.Route
@@ -20,31 +21,9 @@ import org.maplibre.geojson.Point
 
 class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
-    private var routeID : RouteID = RouteID(0);
+    private var routeID : RouteID = RouteID(-1);
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_routes)
-        mapView = findViewById(R.id.mapView)
-        mapView.onCreate(savedInstanceState)
-        mapView.getMapAsync(this)
-    }
-
-    override fun onMapReady(maplibreMap: MapLibreMap) {
-        // Set up the map and add route data here
-        val key = ApiKeyUtils.getApiKey(applicationContext)
-        if (key == null || key == "YOUR_API_KEY_GOES_HERE") {
-            maplibreMap.setStyle(
-                Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")
-            )
-        } else {
-            val styles = Style.getPredefinedStyles()
-            if (styles.isNotEmpty()) {
-                val styleUrl = styles[0].url
-                maplibreMap.setStyle(Style.Builder().fromUri(styleUrl))
-            }
-        }
-
+    fun addRoute(mapView: MapView) {
         val route_resolution = 50;
         val radius : Double = 50.0
         val route_geometry : LineString
@@ -63,24 +42,44 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         route_options.outerWidth = 16.0
         route_options.innerColor = Color.argb(255, 0, 0, 255)
         route_options.outerColor = Color.argb(255, 0, 255, 0)
+        route_options.outerClipColor = Color.DKGRAY
+        route_options.innerClipColor = Color.LTGRAY
 
         routeID = mapView.createRoute(route_geometry, route_options)
 
-        var route_segment_geom = mutableListOf<Point>()
-        for(i in 0..(route_resolution-1)/2) {
-            val anglerad : Double = (i.toDouble() / (route_resolution-1).toDouble()) * 2.0 * Math.PI
-            val pt : Point = Point.fromLngLat(radius * Math.sin(anglerad),
-                radius * Math.cos(anglerad))
-            route_segment_geom.add(pt)
-        }
-        var rsopts = RouteSegmentOptions()
-        rsopts.color = Color.argb(255, 120, 0, 0)
-        rsopts.outerColor = Color.argb(255, 0, 122, 0)
-        rsopts.priority = 0
-        rsopts.geometry = LineString.fromLngLats(route_segment_geom)
-        mapView.createRouteSegment(routeID, rsopts)
-
+        mapView.setRouteProgress(routeID, 0.5)
         mapView.finalizeRoutes()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_routes)
+        mapView = findViewById(R.id.mapView)
+        mapView.onCreate(savedInstanceState)
+        mapView.getMapAsync(this)
+
+        val addRouteButton = findViewById<Button>(R.id.addRouteButton)
+        addRouteButton.setOnClickListener {
+            addRoute(mapView)
+        }
+
+    }
+
+    override fun onMapReady(maplibreMap: MapLibreMap) {
+        // Set up the map and add route data here
+        val key = ApiKeyUtils.getApiKey(applicationContext)
+        if (key == null || key == "YOUR_API_KEY_GOES_HERE") {
+            maplibreMap.setStyle(
+                Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")
+            )
+        } else {
+            val styles = Style.getPredefinedStyles()
+            if (styles.isNotEmpty()) {
+                val styleUrl = styles[0].url
+                maplibreMap.setStyle(Style.Builder().fromUri(styleUrl))
+            }
+        }
+
     }
 
     override fun onStart() {
