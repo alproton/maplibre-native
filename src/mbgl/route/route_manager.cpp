@@ -523,7 +523,7 @@ bool RouteManager::hasRoutes() const {
     return !routeMap_.empty();
 }
 
-bool RouteManager::routeSetProgress(const RouteID& routeID, const double progress, bool capture) {
+bool RouteManager::routeSetProgressPercent(const RouteID& routeID, const double progress, bool capture) {
     assert(style_ != nullptr && "Style not set!");
     assert(routeID.isValid() && "invalid route ID");
     double validProgress = std::clamp(progress, 0.0, 1.0);
@@ -538,35 +538,31 @@ bool RouteManager::routeSetProgress(const RouteID& routeID, const double progres
     return success;
 }
 
-double RouteManager::routeSetProgress(const RouteID& routeID, const mbgl::Point<double>& progressPoint, bool capture) {
+double RouteManager::routeSetProgressPoint(const RouteID& routeID,
+                                           const mbgl::Point<double>& progressPoint,
+                                           const Precision& precision,
+                                           bool capture) {
     assert(routeID.isValid() && "invalid route ID");
+    double percentage = -1.0;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        double progressPercent = routeMap_.at(routeID).getProgressPercent(progressPoint, capture);
-        if (progressPercent >= 0.0 && progressPercent <= 1.0) {
-            routeMap_[routeID].routeSetProgress(progressPercent);
-            validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
+        percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, capture);
 
-            return progressPercent;
+        if (percentage >= 0.0) {
+            routeMap_[routeID].routeSetProgress(percentage);
+            validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
         }
     }
 
-    return -1.0;
+    return percentage;
 }
 
-RouteProjectionResult RouteManager::routeSetProgressProject(const RouteID& routeID,
-                                                            const mbgl::Point<double>& progressPoint,
-                                                            bool capture) {
+mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID, double percent, const Precision& precision) const {
     assert(routeID.isValid() && "invalid route ID");
-    RouteProjectionResult rpr;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        rpr = routeMap_.at(routeID).getProgressProjection(progressPoint, capture);
-        if (rpr.success) {
-            routeMap_[routeID].routeSetProgress(rpr.percentageAlongRoute);
-            validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
-        }
+        return routeMap_.at(routeID).getPoint(percent, precision);
     }
 
-    return rpr;
+    return {0.0, 0.0};
 }
 
 std::string RouteManager::getActiveRouteLayerName(const RouteID& routeID) const {

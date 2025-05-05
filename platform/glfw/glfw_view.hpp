@@ -161,9 +161,9 @@ private:
     bool show3DExtrusions = false;
 
     struct RouteCircle {
-        double resolution = 30;
+        double resolution = 10;
         double xlate = 0;
-        double radius = 50;
+        double radius = 5;
         int numTrafficZones = 5;
         bool trafficZonesGridAligned = true;
         mbgl::LineString<double> points;

@@ -699,7 +699,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 view->freeCameraDemoStartTime = mbgl::Clock::now();
                 view->invalidate();
             } break;
-            case GLFW_KEY_V: {
+            case GLFW_KEY_M: {
                 cycleTileLodMode(*view->map);
             } break;
             case GLFW_KEY_F7: {
@@ -958,7 +958,8 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
 
     // Calculate the length of each segment and the total length of the polyline
     for (size_t i = 0; i < points.size() - 1; ++i) {
-        segmentLengths[i] = mbgl::util::dist<double>(points[i + 1], points[i]);
+        double dist = mbgl::util::dist<double>(points[i], points[i + 1]);
+        segmentLengths[i] = dist;
         totalLength += segmentLengths[i];
     }
 
@@ -966,7 +967,7 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
     double accumulatedLength = 0.0;
 
     // Find the segment where the target length falls
-    for (size_t i = 0; i < segmentLengths.size(); ++i) {
+    for (size_t i = 0; i < segmentLengths.size() - 1; ++i) {
         if (accumulatedLength + segmentLengths[i] >= targetLength) {
             double segmentPercent = (targetLength - accumulatedLength) / segmentLengths[i];
             double x = points[i].x + segmentPercent * (points[i + 1].x - points[i].x);
@@ -1156,23 +1157,38 @@ void GLFWView::addTrafficSegments() {
         if (useTestCode) {
             trafficBlks = testCases(RouteSegmentTestCases::Blk12SameColorIntersecting, route);
         } else {
-            size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
-            size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
+            if (route.numTrafficZones * 3 > route.resolution) {
+                float blockSize = 1.0f / float(route.numTrafficZones);
+                float innerBlockSize = blockSize / 2.0f;
+                for (int i = 0; i < route.numTrafficZones; i++) {
+                    TrafficBlock currTrafficBlk;
+                    float startPercent = float(i) * blockSize;
+                    float endPercent = startPercent + innerBlockSize;
+                    currTrafficBlk.block.push_back(route.getPoint(startPercent));
+                    currTrafficBlk.block.push_back(route.getPoint(endPercent));
+                    currTrafficBlk.color = mbgl::Color(float(i) / float(route.numTrafficZones - 1), 0.0, 0.0, 1.0);
 
-            auto &routePts = route.points;
-            TrafficBlock currTrafficBlk;
-            for (size_t i = 0; i < routePts.size(); i++) {
-                if (i % blockSize == 0 && !currTrafficBlk.block.empty()) {
                     trafficBlks.push_back(currTrafficBlk);
-                    currTrafficBlk.block.clear();
                 }
+            } else {
+                size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
+                size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
 
-                if (i % blockSize < innerBlockSize) {
-                    currTrafficBlk.block.push_back(mbgl::Point<double>(routePts.at(i).x, routePts.at(i).y));
+                auto &routePts = route.points;
+                TrafficBlock currTrafficBlk;
+                for (size_t i = 0; i < routePts.size(); i++) {
+                    if (i % blockSize == 0 && !currTrafficBlk.block.empty()) {
+                        trafficBlks.push_back(currTrafficBlk);
+                        currTrafficBlk.block.clear();
+                    }
+
+                    if (i % blockSize < innerBlockSize) {
+                        currTrafficBlk.block.push_back(mbgl::Point<double>(routePts.at(i).x, routePts.at(i).y));
+                    }
                 }
-            }
-            if (!currTrafficBlk.block.empty()) {
-                trafficBlks.push_back(currTrafficBlk);
+                if (!currTrafficBlk.block.empty()) {
+                    trafficBlks.push_back(currTrafficBlk);
+                }
             }
         }
 
@@ -1288,19 +1304,19 @@ void GLFWView::incrementRouteProgress() {
     if (firstRouteID_.isValid() && routeMap_.find(firstRouteID_) != routeMap_.end()) {
         routeProgress_ += ROUTE_PROGRESS_STEP;
         routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
-        std::cout << "Route progress: " << routeProgress_;
-
+        // routeProgress_ = 0.041;
         if (generateRouteProgressPercent_) {
-            rmptr_->routeSetProgress(firstRouteID_, routeProgress_);
+            rmptr_->routeSetProgressPercent(firstRouteID_, routeProgress_);
         } else {
-            mbgl::Point<double> progressPoint = routeMap_[firstRouteID_].getPoint(routeProgress_);
+            const mbgl::Point<double> &progressPoint = rmptr_->getPoint(
+                firstRouteID_, routeProgress_, mbgl::route::Precision::Course);
             // TODO: test out which algorithm works in nav app before removing dead code
             //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
             //  std::cout<<", calculated percent: "<<percent<<std::endl;
 
-            mbgl::route::RouteProjectionResult rpr = rmptr_->routeSetProgressProject(
-                firstRouteID_, progressPoint, captureNavPoints_);
-            std::cout << ", calculated percent: " << rpr.percentageAlongRoute << std::endl;
+            double percentage = rmptr_->routeSetProgressPoint(
+                firstRouteID_, progressPoint, mbgl::route::Precision::Course, captureNavPoints_);
+            std::cout << "Route progress: " << routeProgress_ << ", calculated percent: " << percentage << std::endl;
         }
         rmptr_->finalize();
     }
@@ -1310,18 +1326,18 @@ void GLFWView::decrementRouteProgress() {
     if (firstRouteID_.isValid() && routeMap_.find(firstRouteID_) != routeMap_.end()) {
         routeProgress_ -= ROUTE_PROGRESS_STEP;
         routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
-        std::cout << "Route progress: " << routeProgress_;
+
         if (generateRouteProgressPercent_) {
-            rmptr_->routeSetProgress(firstRouteID_, routeProgress_, captureNavPoints_);
+            rmptr_->routeSetProgressPercent(firstRouteID_, routeProgress_, captureNavPoints_);
         } else {
             mbgl::Point<double> progressPoint = routeMap_[firstRouteID_].getPoint(routeProgress_);
             // TODO: test out which algorithm works in nav app before removing dead code
             //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
             //  std::cout<<", calculated percent: "<<percent<<std::endl;
 
-            mbgl::route::RouteProjectionResult rpr = rmptr_->routeSetProgressProject(
-                firstRouteID_, progressPoint, captureNavPoints_);
-            std::cout << ", calculated percent: " << rpr.percentageAlongRoute << std::endl;
+            double percentage = rmptr_->routeSetProgressPoint(
+                firstRouteID_, progressPoint, mbgl::route::Precision::Course, captureNavPoints_);
+            std::cout << "Route progress: " << routeProgress_ << ", calculated percent: " << percentage << std::endl;
         }
 
         rmptr_->finalize();
@@ -1606,15 +1622,15 @@ void GLFWView::replayNavStops() {
             const mbgl::LineString<double> &route = capturedNavStopMap_[firstRouteID_];
             const uint32_t sz = route.size();
             const auto &navStop = route[lastNavStop_++ % sz];
-            const mbgl::route::RouteProjectionResult &rpr = rmptr_->routeSetProgressProject(firstRouteID_, navStop);
+            double percentage = rmptr_->routeSetProgressPoint(firstRouteID_, navStop, mbgl::route::Precision::Course);
             rmptr_->finalize();
             std::cout << "replayNavStop - Route: " << firstRouteID_.id << ", NavStop: " << navStop.x << ", "
-                      << navStop.y << ", percent: " << std::to_string(rpr.percentageAlongRoute) << std::endl;
+                      << navStop.y << ", percent: " << std::to_string(percentage) << std::endl;
         } else if (capturedNavPercentMap_.find(firstRouteID_) != capturedNavPercentMap_.end()) {
             const auto &route = capturedNavPercentMap_[firstRouteID_];
             const uint32_t sz = route.size();
             const double percent = route[lastNavStop_++ % sz];
-            rmptr_->routeSetProgress(firstRouteID_, percent);
+            rmptr_->routeSetProgressPercent(firstRouteID_, percent);
             rmptr_->finalize();
         } else {
             std::cout << "No nav stops found for the route!" << std::endl;

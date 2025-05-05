@@ -4,6 +4,7 @@
 #include <mbgl/route/route_segment.hpp>
 #include <mbgl/route/id_pool.hpp>
 #include <mbgl/route/route.hpp>
+#include <mbgl/route/route_enums.hpp>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
@@ -58,11 +59,12 @@ public:
 
     RouteID routeCreate(const LineString<double>& geometry, const RouteOptions& ropts);
     bool routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
-    bool routeSetProgress(const RouteID&, const double progress, bool capture = false);
-    double routeSetProgress(const RouteID&, const mbgl::Point<double>& progressPoint, bool capture = false);
-    RouteProjectionResult routeSetProgressProject(const RouteID&,
-                                                  const Point<double>& progressPoint,
-                                                  bool capture = false);
+    bool routeSetProgressPercent(const RouteID&, double progress, bool capture = false);
+    double routeSetProgressPoint(const RouteID&,
+                                 const Point<double>& progressPoint,
+                                 const Precision& precision,
+                                 bool capture = false);
+    Point<double> getPoint(const RouteID& routeID, double percent, const Precision& precision) const;
     void routeClearSegments(const RouteID&);
     bool routeDispose(const RouteID&);
     std::vector<RouteID> getAllRoutes() const;

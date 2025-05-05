@@ -50,6 +50,33 @@ T dist(const S1& a, const S2& b) {
     return static_cast<T>(std::sqrt(dx * dx + dy * dy));
 }
 
+// Calculates the Haversine distance between two LatLng points
+template <typename T, typename S1, typename S2>
+T haversineDist(const S1& p1, const S2& p2) {
+    const auto& degreesToRadians = [](double degrees) {
+        return degrees * M_PI / 180.0;
+    };
+
+    // Earth's radius in meters
+    static constexpr double EARTH_RADIUS_METERS = 6371000.0;
+
+    double p1latitude = p1.y, p1longitude = p1.x;
+    double p2latitude = p2.y, p2longitude = p2.x;
+    double lat1Rad = degreesToRadians(p1latitude);
+    double lon1Rad = degreesToRadians(p1longitude);
+    double lat2Rad = degreesToRadians(p2latitude);
+    double lon2Rad = degreesToRadians(p2longitude);
+
+    double dLat = lat2Rad - lat1Rad;
+    double dLon = lon2Rad - lon1Rad;
+
+    double a = std::sin(dLat / 2.0) * std::sin(dLat / 2.0) +
+               std::cos(lat1Rad) * std::cos(lat2Rad) * std::sin(dLon / 2.0) * std::sin(dLon / 2.0);
+    double c = 2.0 * std::atan2(std::sqrt(a), std::sqrt(1.0 - a));
+
+    return EARTH_RADIUS_METERS * c;
+}
+
 template <typename T, typename S1, typename S2>
 T distSqr(const S1& a, const S2& b) {
     auto dx = b.x - a.x;

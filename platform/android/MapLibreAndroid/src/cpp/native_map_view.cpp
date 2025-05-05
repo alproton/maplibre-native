@@ -61,6 +61,7 @@
 #include "tile/tile_operation.hpp"
 #include "mbgl/route/route_manager.hpp"
 #include "mbgl/route/route.hpp"
+#include "mbgl/route/route_enums.hpp"
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/error/en.h>
@@ -1722,7 +1723,7 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
 
 jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {
     if (routeMgr) {
-        return routeMgr->routeSetProgress(RouteID(routeID), progress);
+        return routeMgr->routeSetProgressPercent(RouteID(routeID), progress);
     }
 
     return false;
@@ -1731,11 +1732,9 @@ jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jd
 jdouble NativeMapView::routeProgressSetPoint(
     JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean capture) {
     if (routeMgr) {
-        route::RouteProjectionResult rpr = routeMgr->routeSetProgressProject(
-            RouteID(routeID), mbgl::Point<double>(x, y), capture);
-        if (rpr.success) {
-            return rpr.percentageAlongRoute;
-        }
+        double percentage = routeMgr->routeSetProgressPoint(
+            RouteID(routeID), mbgl::Point<double>(x, y), mbgl::route::Precision::Course, capture);
+        return percentage;
     }
 
     return -1.0;

@@ -1,10 +1,13 @@
 
 #pragma once
 
+#include "mbgl/util/geo.hpp"
+
 #include <mbgl/route/route_segment.hpp>
 
 #include <mbgl/util/geometry.hpp>
 #include <mbgl/util/color.hpp>
+#include <mbgl/route/route_enums.hpp>
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -28,17 +31,6 @@ struct RouteOptions {
     std::string layerBefore;
 };
 
-enum class RouteType {
-    Casing,
-    Inner
-};
-
-struct RouteProjectionResult {
-    mbgl::Point<double> closestPoint;
-    double percentageAlongRoute = 0.0;
-    bool success = false;
-};
-
 /***
  * A route is a polyline that represents a road between two locations. There can be multiple routes in the case of
  * multiple stops. Each route can have route segments. Routes segments represents a traffic zone. A route must have a
@@ -55,8 +47,9 @@ public:
     void routeSetProgress(const double t, bool capture = false);
     double routeGetProgress() const;
     double getTotalDistance() const;
-    double getProgressPercent(const Point<double>& progressPoint, bool capture = false);
-    RouteProjectionResult getProgressProjection(const Point<double>& progressPoint, bool capture = false);
+    double getProgressPercent(const Point<double>& queryPoint, const Precision& precision, bool capture = false);
+    Point<double> getPoint(double percent, const Precision& precision) const;
+
     mbgl::LineString<double> getGeometry() const;
     bool hasRouteSegments() const;
     const RouteOptions& getRouteOptions() const;
@@ -74,6 +67,10 @@ private:
     };
 
     std::vector<SegmentRange> compactSegments(const RouteType& routeType) const;
+    Point<double> getPointCourse(double percent) const;
+    Point<double> getPointFine(double percent) const;
+    double getProgressProjectionLERP(const Point<double>& queryPoint, bool capture = false);
+    double getProgressProjectionSLERP(const Point<double>& queryPoint, bool capture = false);
 
     RouteOptions routeOptions_;
     double progress_ = 0.0;

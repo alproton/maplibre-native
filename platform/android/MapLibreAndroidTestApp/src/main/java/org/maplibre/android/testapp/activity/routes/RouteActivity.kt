@@ -1,6 +1,11 @@
 package org.maplibre.android.testapp.activity.routes
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -10,6 +15,15 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.LocationComponentOptions
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
+import org.maplibre.android.location.permissions.PermissionsListener
+import org.maplibre.android.location.permissions.PermissionsManager
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.OnMapReadyCallback
@@ -27,8 +41,15 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var maplibreMap : MapLibreMap
     private var progressModePoint : Boolean = false
 
+    private val useLocationEngine = false
+    private var permissionsManager: PermissionsManager? = null
+    private var locationManager : LocationManager? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        checkPermissions()
+
         setContentView(R.layout.activity_routes)
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
@@ -94,7 +115,74 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
                 Toast.makeText(applicationContext, "Nothing selected", Toast.LENGTH_SHORT).show()
             }
         }
+    }
 
+    private fun prepareLocationComp(style: Style) {
+        val context : Context = this
+        val locationComponentOptions =
+            LocationComponentOptions.builder(context)
+                .compassAnimationEnabled(true)
+                .gpsDrawable(R.drawable.ic_puck)
+                .foregroundDrawableStale(R.drawable.ic_puck)
+                .foregroundDrawable(R.drawable.ic_puck)
+                .backgroundDrawable(R.drawable.ic_transparent)
+                .bearingDrawable(R.drawable.ic_transparent)
+                .trackingAnimationDurationMultiplier(1.0f)
+                .build()
+
+        maplibreMap.locationComponent.apply {
+            activateLocationComponent(
+                LocationComponentActivationOptions.Builder(
+                    context,
+                    style
+                ).locationComponentOptions(locationComponentOptions)
+                    .useDefaultLocationEngine(useLocationEngine)
+                    .customPuckAnimationEnabled(true)
+                    .customPuckAnimationIntervalMS(30)
+                    .customPuckLagMS(900)
+                    .customPuckIconScale(0.8f)
+                    .build()
+            )
+            applyStyle(locationComponentOptions)
+//            isLocationComponentEnabled = true
+            renderMode = RenderMode.GPS
+            cameraMode = CameraMode.TRACKING_GPS
+        }
+        maplibreMap.locationComponent.setMaxAnimationFps(30)
+        if (useLocationEngine) {
+            maplibreMap.cameraPosition = CameraPosition.Builder().target(LatLng(0.0,0.0)).zoom(16.4).build()
+            maplibreMap.locationComponent.setCameraMode(CameraMode.TRACKING_GPS)
+        } else {
+            maplibreMap.locationComponent.zoomWhileTracking(16.4, 1000)
+        }
+    }
+
+
+    private fun checkPermissions() {
+        val context : Context = this
+
+        if (PermissionsManager.areLocationPermissionsGranted(this)) {
+            // mapView.getMapAsync(this)
+        } else {
+            permissionsManager = PermissionsManager(object : PermissionsListener {
+                override fun onExplanationNeeded(permissionsToExplain: List<String>) {
+                    Toast.makeText(
+                        context,
+                        "You need to accept location permissions.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+                override fun onPermissionResult(granted: Boolean) {
+                    if (granted) {
+                        // mapView.getMapAsync(this@BasicLocationPulsingCircleActivity)
+                    } else {
+                        finish()
+                    }
+                }
+            })
+            permissionsManager!!.requestLocationPermissions(this)
+        }
     }
 
     override fun onMapReady(map: MapLibreMap) {
@@ -104,14 +192,27 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         if (key == null || key == "YOUR_API_KEY_GOES_HERE") {
             maplibreMap.setStyle(
                 Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")
-            )
+            ) {
+                style: Style ->
+                prepareLocationComp(style)
+            }
         } else {
             val styles = Style.getPredefinedStyles()
             if (styles.isNotEmpty()) {
                 val styleUrl = styles[0].url
                 maplibreMap.setStyle(Style.Builder().fromUri(styleUrl))
+                maplibreMap.getStyle() { style ->
+                    prepareLocationComp(style)
+                }
             }
         }
+
+        //TODO: investigate and fix location component to programmatically set puck location
+//        val location : Location = Location("dummyprovider")
+//        location.latitude = 0.0
+//        location.longitude = 0.0
+//        maplibreMap.locationComponent.forceLocationUpdate(location)
+
     }
 
     override fun onStart() {

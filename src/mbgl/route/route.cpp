@@ -11,7 +11,6 @@
 namespace mbgl {
 
 namespace route {
-
 namespace {
 
 const double EPSILON = 1e-8;
@@ -56,6 +55,81 @@ std::string tabs(uint32_t tabcount) {
     return ss.str();
 }
 
+// --- Constants ---
+constexpr double PI = 3.14159265358979323846;
+
+// --- Helper Functions ---
+
+// Converts degrees to radians
+inline double degreesToRadians(double degrees) {
+    return degrees * PI / 180.0;
+}
+
+// Converts radians to degrees
+inline double radiansToDegrees(double radians) {
+    return radians * 180.0 / PI;
+}
+
+struct Vector3D {
+    double x;
+    double y;
+    double z;
+};
+
+Vector3D vecSubtract(const Vector3D& a, const Vector3D& b) {
+    return {a.x - b.x, a.y - b.y, a.z - b.z};
+}
+Vector3D vecAdd(const Vector3D& a, const Vector3D& b) {
+    return {a.x + b.x, a.y + b.y, a.z + b.z};
+}
+Vector3D vecScale(const Vector3D& v, double scalar) {
+    return {v.x * scalar, v.y * scalar, v.z * scalar};
+}
+double vecDot(const Vector3D& a, const Vector3D& b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+double vecMagnitudeSq(const Vector3D& v) {
+    return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
+/**
+ * @brief Converts Latitude/Longitude (degrees) to 3D Cartesian coordinates (unit sphere). Latitude ranges from
+ * -90 to +90, where +ve is above equator and -ve is below equator. Longitude ranges from -180 to +180, where -ve is
+ * is west of prime meridian and +ve is east of prime meridian.
+ *
+ * @param p Point with latitude and longitude in degrees.
+ * @return Vector3D Cartesian coordinates (x, y, z).
+ */
+Vector3D latLonToCartesian(const Point<double>& p) {
+    double latRad = degreesToRadians(p.y);
+    double lonRad = degreesToRadians(p.x);
+
+    return {
+        std::cos(latRad) * std::cos(lonRad), // x
+        std::cos(latRad) * std::sin(lonRad), // y
+        std::sin(latRad)                     // z
+    };
+}
+
+/**
+ * @brief Converts 3D Cartesian coordinates (unit sphere) back to Latitude/Longitude (degrees).
+ * @param v Cartesian vector (x, y, z). Assumed to be normalized (unit length).
+ * @return Point with latitude and longitude in degrees.
+ */
+Point<double> cartesianToLatLon(const Vector3D& v) {
+    // Ensure the vector is normalized (or close enough) for accurate asin
+    // double length = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z); // Optional normalization
+    // Vector3D norm_v = {v.x / length, v.y / length, v.z / length};
+
+    // Clamp z to [-1, 1] to avoid domain errors in asin due to potential floating point inaccuracies
+    double clamped_z = std::clamp(v.z, -1.0, 1.0);
+
+    double latitudeRad = std::asin(clamped_z);  // Latitude from z component
+    double longitudeRad = std::atan2(v.y, v.x); // Longitude from atan2(y, x)
+
+    return {radiansToDegrees(longitudeRad), radiansToDegrees(latitudeRad)};
+}
+
 } // namespace
 
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
@@ -67,10 +141,235 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
         mbgl::Point<double> a = geometry_[i];
         mbgl::Point<double> b = geometry_[i - 1];
         assert((!std::isnan(a.x) && !std::isnan(a.y)) && "invalid geometry point");
-        double dist = std::abs(mbgl::util::dist<double>(a, b));
+        double dist = mbgl::util::haversineDist<double>(a, b);
         segDistances_.push_back(dist);
         totalDistance_ += dist;
     }
+}
+
+Point<double> Route::getPointCourse(double percentage) const {
+    if (geometry_.empty()) {
+        throw std::invalid_argument("Route cannot be empty.");
+    }
+
+    if (geometry_.size() == 1) {
+        return geometry_[0]; // If only one point, return it regardless of percentage
+    }
+
+    // Clamp percentage to the valid range [0.0, 1.0]
+    if (percentage < 0.0) percentage = 0.0;
+    if (percentage > 1.0) percentage = 1.0;
+
+    if (percentage == 0.0) {
+        return geometry_.front();
+    }
+    if (percentage == 1.0) {
+        return geometry_.back();
+    }
+
+    // Calculate the total length of the route TODO used pre-cached variables.
+    double total_distance = 0.0;
+    std::vector<double> segment_lengths; // Store lengths of each segment
+    segment_lengths.reserve(geometry_.size() - 1);
+
+    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
+        double dist = mbgl::util::haversineDist<double>(geometry_[i], geometry_[i + 1]);
+        segment_lengths.push_back(dist);
+        total_distance += dist;
+    }
+
+    // Handle cases where the total distance is zero (e.g., all points are identical)
+    if (total_distance <= std::numeric_limits<double>::epsilon()) {
+        return geometry_.front(); // Return the start point if total distance is negligible
+    }
+
+    // 2. Calculate the target distance based on the percentage
+    double target_distance = total_distance * percentage;
+
+    // 3. Iterate through segments to find the one containing the target distance
+    double cumulative_distance = 0.0;
+    for (size_t i = 0; i < segment_lengths.size(); ++i) {
+        double current_segment_length = segment_lengths[i];
+
+        // Check if the target point lies within or at the end of the current segment
+        // Use a small tolerance for floating point comparison
+        if (cumulative_distance + current_segment_length >= target_distance - std::numeric_limits<double>::epsilon()) {
+            const Point<double>& p1 = geometry_[i];
+            const Point<double>& p2 = geometry_[i + 1];
+
+            // Calculate how far into the current segment the target distance is
+            double distance_needed_in_segment = target_distance - cumulative_distance;
+
+            // Calculate the fraction of the current segment needed
+            double segment_fraction = 0.0;
+            if (current_segment_length > std::numeric_limits<double>::epsilon()) {
+                segment_fraction = distance_needed_in_segment / current_segment_length;
+            } else {
+                // If segment length is zero, just return the start point of the segment
+                return p1;
+            }
+
+            // Clamp fraction just in case of floating point issues
+            if (segment_fraction < 0.0) segment_fraction = 0.0;
+            if (segment_fraction > 1.0) segment_fraction = 1.0;
+
+            // 4. Linear Interpolation (LERP) between the segment's start and end points
+            // Note: Simple linear interpolation of lat/lon is an approximation.
+            // For very long segments or high accuracy needs, spherical linear
+            // interpolation (Slerp) might be preferred, but it's more complex.
+            // LERP is often sufficient for typical navigation route segments.
+            double result_lon = p1.x + (p2.x - p1.x) * segment_fraction;
+            double result_lat = p1.y + (p2.y - p1.y) * segment_fraction;
+
+            return {result_lon, result_lat};
+        }
+
+        // Add the current segment's length to the cumulative distance
+        cumulative_distance += current_segment_length;
+    }
+
+    // Should theoretically not be reached if percentage <= 1.0 due to checks,
+    // but as a fallback, return the last point (covers percentage = 1.0 edge case
+    // potentially missed by floating point issues).
+    return geometry_.back();
+}
+
+Point<double> Route::getPointFine(double percentage) const {
+    if (geometry_.empty()) {
+        throw std::invalid_argument("Route cannot be empty.");
+    }
+
+    if (geometry_.size() == 1) {
+        return geometry_[0]; // If only one point, return it regardless of percentage
+    }
+
+    // Clamp percentage to the valid range [0.0, 1.0]
+    if (percentage < 0.0) percentage = 0.0;
+    if (percentage > 1.0) percentage = 1.0;
+
+    if (percentage == 0.0) {
+        return geometry_.front();
+    }
+    if (percentage == 1.0) {
+        return geometry_.back();
+    }
+
+    // 1. Calculate the total length of the route
+    double total_distance = 0.0;
+    std::vector<double> segment_lengths; // Store lengths of each segment
+    segment_lengths.reserve(geometry_.size() - 1);
+
+    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
+        double dist = mbgl::util::haversineDist<double>(geometry_[i], geometry_[i + 1]);
+        segment_lengths.push_back(dist);
+        total_distance += dist;
+    }
+
+    // Handle cases where the total distance is zero (e.g., all points are identical)
+    if (total_distance <= std::numeric_limits<double>::epsilon()) {
+        return geometry_.front(); // Return the start point if total distance is negligible
+    }
+
+    // 2. Calculate the target distance based on the percentage
+    double target_distance = total_distance * percentage;
+
+    // 3. Iterate through segments to find the one containing the target distance
+    double cumulative_distance = 0.0;
+    for (size_t i = 0; i < segment_lengths.size(); ++i) {
+        double current_segment_length = segment_lengths[i];
+
+        // Check if the target point lies within or at the end of the current segment
+        // Use a small tolerance for floating point comparison
+        if (cumulative_distance + current_segment_length >= target_distance - std::numeric_limits<double>::epsilon()) {
+            const Point<double>& p1 = geometry_[i];
+            const Point<double>& p2 = geometry_[i + 1];
+
+            double distance_needed_in_segment = target_distance - cumulative_distance;
+            double segment_fraction = 0.0;
+
+            if (current_segment_length > EPSILON) {
+                segment_fraction = distance_needed_in_segment / current_segment_length;
+            } else {
+                // Segment length is effectively zero, return the start point
+                return p1;
+            }
+            segment_fraction = std::clamp(segment_fraction, 0.0, 1.0); // Clamp fraction
+
+            // --- 4. Perform SLERP ---
+            Vector3D v1 = latLonToCartesian(p1);
+            Vector3D v2 = latLonToCartesian(p2);
+
+            // Dot product -> angle between vectors
+            double dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+
+            // Clamp dot product to avoid acos domain errors due to floating point inaccuracies
+            dot = std::clamp(dot, -1.0, 1.0);
+
+            double omega = std::acos(dot); // Angle between v1 and v2 in radians
+
+            // Handle cases where points are very close or identical
+            if (std::abs(omega) < EPSILON) {
+                // If angle is negligible, points are virtually the same.
+                // LERP or returning p1 is fine. We can just return p1 or linearly interpolate.
+                // Since fraction could be anything, let's LERP on the original points for robustness here.
+                // (Although returning p1 if fraction is 0 or p2 if fraction is 1 is also valid)
+                // For simplicity given the check above, return p1 as segment_fraction is likely 0 anyway
+                // if segment_length was near zero. If segment length wasn't near zero but omega is,
+                // it implies an issue, but p1 is a safe fallback. Let's return p1.
+                return p1;
+                // Alternatively, simple LERP on lat/lon if omega is small:
+                // double result_lat = p1.latitude + (p2.latitude - p1.latitude) * segment_fraction;
+                // double result_lon = p1.longitude + (p2.longitude - p1.longitude) * segment_fraction;
+                // return {result_lat, result_lon};
+            }
+
+            double sin_omega = std::sin(omega);
+
+            // Handle cases where points are nearly antipodal (or identical again)
+            if (std::abs(sin_omega) < EPSILON) {
+                // Points are identical or antipodal.
+                // If identical (omega ~ 0), already handled above.
+                // If antipodal (omega ~ PI), SLERP is ill-defined (infinite great circles).
+                // Falling back to LERP or returning p1 is a pragmatic choice for route segments.
+                // Return p1 as a fallback.
+                // or
+                // Alternatively LERP:
+                double result_lat = p1.y + (p2.y - p1.y) * segment_fraction;
+                double result_lon = p1.x + (p2.x - p1.x) * segment_fraction;
+                return {result_lon, result_lat};
+            }
+
+            // SLERP formula components
+            double a = std::sin((1.0 - segment_fraction) * omega) / sin_omega;
+            double b = std::sin(segment_fraction * omega) / sin_omega;
+
+            // Interpolated Cartesian vector
+            Vector3D v_result = {a * v1.x + b * v2.x, a * v1.y + b * v2.y, a * v1.z + b * v2.z};
+
+            // Convert back to Lat/Lon (degrees)
+            return cartesianToLatLon(v_result);
+            // --- End SLERP ---
+        }
+        cumulative_distance += current_segment_length;
+    }
+
+    // Should theoretically not be reached if percentage <= 1.0 due to checks,
+    // but as a fallback, return the last point (covers percentage = 1.0 edge case
+    // potentially missed by floating point issues).
+    return geometry_.back();
+}
+
+mbgl::Point<double> Route::getPoint(double percentage, const Precision& precision) const {
+    switch (precision) {
+        case Precision::Course:
+            return getPointCourse(percentage);
+        case Precision::Fine:
+            return getPointFine(percentage);
+        default:
+            throw std::invalid_argument("Invalid precision type.");
+    }
+
+    return {};
 }
 
 const RouteOptions& Route::getRouteOptions() const {
@@ -223,122 +522,6 @@ double Route::routeGetProgress() const {
     return progress_;
 }
 
-RouteProjectionResult Route::getProgressProjection(const Point<double>& progressPoint, bool capture) {
-    RouteProjectionResult result;
-    result.success = false;
-
-    if (geometry_.size() < 2) {
-        return result; // Cannot form segments
-    }
-
-    double totalRouteLength = 0.0;
-    std::vector<double> segmentLengths;
-    segmentLengths.reserve(geometry_.size() - 1);
-
-    // Calculate total length and individual segment lengths
-    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
-        double segLen = mbgl::util::dist<double>(geometry_[i], geometry_[i + 1]);
-        segmentLengths.push_back(segLen);
-        totalRouteLength += segLen;
-    }
-
-    // Handle zero-length route
-    if (totalRouteLength <= std::numeric_limits<double>::epsilon()) {
-        // If the route has no length, the closest point is the first point,
-        // and percentage is arguably 0 or undefined. We'll return 0.
-        result.closestPoint = geometry_[0];
-        result.percentageAlongRoute = 0.0;
-        result.success = true; // Technically successful, though degenerate case
-        // Check if query point *is* the single point location
-        if (mbgl::util::dist<double>(geometry_[0], progressPoint) > std::numeric_limits<double>::epsilon()) {
-            // If query point is different, maybe success should be false? Depends on requirements.
-            // Let's keep it true but maybe add a warning/note.
-            Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");
-        }
-        return result;
-    }
-
-    double minDistanceSq = std::numeric_limits<double>::max();
-    double distanceToBestSegmentStart = 0.0; // Accumulates distance up to the start of the 'best' segment
-    double distanceAlongBestSegment = 0.0;
-
-    double currentDistanceAlongRoute = 0.0; // Accumulates distance as we iterate
-                                            // Iterate through each segment of the route
-    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
-        const mbgl::Point<double>& p1 = geometry_[i];     // Start point of the segment
-        const mbgl::Point<double>& p2 = geometry_[i + 1]; // End point of the segment
-        double currentSegmentLength = segmentLengths[i];
-
-        mbgl::Point<double> segmentVector = p2 - p1;
-        mbgl::Point<double> queryVector = progressPoint - p1;
-
-        mbgl::Point<double> closestPointOnSegment;
-        double distAlongCurrentSegment = 0.0;
-
-        // Calculate the squared length of the segment vector
-        double segmentLenSq = mbgl::util::distSqr<double>(
-            p1, p2); // segmentVector.x * segmentVector.x + segmentVector.y * segmentVector.y;
-
-        if (segmentLenSq < std::numeric_limits<double>::epsilon()) {
-            // Segment has zero length, closest point on segment is just p1 (or p2)
-            closestPointOnSegment = p1;
-            distAlongCurrentSegment = 0.0; // No distance along a zero-length segment
-        } else {
-            // Project queryVector onto segmentVector
-            // t = dot(queryVector, segmentVector) / dot(segmentVector, segmentVector)
-            double dotProduct = queryVector.x * segmentVector.x + queryVector.y * segmentVector.y;
-            double t = dotProduct / segmentLenSq;
-
-            // Clamp t to the range [0, 1] to stay within the segment
-            if (t < 0.0) {
-                closestPointOnSegment = p1; // Closest point is the start of the segment
-                distAlongCurrentSegment = 0.0;
-            } else if (t > 1.0) {
-                closestPointOnSegment = p2;                     // Closest point is the end of the segment
-                distAlongCurrentSegment = currentSegmentLength; // Full length of this segment
-            } else {
-                // Projection lies within the segment
-                closestPointOnSegment = p1 + (segmentVector * t);
-                // Calculate distance from p1 to the projected point
-                distAlongCurrentSegment = mbgl::util::dist<double>(p1, closestPointOnSegment);
-            }
-        }
-
-        // Check if the closest point on this segment is the closest overall found so far
-        double currentDistSq = mbgl::util::distSqr<double>(progressPoint, closestPointOnSegment);
-        if (currentDistSq < minDistanceSq) {
-            minDistanceSq = currentDistSq;
-            result.closestPoint = closestPointOnSegment;
-            distanceToBestSegmentStart = currentDistanceAlongRoute; // Store distance up to the start of this segment
-            distanceAlongBestSegment = distAlongCurrentSegment;     // Store distance along this segment
-            result.success = true;
-        }
-
-        // Accumulate distance for the next iteration
-        currentDistanceAlongRoute += currentSegmentLength;
-    }
-
-    // Calculate the final percentage
-    if (result.success) {
-        double totalDistanceToClosestPoint = distanceToBestSegmentStart + distanceAlongBestSegment;
-        result.percentageAlongRoute = (totalDistanceToClosestPoint / totalRouteLength);
-
-        // Clamp percentage just in case of floating point inaccuracies near ends
-        if (result.percentageAlongRoute < 0.0) result.percentageAlongRoute = 0.0;
-        if (result.percentageAlongRoute > 1.0) result.percentageAlongRoute = 1.0;
-    }
-
-    Log::Info(Event::Route,
-              "ROUTE_PROGRESS_LOG: Route::getProgressProjection() pt: " + std::to_string(progressPoint.x) + ", " +
-                  std::to_string(progressPoint.y) + ", capturedNavStops.size: " +
-                  std::to_string(capturedNavStops_.size()) + "percent: " + std::to_string(result.percentageAlongRoute));
-    if (capture) {
-        capturedNavStops_.push_back(result.closestPoint);
-    }
-
-    return result;
-}
-
 const std::vector<Point<double>>& Route::getCapturedNavStops() const {
     return capturedNavStops_;
 }
@@ -347,62 +530,223 @@ const std::vector<double>& Route::getCapturedNavPercent() const {
     return capturedNavPercent_;
 }
 
-double Route::getProgressPercent(const Point<double>& progressPoint, bool capture) {
+double Route::getProgressPercent(const Point<double>& progressPoint, const Precision& precision, bool capture) {
+    switch (precision) {
+        case Precision::Course: {
+            return getProgressProjectionLERP(progressPoint, capture);
+        }
+        case Precision::Fine: {
+            return getProgressProjectionSLERP(progressPoint, capture);
+        }
+        default:
+            throw std::invalid_argument("Invalid precision type.");
+    }
+
+    return -1.0;
+}
+
+double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool capture) {
     if (capture) {
-        capturedNavStops_.push_back(progressPoint);
+        capturedNavStops_.push_back(queryPoint);
     }
 
     if (geometry_.size() < 2) {
+        return -1.0; // Cannot form segments
+    }
+
+    double totalRouteLength = 0.0;
+    std::vector<double> segmentLengths;
+    std::vector<double> cumulativeDistances;
+    segmentLengths.reserve(geometry_.size() - 1);
+    cumulativeDistances.reserve(geometry_.size());
+    cumulativeDistances.push_back(0.0);
+
+    // Calculate total length and individual segment lengths
+    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
+        double segLen = mbgl::util::haversineDist<double>(geometry_[i], geometry_[i + 1]);
+        segmentLengths[i] = segLen;
+        totalRouteLength += segLen;
+        cumulativeDistances.push_back(totalRouteLength);
+    }
+
+    // Handle zero-length route
+    if (totalRouteLength <= std::numeric_limits<double>::epsilon()) {
+        // If the route has no length, the closest point is the first point,
+        // and percentage is arguably 0 or undefined. We'll return 0.
+        // Check if query point *is* the single point location
+        if (mbgl::util::haversineDist<double>(geometry_[0], queryPoint) > std::numeric_limits<double>::epsilon()) {
+            // If query point is different, maybe success should be false? Depends on requirements.
+            // Let's keep it true but maybe add a warning/note.
+            Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");
+        }
         return 0.0;
     }
 
-    double minDistance = std::numeric_limits<double>::max();
-    size_t closestSegmentIndex = 0;
-    double closestPercentage = 0.0;
+    double minDistanceSq = std::numeric_limits<double>::max();
+    double bestSegmentFraction = 0.0;
+    size_t bestSegmentIndex = 0;
 
-    // Iterate through each line segment in the polyline
-    for (size_t i = 0; i < geometry_.size() - 1; i++) {
-        const Point<double>& p1 = geometry_[i];
-        const Point<double>& p2 = geometry_[i + 1];
+    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
+        const mbgl::Point<double>& p1 = geometry_[i];     // Start point of the segment
+        const mbgl::Point<double>& p2 = geometry_[i + 1]; // End point of the segment
 
-        // Vector from p1 to p2
-        double segmentX = p2.x - p1.x;
-        double segmentY = p2.y - p1.y;
-        double segmentLength = segDistances_[i];
+        // --- Project queryPoint onto the 2D line segment (p1, p2) ---
+        // Treat Lat/Lon as simple 2D coordinates for projection (approximation)
+        double segmentDX = p2.x - p1.x; // longitude
+        double segmentDY = p2.y - p1.y; // lattitude
 
-        if (segmentLength == 0.0) continue;
+        double segmentLenSq = segmentDX * segmentDX + segmentDY * segmentDY;
 
-        // Vector from p1 to progressPoint
-        double vectorX = progressPoint.x - p1.x;
-        double vectorY = progressPoint.y - p1.y;
+        double t = 0.0; // Parameter along the line segment (0=p1, 1=p2)
+        Point<double> closestPointOnSegment = p1;
 
-        // Project progressPoint onto the line segment
-        double projection = (vectorX * segmentX + vectorY * segmentY) / segmentLength;
-        double percentage = std::max(0.0, std::min(1.0, projection / segmentLength));
+        if (segmentLenSq > EPSILON) {
+            // Project (queryPoint - p1) onto (p2 - p1)
+            double queryPointDX = queryPoint.x - p1.x;
+            double queryPointDY = queryPoint.y - p1.y;
+            t = (queryPointDX * segmentDX + queryPointDY * segmentDY) / segmentLenSq;
+            t = std::clamp(t, 0.0, 1.0); // Clamp to the segment bounds [0, 1]
 
-        // Calculate the closest point on the line segment
-        double closestX = p1.x + percentage * segmentX;
-        double closestY = p1.y + percentage * segmentY;
+            // Calculate the point on the segment corresponding to clamped t
+            closestPointOnSegment.y = p1.y + t * segmentDY;
+            closestPointOnSegment.x = p1.x + t * segmentDX;
+        } else {
+            // Segment has zero length, closest point is p1 (or p2, they are the same)
+            // t remains 0.0;
+            closestPointOnSegment = p1;
+        }
 
-        // Calculate distance to the line segment
-        double distance = std::sqrt(std::pow(progressPoint.x - closestX, 2) + std::pow(progressPoint.y - closestY, 2));
+        // --- Calculate distance from queryPoint to this closest point ---
+        // IMPORTANT: Use Haversine distance for the actual distance check,
+        // even though projection used linear approximation.
+        double dist = mbgl::util::haversineDist<double>(queryPoint, closestPointOnSegment);
+        double distSq = dist * dist; // Compare squared distances to avoid sqrt
 
-        // Update if this is the closest segment found
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestSegmentIndex = i;
-            closestPercentage = percentage;
+        if (distSq < minDistanceSq) {
+            minDistanceSq = distSq;
+            bestSegmentIndex = i;
+            bestSegmentFraction = t; // Use the clamped fraction
         }
     }
 
-    // Calculate distance up to the projected point using stored segment distances
-    double distanceToPoint = 0.0;
-    for (size_t i = 0; i < closestSegmentIndex; i++) {
-        distanceToPoint += segDistances_[i];
-    }
-    distanceToPoint += segDistances_[closestSegmentIndex] * closestPercentage;
+    // --- Calculate final percentage ---
+    double distanceAlongRoute = cumulativeDistances[bestSegmentIndex] +
+                                (bestSegmentFraction * segmentLengths[bestSegmentIndex]);
 
-    return totalDistance_ > 0.0 ? distanceToPoint / totalDistance_ : 0.0;
+    return distanceAlongRoute / totalRouteLength;
+}
+
+double Route::getProgressProjectionSLERP([[maybe_unused]] const Point<double>& queryPoint,
+                                         [[maybe_unused]] bool capture) {
+    if (capture) {
+        capturedNavStops_.push_back(queryPoint);
+    }
+
+    if (geometry_.size() < 2) {
+        return -1.0; // Cannot form segments
+    }
+
+    double totalRouteLength = 0.0;
+    std::vector<double> segmentLengths;
+    std::vector<double> cumulativeDistances;
+    segmentLengths.reserve(geometry_.size() - 1);
+    cumulativeDistances.reserve(geometry_.size());
+    cumulativeDistances.push_back(0.0);
+
+    // Calculate total length and individual segment lengths
+    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
+        double segLen = mbgl::util::haversineDist<double>(geometry_[i], geometry_[i + 1]);
+        segmentLengths[i] = segLen;
+        totalRouteLength += segLen;
+        cumulativeDistances.push_back(totalRouteLength);
+    }
+
+    // Handle zero-length route
+    if (totalRouteLength <= std::numeric_limits<double>::epsilon()) {
+        // If the route has no length, the closest point is the first point,
+        // and percentage is arguably 0 or undefined. We'll return 0.
+        // Check if query point *is* the single point location
+        if (mbgl::util::haversineDist<double>(geometry_[0], queryPoint) > std::numeric_limits<double>::epsilon()) {
+            // If query point is different, maybe success should be false? Depends on requirements.
+            // Let's keep it true but maybe add a warning/note.
+            Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");
+        }
+        return 0.0;
+    }
+
+    double minDistanceSq = std::numeric_limits<double>::max();
+    double bestSegmentFraction = 0.0;
+    size_t bestSegmentIndex = 0;
+    Vector3D vQuery = latLonToCartesian(queryPoint);
+
+    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
+        const mbgl::Point<double>& p1 = geometry_[i];     // Start point of the segment
+        const mbgl::Point<double>& p2 = geometry_[i + 1]; // End point of the segment
+        Vector3D v1 = latLonToCartesian(p1);
+        Vector3D v2 = latLonToCartesian(p2);
+
+        // --- Project vQuery onto the 3D line segment (chord) v1 -> v2 ---
+        Vector3D segmentVec = vecSubtract(v2, v1);
+        Vector3D queryVec = vecSubtract(vQuery, v1); // Vector from v1 to vQuery
+
+        double segmentLenSq = vecMagnitudeSq(segmentVec);
+        double t = 0.0; // Parameter along the chord (0=v1, 1=v2)
+
+        if (segmentLenSq > EPSILON) {
+            // Project queryVec onto segmentVec
+            t = vecDot(queryVec, segmentVec) / segmentLenSq;
+            t = std::clamp(t, 0.0, 1.0); // Clamp to the segment bounds [0, 1]
+        } else {
+            // Segment chord has zero length (v1 and v2 are same point)
+            // The closest point on the segment is v1 (or v2).
+            t = 0.0;
+        }
+
+        // --- Find the point on the great circle arc corresponding to fraction t ---
+        // We need the point on the *arc* to calculate the true distance.
+        // We use the SLERP *logic* (interpolation) to find this point, even
+        // though 't' came from projection onto the chord. This is a common approximation.
+        Point<double> closestPointOnArc;
+        double omega = 0.0;
+        double dot_prod = vecDot(v1, v2);
+        dot_prod = std::clamp(dot_prod, -1.0, 1.0); // Clamp for acos safety
+        omega = std::acos(dot_prod);                // Angle of the arc segment
+
+        if (std::abs(omega) < EPSILON || std::abs(std::sin(omega)) < EPSILON) {
+            // Arc angle is negligible (points identical) or antipodal.
+            // If identical (omega ~ 0), the point is just p1 (or p2).
+            // If antipodal (omega ~ PI), the path is ambiguous, but LERP is okay fallback.
+            // Use simple linear interpolation on original lat/lon for safety here.
+            closestPointOnArc.y = p1.y + t * (p2.y - p1.y);
+            closestPointOnArc.x = p1.x + t * (p2.x - p1.x);
+        } else {
+            // Use SLERP formula to find the point on the arc at fraction t
+            double sin_omega = std::sin(omega);
+            double a = std::sin((1.0 - t) * omega) / sin_omega;
+            double b = std::sin(t * omega) / sin_omega;
+            Vector3D v_result = vecAdd(vecScale(v1, a), vecScale(v2, b));
+            closestPointOnArc = cartesianToLatLon(v_result);
+        }
+
+        // --- Calculate distance from queryPoint to this point on the arc ---
+        double dist = mbgl::util::haversineDist<double>(queryPoint, closestPointOnArc);
+        double dist_sq = dist * dist;
+
+        if (dist_sq < minDistanceSq) {
+            minDistanceSq = dist_sq;
+            bestSegmentIndex = i;
+            bestSegmentFraction = t; // Store the fraction along the chord/arc
+        }
+    }
+
+    // --- Calculate final percentage (same as LERP version) ---
+    double distance_along_route = cumulativeDistances[bestSegmentIndex] +
+                                  (bestSegmentFraction * segmentLengths[bestSegmentIndex]);
+
+    // Clamp final distance just in case of minor over/undershoot from projection
+    distance_along_route = std::clamp(distance_along_route, 0.0, totalRouteLength);
+
+    return distance_along_route / totalRouteLength;
 }
 
 uint32_t Route::getNumRouteSegments() const {

@@ -143,9 +143,12 @@ class RouteUtils {
             if(routeCircle == null) return
 
             val point = routeCircle.getPoint(progress)
-            Timber.tag("General").i("getPoint: $point")
+            Timber.tag("RouteProgress").i("getPoint: $point")
             val calculatedPercent = mapView.setRouteProgressPoint(routeID, point, false)
-            Timber.tag("General").i("inputPercent: $progress , calculatedPercent: $calculatedPercent")
+            Timber.tag("RouteProgress").i("inputPercent: $progress , calculatedPercent: $calculatedPercent")
+
+//            mapView.setCustomPuckState(point.latitude(), point.longitude(), 0.0, 1.0f, false)
+
         }
 
         fun setPercentProgress(mapView: MapView, percent: Double) {
@@ -162,7 +165,7 @@ class RouteUtils {
                 Color.DKGRAY
             )
 
-            val routeCircle = createRouteCircle(30.0, 50.0, 5)
+            val routeCircle = createRouteCircle(30.0, 5.0, 5)
             val points = routeCircle.points
             val routeGeometry = org.maplibre.geojson.LineString.fromLngLats(points)
             val routeOptions = org.maplibre.android.maps.RouteOptions()
