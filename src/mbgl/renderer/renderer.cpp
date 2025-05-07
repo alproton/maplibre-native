@@ -155,6 +155,7 @@ void Renderer::reduceMemoryUse() {
 
 void Renderer::clearData() {
     impl->orchestrator.clearData();
+    reduceMemoryUse();
 }
 
 #if MLN_RENDER_BACKEND_OPENGL

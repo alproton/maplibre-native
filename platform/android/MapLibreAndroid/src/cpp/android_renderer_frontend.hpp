@@ -32,6 +32,8 @@ public:
     AndroidRendererFrontend(MapRenderer&);
     ~AndroidRendererFrontend() override;
 
+    void clearData();
+
     void reset() override;
     void setObserver(RendererObserver&) override;
 
