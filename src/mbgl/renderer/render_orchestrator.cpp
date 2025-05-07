@@ -869,6 +869,8 @@ bool RenderOrchestrator::isLoaded() const {
 void RenderOrchestrator::clearData() {
     MLN_TRACE_FUNC();
 
+    threadPool.waitForEmpty();
+
     if (!sourceImpls->empty()) sourceImpls = makeMutable<std::vector<Immutable<style::Source::Impl>>>();
     if (!layerImpls->empty()) layerImpls = makeMutable<std::vector<Immutable<style::Layer::Impl>>>();
     if (!imageImpls->empty()) imageImpls = makeMutable<std::vector<Immutable<style::Image::Impl>>>();
