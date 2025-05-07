@@ -65,6 +65,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   private final MapCallback mapCallback = new MapCallback();
   private final InitialRenderCallback initialRenderCallback = new InitialRenderCallback();
   private RouteID vanishingRouteID = new RouteID(-1);
+  private boolean isPointBasedRouteQueryCoarse = true;
+
   @Nullable
   private NativeMap nativeMapView;
   @Nullable
@@ -533,6 +535,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     vanishingRouteID = routeID;
   }
 
+  public void setPointBasedRouteQueryCoarse(boolean coarse) {
+    isPointBasedRouteQueryCoarse = coarse;
+  }
+
   /***
    * Removes all the route segments for the corresponding route. Remember to call finalizeRoutes().
    *
@@ -654,7 +660,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
                                  boolean cameraTracking) {
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
     if(vanishingRouteID.isValid()) {
-      double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), true, false);
+      double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse, false);
       nativeMapView.finalizeRoutes();
       Timber.i("Map_View_Route_Progress: route percent: "+ percent);
     } else {
