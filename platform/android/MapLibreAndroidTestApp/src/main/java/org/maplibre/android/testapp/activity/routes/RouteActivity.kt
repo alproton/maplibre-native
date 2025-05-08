@@ -1,10 +1,6 @@
 package org.maplibre.android.testapp.activity.routes
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.Color
-import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
 import android.view.View
@@ -15,7 +11,6 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.location.LocationComponentActivationOptions
@@ -27,19 +22,15 @@ import org.maplibre.android.location.permissions.PermissionsManager
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.OnMapReadyCallback
-import org.maplibre.android.maps.RouteID
-import org.maplibre.android.maps.RouteOptions
-import org.maplibre.android.maps.RouteSegmentOptions
 import org.maplibre.android.maps.Style
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ApiKeyUtils
-import org.maplibre.geojson.LineString
-import org.maplibre.geojson.Point
 
 class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
     private lateinit var maplibreMap : MapLibreMap
     private var progressModePoint : Boolean = false
+    private var progressPrecisionCoarse : Boolean = false
 
     private val useLocationEngine = false
     private var permissionsManager: PermissionsManager? = null
@@ -55,6 +46,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
 
+        //Add route
         val addRouteButton = findViewById<Button>(R.id.add_route)
         addRouteButton?.setOnClickListener {
             RouteUtils.addRoute(mapView)
@@ -62,38 +54,23 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             Toast.makeText(this, "Added Route", Toast.LENGTH_SHORT).show()
         }
 
+        //Remove route
         val removeRouteButton = findViewById<Button>(R.id.remove_route)
         removeRouteButton?.setOnClickListener {
             RouteUtils.disposeRoute(mapView)
             Toast.makeText(this, "Removed Route", Toast.LENGTH_SHORT).show()
         }
 
-        val sliderBar = findViewById<SeekBar>(R.id.route_slider)
-        sliderBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                var progressPercent = progress.toDouble() / 100.0
 
-                if(progressModePoint) {
-                    RouteUtils.setPointProgress(mapView, progressPercent)
-                } else {
-                    RouteUtils.setPercentProgress(mapView, progressPercent)
-                }
+        //route progress mode
+        val progressModeSpinner = findViewById<Spinner>(R.id.route_progress_mode)
+        val progressModeOptions = listOf("Point", "Percent")
+        val progressModeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, progressModeOptions)
+        progressModeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        progressModeSpinner.adapter = progressModeAdapter
 
-                mapView.finalizeRoutes()
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-
-        val spinner = findViewById<Spinner>(R.id.route_progress_mode)
-        val progressModeOptions = listOf("Percent", "Point")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, progressModeOptions)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
-
-        // Set a listener for the Spinner
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        // Set a listener for the progress mode spinner
+        progressModeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 // Get the selected item
                 val selectedItem = parent?.getItemAtPosition(position).toString()
@@ -115,6 +92,57 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
                 Toast.makeText(applicationContext, "Nothing selected", Toast.LENGTH_SHORT).show()
             }
         }
+
+        //route progress precision
+        val progressPrecisionSpinner = findViewById<Spinner>(R.id.route_progress_precision)
+        val progressPrecisionOptions = listOf("Coarse", "Fine")
+        val progressPrecisionAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, progressPrecisionOptions)
+        progressPrecisionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        progressPrecisionSpinner.adapter = progressPrecisionAdapter
+
+        // Set a listener for the progress precision spinner
+        progressPrecisionSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // Get the selected item
+                val selectedItem = parent?.getItemAtPosition(position).toString()
+                // Handle the selected item
+                when (selectedItem) {
+                    "Coarse" -> {
+                        // Handle percent selection
+                        progressPrecisionCoarse = true
+                    }
+                    "Fine" -> {
+                        // Handle point selection
+                        progressPrecisionCoarse = false
+                    }
+                }
+                Toast.makeText(applicationContext, "Selected: $selectedItem", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                Toast.makeText(applicationContext, "Nothing selected", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        //route progress slider
+        val sliderBar = findViewById<SeekBar>(R.id.route_slider)
+        sliderBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                var progressPercent = progress.toDouble() / 100.0
+
+                if(progressModePoint) {
+                    RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
+                } else {
+                    RouteUtils.setPercentProgress(mapView, progressPercent)
+                }
+
+                mapView.finalizeRoutes()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
     }
 
     private fun prepareLocationComp(style: Style) {

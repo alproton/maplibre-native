@@ -503,10 +503,6 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if setting the progress was a success
    */
   public boolean setRouteProgress(RouteID routeID, double progress) {
-    if(!vanishingRouteID.isValid()) {
-      vanishingRouteID = routeID;
-    }
-
     return nativeMapView.setRouteProgress(routeID, progress);
   }
 
@@ -519,10 +515,6 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if successful, false otherwise. If the route does not exist, false is returned.
    */
   public double setRouteProgressPoint(RouteID routeID, Point point, boolean coarsePrecision, boolean capture) {
-    if(!vanishingRouteID.isValid()) {
-      vanishingRouteID = routeID;
-    }
-
     return nativeMapView.setRouteProgressPoint(routeID, point, coarsePrecision, false);
   }
 

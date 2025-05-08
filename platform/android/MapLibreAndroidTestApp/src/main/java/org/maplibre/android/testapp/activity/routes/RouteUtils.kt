@@ -137,14 +137,14 @@ class RouteUtils {
             mapView.finalizeRoutes()
         }
 
-        fun setPointProgress(mapView: MapView, progress: Double) {
+        fun setPointProgress(mapView: MapView, progress: Double, progressPrecisionCoarse: Boolean = true) {
             val routeID = routeMap.keys.first()
             val routeCircle = routeMap[routeID]
             if(routeCircle == null) return
 
             val point = routeCircle.getPoint(progress)
             Timber.tag("RouteProgress").i("getPoint: $point")
-            val calculatedPercent = mapView.setRouteProgressPoint(routeID, point, true, false)
+            val calculatedPercent = mapView.setRouteProgressPoint(routeID, point, progressPrecisionCoarse, false)
             Timber.tag("RouteProgress").i("inputPercent: $progress , calculatedPercent: $calculatedPercent")
 
 //            mapView.setCustomPuckState(point.latitude(), point.longitude(), 0.0, 1.0f, false)

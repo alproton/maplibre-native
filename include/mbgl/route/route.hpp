@@ -80,6 +80,7 @@ private:
     mbgl::LineString<double> geometry_;
     std::map<double, mbgl::Color> segGradient_;
     double totalLength_ = 0.0;
+    uint32_t bestIntervalIndex_ = uint32_t(~0);
     std::vector<double> capturedNavPercent_;
     std::vector<Point<double>> capturedNavStops_;
 };

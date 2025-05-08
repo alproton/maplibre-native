@@ -16,6 +16,8 @@ namespace {
 const double EPSILON = 1e-8;
 const double HALF_EPSILON = EPSILON * 0.5;
 
+#define INVALID_UINT uint32_t(~0)
+
 std::string tabs(uint32_t tabcount) {
     std::string tabstr;
     for (size_t i = 0; i < tabcount; ++i) {
@@ -499,18 +501,21 @@ const std::vector<double>& Route::getCapturedNavPercent() const {
 }
 
 double Route::getProgressPercent(const Point<double>& progressPoint, const Precision& precision, bool capture) {
+    double percentage = -1.0;
     switch (precision) {
         case Precision::Course: {
-            return getProgressProjectionLERP(progressPoint, capture);
+            percentage = getProgressProjectionLERP(progressPoint, capture);
+            break;
         }
         case Precision::Fine: {
-            return getProgressProjectionSLERP(progressPoint, capture);
+            percentage = getProgressProjectionSLERP(progressPoint, capture);
+            break;
         }
         default:
             throw std::invalid_argument("Invalid precision type.");
     }
 
-    return -1.0;
+    return percentage;
 }
 
 double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool capture) {
@@ -535,56 +540,82 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
         return 0.0;
     }
 
-    double minDistanceSq = std::numeric_limits<double>::max();
-    double bestSegmentFraction = 0.0;
-    size_t bestSegmentIndex = 0;
+    const auto& getClosestInterval = [&](uint32_t startIdx, uint32_t endIdx) -> std::pair<uint32_t, double> {
+        uint32_t bestIntervalIndex = ~0;
+        double bestIntervalFraction = -1.0;
+        double minDistanceSq = std::numeric_limits<double>::max();
 
-    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
-        const mbgl::Point<double>& p1 = geometry_[i];     // Start point of the segment
-        const mbgl::Point<double>& p2 = geometry_[i + 1]; // End point of the segment
+        for (size_t i = startIdx; i <= endIdx; ++i) {
+            const mbgl::Point<double>& p1 = geometry_[i];     // Start point of the segment
+            const mbgl::Point<double>& p2 = geometry_[i + 1]; // End point of the segment
 
-        // --- Project queryPoint onto the 2D line segment (p1, p2) ---
-        // Treat Lat/Lon as simple 2D coordinates for projection (approximation)
-        double segmentDX = p2.x - p1.x; // longitude
-        double segmentDY = p2.y - p1.y; // lattitude
+            // --- Project queryPoint onto the 2D line segment (p1, p2) ---
+            // Treat Lat/Lon as simple 2D coordinates for projection (approximation)
+            double segmentDX = p2.x - p1.x; // longitude
+            double segmentDY = p2.y - p1.y; // lattitude
 
-        double segmentLenSq = segmentDX * segmentDX + segmentDY * segmentDY;
+            double segmentLenSq = segmentDX * segmentDX + segmentDY * segmentDY;
 
-        double t = 0.0; // Parameter along the line segment (0=p1, 1=p2)
-        Point<double> closestPointOnSegment = p1;
+            double t = 0.0; // Parameter along the line segment (0=p1, 1=p2)
+            Point<double> closestPointOnSegment = p1;
 
-        if (segmentLenSq > EPSILON) {
-            // Project (queryPoint - p1) onto (p2 - p1)
-            double queryPointDX = queryPoint.x - p1.x;
-            double queryPointDY = queryPoint.y - p1.y;
-            t = (queryPointDX * segmentDX + queryPointDY * segmentDY) / segmentLenSq;
-            t = std::clamp(t, 0.0, 1.0); // Clamp to the segment bounds [0, 1]
+            if (segmentLenSq > EPSILON) {
+                // Project (queryPoint - p1) onto (p2 - p1)
+                double queryPointDX = queryPoint.x - p1.x;
+                double queryPointDY = queryPoint.y - p1.y;
+                t = (queryPointDX * segmentDX + queryPointDY * segmentDY) / segmentLenSq;
+                t = std::clamp(t, 0.0, 1.0); // Clamp to the segment bounds [0, 1]
 
-            // Calculate the point on the segment corresponding to clamped t
-            closestPointOnSegment.y = p1.y + t * segmentDY;
-            closestPointOnSegment.x = p1.x + t * segmentDX;
-        } else {
-            // Segment has zero length, closest point is p1 (or p2, they are the same)
-            // t remains 0.0;
-            closestPointOnSegment = p1;
+                // Calculate the point on the segment corresponding to clamped t
+                closestPointOnSegment.y = p1.y + t * segmentDY;
+                closestPointOnSegment.x = p1.x + t * segmentDX;
+            } else {
+                // Segment has zero length, closest point is p1 (or p2, they are the same)
+                // t remains 0.0;
+                closestPointOnSegment = p1;
+            }
+
+            // --- Calculate distance from queryPoint to this closest point ---
+            // IMPORTANT: Use Haversine distance for the actual distance check,
+            // even though projection used linear approximation.
+            double dist = mbgl::util::haversineDist<double>(queryPoint, closestPointOnSegment);
+            double distSq = dist * dist; // Compare squared distances to avoid sqrt
+
+            if (distSq < minDistanceSq) {
+                minDistanceSq = distSq;
+                bestIntervalIndex = i;
+                bestIntervalFraction = t; // Use the clamped fraction
+            }
         }
 
-        // --- Calculate distance from queryPoint to this closest point ---
-        // IMPORTANT: Use Haversine distance for the actual distance check,
-        // even though projection used linear approximation.
-        double dist = mbgl::util::haversineDist<double>(queryPoint, closestPointOnSegment);
-        double distSq = dist * dist; // Compare squared distances to avoid sqrt
+        return {bestIntervalIndex, bestIntervalFraction};
+    };
 
-        if (distSq < minDistanceSq) {
-            minDistanceSq = distSq;
-            bestSegmentIndex = i;
-            bestSegmentFraction = t; // Use the clamped fraction
-        }
+    // closestInterval.first is the interval index, closestInterval.second is the fraction along the interval
+    std::pair<uint32_t, double> closestInterval = {INVALID_UINT, -1.0};
+
+    // lets cache the best interval index, check if there is closest projection before, current and in the after
+    // interval.
+    if (bestIntervalIndex_ != INVALID_UINT) {
+        uint32_t startIdx = bestIntervalIndex_ == 0 ? 0 : bestIntervalIndex_ - 1;
+        uint32_t endIdx = bestIntervalIndex_ == geometry_.size() - 2 ? geometry_.size() - 1 : bestIntervalIndex_ + 1;
+        closestInterval = getClosestInterval(startIdx, endIdx);
     }
 
+    // check if we have a valid closest interval, if not search throught the whole route
+    if (closestInterval.first == INVALID_UINT) {
+        closestInterval = getClosestInterval(0, geometry_.size() - 1);
+    }
+
+    assert(closestInterval.first != INVALID_UINT && "Invalid best interval index");
+    assert(closestInterval.second >= 0.0 && closestInterval.second <= 1.0 && "Invalid best interval fraction");
+    bestIntervalIndex_ = closestInterval.first;
+
     // --- Calculate final percentage ---
-    double distanceAlongRoute = cumulativeIntervalDistances_[bestSegmentIndex] +
-                                (bestSegmentFraction * intervalLengths_[bestSegmentIndex]);
+    uint32_t bestIntervalIndex = closestInterval.first;
+    double bestIntervalFraction = closestInterval.second;
+    double distanceAlongRoute = cumulativeIntervalDistances_[bestIntervalIndex] +
+                                (bestIntervalFraction * intervalLengths_[bestIntervalIndex]);
 
     return distanceAlongRoute / totalLength_;
 }
@@ -598,23 +629,8 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
         return -1.0; // Cannot form segments
     }
 
-    double totalRouteLength = 0.0;
-    std::vector<double> segmentLengths;
-    std::vector<double> cumulativeDistances;
-    segmentLengths.reserve(geometry_.size() - 1);
-    cumulativeDistances.reserve(geometry_.size());
-    cumulativeDistances.push_back(0.0);
-
-    // Calculate total length and individual segment lengths
-    for (size_t i = 0; i < geometry_.size() - 1; ++i) {
-        double segLen = mbgl::util::haversineDist<double>(geometry_[i], geometry_[i + 1]);
-        segmentLengths[i] = segLen;
-        totalRouteLength += segLen;
-        cumulativeDistances.push_back(totalRouteLength);
-    }
-
     // Handle zero-length route
-    if (totalRouteLength <= std::numeric_limits<double>::epsilon()) {
+    if (totalLength_ <= std::numeric_limits<double>::epsilon()) {
         // If the route has no length, the closest point is the first point,
         // and percentage is arguably 0 or undefined. We'll return 0.
         // Check if query point *is* the single point location
@@ -692,13 +708,13 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
     }
 
     // --- Calculate final percentage (same as LERP version) ---
-    double distance_along_route = cumulativeDistances[bestSegmentIndex] +
-                                  (bestSegmentFraction * segmentLengths[bestSegmentIndex]);
+    double distance_along_route = cumulativeIntervalDistances_[bestSegmentIndex] +
+                                  (bestSegmentFraction * intervalLengths_[bestSegmentIndex]);
 
     // Clamp final distance just in case of minor over/undershoot from projection
-    distance_along_route = std::clamp(distance_along_route, 0.0, totalRouteLength);
+    distance_along_route = std::clamp(distance_along_route, 0.0, totalLength_);
 
-    return distance_along_route / totalRouteLength;
+    return distance_along_route / totalLength_;
 }
 
 uint32_t Route::getNumRouteSegments() const {
