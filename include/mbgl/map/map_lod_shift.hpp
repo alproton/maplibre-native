@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <vector>
+#include <stddef.h>
 
 namespace mbgl {
 

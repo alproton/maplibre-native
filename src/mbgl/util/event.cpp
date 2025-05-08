@@ -31,6 +31,7 @@ MBGL_DEFINE_ENUM(Event,
                      {Event::Crash, "Crash"},
                      {Event::Glyph, "Glyph"},
                      {Event::Timing, "Timing"},
+                     {Event::Route, "Route"},
                      {Event(-1), "Unknown"},
                  });
 

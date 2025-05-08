@@ -553,7 +553,7 @@
                 android:value=".activity.FeatureOverviewActivity" />
         </activity>
         <activity
-            android:name=".activity.style.RouteActivity"
+            android:name=".activity.routes.RouteActivity"
             android:description="@string/description_route"
             android:exported="true"
             android:label="@string/activity_routes">
