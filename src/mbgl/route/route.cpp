@@ -7,10 +7,12 @@
 
 #include <mbgl/route/route_segment.hpp>
 #include <mbgl/util/logging.hpp>
+#include <mbgl/route/route_progress_util.hpp>
 
 namespace mbgl {
 
 namespace route {
+
 namespace {
 
 const double EPSILON = 1e-8;
@@ -143,20 +145,47 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     intervalLengths_.reserve(geometry_.size() - 1);
     cumulativeIntervalDistances_.reserve(geometry_.size());
     cumulativeIntervalDistances_.push_back(0.0);
+    std::vector<RTreeValue> rtree_values; // For bulk loading R-tree
 
     for (size_t i = 0; i < geometry_.size() - 1; ++i) {
         const mbgl::Point<double>& p1 = geometry_[i];
         const mbgl::Point<double>& p2 = geometry_[i + 1];
         assert((!std::isnan(p1.x) && !std::isnan(p1.y) && !std::isnan(p2.x) && !std::isnan(p2.y)) &&
                "invalid geometry point");
-        double segLen = mbgl::util::haversineDist<double>(p1, p2);
+        double segLen = RouteProgressUtil::haversineDistance_boost(p1, p2);
         intervalLengths_.push_back(segLen);
         totalLength_ += segLen;
         cumulativeIntervalDistances_.push_back(totalLength_);
+
+        // Create MBR for the R-tree
+        // BoostPoint uses (x,y) -> (longitude, latitude)
+        BoostPoint bp1(p1.x, p1.y);
+        BoostPoint bp2(p2.x, p2.y);
+        BoostBox segment_mbr;
+        bg::envelope(bp1, segment_mbr); // Start MBR with first point
+        bg::expand(segment_mbr, bp2);   // Expand MBR to include second point
+
+        rtree_values.push_back(std::make_pair(segment_mbr, i)); // Store MBR and original segment index
+    }
+
+    // Bulk load the R-tree
+    if (!rtree_values.empty()) {
+        // The constructor chosen here performs bulk loading
+        rtree = std::make_shared<RTree>(rtree_values.begin(), rtree_values.end());
     }
 }
 
 Point<double> Route::getPointCourse(double percentage) const {
+    // if (useBoost) {
+    //     std::vector<Point<double>> gpts;
+    //     for (const auto& pt : geometry_) {
+    //         gpts.push_back({pt.y, pt.x});
+    //     }
+    //
+    //     const Point<double>& gp = RouteProgressUtil::getPointAlongRoute_Boost(gpts, percentage, intervalLengths_,
+    //     totalLength_); return {gp.x, gp.y};
+    // }
+
     if (geometry_.empty()) {
         throw std::invalid_argument("Route cannot be empty.");
     }
@@ -521,6 +550,18 @@ double Route::getProgressPercent(const Point<double>& progressPoint, const Preci
 double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool capture) {
     if (capture) {
         capturedNavStops_.push_back(queryPoint);
+    }
+
+    if (useBoost) {
+        // Point<double> queryPointBoost{queryPoint.y, queryPoint.x};
+        // std::vector<Point<double>> gpts;
+        // for (const auto& pt : geometry_) {
+        //     gpts.push_back({pt.y, pt.x});
+        // }
+        // RouteProperties routeProps(gpts);
+
+        return RouteProgressUtil::getPercentageAlongRoute_BoostRTree(
+            geometry_, queryPoint, intervalLengths_, cumulativeIntervalDistances_, totalLength_, rtree);
     }
 
     if (geometry_.size() < 2) {

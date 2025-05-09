@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "mbgl/util/geo.hpp"
-
 #include <mbgl/route/route_segment.hpp>
 
 #include <mbgl/util/geometry.hpp>
@@ -11,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <mbgl/route/rtree_def.hpp>
 
 namespace mbgl {
 namespace route {
@@ -83,6 +82,8 @@ private:
     uint32_t bestIntervalIndex_ = uint32_t(~0);
     std::vector<double> capturedNavPercent_;
     std::vector<Point<double>> capturedNavStops_;
+    bool useBoost = true;
+    std::shared_ptr<RTree> rtree;
 };
 
 } // namespace route
