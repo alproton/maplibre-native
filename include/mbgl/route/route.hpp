@@ -83,6 +83,7 @@ private:
     uint32_t bestIntervalIndex_ = uint32_t(~0);
     std::vector<double> capturedNavPercent_;
     std::vector<Point<double>> capturedNavStops_;
+    bool useBoost = true;
 };
 
 } // namespace route

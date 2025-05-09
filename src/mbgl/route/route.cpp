@@ -7,6 +7,7 @@
 
 #include <mbgl/route/route_segment.hpp>
 #include <mbgl/util/logging.hpp>
+#include <mbgl/route/route_progress_util.hpp>
 
 namespace mbgl {
 
@@ -157,6 +158,16 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
 }
 
 Point<double> Route::getPointCourse(double percentage) const {
+    if (useBoost) {
+        std::vector<GeoPoint> gpts;
+        for (const auto& pt : geometry_) {
+            gpts.push_back({pt.y, pt.x});
+        }
+        RouteProperties routeProps(gpts);
+        const GeoPoint& gp = RouteProgressUtil::getPointAlongRoute_Boost(gpts, percentage, routeProps);
+        return {gp.longitude, gp.latitude};
+    }
+
     if (geometry_.empty()) {
         throw std::invalid_argument("Route cannot be empty.");
     }
@@ -521,6 +532,17 @@ double Route::getProgressPercent(const Point<double>& progressPoint, const Preci
 double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool capture) {
     if (capture) {
         capturedNavStops_.push_back(queryPoint);
+    }
+
+    if (useBoost) {
+        GeoPoint queryPointBoost{queryPoint.y, queryPoint.x};
+        std::vector<GeoPoint> gpts;
+        for (const auto& pt : geometry_) {
+            gpts.push_back({pt.y, pt.x});
+        }
+        RouteProperties routeProps(gpts);
+
+        return RouteProgressUtil::getPercentageAlongRoute_BoostRTree(gpts, queryPointBoost, routeProps);
     }
 
     if (geometry_.size() < 2) {
