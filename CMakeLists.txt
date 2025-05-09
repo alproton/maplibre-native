@@ -450,6 +450,8 @@ list(APPEND INCLUDE_FILES
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/id_types.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_manager.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/route.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/rtree_def.hpp
+    ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_progress_util.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_segment.hpp
     ${PROJECT_SOURCE_DIR}/include/mbgl/route/route_enums.hpp
 )
@@ -1024,6 +1026,7 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_segment.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/route/route.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/route/route_progress_util.cpp
 )
 
 if(MLN_WITH_OPENGL)
@@ -1521,6 +1524,7 @@ target_link_libraries(
         Mapbox::Base::geojson.hpp
         Mapbox::Base::geometry.hpp
         Mapbox::Base::variant
+        mbgl-vendor-boost
         $<$<BOOL:${MLN_USE_TRACY}>:TracyClient>
         unordered_dense
 )
