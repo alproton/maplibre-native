@@ -172,7 +172,41 @@ public class Transform implements MapView.OnCameraDidChangeListener {
   }
 
   private boolean isValidCameraPosition(@Nullable CameraPosition cameraPosition) {
-    return cameraPosition != null && !cameraPosition.equals(this.cameraPosition);
+    if (cameraPosition == null) {
+      return false;
+    }
+    if (this.cameraPosition == null) {
+      return true;
+    }
+    if (cameraPosition.zoom < 0) {
+      CameraPosition.Builder builder = new CameraPosition.Builder(cameraPosition);
+      builder.zoom(this.cameraPosition.zoom);
+      cameraPosition = builder.build();
+    }
+    if (cameraPosition.tilt < 0) {
+      CameraPosition.Builder builder = new CameraPosition.Builder(cameraPosition);
+      builder.tilt(this.cameraPosition.tilt);
+      cameraPosition = builder.build();
+    }
+    if (cameraPosition.bearing < 0) {
+      CameraPosition.Builder builder = new CameraPosition.Builder(cameraPosition);
+      builder.bearing(this.cameraPosition.bearing);
+      cameraPosition = builder.build();
+    }
+    if (cameraPosition.target == null && this.cameraPosition.target != null) {
+      CameraPosition.Builder builder = new CameraPosition.Builder(cameraPosition);
+      builder.target(this.cameraPosition.target);
+      cameraPosition = builder.build();
+    }
+    if (cameraPosition.padding == null
+        && this.cameraPosition.padding != null
+        && this.cameraPosition.padding.length == 4) {
+      double[] paddings = this.cameraPosition.padding.clone();
+      CameraPosition.Builder builder = new CameraPosition.Builder(cameraPosition);
+      builder.padding(paddings);
+      cameraPosition = builder.build();
+    }
+    return !cameraPosition.equals(this.cameraPosition);
   }
 
   @UiThread
