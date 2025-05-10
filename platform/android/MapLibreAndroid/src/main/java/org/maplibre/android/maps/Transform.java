@@ -172,7 +172,29 @@ public class Transform implements MapView.OnCameraDidChangeListener {
   }
 
   private boolean isValidCameraPosition(@Nullable CameraPosition cameraPosition) {
-    return cameraPosition != null && !cameraPosition.equals(this.cameraPosition);
+    double epsilon = 1e-5; // For zoom and degree angle comparisons 1e-5 is small enough
+    if (cameraPosition == null) {
+      return false;
+    }
+    if (this.cameraPosition == null) {
+      return true;
+    }
+    if (cameraPosition.zoom >= 0 && Math.abs(cameraPosition.zoom - this.cameraPosition.zoom) > epsilon) {
+      return true;
+    }
+    if (cameraPosition.tilt >= 0 && Math.abs(cameraPosition.tilt - this.cameraPosition.tilt) > epsilon) {
+      return true;
+    }
+    if (cameraPosition.bearing >= 0 && Math.abs(cameraPosition.bearing - this.cameraPosition.bearing) > epsilon) {
+      return true;
+    }
+    if (cameraPosition.target != null && !cameraPosition.target.equals(this.cameraPosition.target)) {
+      return true;
+    }
+    if (cameraPosition.padding != null && !cameraPosition.padding.equals(this.cameraPosition.padding)) {
+      return true;
+    }
+    return false;
   }
 
   @UiThread
