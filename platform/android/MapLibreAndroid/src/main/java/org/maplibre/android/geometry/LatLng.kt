@@ -171,7 +171,8 @@ class LatLng : Parcelable {
             return false
         }
         val latLng = other as LatLng
-        return java.lang.Double.compare(latLng.altitude, altitude) == 0 && java.lang.Double.compare(latLng.latitude, latitude) == 0 && java.lang.Double.compare(latLng.longitude, longitude) == 0
+        val epsilon = 1e-10 // This is much smaller than 1 millimeter
+        return abs(latLng.latitude - latitude) < epsilon && abs(latLng.longitude - longitude) < epsilon && abs(latLng.altitude - altitude) < epsilon
     }
 
     /**

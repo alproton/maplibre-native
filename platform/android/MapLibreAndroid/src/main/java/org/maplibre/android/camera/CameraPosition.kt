@@ -15,6 +15,7 @@ import org.maplibre.android.constants.MapLibreConstants
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.utils.MathUtils
 import java.util.Arrays
+import kotlin.math.abs
 
 /**
  * Resembles the position, angle, zoom and tilt of the user's viewpoint.
@@ -143,6 +144,7 @@ class CameraPosition
      * Else, false.
      */
     override fun equals(other: Any?): Boolean {
+        val epsilon = 1e-5 // For zoom and degree angles 1e-5 is small enough
         if (this === other) {
             return true
         }
@@ -150,13 +152,13 @@ class CameraPosition
             return false
         }
         val cameraPosition = other as CameraPosition
-        if (target != null && target != cameraPosition.target) {
+        if (target != null && !target.equals(cameraPosition.target)) {
             return false
-        } else if (zoom != cameraPosition.zoom) {
+        } else if (abs(zoom - cameraPosition.zoom) > epsilon) {
             return false
-        } else if (tilt != cameraPosition.tilt) {
+        } else if (abs(tilt - cameraPosition.tilt) > epsilon) {
             return false
-        } else if (bearing != cameraPosition.bearing) {
+        } else if (abs(bearing - cameraPosition.bearing) > epsilon) {
             return false
         } else if (!Arrays.equals(padding, cameraPosition.padding)) {
             return false
