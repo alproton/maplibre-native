@@ -4,6 +4,7 @@
 
 #include <mbgl/gfx/renderable.hpp>
 #include <mbgl/gl/renderer_backend.hpp>
+#include <mbgl/gfx/custom_puck.hpp>
 
 struct GLFWwindow;
 
@@ -13,6 +14,9 @@ public:
     ~GLFWGLBackend() override;
 
     void swap();
+
+    mbgl::gfx::CustomPuckState getCurrentCustomPuckState() const override;
+    void enableCustomPuck() override;
 
     // GLFWRendererBackend implementation
 public:
