@@ -5,6 +5,8 @@
 #include <mbgl/gfx/backend_scope.hpp>
 #include <mbgl/gl/renderable_resource.hpp>
 #include <mbgl/util/instrumentation.hpp>
+#include <mbgl/util/image.hpp>
+#include <mbgl/util/io.hpp>
 
 #include <GLFW/glfw3.h>
 
@@ -108,6 +110,18 @@ void GLFWGLBackend::swap() {
     MLN_TRACE_FUNC();
 
     glfwSwapBuffers(window);
+}
+
+mbgl::gfx::CustomPuckState GLFWGLBackend::getCurrentCustomPuckState() const {
+    mbgl::gfx::CustomPuckState customPuckState;
+    customPuckState.lat = 12.36;
+    customPuckState.lon = -1.55;
+    customPuckState.enabled = true;
+    return customPuckState;
+}
+
+void GLFWGLBackend::enableCustomPuck() {
+    customPuck->setPuckBitmap(mbgl::decodeImage(mbgl::util::read_file("platform/glfw/assets/puck.png")));
 }
 
 namespace mbgl {
