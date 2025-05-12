@@ -70,10 +70,6 @@ public:
 #endif
     const mbgl::util::SimpleIdentity uniqueID;
 
-    std::unique_ptr<gfx::CustomPuck> customPuck = nullptr;
-
-    std::unique_ptr<gfx::CustomDots> customDots = nullptr;
-
 protected:
     virtual std::unique_ptr<Context> createContext() = 0;
 
@@ -98,6 +94,10 @@ protected:
     TaggedScheduler threadPool;
 
     friend class BackendScope;
+
+public:
+    std::unique_ptr<gfx::CustomPuck> customPuck = nullptr;
+    std::unique_ptr<gfx::CustomDots> customDots = nullptr;
 };
 
 constexpr bool operator==(const RendererBackend& a, const RendererBackend& b) {
