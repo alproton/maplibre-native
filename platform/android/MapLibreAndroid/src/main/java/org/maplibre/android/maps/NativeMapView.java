@@ -1265,6 +1265,21 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public void setPuckStyle(String style_file_path) {
+    nativeSetPuckStyle(style_file_path);
+  }
+
+  @Override
+  public void setPuckVariant(String variant) {
+    nativeSetPuckVariant(variant);
+  }
+
+  @Override
+  public void setPuckIconState(String state) {
+    nativeSetPuckIconState(state);
+  }
+
+  @Override
   public void setCustomDotsNextLayer(String layer) {
     nativeSetCustomDotsNextLayer(layer);
   }
@@ -1719,6 +1734,16 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   native void nativeRoutesClearStats();
+
+  //---------------------Custom Puck APIs---------------------
+  @Keep
+  private native void nativeSetPuckStyle(String style_file_path);
+
+  @Keep
+  private native void nativeSetPuckVariant(String variant);
+
+  @Keep
+  private native void nativeSetPuckIconState(String state);
 
   //---------------------Custom Dots APIs---------------------
   @Keep
