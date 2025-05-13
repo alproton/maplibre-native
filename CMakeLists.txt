@@ -151,6 +151,7 @@ if(MLN_DRAWABLE_RENDERER)
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/context.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/custom_dots.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/custom_puck.hpp
+        ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/custom_puck_style.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/drawable.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/drawable_data.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/drawable_impl.hpp
@@ -489,6 +490,7 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/cull_face_mode.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/custom_dots.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/custom_puck.cpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/custom_puck_style.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/debug_group.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/depth_mode.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/draw_mode.hpp

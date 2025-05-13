@@ -111,6 +111,7 @@ private:
     void toggleCustomSource();
 
     void cycleDebugOptions();
+    void cyclePuck();
     void clearAnnotations();
     void popAnnotation();
 
@@ -165,5 +166,8 @@ private:
     mbgl::ResourceOptions mapResourceOptions;
     mbgl::ClientOptions mapClientOptions;
 
+    std::string customPuckVariant = "day";
+    std::string customPuckIconState = "DefaultState";
     bool customPuckEnabled = false;
+    bool customPuckAnimated = false;
 };

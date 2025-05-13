@@ -2,6 +2,7 @@
 
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/gl/context.hpp>
+#include <unordered_map>
 
 namespace mbgl {
 namespace gl {
@@ -12,13 +13,17 @@ public:
 
     ~CustomPuck() noexcept override;
 
-    void drawImpl(const ScreenQuad& quad) override;
+    void drawImpl(const gfx::CustomPuckSampledStyle& style) override;
     gfx::CustomPuckState getState() override;
+
+private:
+    void updateTextures(const gfx::CustomPuckIconMap& icons);
+    void draw(const gfx::CustomPuckSampledIcon& icon) const;
 
 private:
     gl::Context& context;
     UniqueProgram program;
-    TextureID texture = 0;
+    std::unordered_map<gfx::CustomPuckIconName, TextureID> textures;
     int storage = 0;
 };
 
