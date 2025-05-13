@@ -264,7 +264,7 @@ public:
     jboolean routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress);
 
     jdouble routeProgressSetPoint(
-        JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean course, jni::jboolean capture);
+        JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse, jni::jboolean capture);
 
     void routeSegmentsClear(JNIEnv& env, jint routeID);
 

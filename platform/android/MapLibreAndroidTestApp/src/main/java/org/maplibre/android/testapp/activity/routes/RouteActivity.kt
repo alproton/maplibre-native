@@ -30,7 +30,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
     private lateinit var maplibreMap : MapLibreMap
     private var progressModePoint : Boolean = false
-    private var progressPrecisionCoarse : Boolean = false
+    private var progressPrecisionCoarse : Boolean = true
 
     private val useLocationEngine = false
     private var permissionsManager: PermissionsManager? = null
@@ -45,6 +45,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
+        mapView.setAutoVanishingRoute(false)
 
         //Add route
         val addRouteButton = findViewById<Button>(R.id.add_route)

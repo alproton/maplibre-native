@@ -1730,9 +1730,9 @@ jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jd
 }
 
 jdouble NativeMapView::routeProgressSetPoint(
-    JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean course, jni::jboolean capture) {
+    JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse, jni::jboolean capture) {
     if (routeMgr) {
-        mbgl::route::Precision precision = course ? mbgl::route::Precision::Coarse : mbgl::route::Precision::Fine;
+        mbgl::route::Precision precision = coarse ? mbgl::route::Precision::Coarse : mbgl::route::Precision::Fine;
         double percentage = routeMgr->routeSetProgressPoint(
             RouteID(routeID), mbgl::Point<double>(x, y), precision, capture);
         return percentage;
