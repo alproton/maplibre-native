@@ -31,4 +31,6 @@ public:
     virtual void setSize(mbgl::Size) = 0;
 
     virtual void enableCustomPuck() {}
+    virtual void setPuckVariant(const std::string&) {}
+    virtual void setPuckIconState(const std::string&) {}
 };

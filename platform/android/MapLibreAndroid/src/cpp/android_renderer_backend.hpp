@@ -5,7 +5,6 @@
 #include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/gfx/renderer_backend.hpp>
 #include <mbgl/gfx/renderable.hpp>
-#include <mbgl/util/image.hpp>
 
 #include <android/native_window.h>
 
@@ -35,7 +34,7 @@ public:
     gfx::Renderable::SwapBehaviour getSwapBehavior() const { return swapBehaviour; }
     virtual void setSwapBehavior(gfx::Renderable::SwapBehaviour swapBehaviour);
 
-    void setPuckBitmap(const PremultipliedImage& image);
+    void setPuckStyle(const std::string& style_file_path);
 
     void setCustomPuckState(const gfx::CustomPuckState& state) noexcept { customPuckState = state; }
 

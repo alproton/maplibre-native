@@ -374,6 +374,10 @@ void PUCKView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
             case GLFW_KEY_ESCAPE:
                 glfwSetWindowShouldClose(window, true);
                 break;
+            case GLFW_KEY_SPACE:
+                view->cyclePuck();
+                view->map->triggerRepaint();
+                break;
             case GLFW_KEY_TAB:
                 view->cycleDebugOptions();
                 break;
@@ -802,6 +806,30 @@ void PUCKView::cycleDebugOptions() {
     map->setDebug(debug);
 }
 
+void PUCKView::cyclePuck() {
+    if (customPuckIconState == "MorphState") {
+        customPuckIconState = "DefaultState";
+        if (customPuckVariant == "day") {
+            customPuckVariant = "night";
+        } else {
+            customPuckVariant = "day";
+        }
+        backend->setPuckVariant(customPuckVariant);
+    } else if (customPuckIconState == "DefaultState") {
+        customPuckIconState = "LargeState";
+    } else if (customPuckIconState == "LargeState") {
+        customPuckIconState = "RedState";
+    } else if (customPuckIconState == "RedState") {
+        customPuckIconState = "PulseState";
+    } else if (customPuckIconState == "PulseState") {
+        customPuckIconState = "MorphState";
+    }
+    mbgl::Log::Info(mbgl::Event::General,
+                    "Puck style variant: " + customPuckVariant + " state: " + customPuckIconState);
+    customPuckAnimated = customPuckIconState == "MorphState" || customPuckIconState == "PulseState";
+    backend->setPuckIconState(customPuckIconState);
+}
+
 void PUCKView::clearAnnotations() {
     MLN_TRACE_FUNC();
 
@@ -1026,6 +1054,9 @@ void PUCKView::render() {
         if (!customPuckEnabled) {
             customPuckEnabled = true;
             backend->enableCustomPuck();
+        }
+        if (customPuckAnimated) {
+            dirty = true;
         }
     }
 }

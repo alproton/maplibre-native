@@ -17,6 +17,8 @@ public:
 
     mbgl::gfx::CustomPuckState getCurrentCustomPuckState() const override;
     void enableCustomPuck() override;
+    void setPuckVariant(const std::string& variant) override;
+    void setPuckIconState(const std::string& state) override;
 
     // GLFWRendererBackend implementation
 public:
