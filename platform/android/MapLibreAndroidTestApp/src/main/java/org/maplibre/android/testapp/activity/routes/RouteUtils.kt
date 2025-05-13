@@ -156,7 +156,7 @@ class RouteUtils {
             val routeCircle = routeMap[routeID]
             if(routeCircle == null) return
 
-            mapView.setRouteProgress(routeID, percent)
+            mapView.setRouteProgressPercent(routeID, percent)
         }
 
         fun addRoute(mapView : MapView) {

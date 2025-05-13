@@ -177,7 +177,7 @@ Point<double> Route::getPointCoarse(double percentage) const {
     }
 
     // Handle cases where the total distance is zero (e.g., all points are identical)
-    if (totalLength_ <= std::numeric_limits<double>::epsilon()) {
+    if (totalLength_ <= EPSILON) {
         return geometry_.front(); // Return the start point if total distance is negligible
     }
 
@@ -191,7 +191,7 @@ Point<double> Route::getPointCoarse(double percentage) const {
 
         // Check if the target point lies within or at the end of the current segment
         // Use a small tolerance for floating point comparison
-        if (currCumulativeLen + currIntervalLen >= target_distance - std::numeric_limits<double>::epsilon()) {
+        if (currCumulativeLen + currIntervalLen >= target_distance - EPSILON) {
             const Point<double>& p1 = geometry_[i];
             const Point<double>& p2 = geometry_[i + 1];
 
@@ -200,7 +200,7 @@ Point<double> Route::getPointCoarse(double percentage) const {
 
             // Calculate the fraction of the current segment needed
             double intervalFraction = 0.0;
-            if (currIntervalLen > std::numeric_limits<double>::epsilon()) {
+            if (currIntervalLen > EPSILON) {
                 intervalFraction = lenNeededInInterval / currIntervalLen;
             } else {
                 // If segment length is zero, just return the start point of the segment
@@ -253,7 +253,7 @@ Point<double> Route::getPointFine(double percentage) const {
     }
 
     // Handle cases where the total distance is zero (e.g., all points are identical)
-    if (totalLength_ <= std::numeric_limits<double>::epsilon()) {
+    if (totalLength_ <= EPSILON) {
         return geometry_.front(); // Return the start point if total distance is negligible
     }
 
@@ -267,7 +267,7 @@ Point<double> Route::getPointFine(double percentage) const {
 
         // Check if the target point lies within or at the end of the current segment
         // Use a small tolerance for floating point comparison
-        if (cumulativeLen + currIntervalLen >= targetLen - std::numeric_limits<double>::epsilon()) {
+        if (cumulativeLen + currIntervalLen >= targetLen - EPSILON) {
             const Point<double>& p1 = geometry_[i];
             const Point<double>& p2 = geometry_[i + 1];
 
@@ -331,7 +331,7 @@ Point<double> Route::getPointFine(double percentage) const {
 
 mbgl::Point<double> Route::getPoint(double percentage, const Precision& precision) const {
     switch (precision) {
-        case Precision::Course:
+        case Precision::Coarse:
             return getPointCoarse(percentage);
         case Precision::Fine:
             return getPointFine(percentage);
@@ -503,7 +503,7 @@ const std::vector<double>& Route::getCapturedNavPercent() const {
 double Route::getProgressPercent(const Point<double>& progressPoint, const Precision& precision, bool capture) {
     double percentage = -1.0;
     switch (precision) {
-        case Precision::Course: {
+        case Precision::Coarse: {
             percentage = getProgressProjectionLERP(progressPoint, capture);
             break;
         }
@@ -537,11 +537,11 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
     }
 
     // Handle zero-length route
-    if (totalLength_ <= std::numeric_limits<double>::epsilon()) {
+    if (totalLength_ <= EPSILON) {
         // If the route has no length, the closest point is the first point,
         // and percentage is arguably 0 or undefined. We'll return 0.
         // Check if query point *is* the single point location
-        if (mbgl::util::haversineDist<double>(geometry_[0], queryPoint) > std::numeric_limits<double>::epsilon()) {
+        if (mbgl::util::haversineDist<double>(geometry_[0], queryPoint) > EPSILON) {
             // If query point is different, maybe success should be false? Depends on requirements.
             // Let's keep it true but maybe add a warning/note.
             Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");
@@ -639,11 +639,11 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
     }
 
     // Handle zero-length route
-    if (totalLength_ <= std::numeric_limits<double>::epsilon()) {
+    if (totalLength_ <= EPSILON) {
         // If the route has no length, the closest point is the first point,
         // and percentage is arguably 0 or undefined. We'll return 0.
         // Check if query point *is* the single point location
-        if (mbgl::util::haversineDist<double>(geometry_[0], queryPoint) > std::numeric_limits<double>::epsilon()) {
+        if (mbgl::util::haversineDist<double>(geometry_[0], queryPoint) > EPSILON) {
             // If query point is different, maybe success should be false? Depends on requirements.
             // Let's keep it true but maybe add a warning/note.
             Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");

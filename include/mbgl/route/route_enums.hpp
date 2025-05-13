@@ -4,7 +4,7 @@ namespace mbgl {
 namespace route {
 
 enum class Precision {
-    Course,
+    Coarse,
     Fine
 };
 

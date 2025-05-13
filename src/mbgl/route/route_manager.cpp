@@ -547,7 +547,7 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, capture);
 
-        if (percentage >= 0.0) {
+        if (percentage >= 0.0 && percentage <= 1.0) {
             routeMap_[routeID].routeSetProgress(percentage);
             validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
         }

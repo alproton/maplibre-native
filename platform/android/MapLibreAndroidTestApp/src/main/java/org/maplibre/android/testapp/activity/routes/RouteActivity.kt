@@ -150,9 +150,9 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         val locationComponentOptions =
             LocationComponentOptions.builder(context)
                 .compassAnimationEnabled(true)
-                .gpsDrawable(R.drawable.ic_puck)
-                .foregroundDrawableStale(R.drawable.ic_puck)
-                .foregroundDrawable(R.drawable.ic_puck)
+                .gpsDrawable(R.drawable.ic_my_location)
+                .foregroundDrawableStale(R.drawable.ic_my_location)
+                .foregroundDrawable(R.drawable.ic_my_location)
                 .backgroundDrawable(R.drawable.ic_transparent)
                 .bearingDrawable(R.drawable.ic_transparent)
                 .trackingAnimationDurationMultiplier(1.0f)
