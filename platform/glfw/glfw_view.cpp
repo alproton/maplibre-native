@@ -753,8 +753,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_L: {
                     int lastCapturedIdx = view->getCaptureIdx() - 1;
                     if (lastCapturedIdx == -1) lastCapturedIdx = 0;
-                    // std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
-                    std::string capture_file_name = "route_capture.json";
+                    std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 

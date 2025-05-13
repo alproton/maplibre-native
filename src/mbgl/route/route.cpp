@@ -136,7 +136,8 @@ Point<double> cartesianToLatLon(const Vector3D& v) {
 
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     : routeOptions_(ropts),
-      geometry_(geometry) {
+      geometry_(geometry),
+      bestIntervalIndex_(INVALID_UINT) {
     assert(!geometry_.empty() && "route geometry cannot be empty");
     assert((!std::isnan(geometry_[0].x) && !std::isnan(geometry_[0].y)) && "invalid geometry point");
 
@@ -149,7 +150,7 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
         const mbgl::Point<double>& p2 = geometry_[i + 1];
         assert((!std::isnan(p1.x) && !std::isnan(p1.y) && !std::isnan(p2.x) && !std::isnan(p2.y)) &&
                "invalid geometry point");
-        double segLen = mbgl::util::haversineDist<double>(p1, p2);
+        double segLen = mbgl::util::haversineDist(p1, p2);
         intervalLengths_.push_back(segLen);
         totalLength_ += segLen;
         cumulativeIntervalDistances_.push_back(totalLength_);
@@ -517,7 +518,7 @@ double Route::getProgressPercent(const Point<double>& progressPoint, const Preci
 
     if (logPrecision) {
         mbgl::Point<double> calculatedPt = getPointFine(percentage);
-        double dist = mbgl::util::haversineDist<double>(progressPoint, calculatedPt);
+        double dist = mbgl::util::haversineDist(progressPoint, calculatedPt);
         std::string msg = "progressPoint: " + std::to_string(progressPoint.x) + " " + std::to_string(progressPoint.y) +
                           ", calculatePt: " + std::to_string(calculatedPt.x) + " " + std::to_string(calculatedPt.y) +
                           " ,error rate distance: " + std::to_string(dist);
@@ -541,7 +542,7 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
         // If the route has no length, the closest point is the first point,
         // and percentage is arguably 0 or undefined. We'll return 0.
         // Check if query point *is* the single point location
-        if (mbgl::util::haversineDist<double>(geometry_[0], queryPoint) > EPSILON) {
+        if (mbgl::util::haversineDist(geometry_[0], queryPoint) > EPSILON) {
             // If query point is different, maybe success should be false? Depends on requirements.
             // Let's keep it true but maybe add a warning/note.
             Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");
@@ -550,7 +551,7 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
     }
 
     const auto& getClosestInterval = [&](uint32_t startIdx, uint32_t endIdx) -> std::pair<uint32_t, double> {
-        uint32_t bestIntervalIndex = ~0;
+        uint32_t bestIntervalIndex = INVALID_UINT;
         double bestIntervalFraction = -1.0;
         double minDistanceSq = std::numeric_limits<double>::max();
 
@@ -587,7 +588,7 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
             // --- Calculate distance from queryPoint to this closest point ---
             // IMPORTANT: Use Haversine distance for the actual distance check,
             // even though projection used linear approximation.
-            double dist = mbgl::util::haversineDist<double>(queryPoint, closestPointOnSegment);
+            double dist = mbgl::util::haversineDist(queryPoint, closestPointOnSegment);
             double distSq = dist * dist; // Compare squared distances to avoid sqrt
 
             if (distSq < minDistanceSq) {
@@ -643,7 +644,7 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
         // If the route has no length, the closest point is the first point,
         // and percentage is arguably 0 or undefined. We'll return 0.
         // Check if query point *is* the single point location
-        if (mbgl::util::haversineDist<double>(geometry_[0], queryPoint) > EPSILON) {
+        if (mbgl::util::haversineDist(geometry_[0], queryPoint) > EPSILON) {
             // If query point is different, maybe success should be false? Depends on requirements.
             // Let's keep it true but maybe add a warning/note.
             Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");
@@ -706,7 +707,7 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
         }
 
         // --- Calculate distance from queryPoint to this point on the arc ---
-        double dist = mbgl::util::haversineDist<double>(queryPoint, closestPointOnArc);
+        double dist = mbgl::util::haversineDist(queryPoint, closestPointOnArc);
         double dist_sq = dist * dist;
 
         if (dist_sq < minDistanceSq) {

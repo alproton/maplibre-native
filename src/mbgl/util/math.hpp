@@ -51,8 +51,8 @@ T dist(const S1& a, const S2& b) {
 }
 
 // Calculates the Haversine distance between two LatLng points
-template <typename T, typename S1, typename S2>
-T haversineDist(const S1& p1, const S2& p2) {
+template <typename S1, typename S2>
+double haversineDist(const S1& p1, const S2& p2) {
     const auto& degreesToRadians = [](double degrees) {
         return degrees * M_PI / 180.0;
     };
