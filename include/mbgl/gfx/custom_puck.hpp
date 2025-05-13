@@ -4,6 +4,7 @@
 #include <mbgl/util/image.hpp>
 #include <array>
 #include <memory>
+#include <string>
 
 namespace mbgl {
 namespace gfx {
@@ -27,6 +28,8 @@ public:
 
     PremultipliedImage getPuckBitmap();
 
+    void setPuckStyle(const std::string& style_file_path);
+
 protected:
     using ScreenQuad = std::array<ScreenCoordinate, 4>;
 
@@ -36,8 +39,8 @@ protected:
 
 private:
     PremultipliedImage bitmap{};
-    // The puck icon is sent to the rendering in UI thread and is rendered in the rendering thread
-    // This ensures the puck is not modified by the UI thread while being rendered in the rendering thread
+    // The puck icon bitmap is updated in the UI thread and is used in the rendering thread
+    // This mutex ensures the puck is not modified by the UI thread while being rendered in the rendering thread
     std::mutex bitmapMutex;
 };
 

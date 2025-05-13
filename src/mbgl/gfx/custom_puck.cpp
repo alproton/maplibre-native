@@ -1,5 +1,6 @@
 
 #include <mbgl/gfx/custom_puck.hpp>
+#include <mbgl/gfx/custom_puck_style.hpp>
 #include <numbers>
 #include <mutex>
 
@@ -63,6 +64,10 @@ void CustomPuck::setPuckBitmap(const PremultipliedImage& src) {
 PremultipliedImage CustomPuck::getPuckBitmap() {
     std::lock_guard<std::mutex> lock(bitmapMutex);
     return std::move(bitmap);
+}
+
+void CustomPuck::setPuckStyle(const std::string& style_file_path) {
+    parseCustomPuckStyle(style_file_path);
 }
 
 } // namespace gfx
