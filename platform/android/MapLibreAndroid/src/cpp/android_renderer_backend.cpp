@@ -19,12 +19,36 @@ void AndroidRendererBackend::setSwapBehavior(gfx::Renderable::SwapBehaviour swap
     swapBehaviour = swapBehaviour_;
 }
 
-void AndroidRendererBackend::setPuckBitmap(const PremultipliedImage& image) {
+void AndroidRendererBackend::setPuckStyle(const std::string& style_file_path) {
     if (!getImpl().customPuck) {
         Log::Debug(Event::Android, "Custom puck not enabled");
         return;
     }
-    getImpl().customPuck->setPuckBitmap(image);
+    getImpl().customPuck->setPuckStyle(style_file_path);
+}
+
+void AndroidRendererBackend::setPuckAssetManager(AAssetManager* asset_manager) {
+    if (!getImpl().customPuck) {
+        Log::Debug(Event::Android, "Custom puck not enabled");
+        return;
+    }
+    getImpl().customPuck->setAssetManager(asset_manager);
+}
+
+void AndroidRendererBackend::setPuckVariant(const std::string& variant) {
+    if (!getImpl().customPuck) {
+        Log::Debug(Event::Android, "Custom puck not enabled");
+        return;
+    }
+    getImpl().customPuck->setPuckVariant(variant);
+}
+
+void AndroidRendererBackend::setPuckIconState(const std::string& state) {
+    if (!getImpl().customPuck) {
+        Log::Debug(Event::Android, "Custom puck not enabled");
+        return;
+    }
+    getImpl().customPuck->setPuckIconState(state);
 }
 
 void AndroidRendererBackend::setCustomDotsNextLayer(std::string layer) {

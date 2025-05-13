@@ -689,6 +689,27 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   }
 
   /***
+   * Set the custom puck style
+   */
+  public void setPuckStyle(String style_file_path) {
+    nativeMapView.setPuckStyle(style_file_path);
+  }
+
+  /***
+   * Set the custom puck style variant
+   */
+  public void setPuckVariant(String variant) {
+    nativeMapView.setPuckVariant(variant);
+  }
+
+  /***
+   * Set the custom puck style icon state
+   */
+  public void setPuckIconState(String state) {
+    nativeMapView.setPuckIconState(state);
+  }
+
+  /***
    * Set the layer that get rendered after the custom dots
    */
   public void setCustomDotsNextLayer(String layer) {
