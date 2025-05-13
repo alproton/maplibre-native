@@ -753,7 +753,8 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_L: {
                     int lastCapturedIdx = view->getCaptureIdx() - 1;
                     if (lastCapturedIdx == -1) lastCapturedIdx = 0;
-                    std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
+                    // std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
+                    std::string capture_file_name = "route_capture.json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -1640,8 +1641,8 @@ void GLFWView::replayNavStops() {
             const auto &routeID = routeMap_.begin()->first;
             routeProgress_ += ROUTE_PROGRESS_STEP;
             routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
-            const auto &navstop = rmptr_->getPoint(routeID, routeProgress_, mbgl::route::Precision::Coarse);
-            double percentage = rmptr_->routeSetProgressPoint(routeID, navstop, mbgl::route::Precision::Coarse);
+            const auto &navstop = rmptr_->getPoint(routeID, routeProgress_, routePrecision_);
+            double percentage = rmptr_->routeSetProgressPoint(routeID, navstop, routePrecision_);
             std::cout << "replayNavStop - Route: " << routeID.id << ", i/p %: " << std::to_string(routeProgress_)
                       << ", calculated %: " << std::to_string(percentage) << std::endl;
 

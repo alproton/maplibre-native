@@ -207,6 +207,7 @@ private:
     bool generateRouteProgressPercent_ = false;
     bool routePickMode_ = false;
     bool captureNavPoints_ = true;
+    mbgl::route::Precision routePrecision_ = mbgl::route::Precision::Fine;
 
     // Frame timer
     int frames = 0;
