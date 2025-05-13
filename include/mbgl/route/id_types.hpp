@@ -34,4 +34,3 @@ struct IDHasher {
 };
 
 MAKEID_TYPE(RouteID);
-MAKEID_TYPE(RouteSegmentID);

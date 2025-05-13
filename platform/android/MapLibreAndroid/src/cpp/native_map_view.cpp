@@ -61,6 +61,7 @@
 #include "tile/tile_operation.hpp"
 #include "mbgl/route/route_manager.hpp"
 #include "mbgl/route/route.hpp"
+#include "mbgl/route/route_enums.hpp"
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/error/en.h>
@@ -1720,20 +1721,24 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
     return false;
 }
 
-jboolean NativeMapView::routeProgressSet(JNIEnv& env, jint routeID, jdouble progress) {
+jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {
     if (routeMgr) {
-        return routeMgr->routeSetProgress(RouteID(routeID), progress);
+        return routeMgr->routeSetProgressPercent(RouteID(routeID), progress);
     }
 
     return false;
 }
 
-jboolean NativeMapView::routeProgressSetPoint(JNIEnv& env, jint routeID, jdouble x, jdouble y) {
+jdouble NativeMapView::routeProgressSetPoint(
+    JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse, jni::jboolean capture) {
     if (routeMgr) {
-        return routeMgr->routeSetProgress(RouteID(routeID), mbgl::Point<double>(x, y));
+        mbgl::route::Precision precision = coarse ? mbgl::route::Precision::Coarse : mbgl::route::Precision::Fine;
+        double percentage = routeMgr->routeSetProgressPoint(
+            RouteID(routeID), mbgl::Point<double>(x, y), precision, capture);
+        return percentage;
     }
 
-    return false;
+    return -1.0;
 }
 
 void NativeMapView::routeSegmentsClear(JNIEnv& env, jint routeID) {
