@@ -121,7 +121,17 @@ mbgl::gfx::CustomPuckState GLFWGLBackend::getCurrentCustomPuckState() const {
 }
 
 void GLFWGLBackend::enableCustomPuck() {
-    customPuck->setPuckBitmap(mbgl::decodeImage(mbgl::util::read_file("platform/glfw/assets/puck.png")));
+    customPuck->setPuckStyle("platform/glfw/assets/puck_style.json");
+    customPuck->setPuckVariant("day");
+    customPuck->setPuckIconState("DefaultState");
+}
+
+void GLFWGLBackend::setPuckVariant(const std::string& variant) {
+    customPuck->setPuckVariant(variant);
+}
+
+void GLFWGLBackend::setPuckIconState(const std::string& state) {
+    customPuck->setPuckIconState(state);
 }
 
 namespace mbgl {

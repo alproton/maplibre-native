@@ -29,8 +29,9 @@ void main() {
 in mediump vec2 uv;
 out mediump vec4 fragColor;
 uniform sampler2D tex;
+layout(location = 4) uniform mediump vec4 color;
 void main() {
-  fragColor = texture(tex, uv);
+  fragColor = texture(tex, uv) * color;
 }
 )";
 };
