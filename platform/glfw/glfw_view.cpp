@@ -1304,19 +1304,19 @@ void GLFWView::incrementRouteProgress() {
     if (firstRouteID_.isValid() && routeMap_.find(firstRouteID_) != routeMap_.end()) {
         routeProgress_ += ROUTE_PROGRESS_STEP;
         routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
-        // routeProgress_ = 0.041;
         if (generateRouteProgressPercent_) {
             rmptr_->routeSetProgressPercent(firstRouteID_, routeProgress_);
         } else {
             const mbgl::Point<double> &progressPoint = rmptr_->getPoint(
-                firstRouteID_, routeProgress_, mbgl::route::Precision::Course);
+                firstRouteID_, routeProgress_, mbgl::route::Precision::Fine);
             // TODO: test out which algorithm works in nav app before removing dead code
             //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
             //  std::cout<<", calculated percent: "<<percent<<std::endl;
 
-            double percentage = rmptr_->routeSetProgressPoint(
-                firstRouteID_, progressPoint, mbgl::route::Precision::Course, captureNavPoints_);
-            std::cout << "Route progress: " << routeProgress_ << ", calculated percent: " << percentage << std::endl;
+            rmptr_->routeSetProgressPoint(
+                firstRouteID_, progressPoint, mbgl::route::Precision::Fine, captureNavPoints_);
+            // std::cout << "Route progress: " << std::to_string(routeProgress_) << ", calculated percent: " <<
+            // std::to_string(percentage) << std::endl;
         }
         rmptr_->finalize();
     }
@@ -1335,9 +1335,10 @@ void GLFWView::decrementRouteProgress() {
             //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
             //  std::cout<<", calculated percent: "<<percent<<std::endl;
 
-            double percentage = rmptr_->routeSetProgressPoint(
+            rmptr_->routeSetProgressPoint(
                 firstRouteID_, progressPoint, mbgl::route::Precision::Course, captureNavPoints_);
-            std::cout << "Route progress: " << routeProgress_ << ", calculated percent: " << percentage << std::endl;
+            // std::cout << "Route progress: " << std::to_string(routeProgress_) << ", calculated percent: " <<
+            // std::to_string(percentage) << std::endl;
         }
 
         rmptr_->finalize();

@@ -67,7 +67,7 @@ private:
     };
 
     std::vector<SegmentRange> compactSegments(const RouteType& routeType) const;
-    Point<double> getPointCourse(double percent) const;
+    Point<double> getPointCoarse(double percent) const;
     Point<double> getPointFine(double percent) const;
     double getProgressProjectionLERP(const Point<double>& queryPoint, bool capture = false);
     double getProgressProjectionSLERP(const Point<double>& queryPoint, bool capture = false);
@@ -83,6 +83,7 @@ private:
     uint32_t bestIntervalIndex_ = uint32_t(~0);
     std::vector<double> capturedNavPercent_;
     std::vector<Point<double>> capturedNavStops_;
+    bool logPrecision = true;
 };
 
 } // namespace route

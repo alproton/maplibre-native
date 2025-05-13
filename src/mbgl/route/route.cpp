@@ -156,7 +156,7 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     }
 }
 
-Point<double> Route::getPointCourse(double percentage) const {
+Point<double> Route::getPointCoarse(double percentage) const {
     if (geometry_.empty()) {
         throw std::invalid_argument("Route cannot be empty.");
     }
@@ -332,7 +332,7 @@ Point<double> Route::getPointFine(double percentage) const {
 mbgl::Point<double> Route::getPoint(double percentage, const Precision& precision) const {
     switch (precision) {
         case Precision::Course:
-            return getPointCourse(percentage);
+            return getPointCoarse(percentage);
         case Precision::Fine:
             return getPointFine(percentage);
         default:
@@ -513,6 +513,15 @@ double Route::getProgressPercent(const Point<double>& progressPoint, const Preci
         }
         default:
             throw std::invalid_argument("Invalid precision type.");
+    }
+
+    if (logPrecision) {
+        mbgl::Point<double> calculatedPt = getPointFine(percentage);
+        double dist = mbgl::util::haversineDist<double>(progressPoint, calculatedPt);
+        std::string msg = "progressPoint: " + std::to_string(progressPoint.x) + " " + std::to_string(progressPoint.y) +
+                          ", calculatePt: " + std::to_string(calculatedPt.x) + " " + std::to_string(calculatedPt.y) +
+                          " ,error rate distance: " + std::to_string(dist);
+        Log::Debug(Event::Route, msg);
     }
 
     return percentage;

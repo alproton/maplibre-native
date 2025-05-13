@@ -66,6 +66,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   private final InitialRenderCallback initialRenderCallback = new InitialRenderCallback();
   private RouteID vanishingRouteID = new RouteID(-1);
   private boolean isPointBasedRouteQueryCoarse = true;
+  private boolean isAutoRouteVanishing = true;
+  private double latestRouteProgressPercent = 0.0;
 
   @Nullable
   private NativeMap nativeMapView;
@@ -502,8 +504,17 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @param progress the specified progress which is a value between 0 and 1.
    * @return true if setting the progress was a success
    */
-  public boolean setRouteProgress(RouteID routeID, double progress) {
+  public boolean setRouteProgressPercent(RouteID routeID, double progress) {
     return nativeMapView.setRouteProgress(routeID, progress);
+  }
+
+  /***
+   * Gets the latest progress of the route on the map view.
+   *
+   * @return the progress on the active vanishing route
+   */
+  public double getLatestRouteProgressPercent() {
+    return latestRouteProgressPercent;
   }
 
   /***
@@ -527,8 +538,21 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     vanishingRouteID = routeID;
   }
 
+  /**
+   * Sets if coarse or fine precision is needed for Route Vanishing. This is currently implemented for testing
+   * purposes before investigations and decisions.
+   */
   public void setPointBasedRouteQueryCoarse(boolean coarse) {
     isPointBasedRouteQueryCoarse = coarse;
+  }
+
+  /**
+   * Sets if the route should vanish automatically based on the custom puck location.
+   *
+   * @param autoVanishing if true, the route will vanish automatically based on the custom puck location.
+   */
+  public void setAutoVanishingRoute(boolean autoVanishing) {
+    isAutoRouteVanishing = autoVanishing;
   }
 
   /***
@@ -651,9 +675,13 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
                                  float iconScale,
                                  boolean cameraTracking) {
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
-    if(vanishingRouteID.isValid()) {
+    if(isAutoRouteVanishing && vanishingRouteID.isValid()) {
       double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse, false);
-      nativeMapView.finalizeRoutes();
+      if(percent >= 0.0 && percent <= 1.0) {
+        nativeMapView.finalizeRoutes();
+        latestRouteProgressPercent = percent;
+      }
+
       Timber.i("Map_View_Route_Progress: route percent: "+ percent);
     } else {
       Timber.i("Map_View_Route_Progress: invalid active route");
