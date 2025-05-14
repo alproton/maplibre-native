@@ -241,6 +241,8 @@ interface NativeMap {
 
   boolean getTileCacheEnabled();
 
+  void addTileCacheSettings(TileCacheSettings settings);
+
   void setTileLodMinRadius(double radius);
 
   double getTileLodMinRadius();

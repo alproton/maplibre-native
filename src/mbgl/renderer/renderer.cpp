@@ -147,6 +147,10 @@ bool Renderer::getTileCacheEnabled() const {
     return impl->orchestrator.getTileCacheEnabled();
 }
 
+void Renderer::addTileCacheSettings(const TileCacheSettings& settings) {
+    impl->orchestrator.addTileCacheSettings(settings);
+}
+
 void Renderer::reduceMemoryUse() {
     gfx::BackendScope guard{impl->backend};
     impl->reduceMemoryUse();

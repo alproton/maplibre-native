@@ -14,6 +14,7 @@
 #include <mbgl/text/cross_tile_symbol_index.hpp>
 #include <mbgl/text/glyph_manager_observer.hpp>
 #include <mbgl/renderer/image_manager_observer.hpp>
+#include <mbgl/renderer/tile_cache_settings.hpp>
 #include <mbgl/text/placement.hpp>
 #include <mbgl/renderer/render_tree.hpp>
 
@@ -98,6 +99,7 @@ public:
 
     void setTileCacheEnabled(bool);
     bool getTileCacheEnabled() const;
+    void addTileCacheSettings(const TileCacheSettings& settings);
     void reduceMemoryUse();
     void dumpDebugLogs();
     void collectPlacedSymbolData(bool);
@@ -219,10 +221,12 @@ private:
     CrossTileSymbolIndex crossTileSymbolIndex;
     PlacementController placementController;
 
+    TileCacheSettingsMap tileCacheSettings;
+    bool tileCacheEnabled = true;
+
     const bool backgroundLayerAsColor;
     bool contextLost = false;
     bool placedSymbolDataCollected = false;
-    bool tileCacheEnabled = true;
 
 #if MLN_RENDER_BACKEND_OPENGL
     bool androidGoldfishMitigationEnabled{false};

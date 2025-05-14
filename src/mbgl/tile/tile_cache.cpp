@@ -1,6 +1,7 @@
 #include <mbgl/tile/tile_cache.hpp>
 
 #include <mbgl/actor/scheduler.hpp>
+#include <mbgl/math/clamp.hpp>
 #include <mbgl/util/instrumentation.hpp>
 #include <mbgl/util/logging.hpp>
 
@@ -22,9 +23,8 @@ void TileCache::setSize(size_t size_) {
     MLN_TRACE_FUNC();
 
     if (size_ > 0) {
-        size_ = 512;
+        size_ = util::clamp(size_, minSize, maxSize);
     }
-
     size = size_;
 
     while (orderedKeys.size() > size) {
@@ -155,9 +155,9 @@ std::unique_ptr<Tile> TileCache::pop(const OverscaledTileID& key) {
     } else {
         ++missCount;
     }
-    if (name == "feature_tiles") {
+    if (source == "feature_tiles") {
         Log::Error(Event::Style,
-                   "######################@@@@ " + name + " hits: " + std::to_string(hitCount) +
+                   "######################@@@@ " + source + " hits: " + std::to_string(hitCount) +
                        " misses: " + std::to_string(missCount) + " tiles: " + std::to_string(tiles.size()) +
                        " max:" + std::to_string(size));
     }
@@ -176,8 +176,8 @@ void TileCache::clear() {
     orderedKeys.clear();
     tiles.clear();
 
-    if (name == "feature_tiles") {
-        Log::Error(Event::Style, "######################@@@@ " + name + " clearing cache");
+    if (source == "feature_tiles") {
+        Log::Error(Event::Style, "######################@@@@ " + source + " clearing cache");
     }
 }
 

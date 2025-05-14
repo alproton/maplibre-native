@@ -63,7 +63,7 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
     // If we need a relayout, abandon any cached tiles; they're now stale.
     if (needsRelayout) {
         cache.clear();
-        if (cache.name == "feature_tiles") {
+        if (cache.getSource() == "feature_tiles") {
             Log::Error(Event::Style, "######################@@@@  clearing cache: needsRelayout");
         }
     }
@@ -156,7 +156,7 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
     // using, e.g. as a replacement for tile that aren't loaded yet.
     std::set<OverscaledTileID> retain;
 
-    constexpr bool aggressiveCaching = true;
+    bool aggressiveCaching = aggressiveTileCache && cacheEnabled;
 
     auto retainTileFn = [&](Tile& tile, TileNecessity necessity) -> void {
         if (retain.emplace(tile.id).second) {
@@ -427,9 +427,19 @@ void TilePyramid::setCacheEnabled(bool enable) {
     cacheEnabled = enable;
 }
 
+void TilePyramid::updateTileCacheSettings(const TileCacheSettingsMap& settings) {
+    auto it = settings.find(cache.getSource());
+    if (it == settings.end()) {
+        return;
+    }
+    assert(cache.getSource() == it->second.source);
+    cache.updateSizeRange(it->second.minTiles, it->second.maxTiles);
+    aggressiveTileCache = true;
+}
+
 void TilePyramid::reduceMemoryUse() {
     cache.clear();
-    if (cache.name == "feature_tiles") {
+    if (cache.getSource() == "feature_tiles") {
         Log::Error(Event::Style, "######################@@@@  clearing cache: reduceMemoryUse");
     }
 }

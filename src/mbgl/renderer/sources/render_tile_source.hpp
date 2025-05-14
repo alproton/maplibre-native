@@ -49,9 +49,10 @@ public:
                             const std::optional<std::string>&) override;
 
     void setCacheEnabled(bool) override;
+    void setCacheSource(std::string name) override { tilePyramid.setCacheSource(std::move(name)); }
+    void updateTileCacheSettings(const TileCacheSettingsMap& settings) override;
     void reduceMemoryUse() override;
     void dumpDebugLogs() const override;
-    void setCacheName(std::string name) override { tilePyramid.setCacheName(std::move(name)); }
 
 protected:
     RenderTileSource(Immutable<style::Source::Impl>, const TaggedScheduler&);

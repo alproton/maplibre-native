@@ -2,6 +2,7 @@
 
 #include <mbgl/actor/scheduler.hpp>
 #include <mbgl/map/mode.hpp>
+#include <mbgl/renderer/tile_cache_settings.hpp>
 #include <mbgl/tile/tile_id.hpp>
 #include <mbgl/tile/tile_observer.hpp>
 #include <mbgl/util/mat4.hpp>
@@ -103,7 +104,8 @@ public:
                                     const std::optional<std::string>&) {}
 
     virtual void setCacheEnabled(bool) {};
-    virtual void setCacheName(std::string){};
+    virtual void setCacheSource(std::string){};
+    virtual void updateTileCacheSettings(const TileCacheSettingsMap&) {};
 
     virtual void reduceMemoryUse() = 0;
 
