@@ -41,6 +41,8 @@ public:
     /// Schedule any accumulated deferred tiles to be destroyed
     void deferPendingReleases();
 
+    std::string name = "";
+
 private:
     std::map<OverscaledTileID, std::unique_ptr<Tile>> tiles;
     std::list<OverscaledTileID> orderedKeys;
@@ -50,6 +52,8 @@ private:
     std::mutex deferredSignalLock;
     std::condition_variable deferredSignal;
     size_t size;
+    int hitCount{0};
+    int missCount{0};
 };
 
 } // namespace mbgl

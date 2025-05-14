@@ -51,6 +51,7 @@ public:
     void setCacheEnabled(bool) override;
     void reduceMemoryUse() override;
     void dumpDebugLogs() const override;
+    void setCacheName(std::string name) override { tilePyramid.setCacheName(std::move(name)); }
 
 protected:
     RenderTileSource(Immutable<style::Source::Impl>, const TaggedScheduler&);

@@ -347,6 +347,7 @@ std::unique_ptr<RenderTree> RenderOrchestrator::createRenderTree(
         std::unique_ptr<RenderSource> renderSource = RenderSource::create(entry.second, threadPool);
         renderSource->setObserver(this);
         renderSource->setCacheEnabled(tileCacheEnabled);
+        renderSource->setCacheName(entry.second->id);
         renderSources.emplace(entry.first, std::move(renderSource));
     }
     transformState = updateParameters->transformState;
@@ -426,6 +427,11 @@ std::unique_ptr<RenderTree> RenderOrchestrator::createRenderTree(
                 updateList[index] = true;
 #endif
             }
+        }
+        if (sourceNeedsRelayout) {
+            Log::Error(Event::Style,
+                       "#################################################################@@@@ " + sourceImpl->id +
+                           " needs re-layout");
         }
         source->update(sourceImpl, filteredLayersForSource, sourceNeedsRendering, sourceNeedsRelayout, tileParameters);
         filteredLayersForSource.clear();

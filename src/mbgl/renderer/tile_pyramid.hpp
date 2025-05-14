@@ -61,6 +61,7 @@ public:
     std::vector<Feature> querySourceFeatures(const SourceQueryOptions&) const;
 
     void setCacheEnabled(bool);
+    void setCacheName(std::string name) { cache.name = std::move(name); }
     void reduceMemoryUse();
 
     void setObserver(TileObserver*);
