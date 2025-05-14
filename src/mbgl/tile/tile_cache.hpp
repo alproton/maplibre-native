@@ -50,6 +50,8 @@ private:
     std::mutex deferredSignalLock;
     std::condition_variable deferredSignal;
     size_t size;
+    int hitCount = 0;
+    int missCount = 0;
 };
 
 } // namespace mbgl

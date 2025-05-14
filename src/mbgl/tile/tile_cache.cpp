@@ -2,6 +2,7 @@
 
 #include <mbgl/actor/scheduler.hpp>
 #include <mbgl/util/instrumentation.hpp>
+#include <mbgl/util/logging.hpp>
 
 #include <cassert>
 
@@ -21,6 +22,11 @@ void TileCache::setSize(size_t size_) {
     MLN_TRACE_FUNC();
 
     size = size_;
+    /*
+    if (size > 0 && size < 256) {
+        size = 256;
+    }
+    */
 
     while (orderedKeys.size() > size) {
         const auto key = orderedKeys.front();
@@ -88,7 +94,7 @@ void TileCache::deferPendingReleases() {
     // last one and the destruction actually occurs here on this thread.
     std::function<void()> func{[tile_{CaptureWrapper{std::move(wrap)}}, this]() mutable {
         MLN_TRACE_ZONE(deferPendingReleases lambda);
-        MLN_ZONE_VALUE(wrap_.releases.size());
+        // MLN_ZONE_VALUE(wrap_.releases.size());
         tile_.items.clear();
 
         std::lock_guard<std::mutex> counterLock(deferredSignalLock);
@@ -147,6 +153,16 @@ std::unique_ptr<Tile> TileCache::pop(const OverscaledTileID& key) {
         tile = std::move(tiles.extract(it).mapped());
         orderedKeys.remove(key);
         assert(tile->isRenderable());
+        hitCount++;
+    } else {
+        missCount++;
+    }
+
+    if (size > 0) {
+        Log::Error(mbgl::Event::General,
+                   "##################################@@ POP: " + std::to_string(hitCount) + " hits, " +
+                       std::to_string(missCount) + " misses, tile count: " + std::to_string(tiles.size()) +
+                       " cache max: " + std::to_string(size));
     }
 
     return tile;

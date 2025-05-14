@@ -506,9 +506,9 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
             case GLFW_KEY_C:
                 view->clearAnnotations();
                 break;
-            case GLFW_KEY_V:
-                view->toggleCustomDrawableStyle();
-                break;
+            // case GLFW_KEY_V:
+            //   view->toggleCustomDrawableStyle();
+            //   break;
             case GLFW_KEY_I:
                 view->resetDatabaseCallback();
                 break;
