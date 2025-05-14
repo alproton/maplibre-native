@@ -2,6 +2,7 @@
 
 #include <mbgl/renderer/query.hpp>
 #include <mbgl/annotation/annotation.hpp>
+#include <mbgl/renderer/tile_cache_settings.hpp>
 #include <mbgl/util/geo.hpp>
 #include <mbgl/util/geojson.hpp>
 
@@ -110,6 +111,7 @@ public:
     // Memory
     void setTileCacheEnabled(bool);
     bool getTileCacheEnabled() const;
+    void addTileCacheSettings(const TileCacheSettings& settings);
     void reduceMemoryUse();
     void clearData();
 

@@ -3,6 +3,7 @@
 #include <mbgl/actor/actor.hpp>
 #include <mbgl/annotation/annotation.hpp>
 #include <mbgl/renderer/renderer_frontend.hpp>
+#include <mbgl/renderer/tile_cache_settings.hpp>
 #include <mbgl/util/geo.hpp>
 #include <mbgl/util/run_loop.hpp>
 
@@ -56,6 +57,7 @@ public:
     // Memory
     void setTileCacheEnabled(bool);
     bool getTileCacheEnabled() const;
+    void addTileCacheSettings(const TileCacheSettings& settings);
     void reduceMemoryUse();
 
 private:

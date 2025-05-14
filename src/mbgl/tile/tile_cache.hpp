@@ -41,6 +41,15 @@ public:
     /// Schedule any accumulated deferred tiles to be destroyed
     void deferPendingReleases();
 
+    void updateSizeRange(size_t minSize_, size_t maxSize_) {
+        minSize = minSize_;
+        maxSize = maxSize_;
+    }
+
+    void setSource(std::string source_) { source = std::move(source_); }
+
+    const std::string& getSource() const noexcept { return source; }
+
 private:
     std::map<OverscaledTileID, std::unique_ptr<Tile>> tiles;
     std::list<OverscaledTileID> orderedKeys;
@@ -50,6 +59,9 @@ private:
     std::mutex deferredSignalLock;
     std::condition_variable deferredSignal;
     size_t size;
+    size_t minSize = 0;
+    size_t maxSize = 65536;
+    std::string source = "";
 };
 
 } // namespace mbgl

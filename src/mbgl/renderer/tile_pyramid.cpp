@@ -153,6 +153,8 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
     // using, e.g. as a replacement for tile that aren't loaded yet.
     std::set<OverscaledTileID> retain;
 
+    bool aggressiveCaching = aggressiveTileCache && cacheEnabled;
+
     auto retainTileFn = [&](Tile& tile, TileNecessity necessity) -> void {
         if (retain.emplace(tile.id).second) {
             tile.setUpdateParameters({minimumUpdateInterval, isVolatile});
@@ -163,8 +165,14 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
             tile.setLayers(layers);
         }
     };
+
     auto getTileFn = [&](const OverscaledTileID& tileID) -> Tile* {
         auto it = tiles.find(tileID);
+        if (aggressiveCaching && it != tiles.end()) {
+            if (it->second.get()) {
+                retainTileFn(*it->second.get(), TileNecessity::Required);
+            }
+        }
         return it == tiles.end() ? nullptr : it->second.get();
     };
 
@@ -185,6 +193,9 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
             tile = createTile(tileID, observer);
             if (!tile) return nullptr;
             tile->setLayers(layers);
+        }
+        if (aggressiveCaching) {
+            retainTileFn(*tile, TileNecessity::Required);
         }
 
         return tiles.emplace(tileID, std::move(tile)).first->second.get();
@@ -411,6 +422,16 @@ std::vector<Feature> TilePyramid::querySourceFeatures(const SourceQueryOptions& 
 
 void TilePyramid::setCacheEnabled(bool enable) {
     cacheEnabled = enable;
+}
+
+void TilePyramid::updateTileCacheSettings(const TileCacheSettingsMap& settings) {
+    auto it = settings.find(cache.getSource());
+    if (it == settings.end()) {
+        return;
+    }
+    assert(cache.getSource() == it->second.source);
+    cache.updateSizeRange(it->second.minTiles, it->second.maxTiles);
+    aggressiveTileCache = true;
 }
 
 void TilePyramid::reduceMemoryUse() {

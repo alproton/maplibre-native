@@ -345,6 +345,15 @@ public final class MapLibreMap {
   }
 
   /**
+   * Add render tile cache settings for a specific tile source.
+   *
+   * @param settings tile cache settings
+   */
+  public void addTileCacheSettings(TileCacheSettings settings) {
+    nativeMapView.addTileCacheSettings(settings);
+  }
+
+  /**
    * Camera based tile level of detail controls
    *
    * @param radius minimum radius around the view point in unit of tiles in which the fine
