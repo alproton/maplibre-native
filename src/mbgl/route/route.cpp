@@ -120,14 +120,15 @@ Vector3D latLonToCartesian(const Point<double>& p) {
  */
 Point<double> cartesianToLatLon(const Vector3D& v) {
     // Ensure the vector is normalized (or close enough) for accurate asin
-    // double length = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z); // Optional normalization
-    // Vector3D norm_v = {v.x / length, v.y / length, v.z / length};
+    double length = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    assert(length > EPSILON && "Vector length should be non-zero");
+    Vector3D vnormalized = {v.x / length, v.y / length, v.z / length};
 
     // Clamp z to [-1, 1] to avoid domain errors in asin due to potential floating point inaccuracies
-    double clamped_z = std::clamp(v.z, -1.0, 1.0);
+    double clamped_z = std::clamp(vnormalized.z, -1.0, 1.0);
 
-    double latitudeRad = std::asin(clamped_z);  // Latitude from z component
-    double longitudeRad = std::atan2(v.y, v.x); // Longitude from atan2(y, x)
+    double latitudeRad = std::asin(clamped_z);                      // Latitude from z component
+    double longitudeRad = std::atan2(vnormalized.y, vnormalized.x); // Longitude from atan2(y, x)
 
     return {radiansToDegrees(longitudeRad), radiansToDegrees(latitudeRad)};
 }
@@ -519,9 +520,10 @@ double Route::getProgressPercent(const Point<double>& progressPoint, const Preci
     if (logPrecision) {
         mbgl::Point<double> calculatedPt = getPointFine(percentage);
         double dist = mbgl::util::haversineDist(progressPoint, calculatedPt);
-        std::string msg = "progressPoint: " + std::to_string(progressPoint.x) + " " + std::to_string(progressPoint.y) +
-                          ", calculatePt: " + std::to_string(calculatedPt.x) + " " + std::to_string(calculatedPt.y) +
-                          " ,error rate distance: " + std::to_string(dist);
+        std::string precisionStr = precision == Precision::Coarse ? "Coarse" : "Fine";
+        std::string msg = precisionStr + ": progressPoint: " + std::to_string(progressPoint.x) + " " +
+                          std::to_string(progressPoint.y) + ", calculatePt: " + std::to_string(calculatedPt.x) + " " +
+                          std::to_string(calculatedPt.y) + " ,error rate distance: " + std::to_string(dist);
         Log::Debug(Event::Route, msg);
     }
 

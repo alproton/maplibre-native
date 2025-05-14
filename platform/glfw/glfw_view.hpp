@@ -127,7 +127,7 @@ private:
     void captureSnapshot();
     void setRouteProgressUsage();
     void setRoutePickMode();
-    void replayNavStops();
+    void scrubNavStops(bool forward);
 
     void cycleDebugOptions();
     void clearAnnotations();
@@ -207,6 +207,7 @@ private:
     bool generateRouteProgressPercent_ = false;
     bool routePickMode_ = false;
     bool captureNavPoints_ = true;
+    mbgl::route::Precision routePrecision_ = mbgl::route::Precision::Coarse;
 
     // Frame timer
     int frames = 0;
