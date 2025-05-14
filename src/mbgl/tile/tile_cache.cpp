@@ -155,11 +155,12 @@ std::unique_ptr<Tile> TileCache::pop(const OverscaledTileID& key) {
     } else {
         ++missCount;
     }
-    if (name == "feature_tiles")
+    if (name == "feature_tiles") {
         Log::Error(Event::Style,
                    "######################@@@@ " + name + " hits: " + std::to_string(hitCount) +
                        " misses: " + std::to_string(missCount) + " tiles: " + std::to_string(tiles.size()) +
                        " max:" + std::to_string(size));
+    }
 
     return tile;
 }
@@ -174,6 +175,10 @@ void TileCache::clear() {
     }
     orderedKeys.clear();
     tiles.clear();
+
+    if (name == "feature_tiles") {
+        Log::Error(Event::Style, "######################@@@@ " + name + " clearing cache");
+    }
 }
 
 } // namespace mbgl

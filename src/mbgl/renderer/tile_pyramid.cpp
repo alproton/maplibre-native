@@ -63,6 +63,9 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
     // If we need a relayout, abandon any cached tiles; they're now stale.
     if (needsRelayout) {
         cache.clear();
+        if (cache.name == "feature_tiles") {
+            Log::Error(Event::Style, "######################@@@@  clearing cache: needsRelayout");
+        }
     }
 
     // If we're not going to render anything, move our existing tiles into
@@ -426,6 +429,9 @@ void TilePyramid::setCacheEnabled(bool enable) {
 
 void TilePyramid::reduceMemoryUse() {
     cache.clear();
+    if (cache.name == "feature_tiles") {
+        Log::Error(Event::Style, "######################@@@@  clearing cache: reduceMemoryUse");
+    }
 }
 
 void TilePyramid::setObserver(TileObserver* observer_) {
@@ -443,6 +449,7 @@ void TilePyramid::clearAll() {
     tiles.clear();
     renderedTiles.clear();
     cache.clear();
+    Log::Error(Event::Style, "######################@@@@  clearing cache: clearAll");
 }
 
 void TilePyramid::addRenderTile(const UnwrappedTileID& tileID, Tile& tile) {
