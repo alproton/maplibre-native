@@ -753,8 +753,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_L: {
                     int lastCapturedIdx = view->getCaptureIdx() - 1;
                     if (lastCapturedIdx == -1) lastCapturedIdx = 0;
-                    // std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
-                    std::string capture_file_name = "route_capture.json";
+                    std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -762,8 +761,12 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                     view->writeStats(true);
                     break;
 
-                case GLFW_KEY_0:
-                    view->replayNavStops();
+                case GLFW_KEY_X:
+                    view->scrubNavStops(false);
+                    break;
+
+                case GLFW_KEY_C:
+                    view->scrubNavStops(true);
                     break;
             }
         } else {
@@ -1618,32 +1621,40 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
     }
 }
 
-void GLFWView::replayNavStops() {
+void GLFWView::scrubNavStops(bool forward) {
     if (loadedCapture_ && firstRouteID_.isValid()) {
+        if (forward) {
+            ++lastNavStop_;
+        } else {
+            --lastNavStop_;
+        }
         if (capturedNavStopMap_.find(firstRouteID_) != capturedNavStopMap_.end()) {
             const mbgl::LineString<double> &navstops = capturedNavStopMap_[firstRouteID_];
             const uint32_t sz = navstops.size();
-            const auto &navStop = navstops[lastNavStop_++ % sz];
-            double percentage = rmptr_->routeSetProgressPoint(firstRouteID_, navStop, mbgl::route::Precision::Coarse);
+            const auto &navStop = navstops[lastNavStop_ % sz];
+            double percentage = rmptr_->routeSetProgressPoint(firstRouteID_, navStop, routePrecision_);
             rmptr_->finalize();
-            std::cout << "replayNavStop - Route: " << firstRouteID_.id << ", NavStop: " << navStop.x << ", "
-                      << navStop.y << ", percent: " << std::to_string(percentage) << std::endl;
+            std::cout << "percent: " << std::to_string(percentage) << std::endl;
         } else if (capturedNavPercentMap_.find(firstRouteID_) != capturedNavPercentMap_.end()) {
             const auto &navstops = capturedNavPercentMap_[firstRouteID_];
             const uint32_t sz = navstops.size();
-            const double percent = navstops[lastNavStop_++ % sz];
+            const double percent = navstops[lastNavStop_ % sz];
             rmptr_->routeSetProgressPercent(firstRouteID_, percent);
             rmptr_->finalize();
         }
     } else if (loadedCapture_) {
         // perhaps the capture file did not have nav stops, lets just pick the first route we see and traverse it.
         if (!routeMap_.empty()) {
+            if (forward) {
+                routeProgress_ += ROUTE_PROGRESS_STEP;
+            } else {
+                routeProgress_ -= ROUTE_PROGRESS_STEP;
+            }
             const auto &routeID = routeMap_.begin()->first;
-            routeProgress_ += ROUTE_PROGRESS_STEP;
             routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
             const auto &navstop = rmptr_->getPoint(routeID, routeProgress_, routePrecision_);
             double percentage = rmptr_->routeSetProgressPoint(routeID, navstop, routePrecision_);
-            std::cout << "replayNavStop - Route: " << routeID.id << ", i/p %: " << std::to_string(routeProgress_)
+            std::cout << ", ip %: " << std::to_string(routeProgress_)
                       << ", calculated %: " << std::to_string(percentage) << std::endl;
 
             rmptr_->finalize();
