@@ -21,4 +21,10 @@ final public class TileCacheSettings {
      * Check update_renderables.hpp for details about ideal tiles
      */
     public boolean aggressiveCache;
+
+    /***
+     * For certain sources, it is possible to not clear the cache when only
+     * geojson causes a tile relayout
+     */
+    public boolean skipRelayoutClear;
 }

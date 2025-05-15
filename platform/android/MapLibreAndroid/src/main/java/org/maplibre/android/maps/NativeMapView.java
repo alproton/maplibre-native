@@ -836,7 +836,11 @@ final class NativeMapView implements NativeMap {
     if (checkState("addTileCacheSettings")) {
       return;
     }
-    nativeAddTileCacheSettings(settings.source, settings.minTiles, settings.maxTiles, settings.aggressiveCache);
+    nativeAddTileCacheSettings(settings.source,
+                               settings.minTiles,
+                               settings.maxTiles,
+                               settings.aggressiveCache,
+                               settings.skipRelayoutClear);
   }
 
   @Override
@@ -1899,7 +1903,11 @@ final class NativeMapView implements NativeMap {
   private native boolean nativeGetTileCacheEnabled();
 
   @Keep
-  private native void nativeAddTileCacheSettings(String source, int minTiles, int maxTiles, boolean aggressiveCache);
+  private native void nativeAddTileCacheSettings(String source,
+                                                 int minTiles,
+                                                 int maxTiles,
+                                                 boolean aggressiveCache,
+                                                 boolean skipRelayoutClear);
 
   @Keep
   private native int nativeGetPrefetchZoomDelta();

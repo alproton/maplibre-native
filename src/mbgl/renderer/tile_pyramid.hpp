@@ -89,6 +89,7 @@ private:
     bool fadingTiles = false;
     bool cacheEnabled = true;
     bool aggressiveTileCache = false;
+    bool skipRelayoutClear = false;
 };
 
 } // namespace mbgl

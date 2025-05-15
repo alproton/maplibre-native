@@ -61,7 +61,7 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
                          std::optional<LatLngBounds> bounds,
                          std::function<std::unique_ptr<Tile>(const OverscaledTileID&, TileObserver*)> createTile) {
     // If we need a relayout, abandon any cached tiles; they're now stale.
-    if (needsRelayout) {
+    if (needsRelayout && !skipRelayoutClear) {
         cache.clear();
     }
 
@@ -431,7 +431,8 @@ void TilePyramid::updateTileCacheSettings(const TileCacheSettingsMap& settings) 
     }
     assert(cache.getSource() == it->second.source);
     cache.updateSizeRange(it->second.minTiles, it->second.maxTiles);
-    aggressiveTileCache = true;
+    aggressiveTileCache = it->second.aggressiveCache;
+    skipRelayoutClear = it->second.skipRelayoutClear;
 }
 
 void TilePyramid::reduceMemoryUse() {

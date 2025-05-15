@@ -346,9 +346,9 @@ std::unique_ptr<RenderTree> RenderOrchestrator::createRenderTree(
         MLN_TRACE_ZONE(create source);
         std::unique_ptr<RenderSource> renderSource = RenderSource::create(entry.second, threadPool);
         renderSource->setObserver(this);
+        renderSource->setCacheSource(entry.second->id);
         renderSource->setCacheEnabled(tileCacheEnabled);
         renderSource->updateTileCacheSettings(tileCacheSettings);
-        renderSource->setCacheSource(entry.second->id);
         renderSources.emplace(entry.first, std::move(renderSource));
     }
     transformState = updateParameters->transformState;
@@ -785,7 +785,6 @@ bool RenderOrchestrator::getTileCacheEnabled() const {
 
 void RenderOrchestrator::addTileCacheSettings(const TileCacheSettings& settings) {
     tileCacheSettings[settings.source] = settings;
-
     for (const auto& entry : renderSources) {
         entry.second->updateTileCacheSettings(tileCacheSettings);
     }

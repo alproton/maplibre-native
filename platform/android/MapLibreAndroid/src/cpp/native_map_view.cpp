@@ -1348,13 +1348,18 @@ jni::jboolean NativeMapView::getTileCacheEnabled(JNIEnv&) {
     return jni::jboolean(rendererFrontend->getTileCacheEnabled());
 }
 
-void NativeMapView::addTileCacheSettings(
-    JNIEnv& env, const jni::String& source, jni::jint minTiles, jni::jint maxTiles, jni::jboolean aggressiveCache) {
+void NativeMapView::addTileCacheSettings(JNIEnv& env,
+                                         const jni::String& source,
+                                         jni::jint minTiles,
+                                         jni::jint maxTiles,
+                                         jni::jboolean aggressiveCache,
+                                         jni::jboolean skipRelayoutClear) {
     mbgl::TileCacheSettings settings{};
     settings.source = jni::Make<std::string>(env, source);
     settings.minTiles = minTiles;
     settings.maxTiles = maxTiles;
     settings.aggressiveCache = aggressiveCache == jni::jni_true;
+    settings.skipRelayoutClear = skipRelayoutClear == jni::jni_true;
     rendererFrontend->addTileCacheSettings(settings);
 }
 
