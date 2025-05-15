@@ -1,6 +1,7 @@
 #include <mbgl/tile/tile_cache.hpp>
 
 #include <mbgl/actor/scheduler.hpp>
+#include <mbgl/math/clamp.hpp>
 #include <mbgl/util/instrumentation.hpp>
 
 #include <cassert>
@@ -20,6 +21,9 @@ TileCache::~TileCache() {
 void TileCache::setSize(size_t size_) {
     MLN_TRACE_FUNC();
 
+    if (size_ > 0) {
+        size_ = util::clamp(size_, minSize, maxSize);
+    }
     size = size_;
 
     while (orderedKeys.size() > size) {
@@ -88,7 +92,7 @@ void TileCache::deferPendingReleases() {
     // last one and the destruction actually occurs here on this thread.
     std::function<void()> func{[tile_{CaptureWrapper{std::move(wrap)}}, this]() mutable {
         MLN_TRACE_ZONE(deferPendingReleases lambda);
-        MLN_ZONE_VALUE(wrap_.releases.size());
+        MLN_ZONE_VALUE(tile_.items.size());
         tile_.items.clear();
 
         std::lock_guard<std::mutex> counterLock(deferredSignalLock);

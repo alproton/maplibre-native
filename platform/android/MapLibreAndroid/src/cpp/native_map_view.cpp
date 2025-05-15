@@ -31,6 +31,7 @@
 #include <mbgl/style/image.hpp>
 #include <mbgl/style/filter.hpp>
 #include <mbgl/renderer/query.hpp>
+#include <mbgl/renderer/tile_cache_settings.hpp>
 #include <mbgl/util/thread_local.hpp>
 
 // Java -> C++ conversion
@@ -1347,6 +1348,16 @@ jni::jboolean NativeMapView::getTileCacheEnabled(JNIEnv&) {
     return jni::jboolean(rendererFrontend->getTileCacheEnabled());
 }
 
+void NativeMapView::addTileCacheSettings(
+    JNIEnv& env, const jni::String& source, jni::jint minTiles, jni::jint maxTiles, jni::jboolean aggressiveCache) {
+    mbgl::TileCacheSettings settings{};
+    settings.source = jni::Make<std::string>(env, source);
+    settings.minTiles = minTiles;
+    settings.maxTiles = maxTiles;
+    settings.aggressiveCache = aggressiveCache == jni::jni_true;
+    rendererFrontend->addTileCacheSettings(settings);
+}
+
 void NativeMapView::setTileLodMinRadius(JNIEnv&, jni::jdouble radius) {
     map->setTileLodMinRadius(radius);
 }
@@ -1553,6 +1564,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::getPrefetchZoomDelta, "nativeGetPrefetchZoomDelta"),
         METHOD(&NativeMapView::setTileCacheEnabled, "nativeSetTileCacheEnabled"),
         METHOD(&NativeMapView::getTileCacheEnabled, "nativeGetTileCacheEnabled"),
+        METHOD(&NativeMapView::addTileCacheSettings, "nativeAddTileCacheSettings"),
         METHOD(&NativeMapView::triggerRepaint, "nativeTriggerRepaint"),
         METHOD(&NativeMapView::setTileLodMinRadius, "nativeSetTileLodMinRadius"),
         METHOD(&NativeMapView::getTileLodMinRadius, "nativeGetTileLodMinRadius"),

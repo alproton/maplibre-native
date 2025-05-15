@@ -576,6 +576,10 @@ void RenderTileSource::setCacheEnabled(bool enable) {
     tilePyramid.setCacheEnabled(enable);
 }
 
+void RenderTileSource::updateTileCacheSettings(const TileCacheSettingsMap& settings) {
+    tilePyramid.updateTileCacheSettings(settings);
+}
+
 void RenderTileSource::reduceMemoryUse() {
     tilePyramid.reduceMemoryUse();
 }

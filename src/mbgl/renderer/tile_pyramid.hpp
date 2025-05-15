@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mbgl/renderer/tile_cache_settings.hpp>
 #include <mbgl/style/layer_properties.hpp>
 #include <mbgl/style/source_impl.hpp>
 #include <mbgl/style/types.hpp>
@@ -61,6 +62,8 @@ public:
     std::vector<Feature> querySourceFeatures(const SourceQueryOptions&) const;
 
     void setCacheEnabled(bool);
+    void setCacheSource(std::string source) { cache.setSource(std::move(source)); }
+    void updateTileCacheSettings(const TileCacheSettingsMap& settings);
     void reduceMemoryUse();
 
     void setObserver(TileObserver*);
@@ -85,6 +88,7 @@ private:
 
     bool fadingTiles = false;
     bool cacheEnabled = true;
+    bool aggressiveTileCache = false;
 };
 
 } // namespace mbgl
