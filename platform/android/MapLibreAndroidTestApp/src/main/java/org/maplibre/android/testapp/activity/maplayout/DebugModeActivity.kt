@@ -93,7 +93,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         return MapLibreMapOptions.createFromAttributes(this, null)
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "SuspiciousIndentation")
     private fun prepareLocationComp(style: Style) {
         val context : Context = this
         val locationComponentOptions =
