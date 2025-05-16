@@ -101,6 +101,7 @@ mbgl::gfx::CustomPuckState GLFWGLBackend::getCurrentCustomPuckState() const {
 
 void GLFWGLBackend::enableCustomPuck() {
     customPuck->setPuckBitmap(mbgl::decodeImage(mbgl::util::read_file("platform/glfw/assets/puck.png")));
+    customPuck->setPuckStyle("platform/glfw/assets/puck_style.json");
 }
 
 namespace mbgl {
