@@ -137,8 +137,7 @@ Point<double> cartesianToLatLon(const Vector3D& v) {
 
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     : routeOptions_(ropts),
-      geometry_(geometry),
-      bestIntervalIndex_(INVALID_UINT) {
+      geometry_(geometry) {
     assert(!geometry_.empty() && "route geometry cannot be empty");
     assert((!std::isnan(geometry_[0].x) && !std::isnan(geometry_[0].y)) && "invalid geometry point");
 
@@ -604,24 +603,7 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
     };
 
     // closestInterval.first is the interval index, closestInterval.second is the fraction along the interval
-    std::pair<uint32_t, double> closestInterval = {INVALID_UINT, -1.0};
-
-    // lets cache the best interval index, check if there is closest projection before, current and in the after
-    // interval.
-    if (bestIntervalIndex_ != INVALID_UINT) {
-        uint32_t startIdx = bestIntervalIndex_ == 0 ? 0 : bestIntervalIndex_ - 1;
-        uint32_t endIdx = bestIntervalIndex_ == geometry_.size() - 2 ? geometry_.size() - 1 : bestIntervalIndex_ + 1;
-        closestInterval = getClosestInterval(startIdx, endIdx);
-    }
-
-    // check if we have a valid closest interval, if not search throught the whole route
-    if (closestInterval.first == INVALID_UINT) {
-        closestInterval = getClosestInterval(0, geometry_.size() - 1);
-    }
-
-    assert(closestInterval.first != INVALID_UINT && "Invalid best interval index");
-    assert(closestInterval.second >= 0.0 && closestInterval.second <= 1.0 && "Invalid best interval fraction");
-    bestIntervalIndex_ = closestInterval.first;
+    std::pair<uint32_t, double> closestInterval = getClosestInterval(0, geometry_.size() - 1);
 
     // --- Calculate final percentage ---
     uint32_t bestIntervalIndex = closestInterval.first;
