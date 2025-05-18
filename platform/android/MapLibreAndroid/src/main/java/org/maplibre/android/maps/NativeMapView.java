@@ -1233,6 +1233,16 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public boolean setVanishingRoute(RouteID routeID, boolean vanishing) {
+    return false;
+  }
+
+  @Override
+  public RouteID getVanishingRoute() {
+    return null;
+  }
+
+  @Override
   public boolean finalizeRoutes() {
     return nativeRoutesFinalize();
   }
@@ -1693,6 +1703,12 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   private native String nativeRoutesCaptureSnapshot();
+
+  @Keep
+  private native boolean nativeRouteSetVanishing(int routeID, boolean vanishing);
+
+  @Keep
+  private native int nativeRouteGetVanishing();
 
   @Keep
   native void nativeRoutesClearStats();

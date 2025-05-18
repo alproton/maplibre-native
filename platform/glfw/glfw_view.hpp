@@ -201,7 +201,7 @@ private:
     std::unordered_map<RouteID, std::vector<double>, IDHasher<RouteID>> capturedNavPercentMap_;
     int lastCaptureIdx_ = 0;
     uint32_t lastNavStop_ = 0;
-    RouteID firstRouteID_;
+    RouteID vanishingRouteID_;
     bool loadedCapture_ = false;
     double routeProgress_ = 0.0;
     bool generateRouteProgressPercent_ = false;

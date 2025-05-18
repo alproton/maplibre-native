@@ -64,7 +64,6 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   private final MapChangeReceiver mapChangeReceiver = new MapChangeReceiver();
   private final MapCallback mapCallback = new MapCallback();
   private final InitialRenderCallback initialRenderCallback = new InitialRenderCallback();
-  private RouteID vanishingRouteID = new RouteID(-1);
   private boolean isPointBasedRouteQueryCoarse = true;
   private boolean isAutoRouteVanishing = true;
   private double latestRouteProgressPercent = 0.0;
@@ -535,7 +534,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @param routeID the specified route ID for the corresponding route to vanish.
    */
   public void setVanishingRoute(RouteID routeID) {
-    vanishingRouteID = routeID;
+    nativeMapView.setVanishingRoute(routeID, true);
+  }
+
+  public RouteID getVanishingRouteID() {
+    return nativeMapView.getVanishingRoute();
   }
 
   /**
@@ -675,6 +678,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
                                  float iconScale,
                                  boolean cameraTracking) {
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
+    //TODO: this will be removed to render line layer
+    RouteID vanishingRouteID = getVanishingRouteID();
     if(isAutoRouteVanishing && vanishingRouteID.isValid()) {
       double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse, false);
       if(percent >= 0.0 && percent <= 1.0) {

@@ -482,6 +482,18 @@ const PropertyValue<Color>& LineLayer::getGradientLineClipColor() const {
     return impl().paint.template get<LineClipColor>().value;
 }
 
+void LineLayer::setClipLineEnable(bool enable) {
+    auto impl_ = mutableImpl();
+    impl_->clipLineEnable = enable;
+    baseImpl = std::move(impl_);
+    observer->onLayerChanged(*this);
+}
+
+bool LineLayer::getClipLineEnable() const {
+    return mutableImpl()->clipLineEnable;
+}
+
+
 using namespace conversion;
 
 namespace {

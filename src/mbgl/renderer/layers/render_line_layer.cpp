@@ -377,6 +377,12 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
         return;
     }
 
+    bool isClipLineEnabled = impl_cast(baseImpl).clipLineEnable;
+    std::string idstr = impl_cast(baseImpl).id;
+    std::string clipEnabledStr = isClipLineEnabled ? "true" : "false";
+    std::string msg = "layer for vanishing route: " + clipEnabledStr + ", " + idstr;
+    mbgl::Log::Info(mbgl::Event::Route, msg);
+
     // Set up a layer group
     if (!layerGroup) {
         if (auto layerGroup_ = context.createTileLayerGroup(layerIndex, /*initialCapacity=*/64, getID())) {

@@ -21,6 +21,7 @@ public:
     LineLayoutProperties::Unevaluated layout;
     LinePaintProperties::Transitionable paint;
     LineGradientFilterType gradientFilterType = LineGradientFilterType::Linear;
+    bool clipLineEnable = false;
 
     DECLARE_LAYER_TYPE_INFO;
 };

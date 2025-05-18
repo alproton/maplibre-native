@@ -819,6 +819,36 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
     }
 }
 
+bool RouteManager::setVanishingRouteID(const RouteID& routeID) {
+    bool success = false;
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end() && style_ != nullptr) {
+        // iterate through all the route layers and set the layer is a vanishing route layer
+        vanishingRouteID_ = routeID;
+        const auto& routes = getAllRoutes();
+        for (const RouteID& currRouteID : routes) {
+            std::string baseLayerName = getBaseRouteLayerName(currRouteID);
+            std::string activeLayerName = getActiveRouteLayerName(currRouteID);
+
+            bool enableVanishingRoute = currRouteID == vanishingRouteID_;
+            if (style_->getLayer(baseLayerName) != nullptr) {
+                style::LineLayer* linelayer = static_cast<style::LineLayer*>(style_->getLayer(baseLayerName));
+                linelayer->setClipLineEnable(enableVanishingRoute);
+            }
+            if (style_->getLayer(activeLayerName) != nullptr) {
+                style::LineLayer* linelayer = static_cast<style::LineLayer*>(style_->getLayer(activeLayerName));
+                linelayer->setClipLineEnable(enableVanishingRoute);
+            }
+        }
+        success = true;
+    }
+
+    return success;
+}
+
+RouteID RouteManager::getVanishingRouteID() const {
+    return vanishingRouteID_;
+}
+
 void RouteManager::finalize() {
     using namespace mbgl::style;
     using namespace mbgl::style::expression;

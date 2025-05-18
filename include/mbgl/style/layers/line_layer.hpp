@@ -122,6 +122,8 @@ public:
     const PropertyValue<Color>& getGradientLineClipColor() const;
 
 
+    void setClipLineEnable(bool enable);
+    bool getClipLineEnable() const;
     // Private implementation
 
     class Impl;
