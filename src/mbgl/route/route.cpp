@@ -157,7 +157,44 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     }
 }
 
-Point<double> Route::getPointCoarse(double percentage) const {
+std::optional<double> Route::getVectorOrientation(double x, double y) const {
+    // Handle the zero vector case (angle is undefined)
+    if (x == 0.0 && y == 0.0) {
+        return std::nullopt;
+    }
+
+    // Calculate the angle in radians using std::atan2(x, y).
+    // std::atan2(x, y) returns an angle where:
+    // - Positive Y-axis (North, vector (0,y_pos)) is 0 radians.
+    // - Positive X-axis (East, vector (x_pos,0)) is PI/2 radians.
+    // - Negative Y-axis (South, vector (0,y_neg)) is PI radians.
+    // - Negative X-axis (West, vector (x_neg,0)) is -PI/2 radians.
+    // This convention means positive angles are measured clockwise from North.
+    double angleRadians = std::atan2(x, y);
+
+    // Convert radians to degrees
+    double angleDegrees = angleRadians * (180.0 / M_PI);
+    // Normalize the angle to be in the range [0, 360) degrees.
+    // std::atan2 returns values in (-PI, PI], so angleDegrees is in (-180, 180].
+    if (angleDegrees < 0.0) {
+        angleDegrees += 360.0;
+    }
+
+    // Ensure that if the angle is exactly 360 (e.g. due to -0.0 input that got normalized),
+    // it is represented as 0.0. This also handles the case where angleDegrees might be -0.0
+    // which is fine, but for strict [0,360) output where 360 becomes 0.
+    if (angleDegrees == 360.0) {
+        return 0.0;
+    }
+    // Handle -0.0 becoming 0.0 for consistent output if desired, though numerically they are same.
+    if (angleDegrees == -0.0) {
+        return 0.0;
+    }
+
+    return angleDegrees;
+}
+
+Point<double> Route::getPointCoarse(double percentage, double* bearing) const {
     if (geometry_.empty()) {
         throw std::invalid_argument("Route cannot be empty.");
     }
@@ -196,6 +233,11 @@ Point<double> Route::getPointCoarse(double percentage) const {
             const Point<double>& p1 = geometry_[i];
             const Point<double>& p2 = geometry_[i + 1];
 
+            if (bearing != nullptr) {
+                std::optional<double> bearingOpt = getVectorOrientation(p2.x - p1.x, p2.y - p1.y);
+                *bearing = bearingOpt.has_value() ? bearingOpt.value() : 0.0;
+            }
+
             // Calculate how far into the current segment the target distance is
             double lenNeededInInterval = target_distance - currCumulativeLen;
 
@@ -233,7 +275,7 @@ Point<double> Route::getPointCoarse(double percentage) const {
     return geometry_.back();
 }
 
-Point<double> Route::getPointFine(double percentage) const {
+Point<double> Route::getPointFine(double percentage, double* bearing) const {
     if (geometry_.empty()) {
         throw std::invalid_argument("Route cannot be empty.");
     }
@@ -271,6 +313,11 @@ Point<double> Route::getPointFine(double percentage) const {
         if (cumulativeLen + currIntervalLen >= targetLen - EPSILON) {
             const Point<double>& p1 = geometry_[i];
             const Point<double>& p2 = geometry_[i + 1];
+
+            if (bearing != nullptr) {
+                std::optional<double> bearingOpt = getVectorOrientation(p2.x - p1.x, p2.y - p1.y);
+                *bearing = bearingOpt.has_value() ? bearingOpt.value() : 0.0;
+            }
 
             double distance_needed_in_segment = targetLen - cumulativeLen;
             double intervalFraction = 0.0;
@@ -330,12 +377,12 @@ Point<double> Route::getPointFine(double percentage) const {
     return geometry_.back();
 }
 
-mbgl::Point<double> Route::getPoint(double percentage, const Precision& precision) const {
+mbgl::Point<double> Route::getPoint(double percentage, const Precision& precision, double* bearing) const {
     switch (precision) {
         case Precision::Coarse:
-            return getPointCoarse(percentage);
+            return getPointCoarse(percentage, bearing);
         case Precision::Fine:
-            return getPointFine(percentage);
+            return getPointFine(percentage, bearing);
         default:
             throw std::invalid_argument("Invalid precision type.");
     }

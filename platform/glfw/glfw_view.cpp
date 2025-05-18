@@ -741,10 +741,6 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                     view->decrementRouteProgress();
                     break;
 
-                case GLFW_KEY_P:
-                    view->setRouteProgressUsage();
-                    break;
-
                 case GLFW_KEY_S: {
                     view->captureSnapshot();
                     std::cout << "captured snapshot" << std::endl;
@@ -753,9 +749,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_L: {
                     int lastCapturedIdx = view->getCaptureIdx() - 1;
                     if (lastCapturedIdx == -1) lastCapturedIdx = 0;
-                    std::string capture_file_name =
-                        "/home/spalaniappan/route_tools/pedro.json"; //"snapshot" + std::to_string(lastCapturedIdx) +
-                                                                     //".json";
+                    std::string capture_file_name = "/home/spalaniappan/route_tools/pedro.json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -1078,7 +1072,19 @@ void GLFWView::addRoute() {
     if (!vanishingRouteID_.isValid()) {
         vanishingRouteID_ = routeID;
         rmptr_->setVanishingRouteID(vanishingRouteID_);
+        enablePuck(true);
+
+        const mbgl::Point<double> &pt = routeMap_[vanishingRouteID_].getPoint(0.0);
+        setPuckLocation(pt.y, pt.x, 90.0);
     }
+}
+
+void GLFWView::enablePuck(bool onOff) {
+    backend->enableCustomPuck(onOff);
+}
+
+void GLFWView::setPuckLocation(double lat, double lon, double bearing) {
+    backend->setCustomPuckState(lat, lon, bearing);
 }
 
 std::vector<GLFWView::TrafficBlock> GLFWView::testCases(const RouteSegmentTestCases &testcase,
@@ -1288,15 +1294,6 @@ void GLFWView::modifyTrafficViz() {
     }
 }
 
-void GLFWView::setRouteProgressUsage() {
-    generateRouteProgressPercent_ = !generateRouteProgressPercent_;
-    if (generateRouteProgressPercent_) {
-        std::cout << "Using route progress percent" << std::endl;
-    } else {
-        std::cout << "Using route progress point" << std::endl;
-    }
-}
-
 void GLFWView::setRoutePickMode() {
     routePickMode_ = !routePickMode_;
     std::string routePickModeStr = routePickMode_ ? "routePickMode ON" : "routePickMode OFF";
@@ -1315,21 +1312,18 @@ void GLFWView::incrementRouteProgress() {
     if (vanishingRouteID_.isValid() && routeMap_.find(vanishingRouteID_) != routeMap_.end()) {
         routeProgress_ += ROUTE_PROGRESS_STEP;
         routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
-        if (generateRouteProgressPercent_) {
-            rmptr_->routeSetProgressPercent(vanishingRouteID_, routeProgress_);
-        } else {
-            const mbgl::Point<double> &progressPoint = rmptr_->getPoint(
-                vanishingRouteID_, routeProgress_, mbgl::route::Precision::Fine);
-            // TODO: test out which algorithm works in nav app before removing dead code
-            //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
-            //  std::cout<<", calculated percent: "<<percent<<std::endl;
+        double bearing = 0.0;
+        const mbgl::Point<double> &progressPoint = rmptr_->getPoint(
+            vanishingRouteID_, routeProgress_, mbgl::route::Precision::Fine, &bearing);
 
+        if (!enableAutoVanishing) {
             rmptr_->routeSetProgressPoint(
                 vanishingRouteID_, progressPoint, mbgl::route::Precision::Fine, captureNavPoints_);
             // std::cout << "Route progress: " << std::to_string(routeProgress_) << ", calculated percent: " <<
             // std::to_string(percentage) << std::endl;
+            rmptr_->finalize();
         }
-        rmptr_->finalize();
+        setPuckLocation(progressPoint.y, progressPoint.x, bearing);
     }
 }
 
@@ -1337,22 +1331,16 @@ void GLFWView::decrementRouteProgress() {
     if (vanishingRouteID_.isValid() && routeMap_.find(vanishingRouteID_) != routeMap_.end()) {
         routeProgress_ -= ROUTE_PROGRESS_STEP;
         routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
+        double bearing = 0.0;
+        mbgl::Point<double> progressPoint = rmptr_->getPoint(
+            vanishingRouteID_, routeProgress_, mbgl::route::Precision::Fine, &bearing);
 
-        if (generateRouteProgressPercent_) {
-            rmptr_->routeSetProgressPercent(vanishingRouteID_, routeProgress_, captureNavPoints_);
-        } else {
-            mbgl::Point<double> progressPoint = routeMap_[vanishingRouteID_].getPoint(routeProgress_);
-            // TODO: test out which algorithm works in nav app before removing dead code
-            //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
-            //  std::cout<<", calculated percent: "<<percent<<std::endl;
-
+        if (!enableAutoVanishing) {
             rmptr_->routeSetProgressPoint(
                 vanishingRouteID_, progressPoint, mbgl::route::Precision::Coarse, captureNavPoints_);
-            // std::cout << "Route progress: " << std::to_string(routeProgress_) << ", calculated percent: " <<
-            // std::to_string(percentage) << std::endl;
+            rmptr_->finalize();
         }
-
-        rmptr_->finalize();
+        setPuckLocation(progressPoint.y, progressPoint.x, bearing);
     }
 }
 
@@ -1573,6 +1561,10 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                     }
                     if (!vanishingRouteID_.isValid()) {
                         vanishingRouteID_ = routeID;
+                        rmptr_->setVanishingRouteID(vanishingRouteID_);
+                        enablePuck(true);
+                        const mbgl::Point<double> &pt = routeMap_[vanishingRouteID_].getPoint(0.0);
+                        setPuckLocation(pt.y, pt.x, 90.0);
                     }
                 }
 
@@ -1593,6 +1585,10 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                 if (!vanishingRouteID_.isValid()) {
                     vanishingRouteID_ = routeMap_.begin()->first;
                     rmptr_->setVanishingRouteID(vanishingRouteID_);
+                    enablePuck(true);
+
+                    const mbgl::Point<double> &pt = routeMap_[vanishingRouteID_].getPoint(0.0);
+                    setPuckLocation(pt.y, pt.x, 90.0);
                 }
 
                 // create route segments
@@ -1637,27 +1633,24 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
 }
 
 void GLFWView::scrubNavStops(bool forward) {
-    if (loadedCapture_ && vanishingRouteID_.isValid()) {
+    if (loadedCapture_ && vanishingRouteID_.isValid() &&
+        capturedNavStopMap_.find(vanishingRouteID_) != capturedNavStopMap_.end()) {
         if (forward) {
             ++lastNavStop_;
         } else {
             --lastNavStop_;
         }
-        if (capturedNavStopMap_.find(vanishingRouteID_) != capturedNavStopMap_.end()) {
-            const mbgl::LineString<double> &navstops = capturedNavStopMap_[vanishingRouteID_];
-            const uint32_t sz = navstops.size();
-            const auto &navStop = navstops[lastNavStop_ % sz];
+
+        const mbgl::LineString<double> &navstops = capturedNavStopMap_[vanishingRouteID_];
+        const uint32_t sz = navstops.size();
+        const auto &navStop = navstops[lastNavStop_ % sz];
+        if (!enableAutoVanishing) {
             double percentage = rmptr_->routeSetProgressPoint(vanishingRouteID_, navStop, routePrecision_);
             rmptr_->finalize();
             std::cout << "percent: " << std::to_string(percentage) << std::endl;
-        } else if (capturedNavPercentMap_.find(vanishingRouteID_) != capturedNavPercentMap_.end()) {
-            const auto &navstops = capturedNavPercentMap_[vanishingRouteID_];
-            const uint32_t sz = navstops.size();
-            const double percent = navstops[lastNavStop_ % sz];
-            rmptr_->routeSetProgressPercent(vanishingRouteID_, percent);
-            rmptr_->finalize();
         }
-    } else if (loadedCapture_) {
+        setPuckLocation(navStop.y, navStop.x, 90.0);
+    } else if (loadedCapture_ && vanishingRouteID_.isValid()) {
         // perhaps the capture file did not have nav stops, lets just pick the first route we see and traverse it.
         if (!routeMap_.empty()) {
             if (forward) {
@@ -1667,12 +1660,15 @@ void GLFWView::scrubNavStops(bool forward) {
             }
             const auto &routeID = routeMap_.begin()->first;
             routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
-            const auto &navstop = rmptr_->getPoint(routeID, routeProgress_, routePrecision_);
-            double percentage = rmptr_->routeSetProgressPoint(routeID, navstop, routePrecision_);
-            std::cout << ", ip %: " << std::to_string(routeProgress_)
-                      << ", calculated %: " << std::to_string(percentage) << std::endl;
-
-            rmptr_->finalize();
+            double bearing = 0.0;
+            const auto &navstop = rmptr_->getPoint(routeID, routeProgress_, routePrecision_, &bearing);
+            if (!enableAutoVanishing) {
+                double percentage = rmptr_->routeSetProgressPoint(routeID, navstop, routePrecision_);
+                std::cout << ", ip %: " << std::to_string(routeProgress_)
+                          << ", calculated %: " << std::to_string(percentage) << std::endl;
+                rmptr_->finalize();
+            }
+            setPuckLocation(navstop.y, navstop.x, bearing);
         }
     }
 }

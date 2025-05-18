@@ -168,6 +168,7 @@ public:
     RendererBackend& getBackend() { return backend; }
 
     std::unique_ptr<gfx::CustomPuck> createCustomPuck() override;
+    std::optional<gfx::CustomPuckState> getCustomPuckState() const override;
     std::unique_ptr<gfx::CustomDots> createCustomDots() override;
     double getRouteVanishing() override;
 

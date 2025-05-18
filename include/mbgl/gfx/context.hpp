@@ -188,6 +188,8 @@ public:
     // Remove the custom puck code when #3135 is resolved
     virtual std::unique_ptr<CustomPuck> createCustomPuck() { return nullptr; }
 
+    virtual std::optional<gfx::CustomPuckState> getCustomPuckState() const { return std::nullopt; }
+
     // Similar to custom puck, CustomDots should be replaced with CustomLayerV3
     // once texture atlas updates are optimized out
     virtual std::unique_ptr<CustomDots> createCustomDots() { return nullptr; }

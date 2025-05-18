@@ -24,6 +24,7 @@
 #include <chrono>
 #include <iomanip> // For formatting
 #include <iterator>
+#include <iostream>
 
 namespace mbgl {
 namespace route {
@@ -569,10 +570,13 @@ double RouteManager::routeGetPercent(const RouteID& routeID,
     return percentage;
 }
 
-mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID, double percent, const Precision& precision) const {
+mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID,
+                                           double percent,
+                                           const Precision& precision,
+                                           double* bearing) const {
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        return routeMap_.at(routeID).getPoint(percent, precision);
+        return routeMap_.at(routeID).getPoint(percent, precision, bearing);
     }
 
     return {0.0, 0.0};

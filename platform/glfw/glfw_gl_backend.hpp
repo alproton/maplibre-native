@@ -23,10 +23,15 @@ public:
     // mbgl::gfx::RendererBackend implementation
 public:
     mbgl::gfx::Renderable& getDefaultRenderable() override { return *this; }
+    virtual mbgl::gfx::CustomPuckState getCurrentCustomPuckState() const override;
+    virtual void setCustomPuckState(double lat, double lon, double bearing) override;
+    virtual void enableCustomPuck(bool onOff) override;
 
 protected:
     void activate() override;
     void deactivate() override;
+
+    mbgl::gfx::CustomPuckState customPuckState_;
 
     // mbgl::gl::RendererBackend implementation
 protected:

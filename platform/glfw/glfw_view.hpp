@@ -117,6 +117,8 @@ private:
     std::vector<RouteID> routeIDlist;
     std::unique_ptr<mbgl::route::RouteManager> rmptr_;
     void addRoute();
+    void enablePuck(bool onOff);
+    void setPuckLocation(double lat, double lon, double bearing);
     void modifyRoute();
     void disposeRoute();
     void addTrafficSegments();
@@ -125,7 +127,6 @@ private:
     void incrementRouteProgress();
     void decrementRouteProgress();
     void captureSnapshot();
-    void setRouteProgressUsage();
     void setRoutePickMode();
     void scrubNavStops(bool forward);
 
@@ -204,9 +205,9 @@ private:
     RouteID vanishingRouteID_;
     bool loadedCapture_ = false;
     double routeProgress_ = 0.0;
-    bool generateRouteProgressPercent_ = false;
     bool routePickMode_ = false;
     bool captureNavPoints_ = true;
+    bool enableAutoVanishing = true;
     mbgl::route::Precision routePrecision_ = mbgl::route::Precision::Coarse;
 
     // Frame timer

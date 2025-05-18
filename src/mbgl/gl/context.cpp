@@ -280,6 +280,14 @@ std::unique_ptr<gfx::CustomPuck> Context::createCustomPuck() {
     return std::make_unique<gl::CustomPuck>(*this);
 }
 
+std::optional<gfx::CustomPuckState> Context::getCustomPuckState() const {
+    if (backend.customPuck) {
+        return std::make_optional<gfx::CustomPuckState>(backend.customPuck->getState());
+    }
+
+    return std::nullopt;
+}
+
 std::unique_ptr<gfx::CustomDots> Context::createCustomDots() {
     return std::make_unique<gl::CustomDots>(*this);
 }

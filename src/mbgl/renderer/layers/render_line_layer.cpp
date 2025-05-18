@@ -608,7 +608,9 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
             if (layerTweaker) {
                 LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
                 double currLineClip = context.getRouteVanishing();
-                lineLayerTweaker->setGradientLineClip(currLineClip);
+                if (currLineClip >= 0.0 && currLineClip <= 1.0) {
+                    lineLayerTweaker->setGradientLineClip(currLineClip);
+                }
             }
 
             const auto& currLineClipColor = impl_cast(baseImpl).paint.get<LineClipColor>().value;

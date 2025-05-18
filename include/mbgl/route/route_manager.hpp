@@ -68,7 +68,10 @@ public:
                            const Point<double>& queryPoint,
                            const Precision& precision,
                            bool capture = false);
-    Point<double> getPoint(const RouteID& routeID, double percent, const Precision& precision) const;
+    Point<double> getPoint(const RouteID& routeID,
+                           double percent,
+                           const Precision& precision,
+                           double* bearing = nullptr) const;
     void routeClearSegments(const RouteID&);
     bool routeDispose(const RouteID&);
     bool setVanishingRouteID(const RouteID& routeID);

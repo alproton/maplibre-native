@@ -1,5 +1,7 @@
 #include "glfw_gl_backend.hpp"
 
+#include "mbgl/util/io.hpp"
+
 #include <mbgl/gfx/backend_scope.hpp>
 #include <mbgl/gl/renderable_resource.hpp>
 #include <mbgl/util/instrumentation.hpp>
@@ -51,6 +53,25 @@ GLFWGLBackend::GLFWGLBackend(GLFWwindow* window_, const bool capFrameRate)
 }
 
 GLFWGLBackend::~GLFWGLBackend() = default;
+
+mbgl::gfx::CustomPuckState GLFWGLBackend::getCurrentCustomPuckState() const {
+    return customPuckState_;
+}
+
+void GLFWGLBackend::setCustomPuckState(double lat, double lon, double bearing) {
+    customPuckState_.lat = lat;
+    customPuckState_.lon = lon;
+    customPuckState_.bearing = bearing;
+};
+
+void GLFWGLBackend::enableCustomPuck(bool onOff) {
+    customPuckState_.enabled = onOff;
+    customPuckState_.cameraTracking = false;
+    customPuckState_.bearing = 0;
+    if (onOff) {
+        customPuck->setPuckBitmap(mbgl::decodeImage(mbgl::util::read_file("../../../platform/glfw/assets/puck.png")));
+    }
+};
 
 void GLFWGLBackend::activate() {
     MLN_TRACE_FUNC();
