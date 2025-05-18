@@ -74,6 +74,8 @@ public:
     Context& operator=(const Context& other) = delete;
     virtual ~Context() = default;
 
+    virtual double getRouteVanishing() = 0;
+
     virtual void setObserver(ContextObserver* observer_) { observer = observer_ ? observer_ : &nullObserver; }
 
     virtual void beginFrame() = 0;

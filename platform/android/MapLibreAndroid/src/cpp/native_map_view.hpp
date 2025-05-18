@@ -417,7 +417,7 @@ public:
 
 private:
     std::unique_ptr<AndroidRendererFrontend> rendererFrontend;
-    std::unique_ptr<mbgl::route::RouteManager> routeMgr;
+    std::shared_ptr<route::RouteManager> getRouteMgr();
 
     JavaVM* vm = nullptr;
     jni::WeakReference<jni::Object<NativeMapView>> javaPeer;

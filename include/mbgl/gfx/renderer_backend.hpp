@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <mutex>
+#include <mbgl/route/route_manager.hpp>
 
 namespace mbgl {
 
@@ -41,7 +42,7 @@ public:
     TaggedScheduler& getThreadPool() noexcept { return threadPool; }
     /// Returns the device's context.
     Context& getContext();
-
+    virtual double getVanishingRoutePercent([[maybe_unused]] const Point<double> vaninshingPt) { return -1.0; }
     /**
      * @brief  this method is to be used when the context is needed outside of the rendering scope and should
      * be called only at such times. An example of this would be to get the RenderingStats from the context.
@@ -92,12 +93,14 @@ protected:
     const ContextMode contextMode;
     std::once_flag initialized;
     TaggedScheduler threadPool;
+    std::unique_ptr<mbgl::route::RouteManager> routeMgr;
 
     friend class BackendScope;
 
 public:
     std::unique_ptr<gfx::CustomPuck> customPuck = nullptr;
     std::unique_ptr<gfx::CustomDots> customDots = nullptr;
+    std::shared_ptr<route::RouteManager> routeManager = std::make_shared<route::RouteManager>();
 };
 
 constexpr bool operator==(const RendererBackend& a, const RendererBackend& b) {

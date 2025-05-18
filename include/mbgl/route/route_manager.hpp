@@ -64,6 +64,10 @@ public:
                                  const Point<double>& progressPoint,
                                  const Precision& precision,
                                  bool capture = false);
+    double routeGetPercent(const RouteID& routeID,
+                           const Point<double>& queryPoint,
+                           const Precision& precision,
+                           bool capture = false);
     Point<double> getPoint(const RouteID& routeID, double percent, const Precision& precision) const;
     void routeClearSegments(const RouteID&);
     bool routeDispose(const RouteID&);

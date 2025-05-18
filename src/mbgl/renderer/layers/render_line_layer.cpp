@@ -597,14 +597,20 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                 }
             }
 
-            const auto& currLineClipProp = impl_cast(baseImpl).paint.get<LineClip>().value;
-            if (currLineClipProp.isConstant()) {
-                double currLineClipPropValue = currLineClipProp.asConstant();
-                if (layerTweaker) {
-                    LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
-                    lineLayerTweaker->setGradientLineClip(currLineClipPropValue);
-                }
+            // const auto& currLineClipProp = impl_cast(baseImpl).paint.get<LineClip>().value;
+            // if (currLineClipProp.isConstant()) {
+            //     double currLineClipPropValue = currLineClipProp.asConstant();
+            //     if (layerTweaker) {
+            //         LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
+            //         lineLayerTweaker->setGradientLineClip(currLineClipPropValue);
+            //     }
+            // }
+            if (layerTweaker) {
+                LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
+                double currLineClip = context.getRouteVanishing();
+                lineLayerTweaker->setGradientLineClip(currLineClip);
             }
+
             const auto& currLineClipColor = impl_cast(baseImpl).paint.get<LineClipColor>().value;
             if (currLineClipColor.isConstant()) {
                 Color currLineClipColorValue = currLineClipColor.asConstant();

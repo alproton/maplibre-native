@@ -678,19 +678,6 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
                                  float iconScale,
                                  boolean cameraTracking) {
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
-    //TODO: this will be removed to render line layer
-    RouteID vanishingRouteID = getVanishingRouteID();
-    if(isAutoRouteVanishing && vanishingRouteID.isValid()) {
-      double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse, false);
-      if(percent >= 0.0 && percent <= 1.0) {
-        nativeMapView.finalizeRoutes();
-        latestRouteProgressPercent = percent;
-      }
-
-      Timber.i("Map_View_Route_Progress: route percent: "+ percent);
-    } else {
-      Timber.i("Map_View_Route_Progress: invalid active route");
-    }
 
     customPuckLatestLat = lat;
     customPuckLatestLon = lon;

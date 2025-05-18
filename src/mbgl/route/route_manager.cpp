@@ -556,6 +556,19 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
     return percentage;
 }
 
+double RouteManager::routeGetPercent(const RouteID& routeID,
+                                     const Point<double>& queryPoint,
+                                     const Precision& precision,
+                                     bool capture) {
+    assert(routeID.isValid() && "invalid route ID");
+    double percentage = -1.0;
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        percentage = routeMap_.at(routeID).getProgressPercent(queryPoint, precision, capture);
+    }
+
+    return percentage;
+}
+
 mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID, double percent, const Precision& precision) const {
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {

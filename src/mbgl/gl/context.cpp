@@ -33,6 +33,7 @@
 
 #include <cstring>
 #include <iterator>
+#include <boost/fusion/mpl/back.hpp>
 
 namespace mbgl {
 namespace gl {
@@ -281,6 +282,17 @@ std::unique_ptr<gfx::CustomPuck> Context::createCustomPuck() {
 
 std::unique_ptr<gfx::CustomDots> Context::createCustomDots() {
     return std::make_unique<gl::CustomDots>(*this);
+}
+
+double Context::getRouteVanishing() {
+    if (backend.customPuck != nullptr) {
+        double lat = backend.customPuck->getState().lat;
+        double lon = backend.customPuck->getState().lon;
+        mbgl::Point<double> vanishingPt = {lon, lat};
+        return backend.getVanishingRoutePercent(vanishingPt);
+    }
+
+    return -1.0;
 }
 
 UniqueTexture Context::createUniqueTexture(const Size& size,

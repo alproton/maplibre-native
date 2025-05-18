@@ -32,6 +32,11 @@ std::unique_ptr<gfx::Context> RendererBackend::createContext() {
     return result;
 }
 
+double RendererBackend::getVanishingRoutePercent(const Point<double> vanishingPt) {
+    RouteID vanishingRouteID = routeManager->getVanishingRouteID();
+    return routeManager->routeGetPercent(vanishingRouteID, vanishingPt, route::Precision::Coarse, false);
+}
+
 PremultipliedImage RendererBackend::readFramebuffer(const Size& size) {
     MLN_TRACE_FUNC();
 

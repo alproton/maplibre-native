@@ -169,6 +169,7 @@ public:
 
     std::unique_ptr<gfx::CustomPuck> createCustomPuck() override;
     std::unique_ptr<gfx::CustomDots> createCustomDots() override;
+    double getRouteVanishing() override;
 
 private:
     RendererBackend& backend;
