@@ -534,7 +534,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @param routeID the specified route ID for the corresponding route to vanish.
    */
   public void setVanishingRoute(RouteID routeID) {
-    nativeMapView.setVanishingRoute(routeID, true);
+    nativeMapView.setVanishingRoute(routeID);
   }
 
   public RouteID getVanishingRouteID() {

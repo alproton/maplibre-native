@@ -151,6 +151,8 @@ class RouteUtils {
 
         }
 
+
+
         fun setPercentProgress(mapView: MapView, percent: Double) {
             val routeID = routeMap.keys.first()
             val routeCircle = routeMap[routeID]

@@ -1233,13 +1233,18 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public boolean setVanishingRoute(RouteID routeID, boolean vanishing) {
+  public boolean setVanishingRoute(RouteID routeID) {
+    if(routeID.isValid()) {
+      return nativeRouteSetVanishing(routeID.getId());
+    }
+
     return false;
   }
 
   @Override
   public RouteID getVanishingRoute() {
-    return null;
+    int routeID = nativeRouteGetVanishing();
+    return new RouteID(routeID);
   }
 
   @Override
@@ -1705,7 +1710,7 @@ final class NativeMapView implements NativeMap {
   private native String nativeRoutesCaptureSnapshot();
 
   @Keep
-  private native boolean nativeRouteSetVanishing(int routeID, boolean vanishing);
+  private native boolean nativeRouteSetVanishing(int routeID);
 
   @Keep
   private native int nativeRouteGetVanishing();

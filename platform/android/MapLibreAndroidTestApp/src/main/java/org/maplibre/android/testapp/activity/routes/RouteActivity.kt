@@ -22,6 +22,7 @@ import org.maplibre.android.location.permissions.PermissionsManager
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.OnMapReadyCallback
+import org.maplibre.android.maps.RouteID
 import org.maplibre.android.maps.Style
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ApiKeyUtils
@@ -35,6 +36,8 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private val useLocationEngine = false
     private var permissionsManager: PermissionsManager? = null
     private var locationManager : LocationManager? = null
+    private val enableAutoRouteVanishing = true
+    private var vanishingRouteID : RouteID = RouteID(-1)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +48,8 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
-        mapView.setAutoVanishingRoute(false)
+        mapView.setAutoVanishingRoute(enableAutoRouteVanishing)
+        mapView.setCustomPuckState(0.0, 0.0, 0.0, 1.0f, false)
 
         //Add route
         val addRouteButton = findViewById<Button>(R.id.add_route)
@@ -131,13 +135,17 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 var progressPercent = progress.toDouble() / 100.0
 
-                if(progressModePoint) {
-                    RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
-                } else {
-                    RouteUtils.setPercentProgress(mapView, progressPercent)
-                }
+                if(enableAutoRouteVanishing) {
 
-                mapView.finalizeRoutes()
+                } else {
+                    if(progressModePoint) {
+                        RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
+                    } else {
+                        RouteUtils.setPercentProgress(mapView, progressPercent)
+                    }
+
+                    mapView.finalizeRoutes()
+                }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -236,11 +244,6 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-        //TODO: investigate and fix location component to programmatically set puck location
-//        val location : Location = Location("dummyprovider")
-//        location.latitude = 0.0
-//        location.longitude = 0.0
-//        maplibreMap.locationComponent.forceLocationUpdate(location)
 
     }
 
