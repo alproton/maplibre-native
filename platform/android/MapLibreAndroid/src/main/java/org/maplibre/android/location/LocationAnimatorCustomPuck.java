@@ -102,6 +102,14 @@ final class LocationAnimatorCustomPuck {
           targetPuckLocation = new StampedLatLon(currentPuckLocation);
         }
 
+        // Make sure the style is loaded before rendering the puck
+        if (mapView == null
+            || mapView.getMapLibreMap() == null
+            || mapView.getMapLibreMap().getStyle() == null
+            || !mapView.getMapLibreMap().getStyle().isFullyLoaded()) {
+          return;
+        }
+
         // Get a handler that can be used to post to the main thread
         Handler mainHandler = new Handler(context.getMainLooper());
 
