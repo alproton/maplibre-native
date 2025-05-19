@@ -1,6 +1,7 @@
 package org.maplibre.android.testapp.activity.routes
 
 import android.content.Context
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.view.View
@@ -26,6 +27,9 @@ import org.maplibre.android.maps.RouteID
 import org.maplibre.android.maps.Style
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ApiKeyUtils
+import timber.log.Timber
+import android.location.Location
+import org.maplibre.geojson.Point
 
 class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
@@ -133,10 +137,16 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         val sliderBar = findViewById<SeekBar>(R.id.route_slider)
         sliderBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                var progressPercent = progress.toDouble() / 100.0
+                val progressPercent = progress.toDouble() / 100.0
 
                 if(enableAutoRouteVanishing) {
+                    val pt : Point = RouteUtils.getPointProgress(progressPercent)
+                    val location = Location(LocationManager.GPS_PROVIDER)
+                    location.latitude = pt.latitude()
+                    location.longitude = pt.longitude()
+                    maplibreMap.locationComponent.forceLocationUpdate(location)
 
+                    Timber.d("#####Set######## " + location.latitude.toString() + "  ,  " + location.longitude.toString())
                 } else {
                     if(progressModePoint) {
                         RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
@@ -222,6 +232,31 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private val locationListener: LocationListener = object : LocationListener {
+        override fun onLocationChanged(location: Location) {
+            if (!useLocationEngine) {
+                maplibreMap.locationComponent.forceLocationUpdate(location)
+            }
+
+            Timber.d("##################### " + location.latitude.toString() + "  ,  " + location.longitude.toString())
+        }
+        override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
+        override fun onProviderEnabled(provider: String) {}
+        override fun onProviderDisabled(provider: String) {}
+    }
+
+    private fun prepareLocationManager() {
+        val context : Context = this
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager?
+        try {
+            // Request location updates
+            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1L, 1f, locationListener)
+        } catch(ex: SecurityException) {
+            Timber.d("######################### Security Exception, no location available")
+        }
+    }
+
+
     override fun onMapReady(map: MapLibreMap) {
         // Set up the map and add route data here
         maplibreMap = map
@@ -243,8 +278,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
         }
-
-
+        prepareLocationManager()
     }
 
     override fun onStart() {
