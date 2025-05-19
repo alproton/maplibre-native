@@ -40,6 +40,8 @@ public:
              const mbgl::ClientOptions &clientOptions);
     ~GLFWView() override;
 
+    std::shared_ptr<mbgl::route::RouteManager> getRouteMgr() const;
+
     float getPixelRatio() const;
 
     void setMap(mbgl::Map *);
@@ -115,7 +117,6 @@ private:
     void toggleCustomSource();
     void toggleLocationIndicatorLayer();
     std::vector<RouteID> routeIDlist;
-    std::unique_ptr<mbgl::route::RouteManager> rmptr_;
     void addRoute();
     void enablePuck(bool onOff);
     void setPuckLocation(double lat, double lon, double bearing);

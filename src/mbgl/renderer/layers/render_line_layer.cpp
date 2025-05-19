@@ -1,4 +1,3 @@
-#include <iostream>
 #include <mapbox/vector_tile.hpp>
 #include <mbgl/renderer/layers/render_line_layer.hpp>
 
@@ -377,11 +376,18 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
         return;
     }
 
-    bool isClipLineEnabled = impl_cast(baseImpl).clipLineEnable;
-    std::string idstr = impl_cast(baseImpl).id;
-    std::string clipEnabledStr = isClipLineEnabled ? "true" : "false";
-    std::string msg = "layer for vanishing route: " + clipEnabledStr + ", " + idstr;
-    mbgl::Log::Info(mbgl::Event::Route, msg);
+    if (layerTweaker) {
+        bool isClipLineEnabled = impl_cast(baseImpl).clipLineEnable;
+        if (isClipLineEnabled) {
+            LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
+            double currLineClip = context.getRouteVanishing();
+            if (currLineClip >= 0.0 && currLineClip <= 1.0) {
+                lineLayerTweaker->setGradientLineClip(currLineClip);
+                std::string msg = "gradient line clip: " + std::to_string(currLineClip);
+                mbgl::Log::Info(mbgl::Event::Route, msg);
+            }
+        }
+    }
 
     // Set up a layer group
     if (!layerGroup) {
@@ -594,22 +600,6 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                 lineGradientShaderGroup = shaders.getShaderGroup("LineGradientShader");
                 if (!lineGradientShaderGroup) {
                     continue;
-                }
-            }
-
-            // const auto& currLineClipProp = impl_cast(baseImpl).paint.get<LineClip>().value;
-            // if (currLineClipProp.isConstant()) {
-            //     double currLineClipPropValue = currLineClipProp.asConstant();
-            //     if (layerTweaker) {
-            //         LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
-            //         lineLayerTweaker->setGradientLineClip(currLineClipPropValue);
-            //     }
-            // }
-            if (layerTweaker) {
-                LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
-                double currLineClip = context.getRouteVanishing();
-                if (currLineClip >= 0.0 && currLineClip <= 1.0) {
-                    lineLayerTweaker->setGradientLineClip(currLineClip);
                 }
             }
 
