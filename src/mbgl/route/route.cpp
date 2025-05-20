@@ -36,6 +36,9 @@ std::string tabs(uint32_t tabcount) {
     ss << tabs(tabcount + 2) << "\"color\" : [" << std::to_string(rsopts.color.r) << ", "
        << std::to_string(rsopts.color.g) << ", " << std::to_string(rsopts.color.b) << ", "
        << std::to_string(rsopts.color.a) << "]," << std::endl;
+    ss << tabs(tabcount + 2) << "\"outer_color\" : [" << std::to_string(rsopts.outerColor.r) << ", "
+       << std::to_string(rsopts.outerColor.g) << ", " << std::to_string(rsopts.outerColor.b) << ", "
+       << std::to_string(rsopts.outerColor.a) << "]," << std::endl;
     ss << tabs(tabcount + 2) << "\"priority\" : " << std::to_string(rsopts.priority) << "," << std::endl;
     ss << tabs(tabcount + 2) << "\"geometry\" : [" << std::endl;
     for (size_t i = 0; i < rsopts.geometry.size(); i++) {
