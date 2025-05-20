@@ -27,6 +27,7 @@ struct RouteMgrStats {
     double avgRouteSegmentCreationInterval = 0.0;
     long long maxRouteVanishingElapsedMillis = 0.0;
     long long minRouteVanishingElapsedMillis = 0.0;
+    double avgRouteVanishingElapsedMillis = 0.0;
 };
 
 /***
@@ -117,6 +118,8 @@ private:
     style::Style* style_ = nullptr;
     std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
     RouteID vanishingRouteID_;
+    long long totalVanishingRouteElapsedMillis = 0;
+    long long numVanisingRouteInvocations = 0;
 };
 }; // namespace route
 

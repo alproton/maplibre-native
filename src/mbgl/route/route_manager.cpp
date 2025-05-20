@@ -572,12 +572,17 @@ double RouteManager::routeGetPercent(const RouteID& routeID,
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = endTime - startTime;
     auto durationInMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-
+    totalVanishingRouteElapsedMillis += durationInMilliseconds.count();
+    numVanisingRouteInvocations++;
     if (stats_.maxRouteVanishingElapsedMillis < durationInMilliseconds.count()) {
         stats_.maxRouteVanishingElapsedMillis = durationInMilliseconds.count();
     }
     if (stats_.minRouteVanishingElapsedMillis > durationInMilliseconds.count()) {
         stats_.minRouteVanishingElapsedMillis = durationInMilliseconds.count();
+    }
+    if (numVanisingRouteInvocations > 0) {
+        stats_.avgRouteVanishingElapsedMillis = static_cast<double>(totalVanishingRouteElapsedMillis) /
+                                                numVanisingRouteInvocations;
     }
 
     return percentage;
@@ -631,6 +636,8 @@ const std::string RouteManager::getStats() {
         "max_route_vanishing_elapsed_millis", std::to_string(stats_.maxRouteVanishingElapsedMillis), allocator);
     route_stats.AddMember(
         "min_route_vanishing_elapsed_millis", std::to_string(stats_.minRouteVanishingElapsedMillis), allocator);
+    route_stats.AddMember(
+        "avg_route_vanishing_elapsed_millis", std::to_string(stats_.avgRouteVanishingElapsedMillis), allocator);
     document.AddMember("route_stats", route_stats, allocator);
 
     rapidjson::StringBuffer buffer;
