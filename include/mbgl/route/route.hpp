@@ -47,7 +47,8 @@ public:
     void routeSetProgress(const double t, bool capture = false);
     double routeGetProgress() const;
     double getTotalDistance() const;
-    double getProgressPercent(const Point<double>& queryPoint, const Precision& precision, bool capture = false);
+    double getProgressPercent(
+        const Point<double>& queryPoint, const Precision& precision, int startIdx, int endIdx, bool capture = false);
     Point<double> getPoint(double percent, const Precision& precision) const;
 
     mbgl::LineString<double> getGeometry() const;
@@ -69,8 +70,8 @@ private:
     std::vector<SegmentRange> compactSegments(const RouteType& routeType) const;
     Point<double> getPointCoarse(double percent) const;
     Point<double> getPointFine(double percent) const;
-    double getProgressProjectionLERP(const Point<double>& queryPoint, bool capture = false);
-    double getProgressProjectionSLERP(const Point<double>& queryPoint, bool capture = false);
+    double getProgressProjectionLERP(const Point<double>& queryPoint, int startIdx, int endIdx, bool capture = false);
+    double getProgressProjectionSLERP(const Point<double>& queryPoint, int startIdx, int endIdx, bool capture = false);
 
     RouteOptions routeOptions_;
     double progress_ = 0.0;

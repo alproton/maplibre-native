@@ -541,11 +541,13 @@ bool RouteManager::routeSetProgressPercent(const RouteID& routeID, const double 
 double RouteManager::routeSetProgressPoint(const RouteID& routeID,
                                            const mbgl::Point<double>& progressPoint,
                                            const Precision& precision,
+                                           int startIdx,
+                                           int endIdx,
                                            bool capture) {
     assert(routeID.isValid() && "invalid route ID");
     double percentage = -1.0;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, capture);
+        percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, startIdx, endIdx, capture);
 
         if (percentage >= 0.0 && percentage <= 1.0) {
             routeMap_[routeID].routeSetProgress(percentage);

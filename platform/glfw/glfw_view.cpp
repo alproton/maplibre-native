@@ -753,7 +753,8 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_L: {
                     int lastCapturedIdx = view->getCaptureIdx() - 1;
                     if (lastCapturedIdx == -1) lastCapturedIdx = 0;
-                    std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
+                    // std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
+                    std::string capture_file_name = "/home/spalaniappan/route_tools/pedro.json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -1316,9 +1317,9 @@ void GLFWView::incrementRouteProgress() {
             // TODO: test out which algorithm works in nav app before removing dead code
             //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
             //  std::cout<<", calculated percent: "<<percent<<std::endl;
-
+            int numPts = routeMap_.at(firstRouteID_).points.size();
             rmptr_->routeSetProgressPoint(
-                firstRouteID_, progressPoint, mbgl::route::Precision::Fine, captureNavPoints_);
+                firstRouteID_, progressPoint, mbgl::route::Precision::Fine, 0, numPts - 1, captureNavPoints_);
             // std::cout << "Route progress: " << std::to_string(routeProgress_) << ", calculated percent: " <<
             // std::to_string(percentage) << std::endl;
         }
@@ -1338,9 +1339,9 @@ void GLFWView::decrementRouteProgress() {
             // TODO: test out which algorithm works in nav app before removing dead code
             //  double percent = rmptr_->routeSetProgress(routeID, progressPoint, captureNavPoints);
             //  std::cout<<", calculated percent: "<<percent<<std::endl;
-
+            int numPts = routeMap_.at(firstRouteID_).points.size();
             rmptr_->routeSetProgressPoint(
-                firstRouteID_, progressPoint, mbgl::route::Precision::Coarse, captureNavPoints_);
+                firstRouteID_, progressPoint, mbgl::route::Precision::Coarse, 0, numPts - 1, captureNavPoints_);
             // std::cout << "Route progress: " << std::to_string(routeProgress_) << ", calculated percent: " <<
             // std::to_string(percentage) << std::endl;
         }
@@ -1632,7 +1633,8 @@ void GLFWView::scrubNavStops(bool forward) {
             const mbgl::LineString<double> &navstops = capturedNavStopMap_[firstRouteID_];
             const uint32_t sz = navstops.size();
             const auto &navStop = navstops[lastNavStop_ % sz];
-            double percentage = rmptr_->routeSetProgressPoint(firstRouteID_, navStop, routePrecision_);
+            int numPts = routeMap_.at(firstRouteID_).points.size();
+            double percentage = rmptr_->routeSetProgressPoint(firstRouteID_, navStop, routePrecision_, 0, numPts - 1);
             rmptr_->finalize();
             std::cout << "percent: " << std::to_string(percentage) << std::endl;
         } else if (capturedNavPercentMap_.find(firstRouteID_) != capturedNavPercentMap_.end()) {
@@ -1653,7 +1655,8 @@ void GLFWView::scrubNavStops(bool forward) {
             const auto &routeID = routeMap_.begin()->first;
             routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
             const auto &navstop = rmptr_->getPoint(routeID, routeProgress_, routePrecision_);
-            double percentage = rmptr_->routeSetProgressPoint(routeID, navstop, routePrecision_);
+            int numPts = routeMap_.at(routeID).points.size();
+            double percentage = rmptr_->routeSetProgressPoint(routeID, navstop, routePrecision_, 0, numPts - 1);
             std::cout << ", ip %: " << std::to_string(routeProgress_)
                       << ", calculated %: " << std::to_string(percentage) << std::endl;
 

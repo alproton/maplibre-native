@@ -68,6 +68,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   private boolean isPointBasedRouteQueryCoarse = true;
   private boolean isAutoRouteVanishing = true;
   private double latestRouteProgressPercent = 0.0;
+  private int vanishStartIdx = -1;
+  private int vanishEndIdx = -1;
 
   @Nullable
   private NativeMap nativeMapView;
@@ -525,8 +527,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @param capture if true, the points sent downstream will be cached so that they can logged into the snapshot capture
    * @return true if successful, false otherwise. If the route does not exist, false is returned.
    */
-  public double setRouteProgressPoint(RouteID routeID, Point point, boolean coarsePrecision, boolean capture) {
-    return nativeMapView.setRouteProgressPoint(routeID, point, coarsePrecision, false);
+  public double setRouteProgressPoint(RouteID routeID, Point point, boolean coarsePrecision, int startIdx, int endIdx, boolean capture) {
+    return nativeMapView.setRouteProgressPoint(routeID, point, coarsePrecision, startIdx, endIdx, false);
   }
 
   /**
@@ -534,8 +536,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    *
    * @param routeID the specified route ID for the corresponding route to vanish.
    */
-  public void setVanishingRoute(RouteID routeID) {
+  public void setVanishingRoute(RouteID routeID, int startIdx, int endIdx) {
     vanishingRouteID = routeID;
+    vanishStartIdx = startIdx;
+    vanishEndIdx = endIdx;
   }
 
   /**
@@ -676,7 +680,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
                                  boolean cameraTracking) {
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
     if(isAutoRouteVanishing && vanishingRouteID.isValid()) {
-      double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse, false);
+      double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse, vanishStartIdx, vanishEndIdx, false);
       if(percent >= 0.0 && percent <= 1.0) {
         nativeMapView.finalizeRoutes();
         latestRouteProgressPercent = percent;

@@ -63,6 +63,8 @@ public:
     double routeSetProgressPoint(const RouteID&,
                                  const Point<double>& progressPoint,
                                  const Precision& precision,
+                                 int startIdx,
+                                 int endIdx,
                                  bool capture = false);
     Point<double> getPoint(const RouteID& routeID, double percent, const Precision& precision) const;
     void routeClearSegments(const RouteID&);

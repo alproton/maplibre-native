@@ -501,15 +501,16 @@ const std::vector<double>& Route::getCapturedNavPercent() const {
     return capturedNavPercent_;
 }
 
-double Route::getProgressPercent(const Point<double>& progressPoint, const Precision& precision, bool capture) {
+double Route::getProgressPercent(
+    const Point<double>& progressPoint, const Precision& precision, int startIdx, int endIdx, bool capture) {
     double percentage = -1.0;
     switch (precision) {
         case Precision::Coarse: {
-            percentage = getProgressProjectionLERP(progressPoint, capture);
+            percentage = getProgressProjectionLERP(progressPoint, startIdx, endIdx, capture);
             break;
         }
         case Precision::Fine: {
-            percentage = getProgressProjectionSLERP(progressPoint, capture);
+            percentage = getProgressProjectionSLERP(progressPoint, startIdx, endIdx, capture);
             break;
         }
         default:
@@ -529,7 +530,7 @@ double Route::getProgressPercent(const Point<double>& progressPoint, const Preci
     return percentage;
 }
 
-double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool capture) {
+double Route::getProgressProjectionLERP(const Point<double>& queryPoint, int startIdx, int endIdx, bool capture) {
     if (capture) {
         capturedNavStops_.push_back(queryPoint);
     }
@@ -602,8 +603,14 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
         return {bestIntervalIndex, bestIntervalFraction};
     };
 
-    // closestInterval.first is the interval index, closestInterval.second is the fraction along the interval
-    std::pair<uint32_t, double> closestInterval = getClosestInterval(0, geometry_.size() - 1);
+    // closestInterval.first is the closest interval index, closestInterval.second is the fraction along the interval
+    std::pair<uint32_t, double> closestInterval;
+    int geomsz = static_cast<int>(geometry_.size());
+    if (startIdx >= 0 && startIdx < geomsz - 1 && endIdx >= 0 && endIdx < geomsz - 1 && startIdx != endIdx) {
+        closestInterval = getClosestInterval(startIdx, endIdx);
+    } else {
+        closestInterval = getClosestInterval(0, geometry_.size() - 1);
+    }
 
     // --- Calculate final percentage ---
     uint32_t bestIntervalIndex = closestInterval.first;
@@ -614,7 +621,10 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
     return distanceAlongRoute / totalLength_;
 }
 
-double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool capture) {
+double Route::getProgressProjectionSLERP(const Point<double>& queryPoint,
+                                         [[maybe_unused]] int startIdx,
+                                         [[maybe_unused]] int endIdx,
+                                         bool capture) {
     if (capture) {
         capturedNavStops_.push_back(queryPoint);
     }
