@@ -25,6 +25,8 @@ struct RouteMgrStats {
     bool inconsistentAPIusage = false;
     double avgRouteCreationInterval = 0.0;
     double avgRouteSegmentCreationInterval = 0.0;
+    long long maxRouteVanishingElapsedMillis = 0.0;
+    long long minRouteVanishingElapsedMillis = 0.0;
 };
 
 /***

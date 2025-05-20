@@ -563,8 +563,21 @@ double RouteManager::routeGetPercent(const RouteID& routeID,
                                      bool capture) {
     assert(routeID.isValid() && "invalid route ID");
     double percentage = -1.0;
-    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        percentage = routeMap_.at(routeID).getProgressPercent(queryPoint, precision, capture);
+    auto startTime = std::chrono::high_resolution_clock::now();
+    {
+        if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+            percentage = routeMap_.at(routeID).getProgressPercent(queryPoint, precision, capture);
+        }
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = endTime - startTime;
+    auto durationInMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+
+    if (stats_.maxRouteVanishingElapsedMillis < durationInMilliseconds.count()) {
+        stats_.maxRouteVanishingElapsedMillis = durationInMilliseconds.count();
+    }
+    if (stats_.minRouteVanishingElapsedMillis > durationInMilliseconds.count()) {
+        stats_.minRouteVanishingElapsedMillis = durationInMilliseconds.count();
     }
 
     return percentage;
@@ -614,6 +627,10 @@ const std::string RouteManager::getStats() {
         "avg_route_segment_create_interval_seconds", stats_.avgRouteSegmentCreationInterval, allocator);
     route_stats.AddMember("num_layers", style_->getLayers().size(), allocator);
     route_stats.AddMember("num_sources", style_->getSources().size(), allocator);
+    route_stats.AddMember(
+        "max_route_vanishing_elapsed_millis", std::to_string(stats_.maxRouteVanishingElapsedMillis), allocator);
+    route_stats.AddMember(
+        "min_route_vanishing_elapsed_millis", std::to_string(stats_.minRouteVanishingElapsedMillis), allocator);
     document.AddMember("route_stats", route_stats, allocator);
 
     rapidjson::StringBuffer buffer;
