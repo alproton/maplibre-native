@@ -1593,6 +1593,11 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                                 rsopts.color = mbglColor(color);
                             }
 
+                            if (segment_options.HasMember("outer_color") && segment_options["outer_color"].IsArray()) {
+                                const rapidjson::Value &outerColor = segment_options["outer_color"];
+                                rsopts.outerColor = mbglColor(outerColor);
+                            }
+
                             if (segment_options.HasMember("geometry") && segment_options["geometry"].IsArray()) {
                                 const rapidjson::Value &geometry = segment_options["geometry"];
                                 for (rapidjson::SizeType k = 0; k < geometry.Size(); k++) {
