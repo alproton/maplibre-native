@@ -753,7 +753,8 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_L: {
                     int lastCapturedIdx = view->getCaptureIdx() - 1;
                     if (lastCapturedIdx == -1) lastCapturedIdx = 0;
-                    std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
+                    // std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
+                    std::string capture_file_name = "/home/anaslasram/eraseme/routes/new_route_capture.json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -985,6 +986,8 @@ mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
 }
 
 void GLFWView::writeStats(bool oneline) const {
+    MLN_TRACE_FUNC();
+
     std::stringstream ss;
     std::string renderingStats = backend->getRendererBackend().getRenderingStats().toJSONString();
     std::string routeStats = rmptr_->getStats();
@@ -1018,22 +1021,32 @@ void GLFWView::writeStats(bool oneline) const {
 }
 
 std::vector<RouteID> GLFWView::getAllRoutes() const {
+    MLN_TRACE_FUNC();
+
     return rmptr_->getAllRoutes();
 }
 
 std::string GLFWView::getBaseRouteLayerName(const RouteID &routeID) const {
+    MLN_TRACE_FUNC();
+
     return rmptr_->getBaseRouteLayerName(routeID);
 }
 
 std::string GLFWView::getBaseGeoJSONsourceName(const RouteID &routeID) const {
+    MLN_TRACE_FUNC();
+
     return rmptr_->getBaseGeoJSONsourceName(routeID);
 }
 
 int GLFWView::getTopMost(const std::vector<RouteID> &routeList) const {
+    MLN_TRACE_FUNC();
+
     return rmptr_->getTopMost(routeList);
 }
 
 void GLFWView::addRoute() {
+    MLN_TRACE_FUNC();
+
     using namespace mbgl::route;
 
     mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
@@ -1134,6 +1147,8 @@ std::vector<GLFWView::TrafficBlock> GLFWView::testCases(const RouteSegmentTestCa
 }
 
 void GLFWView::addTrafficSegments() {
+    MLN_TRACE_FUNC();
+
     const auto &getActiveColors = []() -> std::vector<mbgl::Color> {
         return {routeColorTable.at(RouteColorType::RouteMapLowTrafficColor),
                 routeColorTable.at(RouteColorType::RouteMapModerateTrafficColor),
@@ -1214,6 +1229,8 @@ void GLFWView::addTrafficSegments() {
 }
 
 void GLFWView::modifyTrafficViz() {
+    MLN_TRACE_FUNC();
+
     const auto &getColorTable = [](uint32_t numColors) -> std::vector<mbgl::Color> {
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -1305,6 +1322,8 @@ GLFWRendererFrontend *GLFWView::getRenderFrontend() const {
 }
 
 void GLFWView::incrementRouteProgress() {
+    MLN_TRACE_FUNC();
+
     if (firstRouteID_.isValid() && routeMap_.find(firstRouteID_) != routeMap_.end()) {
         routeProgress_ += ROUTE_PROGRESS_STEP;
         routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
@@ -1327,6 +1346,8 @@ void GLFWView::incrementRouteProgress() {
 }
 
 void GLFWView::decrementRouteProgress() {
+    MLN_TRACE_FUNC();
+
     if (firstRouteID_.isValid() && routeMap_.find(firstRouteID_) != routeMap_.end()) {
         routeProgress_ -= ROUTE_PROGRESS_STEP;
         routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
@@ -1350,6 +1371,8 @@ void GLFWView::decrementRouteProgress() {
 }
 
 void GLFWView::removeTrafficViz() {
+    MLN_TRACE_FUNC();
+
     for (const auto &iter : routeMap_) {
         rmptr_->routeClearSegments(iter.first);
     }
@@ -1357,6 +1380,8 @@ void GLFWView::removeTrafficViz() {
 }
 
 void GLFWView::disposeRoute() {
+    MLN_TRACE_FUNC();
+
     if (!routeMap_.empty()) {
         auto &routeID = routeMap_.begin()->first;
         bool success = rmptr_->routeDispose(routeID);
@@ -1371,6 +1396,8 @@ void GLFWView::disposeRoute() {
 }
 
 void GLFWView::captureSnapshot() {
+    MLN_TRACE_FUNC();
+
     if (rmptr_) {
         std::string snapshot = rmptr_->captureSnapshot();
         std::string snapshot_file_name = "snapshot" + std::to_string(lastCaptureIdx_++) + ".json";
@@ -1385,6 +1412,8 @@ int GLFWView::getCaptureIdx() const {
 }
 
 void GLFWView::writeCapture(const std::string &capture, const std::string &capture_file_name) const {
+    MLN_TRACE_FUNC();
+
     std::ofstream outfile(capture_file_name);
 
     if (outfile.is_open()) {
@@ -1397,6 +1426,8 @@ void GLFWView::writeCapture(const std::string &capture, const std::string &captu
 }
 
 void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
+    MLN_TRACE_FUNC();
+
     for (size_t i = 0; i < routeMap_.size(); i++) {
         disposeRoute();
     }
@@ -1622,6 +1653,8 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
 }
 
 void GLFWView::scrubNavStops(bool forward) {
+    MLN_TRACE_FUNC();
+
     if (loadedCapture_ && firstRouteID_.isValid()) {
         if (forward) {
             ++lastNavStop_;

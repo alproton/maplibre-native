@@ -144,6 +144,8 @@ Tile* TileCache::get(const OverscaledTileID& key) {
 }
 
 std::unique_ptr<Tile> TileCache::pop(const OverscaledTileID& key) {
+    MLN_TRACE_FUNC();
+
     std::unique_ptr<Tile> tile;
 
     const auto it = tiles.find(key);
@@ -161,6 +163,8 @@ bool TileCache::has(const OverscaledTileID& key) {
 }
 
 void TileCache::clear() {
+    MLN_TRACE_FUNC();
+
     for (auto& item : tiles) {
         deferredRelease(std::move(item.second));
     }

@@ -9,6 +9,7 @@
 #include <mbgl/util/tile_cover.hpp>
 #include <mbgl/util/tile_range.hpp>
 #include <mbgl/util/enum.hpp>
+#include <mbgl/util/instrumentation.hpp>
 #include <mbgl/util/logging.hpp>
 
 #include <mbgl/algorithm/update_renderables.hpp>
@@ -60,6 +61,8 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
                          const Range<uint8_t> zoomRange,
                          std::optional<LatLngBounds> bounds,
                          std::function<std::unique_ptr<Tile>(const OverscaledTileID&, TileObserver*)> createTile) {
+    MLN_TRACE_FUNC();
+
     // If we need a relayout, abandon any cached tiles; they're now stale.
     if (needsRelayout && !skipRelayoutClear) {
         cache.clear();

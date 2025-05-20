@@ -18,6 +18,7 @@
 #include <mbgl/style/expression/compound_expression.hpp>
 #include <mbgl/style/expression/type.hpp>
 #include <mbgl/style/expression/dsl.hpp>
+#include <mbgl/util/instrumentation.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
@@ -44,6 +45,8 @@ std::string tabs(uint32_t tabcount) {
 }
 
 [[maybe_unused]] std::string embeddAPIcaptures(const std::vector<std::string>& apiCaptures) {
+    MLN_TRACE_FUNC();
+
     std::stringstream ss;
     ss << "{" << std::endl;
     ss << tabs(1) << "\"apiCalls\":[" << std::endl;
@@ -67,6 +70,8 @@ std::string tabs(uint32_t tabcount) {
                                               const std::string& resultValue,
                                               const std::unordered_map<std::string, std::string>& extraDataMap,
                                               const std::string& extraData = "") {
+    MLN_TRACE_FUNC();
+
     std::stringstream tss;
     // Format the time as a string
     static uint32_t eventID = 0;
@@ -101,6 +106,8 @@ std::string tabs(uint32_t tabcount) {
         createAPIcapture(__FUNCTION__, functionParamMap, resultType, resultValue, extraDataMap, extraData));
 
 std::string formatElapsedTime(long long value) {
+    MLN_TRACE_FUNC();
+
     std::stringstream ss;
     ss.imbue(std::locale("")); // Use the user's default locale for number formatting
     ss << std::fixed << value;
@@ -112,6 +119,8 @@ std::string formatElapsedTime(long long value) {
 }
 
 [[maybe_unused]] std::string toString(const LineString<double>& line, uint32_t tabcount) {
+    MLN_TRACE_FUNC();
+
     std::stringstream ss;
     ss << tabs(tabcount) << "[" << std::endl;
     for (size_t i = 0; i < line.size(); i++) {
@@ -125,6 +134,8 @@ std::string formatElapsedTime(long long value) {
 }
 
 [[maybe_unused]] std::string toString(const std::vector<double>& dlistl, uint32_t tabcount) {
+    MLN_TRACE_FUNC();
+
     std::stringstream ss;
     ss << tabs(tabcount) << "[" << std::endl;
     for (size_t i = 0; i < dlistl.size(); i++) {
@@ -137,6 +148,8 @@ std::string formatElapsedTime(long long value) {
 }
 
 [[maybe_unused]] std::string toString(const std::map<double, double>& mapdata) {
+    MLN_TRACE_FUNC();
+
     std::stringstream ss;
     ss << "[" << std::endl;
     for (auto iter = mapdata.begin(); iter != mapdata.end(); iter++) {
@@ -149,6 +162,8 @@ std::string formatElapsedTime(long long value) {
 }
 
 [[maybe_unused]] std::string toString(const RouteOptions& ropts, uint32_t tabcount) {
+    MLN_TRACE_FUNC();
+
     std::stringstream ss;
     ss << tabs(tabcount) << "{" << std::endl;
     ss << tabs(tabcount + 1) << "\"innerColor\": " << "[" << std::to_string(ropts.innerColor.r) << ", "
@@ -180,6 +195,8 @@ std::string formatElapsedTime(long long value) {
 }
 
 [[maybe_unused]] std::string toString(const std::map<double, mbgl::Color>& gradient) {
+    MLN_TRACE_FUNC();
+
     std::stringstream ss;
     ss << "[" << std::endl;
     for (auto iter = gradient.begin(); iter != gradient.end(); iter++) {
@@ -256,6 +273,8 @@ std::string RouteManager::dirtyTypeToString(const RouteManager::DirtyType& dt) c
 }
 
 std::vector<RouteID> RouteManager::getAllRoutes() const {
+    MLN_TRACE_FUNC();
+
     std::vector<RouteID> routeIDs;
     for (const auto& iter : routeMap_) {
         routeIDs.push_back(iter.first);
@@ -265,6 +284,8 @@ std::vector<RouteID> RouteManager::getAllRoutes() const {
 }
 
 int RouteManager::getTopMost(const std::vector<RouteID>& routeList) const {
+    MLN_TRACE_FUNC();
+
     assert(style_ != nullptr && "style not set");
 
     if (style_ != nullptr) {
@@ -289,6 +310,8 @@ int RouteManager::getTopMost(const std::vector<RouteID>& routeList) const {
 }
 
 std::string RouteManager::captureSnapshot() const {
+    MLN_TRACE_FUNC();
+
     // TODO: use rapidjson to create the json string
     std::stringstream ss;
     ss << "{" << std::endl;
@@ -329,6 +352,8 @@ std::string RouteManager::captureSnapshot() const {
 }
 
 void RouteManager::setStyle(style::Style& style) {
+    MLN_TRACE_FUNC();
+
     if (style_ != nullptr && style_ != &style) {
         // remove the old base, active layer and source for each route and add them to the new stylef
         for (auto& routeIter : routeMap_) {
@@ -365,6 +390,8 @@ bool RouteManager::hasStyle() const {
 }
 
 RouteID RouteManager::routeCreate(const LineString<double>& geometry, const RouteOptions& ropts) {
+    MLN_TRACE_FUNC();
+
     RouteID rid;
     bool success = routeIDpool_.createID((rid.id));
     if (success && rid.isValid()) {
@@ -394,6 +421,8 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
 }
 
 RouteID RouteManager::routePreCreate(const RouteID& routeID, uint32_t numRoutes) {
+    MLN_TRACE_FUNC();
+
     assert(routeID.isValid() && "Invalid route ID");
     if (routeID.isValid()) {
         uint32_t id = routeID.id;
@@ -407,6 +436,8 @@ RouteID RouteManager::routePreCreate(const RouteID& routeID, uint32_t numRoutes)
 }
 
 bool RouteManager::routeSet(const RouteID& routeID, const LineString<double>& geometry, const RouteOptions& ropts) {
+    MLN_TRACE_FUNC();
+
     assert(routeID.isValid() && "Invalid route ID");
     assert(!geometry.empty() && "Invalid route geometry");
     if (routeID.isValid() && !geometry.empty()) {
@@ -422,6 +453,8 @@ bool RouteManager::routeSet(const RouteID& routeID, const LineString<double>& ge
 }
 
 bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
+    MLN_TRACE_FUNC();
+
     assert(routeID.isValid() && "Invalid route ID");
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
@@ -443,6 +476,8 @@ bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
 }
 
 void RouteManager::validateAddToDirtyBin(const RouteID& routeID, const DirtyType& dirtyBin) {
+    MLN_TRACE_FUNC();
+
     // check if this route is in the list of dirty geometry routes. if so, then no need to set dirty segments, as it
     // will be created during finalize
     bool foundDirtyRoute = false;
@@ -458,6 +493,8 @@ void RouteManager::validateAddToDirtyBin(const RouteID& routeID, const DirtyType
 }
 
 void RouteManager::routeClearSegments(const RouteID& routeID) {
+    MLN_TRACE_FUNC();
+
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         stats_.numRouteSegments -= routeMap_[routeID].getNumRouteSegments();
@@ -485,6 +522,8 @@ void RouteManager::routeClearSegments(const RouteID& routeID) {
 }
 
 bool RouteManager::routeDispose(const RouteID& routeID) {
+    MLN_TRACE_FUNC();
+
     assert(style_ != nullptr && "Style not set!");
     assert(routeID.isValid() && "Invalid route ID");
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
@@ -524,6 +563,8 @@ bool RouteManager::hasRoutes() const {
 }
 
 bool RouteManager::routeSetProgressPercent(const RouteID& routeID, const double progress, bool capture) {
+    MLN_TRACE_FUNC();
+
     assert(style_ != nullptr && "Style not set!");
     assert(routeID.isValid() && "invalid route ID");
     double validProgress = std::clamp(progress, 0.0, 1.0);
@@ -542,6 +583,8 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
                                            const mbgl::Point<double>& progressPoint,
                                            const Precision& precision,
                                            bool capture) {
+    MLN_TRACE_FUNC();
+
     assert(routeID.isValid() && "invalid route ID");
     double percentage = -1.0;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
@@ -557,6 +600,8 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
 }
 
 mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID, double percent, const Precision& precision) const {
+    MLN_TRACE_FUNC();
+
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         return routeMap_.at(routeID).getPoint(percent, precision);
@@ -582,6 +627,8 @@ std::string RouteManager::getBaseGeoJSONsourceName(const RouteID& routeID) const
 }
 
 const std::string RouteManager::getStats() {
+    MLN_TRACE_FUNC();
+
     rapidjson::Document document;
     document.SetObject();
     rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
@@ -607,6 +654,8 @@ const std::string RouteManager::getStats() {
 }
 
 void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
+    MLN_TRACE_FUNC();
+
     assert(routeID.isValid() && "invalid route ID");
     using namespace mbgl::style;
     using namespace mbgl::style::expression;
@@ -820,6 +869,8 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 }
 
 void RouteManager::finalize() {
+    MLN_TRACE_FUNC();
+
     using namespace mbgl::style;
     using namespace mbgl::style::expression;
     using namespace std::chrono;

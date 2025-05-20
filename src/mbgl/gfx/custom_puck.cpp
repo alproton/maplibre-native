@@ -1,5 +1,6 @@
 
 #include <mbgl/gfx/custom_puck.hpp>
+#include <mbgl/util/instrumentation.hpp>
 #include <numbers>
 #include <mutex>
 
@@ -7,6 +8,8 @@ namespace mbgl {
 namespace gfx {
 
 void CustomPuck::draw(const TransformState& transform) {
+    MLN_TRACE_FUNC();
+
     const auto& state = getState();
     if (!state.enabled) {
         return;
@@ -53,6 +56,8 @@ void CustomPuck::draw(const TransformState& transform) {
 }
 
 void CustomPuck::setPuckBitmap(const PremultipliedImage& src) {
+    MLN_TRACE_FUNC();
+
     assert(src.valid());
     std::lock_guard<std::mutex> lock(bitmapMutex);
     bitmap.size = src.size;
@@ -61,6 +66,8 @@ void CustomPuck::setPuckBitmap(const PremultipliedImage& src) {
 }
 
 PremultipliedImage CustomPuck::getPuckBitmap() {
+    MLN_TRACE_FUNC();
+
     std::lock_guard<std::mutex> lock(bitmapMutex);
     return std::move(bitmap);
 }
