@@ -90,6 +90,7 @@ private:
     bool cacheEnabled = true;
     bool aggressiveTileCache = false;
     bool skipRelayoutClear = false;
+    bool warmupCache = true;
 };
 
 } // namespace mbgl
