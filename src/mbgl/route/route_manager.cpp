@@ -310,6 +310,7 @@ std::string RouteManager::captureSnapshot() const {
 
         ss << toString(iter->second.getGeometry(), 4) << geomCommaStr << std::endl;
         if (iter->second.hasRouteSegments()) {
+            ss << tabs(4) << "," << std::endl;
             ss << tabs(4) << "\"route_segments\" : " << std::endl;
             ss << iter->second.segmentsToString(5) << segmentCommaStr << std::endl;
         }
