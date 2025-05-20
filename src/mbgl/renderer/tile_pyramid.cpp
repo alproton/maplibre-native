@@ -223,6 +223,11 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
             maxParentTileOverscaleFactor);
     }
 
+    if (cacheEnabled && aggressiveTileCache && warmupCache) {
+        warmupCache = false;
+        algorithm::warmupCache(getTileFn, createTileFn, retainTileFn, idealTiles);
+    }
+
     algorithm::updateRenderables(getTileFn,
                                  createTileFn,
                                  retainTileFn,
@@ -454,6 +459,7 @@ void TilePyramid::clearAll() {
     tiles.clear();
     renderedTiles.clear();
     cache.clear();
+    warmupCache = true;
 }
 
 void TilePyramid::addRenderTile(const UnwrappedTileID& tileID, Tile& tile) {

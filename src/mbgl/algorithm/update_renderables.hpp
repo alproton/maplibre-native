@@ -4,6 +4,7 @@
 #include <mbgl/tile/tile_necessity.hpp>
 #include <mbgl/util/range.hpp>
 
+#include <algorithm>
 #include <unordered_set>
 #include <optional>
 
@@ -153,6 +154,39 @@ void updateRenderables(GetTileFn getTile,
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+template <typename GetTileFn, typename CreateTileFn, typename RetainTileFn, typename IdealTileIDs>
+void warmupCache(GetTileFn getTile,
+                 CreateTileFn createTile,
+                 RetainTileFn retainTile,
+                 const IdealTileIDs& idealTileIDs) {
+    std::unordered_set<OverscaledTileID> checked;
+    for (const auto& idealDataTileID : idealTileIDs) {
+        constexpr int32_t minZ = 1;
+        constexpr int32_t maxZLimit = 10; // Arbitrary value, we only warm up the cache for lower resolution tiles
+        int32_t maxZ = std::min(idealDataTileID.overscaledZ - 1, maxZLimit);
+        // We couldn't find child tiles that entirely cover the ideal tile.
+        for (int32_t overscaledZ = maxZ; overscaledZ > minZ; --overscaledZ) {
+            const auto parentDataTileID = idealDataTileID.scaledTo(overscaledZ);
+            if (checked.find(parentDataTileID) != checked.end()) {
+                // Break parent tile ascent, this route has been checked
+                // by another child tile before.
+                break;
+            } else {
+                checked.emplace(parentDataTileID);
+            }
+
+            auto tile = getTile(parentDataTileID);
+            if (!tile) {
+                tile = createTile(parentDataTileID);
+            }
+
+            if (tile) {
+                retainTile(*tile, TileNecessity::Required);
             }
         }
     }
