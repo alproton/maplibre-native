@@ -759,7 +759,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 } break;
 
                 case GLFW_KEY_Q:
-                    view->writeStats(true);
+                    view->writeStats(false);
                     break;
 
                 case GLFW_KEY_X:

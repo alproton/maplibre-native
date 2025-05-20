@@ -25,6 +25,9 @@ struct RouteMgrStats {
     bool inconsistentAPIusage = false;
     double avgRouteCreationInterval = 0.0;
     double avgRouteSegmentCreationInterval = 0.0;
+    long long maxRouteVanishingElapsedMillis = 0.0;
+    long long minRouteVanishingElapsedMillis = 0.0;
+    double avgRouteVanishingElapsedMillis = 0.0;
 };
 
 /***
@@ -107,6 +110,8 @@ private:
     // TODO: change this to weak reference
     style::Style* style_ = nullptr;
     std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
+    long long totalVanishingRouteElapsedMillis = 0;
+    long long numVanisingRouteInvocations = 0;
 };
 }; // namespace route
 
