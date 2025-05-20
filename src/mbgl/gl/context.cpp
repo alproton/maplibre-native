@@ -32,8 +32,6 @@
 #endif
 
 #include <cstring>
-#include <iterator>
-#include <boost/fusion/mpl/back.hpp>
 
 namespace mbgl {
 namespace gl {
@@ -296,11 +294,15 @@ double Context::getRouteVanishing() {
     if (backend.customPuck != nullptr) {
         double lat = backend.customPuck->getState().lat;
         double lon = backend.customPuck->getState().lon;
-        mbgl::Point<double> vanishingPt = {lon, lat};
-        return backend.getVanishingRoutePercent(vanishingPt);
+        if (customPuckLat != lat || customPuckLon != lon) {
+            mbgl::Point<double> vanishingPt = {lon, lat};
+            vanishingRoutePercent = backend.getVanishingRoutePercent(vanishingPt);
+            customPuckLat = lat;
+            customPuckLon = lon;
+        }
     }
 
-    return -1.0;
+    return vanishingRoutePercent;
 }
 
 UniqueTexture Context::createUniqueTexture(const Size& size,

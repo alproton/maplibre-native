@@ -24,6 +24,7 @@
 #endif
 
 #include <array>
+#include <cfloat>
 #include <functional>
 #include <vector>
 
@@ -260,6 +261,9 @@ private:
     std::vector<RenderbufferID> abandonedRenderbuffers;
 
     std::unique_ptr<Texture2DPool> texturePool;
+    double vanishingRoutePercent = -1.0;
+    double customPuckLat = DBL_MAX;
+    double customPuckLon = DBL_MAX;
 
 public:
 #if !defined(NDEBUG)
