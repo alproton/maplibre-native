@@ -35,6 +35,7 @@ android {
                 arguments += listOf(
                     "-DMLN_LEGACY_RENDERER=OFF",
                     "-DMLN_DRAWABLE_RENDERER=ON",
+                    "-DMLN_USE_TRACY=ON",
                     "-DANDROID_STL=c++_static"
                 )
                 targets += "mbgl-test-runner"

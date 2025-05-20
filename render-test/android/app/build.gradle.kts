@@ -35,7 +35,7 @@ android {
         externalNativeBuild {
             cmake {
                 arguments("-DANDROID_STL=c++_static")
-                arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON")
+                arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON", "-DMLN_USE_TRACY=ON")
                 targets.add("mbgl-render-test-runner")
             }
         }
