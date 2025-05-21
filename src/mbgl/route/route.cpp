@@ -419,7 +419,7 @@ std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeTy
         const auto& prevDist = prevPositions[prevPositions.size() - 1];
         const auto& currDist = currPositions[0];
         const auto& prevColor = routeType == RouteType::Inner ? prevOptions.color : prevOptions.outerColor;
-        const auto& currColor = routeType == RouteType::Inner ? currOptions.color : prevOptions.outerColor;
+        const auto& currColor = routeType == RouteType::Inner ? currOptions.color : currOptions.outerColor;
         bool isIntersecting = prevDist >= currDist;
         if (isIntersecting) {
             if (prevColor == currColor) {
