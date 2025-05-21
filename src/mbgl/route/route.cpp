@@ -106,13 +106,15 @@ double vecMagnitudeSq(const Vector3D& v) {
  * @return Vector3D Cartesian coordinates (x, y, z).
  */
 Vector3D latLonToCartesian(const Point<double>& p) {
+    static constexpr double EARTH_RADIUS_METERS = 6371000.0;
     double latRad = degreesToRadians(p.y);
     double lonRad = degreesToRadians(p.x);
 
+    // scale cartesian coords to earth radius, doing in unit sphere we lose a lot of precision even when using double.
     return {
-        std::cos(latRad) * std::cos(lonRad), // x
-        std::cos(latRad) * std::sin(lonRad), // y
-        std::sin(latRad)                     // z
+        EARTH_RADIUS_METERS * std::cos(latRad) * std::cos(lonRad), // x
+        EARTH_RADIUS_METERS * std::cos(latRad) * std::sin(lonRad), // y
+        EARTH_RADIUS_METERS * std::sin(latRad)                     // z
     };
 }
 
@@ -639,7 +641,7 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
         return 0.0;
     }
 
-    double minDistanceSq = std::numeric_limits<double>::max();
+    double minDist = std::numeric_limits<double>::max();
     double bestSegmentFraction = 0.0;
     size_t bestSegmentIndex = 0;
     Vector3D vQuery = latLonToCartesian(queryPoint);
@@ -669,7 +671,7 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
 
         // --- Find the point on the great circle arc corresponding to fraction t ---
         // We need the point on the *arc* to calculate the true distance.
-        // We use the SLERP *logic* (interpolation) to find this point, even
+        // We use the SLERP (interpolation) to find this point, even
         // though 't' came from projection onto the chord. This is a common approximation.
         Point<double> closestPointOnArc;
         double omega = 0.0;
@@ -695,10 +697,9 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
 
         // --- Calculate distance from queryPoint to this point on the arc ---
         double dist = mbgl::util::haversineDist(queryPoint, closestPointOnArc);
-        double dist_sq = dist * dist;
 
-        if (dist_sq < minDistanceSq) {
-            minDistanceSq = dist_sq;
+        if (dist < minDist) {
+            minDist = dist;
             bestSegmentIndex = i;
             bestSegmentFraction = t; // Store the fraction along the chord/arc
         }
