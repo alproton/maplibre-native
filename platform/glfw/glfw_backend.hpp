@@ -17,6 +17,10 @@ public:
     GLFWBackend(const GLFWBackend&) = delete;
     GLFWBackend& operator=(const GLFWBackend&) = delete;
     virtual ~GLFWBackend() = default;
+    virtual void setCustomPuckState([[maybe_unused]] double lat,
+                                    [[maybe_unused]] double lon,
+                                    [[maybe_unused]] double bearing) {};
+    virtual void enableCustomPuck([[maybe_unused]] bool onOff) {};
 
     static std::unique_ptr<GLFWBackend> Create(GLFWwindow* window, bool capFrameRate) {
         return mbgl::gfx::Backend::Create<GLFWBackend, GLFWwindow*, bool>(window, capFrameRate);

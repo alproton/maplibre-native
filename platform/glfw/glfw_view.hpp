@@ -122,10 +122,11 @@ private:
     void addTrafficSegments();
     void modifyTrafficViz();
     void removeTrafficViz();
+    void enablePuck(bool onOff);
+    void setPuckLocation(double lat, double lon, double bearing);
     void incrementRouteProgress();
     void decrementRouteProgress();
     void captureSnapshot();
-    void setRouteProgressUsage();
     void setRoutePickMode();
     void scrubNavStops(bool forward);
 
@@ -199,14 +200,15 @@ private:
     std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeMap_;
     std::unordered_map<RouteID, mbgl::LineString<double>, IDHasher<RouteID>> capturedNavStopMap_;
     std::unordered_map<RouteID, std::vector<double>, IDHasher<RouteID>> capturedNavPercentMap_;
+    mbgl::route::Precision routeProgressPrecision_ = mbgl::route::Precision::Fine;
     int lastCaptureIdx_ = 0;
     uint32_t lastNavStop_ = 0;
-    RouteID firstRouteID_;
+    RouteID vanishingRouteID_;
     bool loadedCapture_ = false;
     double routeProgress_ = 0.0;
-    bool generateRouteProgressPercent_ = false;
     bool routePickMode_ = false;
     bool captureNavPoints_ = true;
+    bool enableAutoVanishing = false; // Simulates route progress in app
     mbgl::route::Precision routePrecision_ = mbgl::route::Precision::Fine;
 
     // Frame timer

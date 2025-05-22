@@ -557,10 +557,13 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
     return percentage;
 }
 
-mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID, double percent, const Precision& precision) const {
+mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID,
+                                           double percent,
+                                           const Precision& precision,
+                                           double* bearing) const {
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        return routeMap_.at(routeID).getPoint(percent, precision);
+        return routeMap_.at(routeID).getPoint(percent, precision, bearing);
     }
 
     return {0.0, 0.0};
@@ -818,6 +821,20 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             casingRouteLineLayer->setGradientLineClip(progress);
         }
     }
+}
+
+bool RouteManager::setVanishingRouteID(const RouteID& routeID) {
+    bool success = false;
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end() && style_ != nullptr) {
+        vanishingRouteID_ = routeID;
+        success = true;
+    }
+
+    return success;
+}
+
+RouteID RouteManager::getVanishingRouteID() const {
+    return vanishingRouteID_;
 }
 
 void RouteManager::finalize() {

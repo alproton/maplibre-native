@@ -64,9 +64,14 @@ public:
                                  const Point<double>& progressPoint,
                                  const Precision& precision,
                                  bool capture = false);
-    Point<double> getPoint(const RouteID& routeID, double percent, const Precision& precision) const;
+    Point<double> getPoint(const RouteID& routeID,
+                           double percent,
+                           const Precision& precision,
+                           double* bearing = nullptr) const;
     void routeClearSegments(const RouteID&);
     bool routeDispose(const RouteID&);
+    bool setVanishingRouteID(const RouteID& routeID);
+    RouteID getVanishingRouteID() const;
     std::vector<RouteID> getAllRoutes() const;
     std::string getActiveRouteLayerName(const RouteID& routeID) const;
     std::string getBaseRouteLayerName(const RouteID& routeID) const;
@@ -105,6 +110,7 @@ private:
     // TODO: change this to weak reference
     style::Style* style_ = nullptr;
     std::unordered_map<RouteID, Route, IDHasher<RouteID>> routeMap_;
+    RouteID vanishingRouteID_;
 };
 }; // namespace route
 
