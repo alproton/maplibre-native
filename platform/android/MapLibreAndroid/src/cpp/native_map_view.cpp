@@ -1731,6 +1731,7 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
         Result<Color> innerSegmentColorRes = colorConverter(env, color);
         if (innerSegmentColorRes) {
             rsegopts.color = *innerSegmentColorRes;
+            rsegopts.color.a = 1.0f;
         }
 
         Result<Color> outerSegmentColorRes = colorConverter(env, outerColor);
