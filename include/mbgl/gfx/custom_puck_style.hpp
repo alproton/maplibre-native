@@ -96,7 +96,7 @@ struct CustomPuckStyle {
     CustomPuckIconMap icons;
 };
 
-CustomPuckStyle parseCustomPuckStyle(const std::string& style_file_path);
+CustomPuckStyle parseCustomPuckStyle(const std::string& json);
 
 } // namespace gfx
 } // namespace mbgl

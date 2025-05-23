@@ -4,7 +4,6 @@
 #include <mbgl/shaders/gl/custom_puck.hpp>
 #include <mbgl/util/instrumentation.hpp>
 #include <mbgl/util/image.hpp>
-#include <mbgl/util/io.hpp>
 #include <mbgl/util/logging.hpp>
 #include <algorithm>
 
@@ -174,7 +173,7 @@ void CustomPuck::updateTextures(const gfx::CustomPuckIconMap& icons) {
     // Create new textures
     for (const auto& [name, path] : icons) {
         TextureID tex = 0;
-        auto image = mbgl::decodeImage(mbgl::util::read_file(path));
+        auto image = mbgl::decodeImage(readFile(path));
         if (!image.valid()) {
             Log::Error(Event::OpenGL, "Failed to load puck icon " + path);
             continue;

@@ -1,5 +1,6 @@
 
 #include <mbgl/gfx/custom_puck.hpp>
+#include <mbgl/util/io.hpp>
 #include <numbers>
 #include <mutex>
 
@@ -113,8 +114,10 @@ void CustomPuck::draw(const TransformState& transform) {
 }
 
 void CustomPuck::setPuckStyle(const std::string& style_file_path) {
+    auto json = readFile(style_file_path);
+
     std::lock_guard<std::mutex> lock(styleMutex);
-    style = parseCustomPuckStyle(style_file_path);
+    style = parseCustomPuckStyle(json);
 }
 
 void CustomPuck::setPuckVariant(std::string variant) {
@@ -125,6 +128,44 @@ void CustomPuck::setPuckVariant(std::string variant) {
 void CustomPuck::setPuckIconState(std::string state) {
     std::lock_guard<std::mutex> lock(styleMutex);
     iconStateName = std::move(state);
+}
+
+#ifdef __ANDROID__
+void CustomPuck::setAssetManager(AAssetManager* asset_manager) {
+    std::lock_guard<std::mutex> lock(styleMutex);
+    android_asset_manager = asset_manager;
+}
+
+AAssetManager* CustomPuck::getAssetManager() {
+    std::lock_guard<std::mutex> lock(styleMutex);
+    assert(android_asset_manager != nullptr);
+    return android_asset_manager;
+}
+#endif
+
+std::string CustomPuck::readFile(const std::string& path) const {
+#ifdef __ANDROID__
+    if (!android_asset_manager) {
+        throw std::runtime_error("Missing asset manager");
+    }
+    AAsset* asset = AAssetManager_open(android_asset_manager, path.c_str(), AASSET_MODE_BUFFER);
+    if (!asset) {
+        throw std::runtime_error("Failed to open asset: " + path);
+    }
+    auto size = AAsset_getLength(asset);
+    auto data = AAsset_getBuffer(asset);
+    if (size == 0) {
+        throw std::runtime_error("Empty asset: " + path);
+    }
+    if (!data) {
+        throw std::runtime_error("Failed to read asset: " + path);
+    }
+    std::string result(reinterpret_cast<const char*>(data), size);
+    AAsset_close(asset);
+    return result;
+#else
+    return util::read_file(path);
+#endif
 }
 
 } // namespace gfx

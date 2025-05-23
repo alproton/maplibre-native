@@ -36,6 +36,12 @@ public:
 
     void setPuckStyle(const std::string& style_file_path);
 
+    void setPuckAssetManager(AAssetManager* asset_manager);
+
+    void setPuckVariant(const std::string& variant);
+
+    void setPuckIconState(const std::string& state);
+
     void setCustomPuckState(const gfx::CustomPuckState& state) noexcept { customPuckState = state; }
 
     const gfx::CustomPuckState& getCustomPuckState() const noexcept { return customPuckState; }

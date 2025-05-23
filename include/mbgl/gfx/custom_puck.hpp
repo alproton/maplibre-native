@@ -8,6 +8,10 @@
 #include <memory>
 #include <string>
 
+#ifdef __ANDROID__
+#include <android/asset_manager.h>
+#endif
+
 namespace mbgl {
 namespace gfx {
 
@@ -44,10 +48,20 @@ public:
     void setPuckVariant(std::string variant);
     void setPuckIconState(std::string state);
 
+#ifdef __ANDROID__
+    void setAssetManager(AAssetManager* asset_manager);
+    AAssetManager* getAssetManager();
+
+private:
+    AAssetManager* android_asset_manager = nullptr;
+#endif
+
 protected:
     virtual void drawImpl(const CustomPuckSampledStyle&) = 0;
 
     virtual CustomPuckState getState() = 0;
+
+    std::string readFile(const std::string& path) const;
 
 private:
     std::chrono::time_point<std::chrono::steady_clock> epochTime = std::chrono::steady_clock::now();
