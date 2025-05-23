@@ -9,6 +9,8 @@
 
 #include <sys/system_properties.h>
 
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
 #include <android/native_window_jni.h>
 
 #include <jni/jni.hpp>
@@ -72,6 +74,8 @@
 #include "android_renderer_backend.hpp"
 
 #include "android_renderer_backend.hpp"
+
+#include "maplibre.hpp"
 
 namespace mbgl {
 namespace android {
@@ -1398,6 +1402,22 @@ jni::jint NativeMapView::getLastRenderedTileCount(JNIEnv&) {
     return jni::jint(mapRenderer.getLastRenderedTileCount());
 }
 
+void NativeMapView::setPuckStyle(JNIEnv& env, const jni::String& style_file_path) {
+    auto wrappedAssetManager = MapLibre::getAssetManager(env);
+    auto assetManager = AAssetManager_fromJava(&env, jni::Unwrap(wrappedAssetManager.get()));
+    mapRenderer.getRendererBackend().setPuckAssetManager(assetManager);
+
+    mapRenderer.getRendererBackend().setPuckStyle(jni::Make<std::string>(env, style_file_path));
+}
+
+void NativeMapView::setPuckVariant(JNIEnv& env, const jni::String& variant) {
+    mapRenderer.getRendererBackend().setPuckVariant(jni::Make<std::string>(env, variant));
+}
+
+void NativeMapView::setPuckIconState(JNIEnv& env, const jni::String& state) {
+    mapRenderer.getRendererBackend().setPuckIconState(jni::Make<std::string>(env, state));
+}
+
 void NativeMapView::setCustomDotsNextLayer(JNIEnv& env, const jni::String& layer) {
     mapRenderer.getRendererBackend().setCustomDotsNextLayer(jni::Make<std::string>(env, layer));
 }
@@ -1588,6 +1608,10 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
         METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
+        // Custom Puck API
+        METHOD(&NativeMapView::setPuckStyle, "nativeSetPuckStyle"),
+        METHOD(&NativeMapView::setPuckVariant, "nativeSetPuckVariant"),
+        METHOD(&NativeMapView::setPuckIconState, "nativeSetPuckIconState"),
         // Custom Dots API
         METHOD(&NativeMapView::setCustomDotsNextLayer, "nativeSetCustomDotsNextLayer"),
         METHOD(&NativeMapView::setCustomDotsPoints, "nativeSetCustomDotsPoints"),

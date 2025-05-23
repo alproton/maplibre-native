@@ -1,6 +1,5 @@
 
 #include <mbgl/gfx/custom_puck_style.hpp>
-#include <mbgl/util/io.hpp>
 #include <mbgl/util/logging.hpp>
 #include <rapidjson/document.h>
 #include "rapidjson/error/en.h"
@@ -282,8 +281,7 @@ std::pair<int, int> offsetToLineColumn(const std::string& json, size_t offset) {
     return {line, column};
 }
 
-rapidjson::Document parseDoc(const std::string& style_file_path) {
-    auto json = util::read_file(style_file_path);
+rapidjson::Document parseDoc(const std::string& json) {
     rapidjson::Document doc;
     rapidjson::ParseResult parseOk = doc.Parse(json.c_str());
     if (!parseOk) {
@@ -298,8 +296,8 @@ rapidjson::Document parseDoc(const std::string& style_file_path) {
 
 } // namespace
 
-CustomPuckStyle parseCustomPuckStyle(const std::string& style_file_path) {
-    auto doc = parseDoc(style_file_path);
+CustomPuckStyle parseCustomPuckStyle(const std::string& json) {
+    auto doc = parseDoc(json);
     checkArrayMember(doc, "variants");
     checkArrayMember(doc, "icons");
     checkObjectMember(doc, "states");

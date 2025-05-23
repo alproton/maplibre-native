@@ -301,6 +301,15 @@ interface NativeMap {
   String getSnapshotCapture();
 
   //
+  // Custom Puck API
+  //
+  void setPuckStyle(String style_file_path);
+
+  void setPuckVariant(String variant);
+
+  void setPuckIconState(String state);
+
+  //
   // Custom Dots API
   //
   void setCustomDotsNextLayer(String layer);
