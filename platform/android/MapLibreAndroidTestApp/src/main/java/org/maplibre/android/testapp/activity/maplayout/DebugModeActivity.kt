@@ -132,6 +132,10 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         } else {
             maplibreMap.locationComponent.zoomWhileTracking(16.4, 1000)
         }
+
+        mapView.setPuckStyle("puck_style.json")
+        mapView.setPuckVariant("day")
+        mapView.setPuckIconState("DefaultState")
     }
 
     private val useLocationEngine = false
@@ -283,6 +287,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
                     currentStyleIndex = 0
                 }
                 maplibreMap.setStyle(Style.Builder().fromUri(STYLES[currentStyleIndex]))
+                mapView.setPuckIconState("MorphState")
             }
         }
     }
