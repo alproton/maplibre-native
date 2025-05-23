@@ -1653,18 +1653,18 @@ jint NativeMapView::routeCreate(JNIEnv& env,
             Result<Color> innerClipColorRes = colorConverter(env, innerClipColor);
             // set alpha to 1 for all colors except for clip colors
             if (outerColorRes) {
-                mbgl::Color ocolor = *outerColorRes;
+                const mbgl::Color& ocolor = *outerColorRes;
                 routeOptions.outerColor = {ocolor.r, ocolor.g, ocolor.b, 1.0f};
             }
             if (innerColorRes) {
-                mbgl::Color icolor = *innerColorRes;
+                const mbgl::Color& icolor = *innerColorRes;
                 routeOptions.innerColor = {icolor.r, icolor.g, icolor.b, 1.0f};
             }
             if (outerClipColorRes) {
-                mbgl::Color oclipcolor = *outerClipColorRes;
+                routeOptions.outerClipColor = *outerClipColorRes;
             }
             if (innerClipColorRes) {
-                mbgl::Color iclipcolor = *innerClipColorRes;
+                routeOptions.innerClipColor = *innerClipColorRes;
             }
             routeOptions.outerWidth = outerWidth;
             routeOptions.innerWidth = innerWidth;

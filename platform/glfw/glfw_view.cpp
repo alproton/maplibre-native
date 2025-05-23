@@ -1223,6 +1223,9 @@ void GLFWView::addTrafficSegments() {
             rsegopts.outerColor = mbgl::Color(float(i) / float(trafficBlks.size() - 1), 0.0, 0.0, 1.0);
             const bool success = rmptr_->routeSegmentCreate(routeID, rsegopts);
             assert(success && "failed to create route segment");
+            if (!success) {
+                std::cerr << "failed to create route segment" << std::endl;
+            }
         }
         trafficBlks.clear();
     }
@@ -1551,6 +1554,9 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
 
                 bool success = rmptr_->routeSet(routeID, route_geom, routeOpts);
                 assert(success && "failed to create route on pre-created route ID");
+                if (!success) {
+                    std::cerr << "failed to create route on pre-created route ID" << std::endl;
+                }
                 RouteCircle routeCircle;
                 routeCircle.points = route_geom;
                 routeCircle.resolution = route_geom.size();
