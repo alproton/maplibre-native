@@ -1652,16 +1652,20 @@ jint NativeMapView::routeCreate(JNIEnv& env,
             Result<Color> outerClipColorRes = colorConverter(env, outerClipColor);
             Result<Color> innerClipColorRes = colorConverter(env, innerClipColor);
             if (outerColorRes) {
-                routeOptions.outerColor = *outerColorRes;
+                mbgl::Color ocolor = *outerColorRes;
+                routeOptions.outerColor = {ocolor.r, ocolor.g, ocolor.b, 1.0f};
             }
             if (innerColorRes) {
-                routeOptions.innerColor = *innerColorRes;
+                mbgl::Color icolor = *innerColorRes;
+                routeOptions.innerColor = {icolor.r, icolor.g, icolor.b, 1.0f};
             }
             if (outerClipColorRes) {
-                routeOptions.outerClipColor = *outerClipColorRes;
+                mbgl::Color oclipcolor = *outerClipColorRes;
+                routeOptions.outerClipColor = {oclipcolor.r, oclipcolor.g, oclipcolor.b, 1.0f};
             }
             if (innerClipColorRes) {
-                routeOptions.innerClipColor = *innerClipColorRes;
+                mbgl::Color iclipcolor = *innerClipColorRes;
+                routeOptions.innerClipColor = {iclipcolor.r, iclipcolor.g, iclipcolor.b, 1.0f};
             }
             routeOptions.outerWidth = outerWidth;
             routeOptions.innerWidth = innerWidth;
@@ -1732,13 +1736,14 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
         Converter<mbgl::Color, int> colorConverter;
         Result<Color> innerSegmentColorRes = colorConverter(env, color);
         if (innerSegmentColorRes) {
-            rsegopts.color = *innerSegmentColorRes;
-            rsegopts.color.a = 1.0f;
+            mbgl::Color isegcolor = *innerSegmentColorRes;
+            rsegopts.color = {isegcolor.r, isegcolor.g, isegcolor.b, 1.0f};
         }
 
         Result<Color> outerSegmentColorRes = colorConverter(env, outerColor);
         if (outerSegmentColorRes) {
-            rsegopts.outerColor = *outerSegmentColorRes;
+            mbgl::Color osegcolor = *outerSegmentColorRes;
+            rsegopts.outerColor = {osegcolor.r, osegcolor.g, osegcolor.b, 1.0f};
         }
 
         return routeMgr->routeSegmentCreate(RouteID(routeID), rsegopts);
