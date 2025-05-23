@@ -1571,8 +1571,10 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                     if (!vanishingRouteID_.isValid()) {
                         vanishingRouteID_ = routeID;
                         enablePuck(true);
-                        const mbgl::Point<double> &pt = routeMap_[vanishingRouteID_].getPoint(0.0);
-                        setPuckLocation(pt.y, pt.x, 90.0);
+                        double bearing = 0.0;
+                        const mbgl::Point<double> &pt = rmptr_->getPoint(
+                            vanishingRouteID_, 0.0, routePrecision_, &bearing);
+                        setPuckLocation(pt.y, pt.x, bearing);
                     }
                 }
 
@@ -1594,8 +1596,9 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                     vanishingRouteID_ = routeMap_.begin()->first;
                     rmptr_->setVanishingRouteID(vanishingRouteID_);
                     enablePuck(true);
-                    const mbgl::Point<double> &pt = routeMap_[vanishingRouteID_].getPoint(0.0);
-                    setPuckLocation(pt.y, pt.x, 90.0);
+                    double bearing = 0.0;
+                    const mbgl::Point<double> &pt = rmptr_->getPoint(vanishingRouteID_, 0.0, routePrecision_, &bearing);
+                    setPuckLocation(pt.y, pt.x, bearing);
                 }
                 // create route segments
                 if (route_obj.HasMember("route_segments") && route_obj["route_segments"].IsArray()) {
