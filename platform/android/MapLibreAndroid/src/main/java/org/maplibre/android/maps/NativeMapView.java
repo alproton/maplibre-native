@@ -47,7 +47,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.TreeMap;
 
-import okhttp3.Route;
 
 // Class that wraps the native methods for convenience
 final class NativeMapView implements NativeMap {
