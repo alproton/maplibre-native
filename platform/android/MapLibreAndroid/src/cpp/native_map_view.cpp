@@ -1589,6 +1589,8 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
         METHOD(&NativeMapView::getRenderingStats, "nativeGetRenderingStats"),
+        METHOD(&NativeMapView::routeSetVanishing, "nativeRouteSetVanishing"),
+        METHOD(&NativeMapView::routeGetVanishing, "nativeRouteGetVanishing"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
         METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
@@ -1769,6 +1771,22 @@ void NativeMapView::routeSegmentsClear(JNIEnv& env, jint routeID) {
     if (routeMgr) {
         routeMgr->routeClearSegments(RouteID(routeID));
     }
+}
+
+jboolean NativeMapView::routeSetVanishing(JNIEnv& env, jni::jint routeID) {
+    if (routeMgr) {
+        return routeMgr->setVanishingRouteID(RouteID(routeID));
+    }
+
+    return false;
+}
+
+jint NativeMapView::routeGetVanishing(JNIEnv& env) {
+    if (routeMgr) {
+        return routeMgr->getVanishingRouteID().id;
+    }
+
+    return -1;
 }
 
 jboolean NativeMapView::routesFinalize(JNIEnv& env) {

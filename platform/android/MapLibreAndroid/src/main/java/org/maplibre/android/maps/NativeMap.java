@@ -290,6 +290,10 @@ interface NativeMap {
 
   void clearRouteSegments(RouteID routeID);
 
+  boolean setVanishingRoute(RouteID routeID);
+
+  RouteID getVanishingRoute();
+
   boolean finalizeRoutes();
 
   String getRenderingStats(boolean oneline);

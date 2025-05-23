@@ -47,6 +47,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.TreeMap;
 
+import okhttp3.Route;
+
 // Class that wraps the native methods for convenience
 final class NativeMapView implements NativeMap {
 
@@ -1232,6 +1234,22 @@ final class NativeMapView implements NativeMap {
     }
   }
 
+
+  @Override
+  public boolean setVanishingRoute(RouteID routeID) {
+    if(routeID.isValid()) {
+      return nativeRouteSetVanishing(routeID.getId());
+    }
+
+    return false;
+  }
+
+  @Override
+  public RouteID getVanishingRoute() {
+    int routeIDint = nativeRouteGetVanishing();
+    return new RouteID(routeIDint);
+  }
+
   @Override
   public boolean finalizeRoutes() {
     return nativeRoutesFinalize();
@@ -1693,6 +1711,12 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   private native String nativeRoutesCaptureSnapshot();
+
+  @Keep
+  private native boolean nativeRouteSetVanishing(int routeID);
+
+  @Keep
+  private native int nativeRouteGetVanishing();
 
   @Keep
   native void nativeRoutesClearStats();
