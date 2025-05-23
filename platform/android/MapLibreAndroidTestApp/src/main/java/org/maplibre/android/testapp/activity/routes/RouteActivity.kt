@@ -1,6 +1,8 @@
 package org.maplibre.android.testapp.activity.routes
 
 import android.content.Context
+import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.view.View
@@ -25,13 +27,14 @@ import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.Style
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ApiKeyUtils
+import org.maplibre.geojson.Point
+import timber.log.Timber
 
 class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
     private lateinit var maplibreMap : MapLibreMap
-    private var progressModePoint : Boolean = false
     private var progressPrecisionCoarse : Boolean = true
-
+    private val enableAutoVanishingRoute = true
     private val useLocationEngine = false
     private var permissionsManager: PermissionsManager? = null
     private var locationManager : LocationManager? = null
@@ -45,7 +48,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
-        mapView.setAutoVanishingRoute(false)
+        mapView.setAutoVanishingRoute(enableAutoVanishingRoute)
 
         //Add route
         val addRouteButton = findViewById<Button>(R.id.add_route)
@@ -60,38 +63,6 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         removeRouteButton?.setOnClickListener {
             RouteUtils.disposeRoute(mapView)
             Toast.makeText(this, "Removed Route", Toast.LENGTH_SHORT).show()
-        }
-
-
-        //route progress mode
-        val progressModeSpinner = findViewById<Spinner>(R.id.route_progress_mode)
-        val progressModeOptions = listOf("Point", "Percent")
-        val progressModeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, progressModeOptions)
-        progressModeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        progressModeSpinner.adapter = progressModeAdapter
-
-        // Set a listener for the progress mode spinner
-        progressModeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                // Get the selected item
-                val selectedItem = parent?.getItemAtPosition(position).toString()
-                // Handle the selected item
-                when (selectedItem) {
-                    "Percent" -> {
-                        // Handle percent selection
-                        progressModePoint = false
-                    }
-                    "Point" -> {
-                        // Handle point selection
-                        progressModePoint = true
-                    }
-                }
-                Toast.makeText(applicationContext, "Selected: $selectedItem", Toast.LENGTH_SHORT).show()
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                Toast.makeText(applicationContext, "Nothing selected", Toast.LENGTH_SHORT).show()
-            }
         }
 
         //route progress precision
@@ -129,14 +100,18 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         val sliderBar = findViewById<SeekBar>(R.id.route_slider)
         sliderBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                var progressPercent = progress.toDouble() / 100.0
+                val progressPercent = progress.toDouble() / 100.0
+                val pt : Point = RouteUtils.getPointProgress(progressPercent)
 
-                if(progressModePoint) {
+                if(!enableAutoVanishingRoute) {
                     RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
-                } else {
-                    RouteUtils.setPercentProgress(mapView, progressPercent)
                 }
+                val location = Location(LocationManager.GPS_PROVIDER)
+                location.latitude = pt.latitude()
+                location.longitude = pt.longitude()
+                maplibreMap.locationComponent.forceLocationUpdate(location)
 
+                Timber.d("#####Set######## " + location.latitude.toString() + "  ,  " + location.longitude.toString())
                 mapView.finalizeRoutes()
             }
 
@@ -214,6 +189,30 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private val locationListener: LocationListener = object : LocationListener {
+        override fun onLocationChanged(location: Location) {
+            if (!useLocationEngine) {
+                maplibreMap.locationComponent.forceLocationUpdate(location)
+            }
+
+            Timber.d("##################### " + location.latitude.toString() + "  ,  " + location.longitude.toString())
+        }
+        override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
+        override fun onProviderEnabled(provider: String) {}
+        override fun onProviderDisabled(provider: String) {}
+    }
+
+    private fun prepareLocationManager() {
+        val context : Context = this
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager?
+        try {
+            // Request location updates
+            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1L, 1f, locationListener)
+        } catch(ex: SecurityException) {
+            Timber.d("######################### Security Exception, no location available")
+        }
+    }
+
     override fun onMapReady(map: MapLibreMap) {
         // Set up the map and add route data here
         maplibreMap = map
@@ -236,12 +235,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-        //TODO: investigate and fix location component to programmatically set puck location
-//        val location : Location = Location("dummyprovider")
-//        location.latitude = 0.0
-//        location.longitude = 0.0
-//        maplibreMap.locationComponent.forceLocationUpdate(location)
-
+        prepareLocationManager()
     }
 
     override fun onStart() {

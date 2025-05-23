@@ -100,13 +100,6 @@ std::string tabs(uint32_t tabcount) {
     apiCaptures.push_back(                                                                                \
         createAPIcapture(__FUNCTION__, functionParamMap, resultType, resultValue, extraDataMap, extraData));
 
-std::string formatElapsedTime(long long value) {
-    std::stringstream ss;
-    ss.imbue(std::locale("")); // Use the user's default locale for number formatting
-    ss << std::fixed << value;
-    return ss.str();
-}
-
 [[maybe_unused]] std::string toString(bool onOff) {
     return onOff ? "true" : "false";
 }
@@ -546,7 +539,28 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
     assert(routeID.isValid() && "invalid route ID");
     double percentage = -1.0;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, capture);
+        auto startTime = std::chrono::high_resolution_clock::now();
+        {
+            if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+                percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, capture);
+            }
+        }
+        auto endTime = std::chrono::high_resolution_clock::now();
+        auto duration = endTime - startTime;
+        auto durationInMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        totalVanishingRouteElapsedMillis += durationInMilliseconds.count();
+        numVanisingRouteInvocations++;
+
+        if (stats_.maxRouteVanishingElapsedMillis < durationInMilliseconds.count()) {
+            stats_.maxRouteVanishingElapsedMillis = durationInMilliseconds.count();
+        }
+        if (stats_.minRouteVanishingElapsedMillis > durationInMilliseconds.count()) {
+            stats_.minRouteVanishingElapsedMillis = durationInMilliseconds.count();
+        }
+        if (numVanisingRouteInvocations > 0) {
+            stats_.avgRouteVanishingElapsedMillis = static_cast<double>(totalVanishingRouteElapsedMillis) /
+                                                    numVanisingRouteInvocations;
+        }
 
         if (percentage >= 0.0 && percentage <= 1.0) {
             routeMap_[routeID].routeSetProgress(percentage);
@@ -557,10 +571,13 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
     return percentage;
 }
 
-mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID, double percent, const Precision& precision) const {
+mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID,
+                                           double percent,
+                                           const Precision& precision,
+                                           double* bearing) const {
     assert(routeID.isValid() && "invalid route ID");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        return routeMap_.at(routeID).getPoint(percent, precision);
+        return routeMap_.at(routeID).getPoint(percent, precision, bearing);
     }
 
     return {0.0, 0.0};
@@ -598,6 +615,13 @@ const std::string RouteManager::getStats() {
         "avg_route_segment_create_interval_seconds", stats_.avgRouteSegmentCreationInterval, allocator);
     route_stats.AddMember("num_layers", style_->getLayers().size(), allocator);
     route_stats.AddMember("num_sources", style_->getSources().size(), allocator);
+    route_stats.AddMember(
+        "max_route_vanishing_elapsed_millis", std::to_string(stats_.maxRouteVanishingElapsedMillis), allocator);
+    route_stats.AddMember(
+        "min_route_vanishing_elapsed_millis", std::to_string(stats_.minRouteVanishingElapsedMillis), allocator);
+    route_stats.AddMember(
+        "avg_route_vanishing_elapsed_millis", std::to_string(stats_.avgRouteVanishingElapsedMillis), allocator);
+
     document.AddMember("route_stats", route_stats, allocator);
 
     rapidjson::StringBuffer buffer;
@@ -820,6 +844,20 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
     }
 }
 
+bool RouteManager::setVanishingRouteID(const RouteID& routeID) {
+    bool success = false;
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end() && style_ != nullptr) {
+        vanishingRouteID_ = routeID;
+        success = true;
+    }
+
+    return success;
+}
+
+RouteID RouteManager::getVanishingRouteID() const {
+    return vanishingRouteID_;
+}
+
 void RouteManager::finalize() {
     using namespace mbgl::style;
     using namespace mbgl::style::expression;
@@ -841,7 +879,7 @@ void RouteManager::finalize() {
         }
     }
     auto stopclock = high_resolution_clock::now();
-    stats_.finalizeMillis = formatElapsedTime(duration_cast<milliseconds>(stopclock - startclock).count());
+    stats_.finalizeMillis = duration_cast<milliseconds>(stopclock - startclock).count();
 }
 
 RouteManager::~RouteManager() {}

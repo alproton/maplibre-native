@@ -1589,6 +1589,8 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
         METHOD(&NativeMapView::getRenderingStats, "nativeGetRenderingStats"),
+        METHOD(&NativeMapView::routeSetVanishing, "nativeRouteSetVanishing"),
+        METHOD(&NativeMapView::routeGetVanishing, "nativeRouteGetVanishing"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
         METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
@@ -1649,11 +1651,14 @@ jint NativeMapView::routeCreate(JNIEnv& env,
             Result<Color> innerColorRes = colorConverter(env, innerColor);
             Result<Color> outerClipColorRes = colorConverter(env, outerClipColor);
             Result<Color> innerClipColorRes = colorConverter(env, innerClipColor);
+            // set alpha to 1 for all colors except for clip colors
             if (outerColorRes) {
-                routeOptions.outerColor = *outerColorRes;
+                const mbgl::Color& ocolor = *outerColorRes;
+                routeOptions.outerColor = {ocolor.r, ocolor.g, ocolor.b, 1.0f};
             }
             if (innerColorRes) {
-                routeOptions.innerColor = *innerColorRes;
+                const mbgl::Color& icolor = *innerColorRes;
+                routeOptions.innerColor = {icolor.r, icolor.g, icolor.b, 1.0f};
             }
             if (outerClipColorRes) {
                 routeOptions.outerClipColor = *outerClipColorRes;
@@ -1730,12 +1735,14 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
         Converter<mbgl::Color, int> colorConverter;
         Result<Color> innerSegmentColorRes = colorConverter(env, color);
         if (innerSegmentColorRes) {
-            rsegopts.color = *innerSegmentColorRes;
+            mbgl::Color isegcolor = *innerSegmentColorRes;
+            rsegopts.color = {isegcolor.r, isegcolor.g, isegcolor.b, 1.0f};
         }
 
         Result<Color> outerSegmentColorRes = colorConverter(env, outerColor);
         if (outerSegmentColorRes) {
-            rsegopts.outerColor = *outerSegmentColorRes;
+            mbgl::Color osegcolor = *outerSegmentColorRes;
+            rsegopts.outerColor = {osegcolor.r, osegcolor.g, osegcolor.b, 1.0f};
         }
 
         return routeMgr->routeSegmentCreate(RouteID(routeID), rsegopts);
@@ -1768,6 +1775,22 @@ void NativeMapView::routeSegmentsClear(JNIEnv& env, jint routeID) {
     if (routeMgr) {
         routeMgr->routeClearSegments(RouteID(routeID));
     }
+}
+
+jboolean NativeMapView::routeSetVanishing(JNIEnv& env, jni::jint routeID) {
+    if (routeMgr) {
+        return routeMgr->setVanishingRouteID(RouteID(routeID));
+    }
+
+    return false;
+}
+
+jint NativeMapView::routeGetVanishing(JNIEnv& env) {
+    if (routeMgr) {
+        return routeMgr->getVanishingRouteID().id;
+    }
+
+    return -1;
 }
 
 jboolean NativeMapView::routesFinalize(JNIEnv& env) {

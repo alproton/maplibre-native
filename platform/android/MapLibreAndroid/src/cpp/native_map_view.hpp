@@ -277,6 +277,10 @@ public:
     jint routeQueryRendered(JNIEnv& env, jni::jdouble screenSpaceX, jni::jdouble screenSpaceY, jni::jint radius);
 
     jboolean routesFinalize(JNIEnv& env);
+
+    jboolean routeSetVanishing(JNIEnv& env, jni::jint routeID);
+
+    jint routeGetVanishing(JNIEnv& env);
     //------------------------------------------------
 
     jni::Local<jni::String> getRenderingStats(JNIEnv& env, jni::jboolean oneline);

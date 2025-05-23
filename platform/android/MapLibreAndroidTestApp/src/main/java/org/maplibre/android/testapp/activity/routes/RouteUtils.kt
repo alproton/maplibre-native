@@ -146,17 +146,13 @@ class RouteUtils {
             Timber.tag("RouteProgress").i("getPoint: $point")
             val calculatedPercent = mapView.setRouteProgressPoint(routeID, point, progressPrecisionCoarse, false)
             Timber.tag("RouteProgress").i("inputPercent: $progress , calculatedPercent: $calculatedPercent")
-
-//            mapView.setCustomPuckState(point.latitude(), point.longitude(), 0.0, 1.0f, false)
-
         }
 
-        fun setPercentProgress(mapView: MapView, percent: Double) {
+        fun getPointProgress(progress: Double) : Point {
             val routeID = routeMap.keys.first()
             val routeCircle = routeMap[routeID]
-            if(routeCircle == null) return
 
-            mapView.setRouteProgressPercent(routeID, percent)
+            return routeCircle?.getPoint(progress)!!
         }
 
         fun addRoute(mapView : MapView) {
@@ -176,6 +172,10 @@ class RouteUtils {
 
             val routeID = mapView.createRoute(routeGeometry, routeOptions)
             mapView.finalizeRoutes()
+            //set the first routeID as the vanishing route
+            if  (routeMap.isEmpty()) {
+                mapView.setVanishingRoute(routeID)
+            }
             routeMap[routeID] = routeCircle
 
             addTrafficSegments(routeID, mapView)

@@ -37,27 +37,6 @@
                 tools:ignore="HardcodedText"/>
 
         <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/route_progress_text"
-                    android:text="Progress Mode "
-                    android:textColor="#000000"
-                    tools:ignore="HardcodedText"/>
-
-            <Spinner
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/route_progress_mode"
-                    android:background="@color/primary"
-            />
-
-        </LinearLayout>
-
-        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">

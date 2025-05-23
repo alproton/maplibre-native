@@ -17,6 +17,9 @@ public:
     // GLFWRendererBackend implementation
 public:
     mbgl::gfx::RendererBackend& getRendererBackend() override { return *this; }
+    virtual mbgl::gfx::CustomPuckState getCurrentCustomPuckState() const override;
+    virtual void setCustomPuckState(double lat, double lon, double bearing) override;
+    virtual void enableCustomPuck(bool onOff) override;
     mbgl::Size getSize() const override;
     void setSize(mbgl::Size) override;
 
@@ -27,6 +30,8 @@ public:
 protected:
     void activate() override;
     void deactivate() override;
+
+    mbgl::gfx::CustomPuckState customPuckState_;
 
     // mbgl::gl::RendererBackend implementation
 protected:
