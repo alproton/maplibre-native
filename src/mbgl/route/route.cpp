@@ -408,7 +408,18 @@ bool Route::hasRouteSegments() const {
 }
 
 bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
-    RouteSegment routeSeg(rsegopts, geometry_, intervalLengths_, totalLength_);
+    std::vector<double> normalizedPositions;
+    normalizedPositions.reserve(rsegopts.geometry.size());
+    for (const auto& segpt : rsegopts.geometry) {
+        if (std::isnan(segpt.x) || std::isnan(segpt.y)) {
+            Log::Error(Event::Route, "Route segment geometry contains NaN point");
+            return false;
+        }
+        double normalized = getProgressPercent(segpt, Precision::Fine, false);
+        normalizedPositions.push_back(normalized);
+    }
+    RouteSegment routeSeg(rsegopts, normalizedPositions);
+
     // client may send invalid segment geometry that is not on the route at all. only add valid segments with segment
     // positions lying on the route.
     if (routeSeg.getNormalizedPositions().empty()) return false;
@@ -524,7 +535,9 @@ std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& 
         colorStops[pre_pos] = routeColor;
         colorStops[firstPos] = sr.color;
         colorStops[lastPos] = sr.color;
-        colorStops[post_pos] = routeColor;
+        if (lastPos < 1.0) {
+            colorStops[post_pos] = routeColor;
+        }
     }
 
     if (colorStops.rbegin()->first != 1.0) {
