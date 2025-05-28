@@ -679,6 +679,12 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
     return distanceAlongRoute / totalLength_;
 }
 
+double Route::getProgressPassthrough(uint32_t intervalIndex, double intervalFraction) const {
+    double distanceAlongRoute = cumulativeIntervalDistances_[intervalIndex] +
+                                (intervalFraction * intervalLengths_[intervalIndex]);
+    return distanceAlongRoute / totalLength_;
+}
+
 double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool capture) {
     if (capture) {
         capturedNavStops_.push_back(queryPoint);

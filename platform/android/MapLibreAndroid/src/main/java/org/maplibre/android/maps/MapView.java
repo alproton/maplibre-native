@@ -507,6 +507,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     return nativeMapView.setRouteProgress(routeID, progress);
   }
 
+  public double setRouteProgressPassthrough(RouteID routeID, int segmentIndex, double segmentFraction) {
+    return nativeMapView.setRouteProgressPassthrough(routeID, segmentIndex, segmentFraction);
+  }
+
   /***
    * Gets the latest progress of the route on the map view.
    *

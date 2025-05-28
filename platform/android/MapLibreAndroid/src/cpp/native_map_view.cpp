@@ -1586,6 +1586,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeDispose, "nativeRouteDispose"),
         METHOD(&NativeMapView::routeProgressSet, "nativeRouteSetProgress"),
         METHOD(&NativeMapView::routeProgressSetPoint, "nativeRouteSetProgressPoint"),
+        METHOD(&NativeMapView::routeSetProgressPassthrough, "nativeRouteSetProgressPassthrough"),
         METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
         METHOD(&NativeMapView::getRenderingStats, "nativeGetRenderingStats"),
@@ -1683,6 +1684,17 @@ jint NativeMapView::routeCreate(JNIEnv& env,
     }
 
     return routeID.id;
+}
+
+jdouble NativeMapView::routeSetProgressPassthrough(JNIEnv& env,
+                                                   jni::jint routeID,
+                                                   jni::jint segmentIndex,
+                                                   jni::jdouble segmentFraction) {
+    if (routeMgr) {
+        return routeMgr->routeSetProgressPassthrough(RouteID(routeID), segmentIndex, segmentFraction);
+    }
+
+    return -1.0;
 }
 
 jni::Local<jni::String> NativeMapView::routeGetActiveLayerName(JNIEnv& env, const jint routeID) {

@@ -67,6 +67,7 @@ public:
                                  const Point<double>& progressPoint,
                                  const Precision& precision,
                                  bool capture = false);
+    double routeSetProgressPassthrough(const RouteID& routeID, uint32_t routeSegmentIndex, double routeSegmentFraction);
     Point<double> getPoint(const RouteID& routeID,
                            double percent,
                            const Precision& precision,

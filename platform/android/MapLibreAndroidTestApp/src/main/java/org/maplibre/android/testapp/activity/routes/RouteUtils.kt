@@ -148,6 +148,15 @@ class RouteUtils {
             Timber.tag("RouteProgress").i("inputPercent: $progress , calculatedPercent: $calculatedPercent")
         }
 
+        fun setPointProgressPassthrough(mapView: MapView, segmentIndex : Int, segmentFraction : Double) {
+            val routeID = routeMap.keys.first()
+            val routeCircle = routeMap[routeID]
+            if(routeCircle == null) return
+
+            val calculatedPercent = mapView.setRouteProgressPassthrough(routeID, segmentIndex, segmentFraction)
+            Timber.tag("RouteProgress").i("calculatedPercent: $calculatedPercent")
+        }
+
         fun getPointProgress(progress: Double) : Point {
             val routeID = routeMap.keys.first()
             val routeCircle = routeMap[routeID]

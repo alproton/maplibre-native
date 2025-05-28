@@ -49,6 +49,7 @@ public:
     double getTotalDistance() const;
     double getProgressPercent(const Point<double>& queryPoint, const Precision& precision, bool capture = false);
     Point<double> getPoint(double percent, const Precision& precision, double* bearing = nullptr) const;
+    double getProgressPassthrough(uint32_t intervalIndex, double intervalFraction) const;
 
     mbgl::LineString<double> getGeometry() const;
     bool hasRouteSegments() const;

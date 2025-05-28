@@ -34,7 +34,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
     private lateinit var maplibreMap : MapLibreMap
     private var progressPrecisionCoarse : Boolean = true
-    private val enableAutoVanishingRoute = true
+    private val enableAutoVanishingRoute = false
     private val useLocationEngine = false
     private var permissionsManager: PermissionsManager? = null
     private var locationManager : LocationManager? = null
@@ -104,15 +104,17 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
                 val pt : Point = RouteUtils.getPointProgress(progressPercent)
 
                 if(!enableAutoVanishingRoute) {
-                    RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
+                    //RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
+                    RouteUtils.setPointProgressPassthrough(mapView, 0, progressPercent)
+                    mapView.finalizeRoutes()
                 }
-                val location = Location(LocationManager.GPS_PROVIDER)
-                location.latitude = pt.latitude()
-                location.longitude = pt.longitude()
-                maplibreMap.locationComponent.forceLocationUpdate(location)
-
-                Timber.d("#####Set######## " + location.latitude.toString() + "  ,  " + location.longitude.toString())
-                mapView.finalizeRoutes()
+//                val location = Location(LocationManager.GPS_PROVIDER)
+//                location.latitude = pt.latitude()
+//                location.longitude = pt.longitude()
+//                maplibreMap.locationComponent.forceLocationUpdate(location)
+//
+//                Timber.d("#####Set######## " + location.latitude.toString() + "  ,  " + location.longitude.toString())
+//                mapView.finalizeRoutes()
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}

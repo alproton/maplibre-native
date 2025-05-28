@@ -266,6 +266,11 @@ public:
     jdouble routeProgressSetPoint(
         JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse, jni::jboolean capture);
 
+    jdouble routeSetProgressPassthrough(JNIEnv& env,
+                                        jni::jint routeID,
+                                        jni::jint segmentIndex,
+                                        jni::jdouble segmentFraction);
+
     void routeSegmentsClear(JNIEnv& env, jint routeID);
 
     jni::Local<jni::String> routesGetStats(JNIEnv& env);
