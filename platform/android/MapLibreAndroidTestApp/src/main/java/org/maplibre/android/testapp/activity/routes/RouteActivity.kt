@@ -34,7 +34,9 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapView: MapView
     private lateinit var maplibreMap : MapLibreMap
     private var progressPrecisionCoarse : Boolean = true
-    private val enableAutoVanishingRoute = true
+    private val enableAutoVanishingRoute = false
+    private val useProgressInMeters = true
+    private val useFractionalRouteSegments = true
     private val useLocationEngine = false
     private var permissionsManager: PermissionsManager? = null
     private var locationManager : LocationManager? = null
@@ -53,7 +55,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         //Add route
         val addRouteButton = findViewById<Button>(R.id.add_route)
         addRouteButton?.setOnClickListener {
-            RouteUtils.addRoute(mapView)
+            RouteUtils.addRoute(mapView, useFractionalRouteSegments)
 
             Toast.makeText(this, "Added Route", Toast.LENGTH_SHORT).show()
         }
@@ -104,8 +106,16 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
                 val pt : Point = RouteUtils.getPointProgress(progressPercent)
 
                 if(!enableAutoVanishingRoute) {
-                    RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
+                    if(useProgressInMeters) {
+                        val progressInMeters = progressPercent * RouteUtils.getTotalRouteLength()
+                        Timber.tag("RouteProgress").i("Progress in meters: $progressInMeters")
+                        RouteUtils.setPointProgressInMeters(mapView, progressInMeters)
+                    } else {
+                        RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
+                    }
+                    mapView.finalizeRoutes()
                 }
+
                 val location = Location(LocationManager.GPS_PROVIDER)
                 location.latitude = pt.latitude()
                 location.longitude = pt.longitude()

@@ -4,6 +4,7 @@
 #include <functional>
 
 #define INVALID_ID (uint32_t(~0))
+#define INVALID_UINT (uint32_t(~0))
 
 #define MAKEID_TYPE(name)                                          \
     typedef struct name {                                          \

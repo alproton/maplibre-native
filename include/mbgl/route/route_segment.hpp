@@ -2,6 +2,7 @@
 #include <mbgl/util/geometry.hpp>
 #include <mbgl/util/color.hpp>
 #include <memory>
+#include <mbgl/route/id_types.hpp>
 
 #pragma once
 
@@ -12,6 +13,11 @@ struct RouteSegmentOptions {
     Color color = Color(1.0f, 1.f, 1.0f, 1.0f);
     Color outerColor = Color(1.0f, 0.f, 0.0f, 1.0f);
     LineString<double> geometry;
+    uint32_t firstIndex = INVALID_UINT;
+    uint32_t lastIndex = INVALID_UINT;
+    // using float since google auto sdk provide floats for fractions
+    float firstIndexFraction = 0.0f;
+    float lastIndexFraction = 0.0f;
     uint32_t priority = 0;
 };
 

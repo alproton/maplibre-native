@@ -1208,6 +1208,15 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public boolean createRouteSegmentFractional(RouteID routeID, RouteSegmentOptions rsopts) {
+    if(routeID.isValid()) {
+        return nativeRouteSegmentCreateFractional(routeID.getId(), rsopts.firstIndex, rsopts.firstIndexFraction, rsopts.lastIndex, rsopts.lastIndexFraction, rsopts.color, rsopts.outerColor, rsopts.priority);
+    }
+
+    return false;
+  }
+
+  @Override
   public boolean setRouteProgress(RouteID routeID, double progress) {
     if(routeID.isValid()) {
       return nativeRouteSetProgress(routeID.getId(), progress);
@@ -1221,6 +1230,15 @@ final class NativeMapView implements NativeMap {
     if(routeID.isValid()) {
       return nativeRouteSetProgressPoint(routeID.getId(), point.longitude(), point.latitude(),
               coursePrecision, capture);
+    }
+
+    return -1.0;
+  }
+
+  @Override
+  public double setRouteProgressInMeters(RouteID routeID, double progressInMeters) {
+    if(routeID.isValid()) {
+      return nativeRouteSetProgressInMeters(routeID.getId(), progressInMeters);
     }
 
     return -1.0;
@@ -1697,10 +1715,16 @@ final class NativeMapView implements NativeMap {
   private native boolean nativeRouteSegmentCreate(int routeID, LineString segmentGeometry, int color, int outerColor, int priority);
 
   @Keep
+  private native boolean nativeRouteSegmentCreateFractional(int routeID, int firstIndex, float firstIndexFraction, int lastIndex, float lastIndexFraction, int color, int outerColor, int priority);
+
+  @Keep
   private native boolean nativeRouteSetProgress(int routeID, double progress);
 
   @Keep
   private native double nativeRouteSetProgressPoint(int routeID, double x, double y, boolean coursePrecision, boolean capture);
+
+  @Keep
+  private native double nativeRouteSetProgressInMeters(int routeID, double progressInMeters);
 
   @Keep
   private native void nativeRouteClearSegments(int routeID);

@@ -173,6 +173,10 @@ private:
     };
 
     struct TrafficBlock {
+        uint32_t firstIndex = INVALID_UINT;
+        float firstIndexFraction = 0.0f;
+        uint32_t lastIndex = INVALID_UINT;
+        float lastIndexFraction = 0.0f;
         mbgl::LineString<double> block;
         uint32_t priority = 0;
         mbgl::Color color;
