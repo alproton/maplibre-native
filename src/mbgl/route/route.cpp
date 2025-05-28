@@ -40,14 +40,22 @@ std::string tabs(uint32_t tabcount) {
        << std::to_string(rsopts.outerColor.g) << ", " << std::to_string(rsopts.outerColor.b) << ", "
        << std::to_string(rsopts.outerColor.a) << "]," << std::endl;
     ss << tabs(tabcount + 2) << "\"priority\" : " << std::to_string(rsopts.priority) << "," << std::endl;
-    ss << tabs(tabcount + 2) << "\"geometry\" : [" << std::endl;
-    for (size_t i = 0; i < rsopts.geometry.size(); i++) {
-        mbgl::Point<double> pt = rsopts.geometry[i];
-        std::string terminating = i == rsopts.geometry.size() - 1 ? "" : ",";
-        ss << tabs(tabcount + 3) << "[" << std::to_string(pt.x) << ", " << std::to_string(pt.y) << "]" << terminating
-           << std::endl;
+    ss << tabs(tabcount + 2) << "\"first_index\" : " << std::to_string(rsopts.firstIndex) << "," << std::endl;
+    ss << tabs(tabcount + 2) << "\"first_index_fraction\" : " << std::to_string(rsopts.firstIndexFraction) << ","
+       << std::endl;
+    ss << tabs(tabcount + 2) << "\"last_index\" : " << std::to_string(rsopts.lastIndex) << "," << std::endl;
+    ss << tabs(tabcount + 2) << "\"last_index_fraction\" : " << std::to_string(rsopts.lastIndexFraction) << std::endl;
+
+    if (!rsopts.geometry.empty()) {
+        ss << tabs(tabcount + 2) << "\"geometry\" : [" << std::endl;
+        for (size_t i = 0; i < rsopts.geometry.size(); i++) {
+            mbgl::Point<double> pt = rsopts.geometry[i];
+            std::string terminating = i == rsopts.geometry.size() - 1 ? "" : ",";
+            ss << tabs(tabcount + 3) << "[" << std::to_string(pt.x) << ", " << std::to_string(pt.y) << "]"
+               << terminating << std::endl;
+        }
+        ss << tabs(tabcount + 2) << "]," << std::endl; // end of options
     }
-    ss << tabs(tabcount + 2) << "]," << std::endl; // end of options
 
     ss << tabs(tabcount + 2) << "\"normalized_positions\" : [";
     for (size_t i = 0; i < normalizedPositions.size(); i++) {
@@ -407,17 +415,31 @@ bool Route::hasRouteSegments() const {
     return !segments_.empty();
 }
 
-bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
+bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts, bool useFractionalIndices) {
     std::vector<double> normalizedPositions;
-    normalizedPositions.reserve(rsegopts.geometry.size());
-    for (const auto& segpt : rsegopts.geometry) {
-        if (std::isnan(segpt.x) || std::isnan(segpt.y)) {
-            Log::Error(Event::Route, "Route segment geometry contains NaN point");
-            return false;
+    if (useFractionalIndices) {
+        const auto& getNormalizedPosition = [&](uint32_t index, float indexFraction) {
+            double indexDistanceAlongRoute = cumulativeIntervalDistances_[index] +
+                                             (indexFraction * intervalLengths_[index]);
+
+            double normalizedDistance = indexDistanceAlongRoute / totalLength_;
+            return normalizedDistance;
+        };
+
+        normalizedPositions = {getNormalizedPosition(rsegopts.firstIndex, rsegopts.firstIndexFraction),
+                               getNormalizedPosition(rsegopts.lastIndex, rsegopts.lastIndexFraction)};
+    } else {
+        normalizedPositions.reserve(rsegopts.geometry.size());
+        for (const auto& segpt : rsegopts.geometry) {
+            if (std::isnan(segpt.x) || std::isnan(segpt.y)) {
+                Log::Error(Event::Route, "Route segment geometry contains NaN point");
+                return false;
+            }
+            double normalized = getProgressPercent(segpt, Precision::Fine, false);
+            normalizedPositions.push_back(normalized);
         }
-        double normalized = getProgressPercent(segpt, Precision::Fine, false);
-        normalizedPositions.push_back(normalized);
     }
+
     RouteSegment routeSeg(rsegopts, normalizedPositions);
 
     // client may send invalid segment geometry that is not on the route at all. only add valid segments with segment
@@ -679,10 +701,8 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
     return distanceAlongRoute / totalLength_;
 }
 
-double Route::getProgressPassthrough(uint32_t intervalIndex, double intervalFraction) const {
-    double distanceAlongRoute = cumulativeIntervalDistances_[intervalIndex] +
-                                (intervalFraction * intervalLengths_[intervalIndex]);
-    return distanceAlongRoute / totalLength_;
+double Route::getProgressInMeters(double progressInMeters) const {
+    return progressInMeters / totalLength_;
 }
 
 double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool capture) {

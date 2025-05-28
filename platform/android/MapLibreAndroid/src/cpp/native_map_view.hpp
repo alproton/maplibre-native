@@ -261,15 +261,22 @@ public:
                                 jint outerColor,
                                 jint priority);
 
+    jboolean routeSegmentCreateFractional(JNIEnv& env,
+                                          jint routeID,
+                                          jni::jint firstIndex,
+                                          jni::jfloat firstFraction,
+                                          jni::jint lastIndex,
+                                          jni::jfloat lastFraction,
+                                          jint color,
+                                          jint outerColor,
+                                          jint priority);
+
     jboolean routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress);
 
     jdouble routeProgressSetPoint(
         JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse, jni::jboolean capture);
 
-    jdouble routeSetProgressPassthrough(JNIEnv& env,
-                                        jni::jint routeID,
-                                        jni::jint segmentIndex,
-                                        jni::jdouble segmentFraction);
+    jdouble routeSetProgressInMeters(JNIEnv& env, jni::jint routeID, jni::jdouble progressInMeters);
 
     void routeSegmentsClear(JNIEnv& env, jint routeID);
 

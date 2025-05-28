@@ -284,11 +284,13 @@ interface NativeMap {
 
   boolean createRouteSegment(RouteID routeID, RouteSegmentOptions rsopts);
 
+  boolean createRouteSegmentFractional(RouteID routeID, RouteSegmentOptions rsopts);
+
   boolean setRouteProgress(RouteID routeID, double progress);
 
   double setRouteProgressPoint(RouteID routeID, Point point, boolean coarsePrecision, boolean capture);
 
-  double setRouteProgressPassthrough(RouteID routeID, int segmentIndex, double segmentFraction);
+  double setRouteProgressInMeters(RouteID routeID, double progressInMeters);
 
   void clearRouteSegments(RouteID routeID);
 

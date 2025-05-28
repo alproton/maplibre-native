@@ -1586,9 +1586,10 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeDispose, "nativeRouteDispose"),
         METHOD(&NativeMapView::routeProgressSet, "nativeRouteSetProgress"),
         METHOD(&NativeMapView::routeProgressSetPoint, "nativeRouteSetProgressPoint"),
-        METHOD(&NativeMapView::routeSetProgressPassthrough, "nativeRouteSetProgressPassthrough"),
+        METHOD(&NativeMapView::routeSetProgressInMeters, "nativeRouteSetProgressInMeters"),
         METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
+        METHOD(&NativeMapView::routeSegmentCreateFractional, "nativeRouteSegmentCreateFractional"),
         METHOD(&NativeMapView::getRenderingStats, "nativeGetRenderingStats"),
         METHOD(&NativeMapView::routeSetVanishing, "nativeRouteSetVanishing"),
         METHOD(&NativeMapView::routeGetVanishing, "nativeRouteGetVanishing"),
@@ -1686,12 +1687,9 @@ jint NativeMapView::routeCreate(JNIEnv& env,
     return routeID.id;
 }
 
-jdouble NativeMapView::routeSetProgressPassthrough(JNIEnv& env,
-                                                   jni::jint routeID,
-                                                   jni::jint segmentIndex,
-                                                   jni::jdouble segmentFraction) {
+jdouble NativeMapView::routeSetProgressInMeters(JNIEnv& env, jni::jint routeID, jni::jdouble progressInMeters) {
     if (routeMgr) {
-        return routeMgr->routeSetProgressPassthrough(RouteID(routeID), segmentIndex, segmentFraction);
+        return routeMgr->routeSetProgressInMeters(RouteID(routeID), progressInMeters);
     }
 
     return -1.0;
@@ -1739,6 +1737,7 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
                                            jint outerColor,
                                            jint priority) {
     if (routeMgr) {
+        routeMgr->setUseRouteSegmentIndexFractions(false);
         using namespace mbgl::android::conversion;
         const auto& linestring = mbgl::android::geojson::LineString::convert(env, segmentGeom);
         mbgl::route::RouteSegmentOptions rsegopts;
@@ -1761,6 +1760,42 @@ jboolean NativeMapView::routeSegmentCreate(JNIEnv& env,
     }
 
     return false;
+}
+
+jboolean NativeMapView::routeSegmentCreateFractional(JNIEnv& env,
+                                                     jint routeID,
+                                                     jni::jint firstIndex,
+                                                     jni::jfloat firstFraction,
+                                                     jni::jint lastIndex,
+                                                     jni::jfloat lastFraction,
+                                                     jint color,
+                                                     jint outerColor,
+                                                     jint priority) {
+    if (routeMgr) {
+        routeMgr->setUseRouteSegmentIndexFractions(true);
+        using namespace mbgl::android::conversion;
+        mbgl::route::RouteSegmentOptions rsegopts;
+
+        rsegopts.firstIndex = static_cast<uint32_t>(firstIndex);
+        rsegopts.firstIndexFraction = firstFraction;
+        rsegopts.lastIndex = static_cast<uint32_t>(lastIndex);
+        rsegopts.lastIndexFraction = lastFraction;
+        rsegopts.priority = static_cast<uint32_t>(priority);
+        Converter<mbgl::Color, int> colorConverter;
+        Result<Color> innerSegmentColorRes = colorConverter(env, color);
+        if (innerSegmentColorRes) {
+            mbgl::Color isegcolor = *innerSegmentColorRes;
+            rsegopts.color = {isegcolor.r, isegcolor.g, isegcolor.b, 1.0f};
+        }
+
+        Result<Color> outerSegmentColorRes = colorConverter(env, outerColor);
+        if (outerSegmentColorRes) {
+            mbgl::Color osegcolor = *outerSegmentColorRes;
+            rsegopts.outerColor = {osegcolor.r, osegcolor.g, osegcolor.b, 1.0f};
+        }
+
+        return routeMgr->routeSegmentCreate(RouteID(routeID), rsegopts);
+    }
 }
 
 jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {
