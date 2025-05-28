@@ -1796,6 +1796,8 @@ jboolean NativeMapView::routeSegmentCreateFractional(JNIEnv& env,
 
         return routeMgr->routeSegmentCreate(RouteID(routeID), rsegopts);
     }
+
+    return false;
 }
 
 jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {

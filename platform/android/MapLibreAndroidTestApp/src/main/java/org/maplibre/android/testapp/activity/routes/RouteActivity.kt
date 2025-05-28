@@ -115,13 +115,14 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                     mapView.finalizeRoutes()
                 }
-//                val location = Location(LocationManager.GPS_PROVIDER)
-//                location.latitude = pt.latitude()
-//                location.longitude = pt.longitude()
-//                maplibreMap.locationComponent.forceLocationUpdate(location)
-//
-//                Timber.d("#####Set######## " + location.latitude.toString() + "  ,  " + location.longitude.toString())
-//                mapView.finalizeRoutes()
+
+                val location = Location(LocationManager.GPS_PROVIDER)
+                location.latitude = pt.latitude()
+                location.longitude = pt.longitude()
+                maplibreMap.locationComponent.forceLocationUpdate(location)
+
+                Timber.d("#####Set######## " + location.latitude.toString() + "  ,  " + location.longitude.toString())
+                mapView.finalizeRoutes()
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}

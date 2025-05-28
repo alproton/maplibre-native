@@ -16,8 +16,6 @@ namespace {
 const double EPSILON = 1e-8;
 const double HALF_EPSILON = EPSILON * 0.5;
 
-#define INVALID_UINT uint32_t(~0)
-
 std::string tabs(uint32_t tabcount) {
     std::string tabstr;
     for (size_t i = 0; i < tabcount; ++i) {
