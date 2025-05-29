@@ -263,8 +263,7 @@ public:
 
     jboolean routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress);
 
-    jdouble routeProgressSetPoint(
-        JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse, jni::jboolean capture);
+    jdouble routeProgressSetPoint(JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse);
 
     void routeSegmentsClear(JNIEnv& env, jint routeID);
 
@@ -281,6 +280,8 @@ public:
     jboolean routeSetVanishing(JNIEnv& env, jni::jint routeID);
 
     jint routeGetVanishing(JNIEnv& env);
+
+    void routeEnableCaptureNavStops(JNIEnv& env, jni::jboolean enable);
     //------------------------------------------------
 
     jni::Local<jni::String> getRenderingStats(JNIEnv& env, jni::jboolean oneline);
