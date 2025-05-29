@@ -144,7 +144,7 @@ class RouteUtils {
 
             val point = routeCircle.getPoint(progress)
             Timber.tag("RouteProgress").i("getPoint: $point")
-            val calculatedPercent = mapView.setRouteProgressPoint(routeID, point, progressPrecisionCoarse, false)
+            val calculatedPercent = mapView.setRouteProgressPoint(routeID, point, progressPrecisionCoarse)
             Timber.tag("RouteProgress").i("inputPercent: $progress , calculatedPercent: $calculatedPercent")
         }
 

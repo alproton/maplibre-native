@@ -1084,8 +1084,7 @@ void GLFWView::setPuckLocation(double lat, double lon, double bearing) {
     backend->setCustomPuckState(lat, lon, bearing);
     mbgl::Point<double> progressPt = {lon, lat};
     if (vanishingRouteID_.isValid()) {
-        double percent = rmptr_->routeSetProgressPoint(
-            vanishingRouteID_, progressPt, routeProgressPrecision_, captureNavPoints_);
+        double percent = rmptr_->routeSetProgressPoint(vanishingRouteID_, progressPt, routeProgressPrecision_);
         std::cout << "set puck location - percent: " << std::to_string(percent) << std::endl;
     }
 }
@@ -1324,7 +1323,7 @@ void GLFWView::incrementRouteProgress() {
             vanishingRouteID_, routeProgress_, routeProgressPrecision_, &bearing);
 
         if (!enableAutoVanishing) {
-            rmptr_->routeSetProgressPoint(vanishingRouteID_, progressPoint, routeProgressPrecision_, captureNavPoints_);
+            rmptr_->routeSetProgressPoint(vanishingRouteID_, progressPoint, routeProgressPrecision_);
             // std::cout << "Route progress: " << std::to_string(routeProgress_) << ", calculated percent: " <<
             // std::to_string(percentage) << std::endl;
             rmptr_->finalize();
@@ -1346,7 +1345,7 @@ void GLFWView::decrementRouteProgress() {
             vanishingRouteID_, routeProgress_, routeProgressPrecision_, &bearing);
 
         if (!enableAutoVanishing) {
-            rmptr_->routeSetProgressPoint(vanishingRouteID_, progressPoint, routeProgressPrecision_, captureNavPoints_);
+            rmptr_->routeSetProgressPoint(vanishingRouteID_, progressPoint, routeProgressPrecision_);
             rmptr_->finalize();
         }
         setPuckLocation(progressPoint.y, progressPoint.x, bearing);
