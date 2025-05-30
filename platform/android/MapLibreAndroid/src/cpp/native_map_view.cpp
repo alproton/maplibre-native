@@ -326,7 +326,7 @@ jni::Local<jni::String> NativeMapView::getStyleUrl(jni::JNIEnv& env) {
 
 void NativeMapView::setStyleUrl(jni::JNIEnv& env, const jni::String& url) {
     if (rendererFrontend) {
-        rendererFrontend->clearData();
+        rendererFrontend->onStyleChange();
     }
     map->getStyle().loadURL(jni::Make<std::string>(env, url));
     if (routeMgr) {
@@ -340,7 +340,7 @@ jni::Local<jni::String> NativeMapView::getStyleJson(jni::JNIEnv& env) {
 
 void NativeMapView::setStyleJson(jni::JNIEnv& env, const jni::String& json) {
     if (rendererFrontend) {
-        rendererFrontend->clearData();
+        rendererFrontend->onStyleChange();
     }
     map->getStyle().loadJSON(jni::Make<std::string>(env, json));
     if (routeMgr) {
@@ -1352,15 +1352,27 @@ void NativeMapView::addTileCacheSettings(JNIEnv& env,
                                          const jni::String& source,
                                          jni::jint minTiles,
                                          jni::jint maxTiles,
+                                         jni::jint minZoom,
+                                         jni::jint maxZoom,
                                          jni::jboolean aggressiveCache,
                                          jni::jboolean skipRelayoutClear) {
     mbgl::TileCacheSettings settings{};
     settings.source = jni::Make<std::string>(env, source);
     settings.minTiles = minTiles;
     settings.maxTiles = maxTiles;
+    settings.minZoom = minZoom;
+    settings.maxZoom = maxZoom;
     settings.aggressiveCache = aggressiveCache == jni::jni_true;
     settings.skipRelayoutClear = skipRelayoutClear == jni::jni_true;
     rendererFrontend->addTileCacheSettings(settings);
+}
+
+void NativeMapView::setBackgroundClearColor(JNIEnv&, jni::jint color) {
+    Converter<mbgl::Color, int> colorConverter;
+    Result<Color> c = colorConverter(env, color);
+    if (c) {
+        rendererFrontend->setBackgroundClearColor(*c);
+    }
 }
 
 void NativeMapView::setTileLodMinRadius(JNIEnv&, jni::jdouble radius) {
@@ -1570,6 +1582,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::setTileCacheEnabled, "nativeSetTileCacheEnabled"),
         METHOD(&NativeMapView::getTileCacheEnabled, "nativeGetTileCacheEnabled"),
         METHOD(&NativeMapView::addTileCacheSettings, "nativeAddTileCacheSettings"),
+        METHOD(&NativeMapView::setBackgroundClearColor, "nativeSetBackgroundClearColor"),
         METHOD(&NativeMapView::triggerRepaint, "nativeTriggerRepaint"),
         METHOD(&NativeMapView::setTileLodMinRadius, "nativeSetTileLodMinRadius"),
         METHOD(&NativeMapView::getTileLodMinRadius, "nativeGetTileLodMinRadius"),

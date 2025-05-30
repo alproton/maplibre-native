@@ -416,7 +416,9 @@ std::unique_ptr<RenderTree> RenderOrchestrator::createRenderTree(
             if (layerIsVisible && zoomFitsLayer && sourceImpl.get() == sourceImpls->at(0).get()) {
                 if (backgroundLayerAsColor && layer.baseImpl == layerImpls->front()) {
                     const auto& solidBackground = layer.getSolidBackground();
-                    if (solidBackground) {
+                    if (updateParameters->backgroundClearColor) {
+                        renderTreeParameters->backgroundColor = *updateParameters->backgroundClearColor;
+                    } else if (solidBackground) {
                         renderTreeParameters->backgroundColor = *solidBackground;
                         continue; // This layer is shown with background color,
                                   // and it shall not be added to render items.
@@ -875,6 +877,14 @@ bool RenderOrchestrator::isLoaded() const {
     return true;
 }
 
+void RenderOrchestrator::onStyleChange() {
+    MLN_TRACE_FUNC();
+
+    for (auto& source : renderSources) {
+        source.second->onStyleChange();
+    }
+}
+
 void RenderOrchestrator::clearData() {
     MLN_TRACE_FUNC();
 
@@ -993,6 +1003,21 @@ void RenderOrchestrator::updateLayers(gfx::ShaderRegistry& shaders,
 
     std::vector<std::unique_ptr<ChangeRequest>> changes;
     changes.reserve(items.size() * 3);
+
+    if (updateParameters->backgroundClearColor) {
+        std::vector<RenderTiles> backgroundRenderTiles;
+        for (const auto& item : items) {
+            const auto& renderLayer = item.layer.get();
+            RenderTiles tiles = renderLayer.getBackGroundRenderTiles();
+            if (tiles != nullptr) {
+                backgroundRenderTiles.push_back(std::move(tiles));
+            }
+        }
+        for (const auto& item : items) {
+            auto& renderLayer = item.layer.get();
+            renderLayer.setBackGroundRenderTiles(backgroundRenderTiles);
+        }
+    }
 
     for (const auto& item : items) {
         auto& renderLayer = item.layer.get();

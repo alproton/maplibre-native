@@ -840,8 +840,18 @@ final class NativeMapView implements NativeMap {
     nativeAddTileCacheSettings(settings.source,
                                settings.minTiles,
                                settings.maxTiles,
+                               settings.minZoom,
+                               settings.maxZoom,
                                settings.aggressiveCache,
                                settings.skipRelayoutClear);
+  }
+
+  @Override
+  public void setBackgroundClearColor(int color) {
+    if (checkState("setBackgroundClearColor")) {
+      return;
+    }
+    nativeSetBackgroundClearColor(color);
   }
 
   @Override
@@ -1949,8 +1959,13 @@ final class NativeMapView implements NativeMap {
   private native void nativeAddTileCacheSettings(String source,
                                                  int minTiles,
                                                  int maxTiles,
+                                                 int minZoom,
+                                                 int maxZoom,
                                                  boolean aggressiveCache,
                                                  boolean skipRelayoutClear);
+
+  @Keep
+  private native void nativeSetBackgroundClearColor(int color);
 
   @Keep
   private native int nativeGetPrefetchZoomDelta();

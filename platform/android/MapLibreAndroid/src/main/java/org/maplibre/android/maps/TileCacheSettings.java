@@ -17,6 +17,16 @@ final public class TileCacheSettings {
     public int maxTiles;
 
     /***
+     * Zoom below minZoom will not be cached
+     */
+    public int minZoom;
+
+    /***
+     * Zoom above maxZoom will not be cached
+     */
+    public int maxZoom;
+
+    /***
      * If true, tiles that are not ideal are also cached
      * Check update_renderables.hpp for details about ideal tiles
      */
