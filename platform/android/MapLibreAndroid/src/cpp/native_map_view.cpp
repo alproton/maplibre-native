@@ -1352,15 +1352,27 @@ void NativeMapView::addTileCacheSettings(JNIEnv& env,
                                          const jni::String& source,
                                          jni::jint minTiles,
                                          jni::jint maxTiles,
+                                         jni::jint minZoom,
+                                         jni::jint maxZoom,
                                          jni::jboolean aggressiveCache,
                                          jni::jboolean skipRelayoutClear) {
     mbgl::TileCacheSettings settings{};
     settings.source = jni::Make<std::string>(env, source);
     settings.minTiles = minTiles;
     settings.maxTiles = maxTiles;
+    settings.minZoom = minZoom;
+    settings.maxZoom = maxZoom;
     settings.aggressiveCache = aggressiveCache == jni::jni_true;
     settings.skipRelayoutClear = skipRelayoutClear == jni::jni_true;
     rendererFrontend->addTileCacheSettings(settings);
+}
+
+void NativeMapView::setBackgroundClearColor(JNIEnv&, jni::jint color) {
+    auto c = static_cast<uint32_t>(color);
+    float r = static_cast<float>((c >> 16) & 0xFF) / 255.0f;
+    float g = static_cast<float>((c >> 8) & 0xFF) / 255.0f;
+    float b = static_cast<float>(c & 0xFF) / 255.0f;
+    rendererFrontend->setBackgroundClearColor(Color(r, g, b, 1));
 }
 
 void NativeMapView::setTileLodMinRadius(JNIEnv&, jni::jdouble radius) {
@@ -1570,6 +1582,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::setTileCacheEnabled, "nativeSetTileCacheEnabled"),
         METHOD(&NativeMapView::getTileCacheEnabled, "nativeGetTileCacheEnabled"),
         METHOD(&NativeMapView::addTileCacheSettings, "nativeAddTileCacheSettings"),
+        METHOD(&NativeMapView::setBackgroundClearColor, "nativeSetBackgroundClearColor"),
         METHOD(&NativeMapView::triggerRepaint, "nativeTriggerRepaint"),
         METHOD(&NativeMapView::setTileLodMinRadius, "nativeSetTileLodMinRadius"),
         METHOD(&NativeMapView::getTileLodMinRadius, "nativeGetTileLodMinRadius"),

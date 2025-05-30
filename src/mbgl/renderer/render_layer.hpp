@@ -96,6 +96,10 @@ protected:
 public:
     virtual ~RenderLayer() = default;
 
+    virtual RenderTiles getBackGroundRenderTiles() const { return nullptr; }
+
+    virtual void setBackGroundRenderTiles(std::vector<RenderTiles>) {}
+
     // Begin transitions for any properties that have changed since the last frame.
     virtual void transition(const TransitionParameters&) = 0;
 
@@ -278,6 +282,7 @@ protected:
 protected:
     // Stores current set of tiles to be rendered for this layer.
     RenderTiles renderTiles;
+    std::vector<RenderTiles> backgroundRenderTiles;
 
     // Retains ownership of tiles
     Immutable<std::vector<RenderTile>> renderTilesOwner;

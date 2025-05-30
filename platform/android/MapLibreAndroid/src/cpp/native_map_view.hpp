@@ -361,7 +361,10 @@ public:
 
     jni::jboolean getTileCacheEnabled(JNIEnv&);
 
-    void addTileCacheSettings(JNIEnv&, const jni::String&, jni::jint, jni::jint, jni::jboolean, jni::jboolean);
+    void addTileCacheSettings(
+        JNIEnv&, const jni::String&, jni::jint, jni::jint, jni::jint, jni::jint, jni::jboolean, jni::jboolean);
+
+    void setBackgroundClearColor(JNIEnv&, jni::jint);
 
     void setTileLodMinRadius(JNIEnv&, jni::jdouble);
 
