@@ -4,11 +4,13 @@
 #include <mbgl/annotation/annotation.hpp>
 #include <mbgl/renderer/renderer_frontend.hpp>
 #include <mbgl/renderer/tile_cache_settings.hpp>
+#include <mbgl/util/color.hpp>
 #include <mbgl/util/geo.hpp>
 #include <mbgl/util/run_loop.hpp>
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <string>
 #include <mbgl/util/geojson.hpp>
@@ -34,6 +36,7 @@ public:
     ~AndroidRendererFrontend() override;
 
     void clearData();
+    void onStyleChange();
 
     void reset() override;
     void setObserver(RendererObserver&) override;
@@ -62,11 +65,14 @@ public:
     void addTileCacheSettings(const TileCacheSettings& settings);
     void reduceMemoryUse();
 
+    void setBackgroundClearColor(const Color& color) { backgroundClearColor = color; }
+
 private:
     MapRenderer& mapRenderer;
     util::RunLoop* mapRunLoop;
     std::unique_ptr<util::AsyncTask> updateAsyncTask;
     std::shared_ptr<UpdateParameters> updateParams;
+    std::optional<Color> backgroundClearColor;
 };
 
 } // namespace android

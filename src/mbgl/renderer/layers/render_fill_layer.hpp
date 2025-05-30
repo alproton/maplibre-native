@@ -36,6 +36,8 @@ public:
     explicit RenderFillLayer(Immutable<style::FillLayer::Impl>);
     ~RenderFillLayer() override;
 
+    RenderTiles getBackGroundRenderTiles() const override { return renderTiles; }
+
 #if MLN_DRAWABLE_RENDERER
     /// Generate any changes needed by the layer
     void update(gfx::ShaderRegistry&,

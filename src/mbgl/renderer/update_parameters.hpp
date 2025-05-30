@@ -8,9 +8,11 @@
 #include <mbgl/style/source.hpp>
 #include <mbgl/style/layer.hpp>
 #include <mbgl/util/chrono.hpp>
+#include <mbgl/util/color.hpp>
 #include <mbgl/util/immutable.hpp>
 
 #include <numbers>
+#include <optional>
 #include <vector>
 
 #include <mapbox/std/weak.hpp>
@@ -51,6 +53,8 @@ public:
     double tileLodScale = 1;
     double tileLodPitchThreshold = (60.0 / 180.0) * std::numbers::pi;
     MapLodShift tileLodZoomShift;
+
+    std::optional<Color> backgroundClearColor;
 };
 
 } // namespace mbgl

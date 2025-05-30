@@ -245,6 +245,10 @@ final class SymbolLocationLayerRenderer implements LocationLayerRenderer {
   }
 
   private void setLayerVisibility(@NonNull String layerId, boolean visible) {
+    if (!style.isFullyLoaded()) {
+      // workaround for https://github.com/maplibre/maplibre-native/issues/3506
+      return; // Application will set the right visibility after the style is loaded
+    }
     Layer layer = style.getLayer(layerId);
     if (layer != null) {
       String targetVisibility = visible ? VISIBLE : NONE;

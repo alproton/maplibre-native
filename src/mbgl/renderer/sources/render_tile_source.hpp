@@ -54,6 +54,8 @@ public:
     void reduceMemoryUse() override;
     void dumpDebugLogs() const override;
 
+    void onStyleChange() override { tilePyramid.onStyleChange(); }
+
 protected:
     RenderTileSource(Immutable<style::Source::Impl>, const TaggedScheduler&);
     TilePyramid tilePyramid;

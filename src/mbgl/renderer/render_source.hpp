@@ -113,6 +113,8 @@ public:
 
     virtual uint8_t getMaxZoom() const;
 
+    virtual void onStyleChange() {};
+
     void setObserver(RenderSourceObserver*);
 
     Immutable<style::Source::Impl> baseImpl;
