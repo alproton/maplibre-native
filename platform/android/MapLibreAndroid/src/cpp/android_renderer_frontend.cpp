@@ -4,6 +4,7 @@
 #include <mbgl/actor/scheduler.hpp>
 #include <mbgl/renderer/renderer.hpp>
 #include <mbgl/renderer/renderer_observer.hpp>
+#include <mbgl/renderer/update_parameters.hpp>
 #include <mbgl/util/async_task.hpp>
 #include <mbgl/util/geojson.hpp>
 #include <mbgl/util/instrumentation.hpp>
@@ -116,6 +117,9 @@ void AndroidRendererFrontend::setObserver(RendererObserver& observer) {
 void AndroidRendererFrontend::update(std::shared_ptr<UpdateParameters> params) {
     MLN_TRACE_FUNC();
     updateParams = std::move(params);
+    if (updateParams) {
+        updateParams->backgroundClearColor = backgroundClearColor;
+    }
     updateAsyncTask->send();
 }
 

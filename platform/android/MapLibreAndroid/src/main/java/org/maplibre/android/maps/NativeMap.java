@@ -243,6 +243,8 @@ interface NativeMap {
 
   void addTileCacheSettings(TileCacheSettings settings);
 
+  void setBackgroundClearColor(float r, float g, float b);
+
   void setTileLodMinRadius(double radius);
 
   double getTileLodMinRadius();

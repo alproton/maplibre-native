@@ -1363,6 +1363,10 @@ void NativeMapView::addTileCacheSettings(JNIEnv& env,
     rendererFrontend->addTileCacheSettings(settings);
 }
 
+void NativeMapView::setBackgroundClearColor(JNIEnv&, jni::jfloat r, jni::jfloat g, jni::jfloat b) {
+    rendererFrontend->setBackgroundClearColor(Color(r, g, b, 1));
+}
+
 void NativeMapView::setTileLodMinRadius(JNIEnv&, jni::jdouble radius) {
     map->setTileLodMinRadius(radius);
 }
@@ -1570,6 +1574,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::setTileCacheEnabled, "nativeSetTileCacheEnabled"),
         METHOD(&NativeMapView::getTileCacheEnabled, "nativeGetTileCacheEnabled"),
         METHOD(&NativeMapView::addTileCacheSettings, "nativeAddTileCacheSettings"),
+        METHOD(&NativeMapView::setBackgroundClearColor, "nativeSetBackgroundClearColor"),
         METHOD(&NativeMapView::triggerRepaint, "nativeTriggerRepaint"),
         METHOD(&NativeMapView::setTileLodMinRadius, "nativeSetTileLodMinRadius"),
         METHOD(&NativeMapView::getTileLodMinRadius, "nativeGetTileLodMinRadius"),

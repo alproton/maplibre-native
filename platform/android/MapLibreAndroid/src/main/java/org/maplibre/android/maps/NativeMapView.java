@@ -845,6 +845,14 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public void setBackgroundClearColor(float r, float g, float b) {
+    if (checkState("setBackgroundClearColor")) {
+      return;
+    }
+    nativeSetBackgroundClearColor(r, g, b);
+  }
+
+  @Override
   public void setTileLodMinRadius(double radius) {
     if (checkState("setTileLodMinRadius")) {
       return;
@@ -1931,6 +1939,9 @@ final class NativeMapView implements NativeMap {
                                                  int maxTiles,
                                                  boolean aggressiveCache,
                                                  boolean skipRelayoutClear);
+
+  @Keep
+  private native void nativeSetBackgroundClearColor(float r, float g, float b);
 
   @Keep
   private native int nativeGetPrefetchZoomDelta();
