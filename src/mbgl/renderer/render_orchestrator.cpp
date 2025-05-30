@@ -188,6 +188,9 @@ std::unique_ptr<RenderTree> RenderOrchestrator::createRenderTree(
     PropertyEvaluationParameters evaluationParameters{zoomHistory, updateParameters->timePoint, transitionDuration};
     evaluationParameters.zoomChanged = zoomChanged;
 
+    bool newStyleLoaded = !updateParameters->styleLoaded || !prevStyleLoaded;
+    prevStyleLoaded = updateParameters->styleLoaded;
+
     const TileParameters tileParameters{updateParameters->pixelRatio,
                                         updateParameters->debugOptions,
                                         updateParameters->transformState,
@@ -201,7 +204,8 @@ std::unique_ptr<RenderTree> RenderOrchestrator::createRenderTree(
                                         updateParameters->tileLodMinRadius,
                                         updateParameters->tileLodScale,
                                         updateParameters->tileLodPitchThreshold,
-                                        updateParameters->tileLodZoomShift};
+                                        updateParameters->tileLodZoomShift,
+                                        newStyleLoaded};
 
     glyphManager->setURL(updateParameters->glyphURL);
 

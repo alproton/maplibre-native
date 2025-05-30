@@ -50,7 +50,7 @@ constexpr uint64_t DEFAULT_MAX_CACHE_SIZE = 50 * 1024 * 1024;
 // Average sprite size with 1.0 pixel ratio is ~2kB, 8kB for pixel ratio of 2.0.
 constexpr std::size_t DEFAULT_ON_DEMAND_IMAGES_CACHE_SIZE = 100 * 8192;
 
-constexpr Duration DEFAULT_TRANSITION_DURATION = Milliseconds(300);
+constexpr Duration DEFAULT_TRANSITION_DURATION = Milliseconds(0); // Milliseconds(300);
 constexpr Seconds CLOCK_SKEW_RETRY_TIMEOUT{30};
 
 constexpr UnitBezier DEFAULT_TRANSITION_EASE = {0, 0, 0.25, 1};

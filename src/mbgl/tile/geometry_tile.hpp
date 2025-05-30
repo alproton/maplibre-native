@@ -44,7 +44,7 @@ public:
     void reset();
 
     std::unique_ptr<TileRenderData> createRenderData() override;
-    void setLayers(const std::vector<Immutable<style::LayerProperties>>&) override;
+    void setLayers(const std::vector<Immutable<style::LayerProperties>>&, bool) override;
     void setShowCollisionBoxes(bool showCollisionBoxes) override;
 
     void onGlyphsAvailable(GlyphMap) override;
@@ -68,25 +68,6 @@ public:
     float getQueryPadding(const std::unordered_map<std::string, const RenderLayer*>&) override;
 
     void cancel() override;
-
-    class LayoutResult {
-    public:
-        mbgl::unordered_map<std::string, LayerRenderData> layerRenderData;
-        std::shared_ptr<FeatureIndex> featureIndex;
-        std::optional<AlphaImage> glyphAtlasImage;
-        ImageAtlas iconAtlas;
-
-        LayerRenderData* getLayerRenderData(const style::Layer::Impl&);
-
-        LayoutResult(mbgl::unordered_map<std::string, LayerRenderData> renderData_,
-                     std::unique_ptr<FeatureIndex> featureIndex_,
-                     std::optional<AlphaImage> glyphAtlasImage_,
-                     ImageAtlas iconAtlas_)
-            : layerRenderData(std::move(renderData_)),
-              featureIndex(std::move(featureIndex_)),
-              glyphAtlasImage(std::move(glyphAtlasImage_)),
-              iconAtlas(std::move(iconAtlas_)) {}
-    };
     void onLayout(std::shared_ptr<LayoutResult>, uint64_t correlationID);
 
     void onError(std::exception_ptr, uint64_t correlationID);

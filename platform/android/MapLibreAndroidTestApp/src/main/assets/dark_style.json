@@ -1,0 +1,6523 @@
+{
+  "metadata": {
+    "openmaptiles:version": "3.x",
+    "maputnik:renderer": "mbgljs",
+    "maputnik:license": "https://github.com/maputnik/osm-liberty/blob/gh-pages/LICENSE.md"
+  },
+  "sources": {
+    "feature_tiles": {
+      "maxzoom": 19,
+      "type": "vector",
+      "url": "https://maptiles.dev.ue1.vcs.goriv.co/tiling/spec.json"
+    },
+    "hillshade": {
+      "tiles": ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+      "maxzoom": 14,
+      "type": "raster-dem",
+      "encoding": "terrarium",
+      "minzoom": 0
+    },
+    "traffic_tiles": {
+      "maxzoom": 19,
+      "type": "vector",
+      "url": "https://maptiles.dev.ue1.vcs.goriv.co/tiling/trafficspec.json"
+    }
+  },
+  "name": "RivianAutoSdk",
+  "sprite": "https://static.rivianservices.com/mapping/static/maplibre/0.0.17/sprites/night/sprites",
+  "layers": [
+    {
+      "layout": {"visibility": "visible"},
+      "paint": {"background-color": {"stops": [
+        [
+          6,
+          "rgba(30, 41, 37, 1)"
+        ],
+        [
+          10,
+          "rgba(30, 41, 37, 1)"
+        ]
+      ]}},
+      "id": "background",
+      "type": "background"
+    },
+    {
+      "paint": {
+        "fill-color": "rgba(255, 255, 255, 0.7)",
+        "fill-opacity": 1,
+        "fill-antialias": false
+      },
+      "id": "ice areas",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ICE_AREAS",
+      "type": "fill"
+    },
+    {
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(38, 46, 42, 1)",
+        "fill-opacity": 0.4,
+        "fill-antialias": false
+      },
+      "id": "natural tundra",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_TUNDRA_AREAS",
+      "type": "fill"
+    },
+    {
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(17, 21, 24, 1)",
+        "fill-opacity": 0.4,
+        "fill-antialias": false
+      },
+      "id": "natural shrub",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_SHRUB_AREAS",
+      "type": "fill"
+    },
+    {
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(32, 36, 29, 1)",
+        "fill-opacity": 0.3,
+        "fill-antialias": false
+      },
+      "id": "natural sand",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_SAND_AREAS",
+      "type": "fill"
+    },
+    {
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(26, 40, 32, 1)",
+        "fill-opacity": 0.4,
+        "fill-antialias": false
+      },
+      "id": "natural forest",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_MIXED_FOREST_AREAS",
+      "type": "fill"
+    },
+    {
+      "layout": {"visibility": "none"},
+      "paint": {
+        "fill-color": {"stops": [
+          [
+            12,
+            "rgba(21, 27, 34, 1)"
+          ],
+          [
+            15,
+            "rgba(21, 27, 34, 1)"
+          ]
+        ]},
+        "fill-antialias": false
+      },
+      "id": "$DD - urban area",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_URBAN_AREA_AREAS",
+      "type": "fill"
+    },
+    {
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": {"stops": [
+          [
+            12,
+            "rgba(21, 27, 34, 1)"
+          ],
+          [
+            22,
+            "rgba(21, 27, 34, 1)"
+          ]
+        ]},
+        "fill-antialias": false
+      },
+      "id": "$CD - urban area",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_URBAN_AREA_AREAS",
+      "type": "fill"
+    },
+    {
+      "filter": ["all"],
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(41, 33, 34, 1)",
+        "fill-opacity": 0.4,
+        "fill-antialias": false
+      },
+      "id": "poi area hospital",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_HOSPITAL_AREAS",
+      "type": "fill"
+    },
+    {
+      "filter": ["all"],
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(44, 51, 57, 1)",
+        "fill-opacity": 0.5,
+        "fill-antialias": false
+      },
+      "id": "poi area parking lot",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_PARKING_LOT_AREAS",
+      "type": "fill"
+    },
+    {
+      "layout": {"visibility": "visible"},
+      "maxzoom": 19,
+      "paint": {
+        "hillshade-illumination-direction": 60,
+        "hillshade-shadow-color": {"stops": [
+          [
+            10,
+            "rgba(23, 26, 23, 1)"
+          ],
+          [
+            16,
+            "rgba(17, 22, 28, 1)"
+          ]
+        ]},
+        "hillshade-accent-color": {"stops": [
+          [
+            10,
+            "rgba(42, 51, 47, 1)"
+          ],
+          [
+            16,
+            "rgba(17, 22, 28, 1)"
+          ]
+        ]},
+        "hillshade-highlight-color": {"stops": [
+          [
+            10,
+            "rgba(42, 51, 47, 1)"
+          ],
+          [
+            16,
+            "rgba(17, 22, 28, 1)"
+          ]
+        ]},
+        "hillshade-exaggeration": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          13,
+          0.8,
+          14,
+          0.5,
+          15,
+          0.5
+        ]
+      },
+      "id": "hillshading",
+      "source": "hillshade",
+      "type": "hillshade"
+    },
+    {
+      "filter": [
+        "any",
+        [
+          "==",
+          "type",
+          "FEATURE_TYPE_PARK"
+        ],
+        [
+          "==",
+          "type",
+          "FEATURE_TYPE_ZOO"
+        ]
+      ],
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": {"stops": [
+          [
+            6,
+            "rgba(30, 41, 37, 1)"
+          ],
+          [
+            12,
+            "rgba(30, 41, 37, 1)"
+          ]
+        ]},
+        "fill-opacity": 0.8,
+        "fill-antialias": false,
+        "fill-translate-anchor": "map"
+      },
+      "id": "outdoor area",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_OUTDOOR_AREA_AREAS",
+      "type": "fill"
+    },
+    {
+      "filter": ["all"],
+      "layout": {"visibility": "visible"},
+      "paint": {"fill-color": "rgba(21, 30, 29, 1)"},
+      "id": "outdoor area golf course",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_GOLF_COURSE_AREAS",
+      "type": "fill",
+      "fill-antialias": false
+    },
+    {
+      "filter": ["all"],
+      "layout": {"visibility": "visible"},
+      "paint": {"fill-color": "rgba(38, 43, 42, 1)"},
+      "id": "outdoor area beach",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_BEACH_AREAS",
+      "type": "fill",
+      "fill-antialias": false
+    },
+    {
+      "filter": ["all"],
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(27, 34, 39, 1)",
+        "fill-antialias": false
+      },
+      "id": "outdoor area airport",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_AIRPORT_AREAS",
+      "type": "fill"
+    },
+    {
+      "filter": ["all"],
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(33, 39, 43, 1)",
+        "fill-antialias": false
+      },
+      "id": "outdoor area tarmac",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_TARMAC_AREAS",
+      "type": "fill"
+    },
+    {
+      "filter": ["all"],
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(29, 41, 39, 1)",
+        "fill-antialias": false
+      },
+      "id": "outdoor area sports field",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_SPORTS_FIELD_AREAS",
+      "type": "fill"
+    },
+    {
+      "filter": ["all"],
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(237, 233, 212, 1)",
+        "fill-opacity": 0.4,
+        "fill-antialias": false
+      },
+      "id": "poi area school",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_SCHOOL_AREAS",
+      "type": "fill"
+    },
+    {
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(11, 18, 25, 1)",
+        "fill-antialias": false
+      },
+      "id": "water areas",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_WATER_AREAS",
+      "type": "fill"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-width": {"stops": [
+          [
+            12,
+            0.6
+          ],
+          [
+            14,
+            3.6
+          ],
+          [
+            18,
+            8
+          ]
+        ]},
+        "line-color": "rgba(19, 35, 52, 1)"
+      },
+      "id": "water lines",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_WATER_LINES",
+      "type": "line"
+    },
+    {
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "fill-color": "rgba(25, 33, 41, 1)",
+        "fill-antialias": false
+      },
+      "id": "building area",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_BUILDING_AREAS",
+      "type": "fill"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "isFerry",
+          true
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "maxzoom": 22,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          14,
+          1,
+          20,
+          8
+        ],
+        "line-offset": 0,
+        "line-opacity": 0.5,
+        "line-dasharray": [
+          "step",
+          ["zoom"],
+          [
+            "literal",
+            [
+              1,
+              0
+            ]
+          ],
+          13,
+          [
+            "literal",
+            [
+              12,
+              4
+            ]
+          ]
+        ],
+        "line-color": "rgba(46, 86, 132, 1)"
+      },
+      "id": "ferries",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line",
+      "minzoom": 13
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "priority",
+          "ROAD_PRIORITY_NON_TRAFFIC"
+        ],
+        [
+          "!=",
+          "usageCategory",
+          "TRAIL"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-join": "round",
+        "line-cap": "square"
+      },
+      "paint": {
+        "line-translate-anchor": "map",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          14.5,
+          2,
+          16.5,
+          4,
+          17.5,
+          6,
+          19,
+          12,
+          20,
+          26
+        ],
+        "line-color": "rgba(40, 50, 59, 1)"
+      },
+      "id": "road non-traffic",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line",
+      "minzoom": 14
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "usageCategory",
+          "TRAIL"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-translate-anchor": "map",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          14.5,
+          2,
+          16.5,
+          4,
+          17.5,
+          6,
+          19,
+          12,
+          20,
+          26
+        ],
+        "line-opacity": 1,
+        "line-color": {"stops": [
+          [
+            14,
+            "rgba(29, 37, 25, 1)"
+          ],
+          [
+            18,
+            "rgba(56, 50, 39, 1)"
+          ]
+        ]}
+      },
+      "id": "road non-traffic-TRAIL",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line",
+      "minzoom": 12
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "elevationCategory",
+          "TUNNEL"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 23,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.2
+          ],
+          ["zoom"],
+          10,
+          1.2,
+          18,
+          2.4
+        ],
+        "line-gap-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          10,
+          1.6,
+          18,
+          34
+        ],
+        "line-dasharray": [
+          3,
+          3
+        ],
+        "line-color": "rgba(18, 23, 29, 1)"
+      },
+      "id": "road minor arterial-tunnel-case",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line",
+      "minzoom": 0
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "elevationCategory",
+          "TUNNEL"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 23,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          10,
+          3,
+          12,
+          5,
+          18,
+          32
+        ],
+        "line-color": "rgba(39, 44, 49, 1)"
+      },
+      "id": "road minor arterial-tunnel",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line",
+      "minzoom": 0
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "priority",
+          "ROAD_PRIORITY_TERMINAL"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.5,
+          15,
+          6,
+          16,
+          8,
+          18,
+          16,
+          20,
+          44
+        ],
+        "line-color": "rgba(18, 23, 29, 1)"
+      },
+      "id": "road terminal-case",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "priority",
+          "ROAD_PRIORITY_TERMINAL"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.5,
+          14,
+          2,
+          18,
+          12,
+          20,
+          40
+        ],
+        "line-color": "rgba(40, 50, 59, 1)"
+      },
+      "id": "road terminal",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "priority",
+          "ROAD_PRIORITY_LIMITED_ACCESS"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          5,
+          18,
+          42
+        ],
+        "line-color": "rgba(18, 23, 29, 1)"
+      },
+      "id": "road limited access-case",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "priority",
+          "ROAD_PRIORITY_LIMITED_ACCESS"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          1.25,
+          18,
+          32
+        ],
+        "line-color": "rgba(51, 63, 77, 1)"
+      },
+      "id": "road limited access",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line"
+    },
+    {
+      "filter": [
+        "any",
+        [
+          "all",
+          [
+            "any",
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ]
+          ],
+          [
+            "!=",
+            "elevationCategory",
+            "TUNNEL"
+          ]
+        ],
+        [
+          "==",
+          "usageCategory",
+          "RAMP"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-sort-key": [
+          "get",
+          "zOrder"
+        ],
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          10,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            0,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            1,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            3,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            0,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            3,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            2,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            0,
+            0
+          ],
+          12,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            3,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            5,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            4,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            0,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            5,
+            0
+          ],
+          14,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            4,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            8,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            1,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            8,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            8,
+            0
+          ],
+          16,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            10,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            14,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            16,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            10,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            16,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            16,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            12,
+            0
+          ],
+          17,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            20,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            26,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            24,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            28,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            20,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            30,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            28,
+            0
+          ],
+          18,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            26,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            46,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            36,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            51,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            26,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            44,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            28,
+            0
+          ],
+          20,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            68,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            54,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            70,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            146,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            96,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            60,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            24,
+            0
+          ]
+        ],
+        "line-color": [
+          "case",
+          [
+            "==",
+            [
+              "get",
+              "usageCategory"
+            ],
+            "RAMP"
+          ],
+          "#313B46",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_MINOR_ARTERIAL"
+          ],
+          "#1A2026",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_MAJOR_ARTERIAL"
+          ],
+          "#1B232C",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_CONTROLLED_ACCESS"
+          ],
+          "#37434F",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_LOCAL"
+          ],
+          "#12171D",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+          ],
+          "#2C353E",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_SECONDARY_ROAD"
+          ],
+          "#1C2329",
+          "#1C2329"
+        ]
+      },
+      "id": "road layered-case",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line",
+      "minzoom": 10
+    },
+    {
+      "filter": [
+        "any",
+        [
+          "all",
+          [
+            "any",
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            [
+              "==",
+              "priority",
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ]
+          ],
+          [
+            "!=",
+            "elevationCategory",
+            "TUNNEL"
+          ]
+        ],
+        [
+          "==",
+          "usageCategory",
+          "RAMP"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-sort-key": [
+          "get",
+          "zOrder"
+        ],
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 23,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          8,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            1,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            0.175,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            1,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            2.8,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            0,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            2.8,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            2.5,
+            0
+          ],
+          10,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            1,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            4,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            5,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            0.5,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            5,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            4,
+            0
+          ],
+          12,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            1,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            4,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            0.5,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            4,
+            0
+          ],
+          14,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            4,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            1,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            2,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            2,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            6,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            6,
+            0
+          ],
+          16,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            12,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            10,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            12,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            8,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            12,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            16,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            16,
+            0
+          ],
+          18,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            24,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            40,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            30,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            48,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            22,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            40,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            22,
+            0
+          ],
+          20,
+          [
+            "case",
+            [
+              "==",
+              [
+                "get",
+                "usageCategory"
+              ],
+              "RAMP"
+            ],
+            62,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MINOR_ARTERIAL"
+            ],
+            45,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_MAJOR_ARTERIAL"
+            ],
+            64,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_CONTROLLED_ACCESS"
+            ],
+            140,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_LOCAL"
+            ],
+            88,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+            ],
+            58,
+            [
+              "==",
+              [
+                "get",
+                "priority"
+              ],
+              "ROAD_PRIORITY_SECONDARY_ROAD"
+            ],
+            22,
+            0
+          ]
+        ],
+        "line-color": [
+          "case",
+          [
+            "==",
+            [
+              "get",
+              "usageCategory"
+            ],
+            "RAMP"
+          ],
+          "#404D59",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_MINOR_ARTERIAL"
+          ],
+          "#28323B",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_MAJOR_ARTERIAL"
+          ],
+          "#28323B",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_CONTROLLED_ACCESS"
+          ],
+          "#404D59",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_LOCAL"
+          ],
+          "#28323B",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+          ],
+          "#404D59",
+          [
+            "==",
+            [
+              "get",
+              "priority"
+            ],
+            "ROAD_PRIORITY_SECONDARY_ROAD"
+          ],
+          "#28323B",
+          "#36434F"
+        ]
+      },
+      "id": "road layered",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LINES",
+      "type": "line",
+      "minzoom": 0
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "line-join": "round",
+        "line-cap": "butt"
+      },
+      "maxzoom": 22,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          10,
+          1,
+          20,
+          10
+        ],
+        "line-offset": 0,
+        "line-color": "rgba(74, 87, 99, 1)"
+      },
+      "id": "rail",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_RAIL_LINES",
+      "type": "line",
+      "minzoom": 13
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "trafficStatus",
+          "SPEED_SLOW"
+        ],
+        [
+          "any",
+          [
+            "!=",
+            "roadPriority",
+            "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+          ],
+          [
+            "!=",
+            "roadPriority",
+            "ROAD_PRIORITY_CONTROLLED_ACCESS"
+          ],
+          [
+            "!=",
+            "roadPriority",
+            "ROAD_PRIORITY_MAJOR_ARTERIAL"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          10,
+          3,
+          11,
+          3,
+          13,
+          2,
+          14,
+          2,
+          18,
+          6,
+          20,
+          8
+        ],
+        "line-offset": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          7,
+          0,
+          9,
+          0.8,
+          15,
+          4,
+          18,
+          4,
+          20,
+          10
+        ],
+        "line-opacity": 1,
+        "line-color": "rgba(170, 103, 2, 1)"
+      },
+      "id": "traffic speed slow-close",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line",
+      "minzoom": 14
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "trafficStatus",
+          "SPEED_SLOW"
+        ],
+        [
+          "any",
+          [
+            "==",
+            "roadPriority",
+            "ROAD_PRIORITY_MAJOR_ARTERIAL"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "square",
+        "line-join": "bevel"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          10,
+          4,
+          11,
+          4,
+          13,
+          4,
+          14,
+          4,
+          18,
+          4,
+          22,
+          4
+        ],
+        "line-offset": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          7,
+          0,
+          9,
+          0.8,
+          12,
+          3,
+          15,
+          1.875,
+          18,
+          4,
+          22,
+          5
+        ],
+        "line-opacity": 1,
+        "line-color": "rgba(170, 103, 2, 1)"
+      },
+      "id": "traffic speed slow-med",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line",
+      "minzoom": 12
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "trafficStatus",
+          "SPEED_SLOW"
+        ],
+        [
+          "any",
+          [
+            "==",
+            "roadPriority",
+            "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+          ],
+          [
+            "==",
+            "roadPriority",
+            "ROAD_PRIORITY_CONTROLLED_ACCESS"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          8,
+          2,
+          9,
+          4,
+          10,
+          3,
+          11,
+          3,
+          13,
+          4,
+          14,
+          4,
+          15,
+          6,
+          16,
+          10,
+          18,
+          14,
+          20,
+          16
+        ],
+        "line-offset": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          7,
+          0,
+          9,
+          4,
+          10,
+          3,
+          15,
+          1.875,
+          18,
+          4,
+          22,
+          5
+        ],
+        "line-opacity": 1,
+        "line-color": "rgba(170, 103, 2, 1)"
+      },
+      "id": "traffic speed slow-far",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "trafficStatus",
+          "SPEED_STOP_AND_GO"
+        ],
+        [
+          "any",
+          [
+            "!=",
+            "roadPriority",
+            "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+          ],
+          [
+            "!=",
+            "roadPriority",
+            "ROAD_PRIORITY_CONTROLLED_ACCESS"
+          ],
+          [
+            "!=",
+            "roadPriority",
+            "ROAD_PRIORITY_MAJOR_ARTERIAL"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          10,
+          3,
+          11,
+          3,
+          13,
+          2,
+          14,
+          2,
+          18,
+          6,
+          20,
+          8
+        ],
+        "line-offset": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          7,
+          0,
+          9,
+          0.8,
+          15,
+          4,
+          18,
+          4,
+          20,
+          10
+        ],
+        "line-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          6,
+          0.5,
+          12,
+          0.8,
+          15,
+          1
+        ],
+        "line-color": "rgba(174, 35, 27, 1)"
+      },
+      "id": "traffic speed stop n go-close",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line",
+      "minzoom": 14
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "trafficStatus",
+          "SPEED_STOP_AND_GO"
+        ],
+        [
+          "any",
+          [
+            "==",
+            "roadPriority",
+            "ROAD_PRIORITY_MAJOR_ARTERIAL"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          10,
+          4,
+          11,
+          4,
+          13,
+          4,
+          14,
+          4,
+          18,
+          4,
+          22,
+          4
+        ],
+        "line-offset": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          7,
+          0,
+          9,
+          0.625,
+          15,
+          1.875,
+          18,
+          0,
+          22,
+          0
+        ],
+        "line-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          6,
+          0.5,
+          12,
+          0.8,
+          15,
+          1
+        ],
+        "line-color": "rgba(174, 35, 27, 1)"
+      },
+      "id": "traffic speed stop n go-med",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line",
+      "minzoom": 12
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "trafficStatus",
+          "SPEED_STOP_AND_GO"
+        ],
+        [
+          "any",
+          [
+            "==",
+            "roadPriority",
+            "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+          ],
+          [
+            "==",
+            "roadPriority",
+            "ROAD_PRIORITY_CONTROLLED_ACCESS"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          8,
+          2,
+          9,
+          4,
+          10,
+          3,
+          11,
+          3,
+          13,
+          4,
+          14,
+          4,
+          15,
+          6,
+          16,
+          10,
+          18,
+          14,
+          20,
+          16
+        ],
+        "line-offset": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          7,
+          0,
+          9,
+          4,
+          10,
+          3,
+          15,
+          1.875,
+          18,
+          4,
+          22,
+          5
+        ],
+        "line-opacity": 1,
+        "line-color": "rgba(174, 35, 27, 1)"
+      },
+      "id": "traffic speed stop n go-far",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "trafficStatus",
+          "SPEED_STOPPED"
+        ],
+        [
+          "any",
+          [
+            "!=",
+            "roadPriority",
+            "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+          ],
+          [
+            "!=",
+            "roadPriority",
+            "ROAD_PRIORITY_CONTROLLED_ACCESS"
+          ],
+          [
+            "!=",
+            "roadPriority",
+            "ROAD_PRIORITY_MAJOR_ARTERIAL"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          10,
+          3,
+          11,
+          3,
+          13,
+          2,
+          14,
+          2,
+          18,
+          6,
+          20,
+          8
+        ],
+        "line-offset": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          7,
+          0,
+          9,
+          0.8,
+          15,
+          4,
+          18,
+          4,
+          20,
+          10
+        ],
+        "line-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          6,
+          0.5,
+          12,
+          0.8,
+          15,
+          1
+        ],
+        "line-color": "rgba(124, 1, 1, 1)"
+      },
+      "id": "traffic speed stopped-close",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line",
+      "minzoom": 14
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "trafficStatus",
+          "SPEED_STOPPED"
+        ],
+        [
+          "any",
+          [
+            "==",
+            "roadPriority",
+            "ROAD_PRIORITY_MAJOR_ARTERIAL"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          10,
+          4,
+          11,
+          4,
+          13,
+          4,
+          14,
+          4,
+          18,
+          4,
+          22,
+          4
+        ],
+        "line-offset": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          7,
+          0,
+          9,
+          0.625,
+          15,
+          1.875,
+          18,
+          4,
+          22,
+          5
+        ],
+        "line-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          6,
+          0.5,
+          12,
+          0.8,
+          15,
+          1
+        ],
+        "line-color": "rgba(137, 21, 19, 1)"
+      },
+      "id": "traffic speed stopped-med",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line",
+      "minzoom": 12
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "trafficStatus",
+          "SPEED_STOPPED"
+        ],
+        [
+          "any",
+          [
+            "==",
+            "roadPriority",
+            "ROAD_PRIORITY_PRIMARY_HIGHWAY"
+          ],
+          [
+            "==",
+            "roadPriority",
+            "ROAD_PRIORITY_CONTROLLED_ACCESS"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          8,
+          2,
+          9,
+          4,
+          10,
+          3,
+          11,
+          3,
+          13,
+          4,
+          14,
+          4,
+          15,
+          6,
+          16,
+          10,
+          18,
+          14,
+          20,
+          16
+        ],
+        "line-offset": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          7,
+          0,
+          9,
+          4,
+          10,
+          3,
+          15,
+          1.875,
+          18,
+          4,
+          22,
+          5
+        ],
+        "line-opacity": 1,
+        "line-color": "rgba(91, 0, 0, 1)"
+      },
+      "id": "traffic speed stopped-far",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line"
+    },
+    {
+      "filter": [
+        "any",
+        [
+          "==",
+          "trafficStatus",
+          "ROAD_CLOSED"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "butt"
+      },
+      "maxzoom": 24,
+      "paint": {
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          6,
+          1,
+          10,
+          6,
+          11,
+          4,
+          13,
+          2,
+          14,
+          4,
+          18,
+          4,
+          22,
+          4
+        ],
+        "line-offset": 0,
+        "line-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          6,
+          0.5,
+          12,
+          0.8,
+          15,
+          1
+        ],
+        "line-dasharray": [
+          "step",
+          ["zoom"],
+          [
+            "literal",
+            [
+              3,
+              0.6
+            ]
+          ],
+          15,
+          [
+            "literal",
+            [
+              1.5,
+              0.6
+            ]
+          ],
+          16,
+          [
+            "literal",
+            [
+              1.5,
+              0.8
+            ]
+          ],
+          18,
+          [
+            "literal",
+            [
+              3,
+              1
+            ]
+          ]
+        ],
+        "line-color": "rgba(180, 35, 26, 1)"
+      },
+      "id": "traffic speed road closed",
+      "source": "traffic_tiles",
+      "source-layer": "TRAFFIC_LAYER",
+      "type": "line"
+    },
+    {
+      "layout": {
+        "icon-rotation-alignment": "map",
+        "icon-pitch-alignment": "auto",
+        "visibility": "visible",
+        "text-rotation-alignment": "map",
+        "text-size": 0.1,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          15,
+          0.25,
+          18,
+          1
+        ],
+        "symbol-placement": "line-center",
+        "icon-image": "map_oneway"
+      },
+      "paint": {"text-translate-anchor": "map"},
+      "id": "road arrow",
+      "source": "feature_tiles",
+      "source-layer": "roadArrows",
+      "type": "symbol"
+    },
+    {
+      "layout": {"visibility": "visible"},
+      "maxzoom": 24,
+      "paint": {
+        "fill-extrusion-height": [
+          "get",
+          "height"
+        ],
+        "fill-extrusion-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          17,
+          0.3,
+          18,
+          0.5,
+          19,
+          0.7
+        ],
+        "fill-extrusion-base": [
+          "get",
+          "base_height"
+        ],
+        "fill-extrusion-vertical-gradient": false,
+        "fill-extrusion-translate-anchor": "viewport",
+        "fill-extrusion-color": "rgba(19, 25, 32, 1)",
+        "fill-extrusion-translate": [
+          0,
+          0
+        ]
+      },
+      "id": "building extrusion",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_BUILDING_EXTRUDED_AREAS",
+      "type": "fill-extrusion"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "line-join": "miter"
+      },
+      "paint": {
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          1,
+          10,
+          4
+        ],
+        "line-offset": 0,
+        "line-dasharray": [
+          5,
+          1
+        ],
+        "line-color": "rgba(81, 88, 85, 1)"
+      },
+      "id": "border international",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_INTERNATIONAL_BORDER_LINES",
+      "type": "line"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "line-join": "miter"
+      },
+      "paint": {
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          7,
+          7.5,
+          12,
+          11
+        ],
+        "line-offset": 0,
+        "line-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          0,
+          4,
+          0.1
+        ],
+        "line-dasharray": [1],
+        "line-color": "rgba(153, 153, 153, 1)"
+      },
+      "id": "border international-bg",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_INTERNATIONAL_BORDER_LINES",
+      "type": "line"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "line-join": "miter"
+      },
+      "paint": {
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          7,
+          7.5,
+          12,
+          11
+        ],
+        "line-offset": 0,
+        "line-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          7,
+          0,
+          8,
+          0.6
+        ],
+        "line-blur": 0,
+        "line-color": {"stops": [
+          [
+            8,
+            "rgba(33, 39, 45, 1)"
+          ],
+          [
+            16,
+            "rgba(48, 55, 52, 1)"
+          ]
+        ]}
+      },
+      "id": "border state-bg",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_STATE_OR_PROVINCE_LINES",
+      "type": "line"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "line-join": "miter"
+      },
+      "paint": {
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          7,
+          1.5,
+          12,
+          3
+        ],
+        "line-offset": 0,
+        "line-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          2,
+          0,
+          3,
+          1
+        ],
+        "line-dasharray": [4],
+        "line-color": {"stops": [
+          [
+            3,
+            "rgba(48, 48, 48, 1)"
+          ],
+          [
+            7,
+            "rgba(48, 48, 48, 1)"
+          ]
+        ]}
+      },
+      "id": "border state",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_STATE_OR_PROVINCE_LINES",
+      "type": "line"
+    },
+    {
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": 6,
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgb(192, 212, 216)",
+        "text-color": "rgb(78, 118, 126)",
+        "text-halo-width": 2
+      },
+      "id": "label channel points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_CHANNEL_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": 16,
+        "text-allow-overlap": false,
+        "text-ignore-placement": false,
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgb(78, 118, 126)",
+        "text-halo-width": 2
+      },
+      "id": "label lake points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_LAKE_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": 18,
+        "text-allow-overlap": false,
+        "text-ignore-placement": false,
+        "symbol-placement": "line",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(14, 25, 37, 1)",
+        "text-color": "rgba(41, 75, 112, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label lake lines",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_LAKE_LABELS_LINES",
+      "type": "symbol",
+      "minzoom": 0
+    },
+    {
+      "layout": {
+        "text-pitch-alignment": "viewport",
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          14,
+          6,
+          16,
+          22,
+          28
+        ],
+        "symbol-placement": "line",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(14, 25, 37, 1)",
+        "text-color": "rgba(41, 75, 112, 1)",
+        "text-halo-width": 2
+      },
+      "id": "label river lines",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_RIVER_LABELS_LINES",
+      "type": "symbol"
+    },
+    {
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          13,
+          14,
+          18,
+          18
+        ],
+        "icon-size": 1,
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(31, 31, 31, 1)",
+        "text-color": "rgb(78, 118, 126)",
+        "text-halo-width": 2
+      },
+      "id": "label river points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_RIVER_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          5,
+          16,
+          13,
+          24.799999999999997,
+          18,
+          24
+        ],
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(14, 25, 37, 1)",
+        "text-color": "rgba(41, 75, 112, 1)",
+        "text-halo-width": 2
+      },
+      "id": "label ocean points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_OCEAN_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "layout": {
+        "text-transform": "uppercase",
+        "visibility": "visible",
+        "text-letter-spacing": 0.15,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          2,
+          8,
+          5,
+          14,
+          8,
+          32
+        ],
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(104, 117, 129, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label state points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_STATE_OR_PROVINCE_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 2
+    },
+    {
+      "layout": {
+        "text-transform": "uppercase",
+        "visibility": "visible",
+        "text-letter-spacing": 0.04,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          6,
+          18,
+          13,
+          20,
+          18,
+          20
+        ],
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 6,
+      "paint": {
+        "text-halo-color": "hsla(37, 0%, 0%, 0.25)",
+        "text-color": "rgba(174, 187, 199, 1)",
+        "text-halo-width": 0,
+        "text-opacity": 0.8
+      },
+      "id": "label country points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_COUNTRY_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 0
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": 20,
+        "text-allow-overlap": false,
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(104, 117, 129, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label building points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_BUILDING_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "has",
+          "highwayClass"
+        ],
+        [
+          "any",
+          [
+            "==",
+            "regionCode",
+            "US"
+          ],
+          [
+            "==",
+            "regionCode",
+            "CA"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": {"stops": [
+          [
+            10,
+            14
+          ],
+          [
+            16,
+            20
+          ]
+        ]},
+        "text-allow-overlap": false,
+        "icon-size": {"stops": [
+          [
+            1,
+            1
+          ],
+          [
+            10,
+            1
+          ],
+          [
+            17,
+            1.4
+          ]
+        ]},
+        "symbol-placement": "point",
+        "icon-image": [
+          "concat",
+          [
+            "get",
+            "highwayClass"
+          ],
+          "_",
+          [
+            "get",
+            "regionCode"
+          ],
+          "_",
+          [
+            "to-string",
+            [
+              "min",
+              [
+                "max",
+                [
+                  "length",
+                  [
+                    "get",
+                    "name"
+                  ]
+                ],
+                2
+              ],
+              3
+            ]
+          ]
+        ],
+        "text-font": ["AdventureV2SemiBold"],
+        "text-letter-spacing": 0.02,
+        "icon-anchor": "center",
+        "text-keep-upright": false,
+        "icon-offset": [
+          0,
+          -1.6
+        ],
+        "symbol-z-order": "auto"
+      },
+      "paint": {
+        "text-color": "rgba(0, 0, 0, 1)",
+        "text-halo-width": 0
+      },
+      "id": "label street points shields US and Canada",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "has",
+          "highwayClass"
+        ],
+        [
+          "all",
+          [
+            "!=",
+            "regionCode",
+            "US"
+          ],
+          [
+            "!=",
+            "regionCode",
+            "CA"
+          ]
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": {"stops": [
+          [
+            10,
+            14
+          ],
+          [
+            16,
+            20
+          ]
+        ]},
+        "text-allow-overlap": false,
+        "icon-size": {"stops": [
+          [
+            1,
+            1
+          ],
+          [
+            10,
+            1
+          ],
+          [
+            17,
+            1.4
+          ]
+        ]},
+        "symbol-placement": "point",
+        "icon-image": [
+          "concat",
+          "FEATURE_TYPE_INTERNATIONAL_",
+          [
+            "to-string",
+            [
+              "min",
+              [
+                "max",
+                [
+                  "length",
+                  [
+                    "get",
+                    "name"
+                  ]
+                ],
+                2
+              ],
+              3
+            ]
+          ]
+        ],
+        "text-font": ["AdventureV2SemiBold"],
+        "text-letter-spacing": 0.02,
+        "icon-anchor": "center",
+        "text-keep-upright": false,
+        "icon-offset": [
+          0,
+          -1.6
+        ],
+        "symbol-z-order": "auto"
+      },
+      "paint": {
+        "text-halo-color": "rgba(104, 117, 129, 1)",
+        "text-color": "rgba(0, 0, 0, 1)",
+        "text-halo-width": 2
+      },
+      "id": "label street points shields international",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "!",
+        [
+          "has",
+          "highwayClass"
+        ]
+      ],
+      "layout": {
+        "visibility": "visible",
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": {"stops": [
+          [
+            10,
+            14
+          ],
+          [
+            16,
+            20
+          ]
+        ]},
+        "text-allow-overlap": false,
+        "icon-size": {"stops": [
+          [
+            1,
+            1
+          ],
+          [
+            10,
+            1
+          ],
+          [
+            17,
+            1.4
+          ]
+        ]},
+        "symbol-placement": "point",
+        "icon-image": [
+          "concat",
+          "FEATURE_TYPE_ROAD_LABELS_POINTS_",
+          [
+            "to-string",
+            [
+              "min",
+              [
+                "max",
+                [
+                  "length",
+                  [
+                    "get",
+                    "name"
+                  ]
+                ],
+                2
+              ],
+              3
+            ]
+          ]
+        ],
+        "text-font": ["AdventureV2SemiBold"],
+        "text-letter-spacing": 0.02,
+        "icon-anchor": "center",
+        "text-keep-upright": false,
+        "icon-offset": [
+          0,
+          -1.6
+        ],
+        "symbol-z-order": "auto"
+      },
+      "paint": {
+        "text-halo-color": "rgba(104, 117, 129, 1)",
+        "text-color": "rgba(0, 0, 0, 1)",
+        "text-halo-width": 2
+      },
+      "id": "label exit labels shields",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": 0.6,
+        "symbol-placement": "point",
+        "icon-image": "transit_entrance",
+        "text-font": ["AdventureV2SemiBold"],
+        "text-letter-spacing": 0.02,
+        "icon-anchor": "center",
+        "icon-offset": [
+          0,
+          -32
+        ]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label transit stations",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_TRANSIT_STATION_OR_ENTRANCE_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": [
+          0,
+          1
+        ],
+        "icon-offset": [
+          0,
+          -20
+        ],
+        "text-size": 19.2,
+        "icon-size": 0.6,
+        "symbol-placement": "point",
+        "icon-image": "transit_rail_station",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(89, 104, 115, 1)",
+        "text-halo-width": 1.8
+      },
+      "id": "label rail stations",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_RAIL_STATION_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": [
+          0,
+          1
+        ],
+        "icon-offset": [
+          0,
+          -20
+        ],
+        "text-size": 19.2,
+        "icon-size": 0.6,
+        "symbol-placement": "point",
+        "icon-image": "transit_monorail_station",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(89, 104, 115, 1)",
+        "text-halo-width": 1.8
+      },
+      "id": "label monorail stations",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_MONORAIL_STATION_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": [
+          0,
+          1
+        ],
+        "icon-offset": [
+          0,
+          -20
+        ],
+        "text-size": 19.2,
+        "icon-size": 0.6,
+        "symbol-placement": "point",
+        "icon-image": "transit_bus_station",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(89, 104, 115, 1)",
+        "text-halo-width": 1.8
+      },
+      "id": "label bus stations",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_BUS_STATION_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": [
+          0,
+          1
+        ],
+        "icon-offset": [
+          0,
+          -20
+        ],
+        "text-size": 19.2,
+        "icon-size": 0.6,
+        "symbol-placement": "point",
+        "icon-image": "transit_ferry_terminal",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(89, 104, 115, 1)",
+        "text-halo-width": 1.8
+      },
+      "id": "label ferry stations",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_FERRY_TERMINAL_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": [
+          0,
+          1
+        ],
+        "icon-offset": [
+          0,
+          -20
+        ],
+        "text-size": 19.2,
+        "icon-size": 0.6,
+        "symbol-placement": "point",
+        "icon-image": "transit_funicular_station",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(89, 104, 115, 1)",
+        "text-halo-width": 1.8
+      },
+      "id": "label funicular stations",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_FUNICULAR_STATION_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": [
+          0,
+          1
+        ],
+        "icon-offset": [
+          0,
+          -20
+        ],
+        "text-size": 19.2,
+        "icon-size": 0.6,
+        "symbol-placement": "point",
+        "icon-image": "transit_gondola_station",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(89, 104, 115, 1)",
+        "text-halo-width": 1.8
+      },
+      "id": "label gondola stations",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_GONDOLA_STATION_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": [
+          0,
+          1
+        ],
+        "icon-offset": [
+          0,
+          -20
+        ],
+        "text-size": 19.2,
+        "icon-size": 0.6,
+        "symbol-placement": "point",
+        "icon-image": "transit_bicycle_sharing_location",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(89, 104, 115, 1)",
+        "text-halo-width": 1.8
+      },
+      "id": "label bicycle stations",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_BICYCLE_SHARING_LOCATION_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "!=",
+          "isFerry",
+          true
+        ]
+      ],
+      "layout": {
+        "text-pitch-alignment": "viewport",
+        "text-letter-spacing": 0.02,
+        "visibility": "visible",
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          10,
+          16,
+          18,
+          28,
+          22,
+          38
+        ],
+        "symbol-z-order": "auto",
+        "symbol-placement": "line",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "icon-halo-width": 1,
+        "text-color": "rgba(104, 117, 129, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label street lines",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LABELS_LINES",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_generic",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 2
+      },
+      "id": "label poi casino points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_CASINO_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 2
+      },
+      "id": "label poi government points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_GOVERNMENT_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 0
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_generic",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_POI_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-anchor": "top",
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_police",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi police points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_POLICE_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_fire_station",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi fire points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_FIRE_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 0
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_airport",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi airport points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_AIRPORT_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_hospital",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi hospital points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_HOSPITAL_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_school",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi school points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_SCHOOL_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-anchor": "top",
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_library",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi library points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_LIBRARY_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi parking lot points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_PARKING_LOT_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_art_gallery",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi art points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ARTS_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_cinema",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi cinema points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_CINEMA_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_museum",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi museum points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_MUSEUM_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 14
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_zoo",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi zoo points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ZOO_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_generic",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi historic points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_HISTORIC_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 0
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_fishing",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi fishing points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_FISHING_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_boating",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi boating points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_BOATING_PLABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_pitch",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi sports field points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_SPORTS_FIELD_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_pitch",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi sports complex points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_SPORTS_COMPLEX_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 0
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_golf",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi golf course points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_GOLF_COURSE_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_generic",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi winery points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_WINERY_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_pharmacy",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi pharmacy points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_PHARMACY_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_beach",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi beach points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_BEACH_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_amusement-park",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi amusement park points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_AMUSEMENT_PARK_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_trailhead",
+        "text-font": ["AdventureV2SemiBold"],
+        "text-letter-spacing": 0.02,
+        "icon-anchor": "center",
+        "icon-offset": [
+          0,
+          -36
+        ]
+      },
+      "paint": {
+        "text-halo-color": "rgba(31, 31, 31, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi trailhead points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_TRAILHEAD_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_grocery",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi grocery points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_GROCERY_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_shop",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi retail points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_RETAIL_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_shop",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi shopping points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_SHOPPING_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 14
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_lodging",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi lodging points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_LODGING_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_bar",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi bar points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_BAR_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_cafe",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi cafe points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_CAFE_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_restaurant",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi food points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_FOOD_AND_DRINK_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_restaurant",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi restaurant points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_RESTAURANT_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_park",
+        "text-font": ["AdventureV2SemiBold"],
+        "text-letter-spacing": 0.02,
+        "icon-anchor": "center",
+        "icon-offset": [
+          0,
+          -36
+        ]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi park points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_PARK_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_attraction",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi tourist destination points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_TOURIST_DESTINATION_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_park",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi nature reserve points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_NATURE_RESERVE_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": ["all"],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "icon-offset": [
+          0,
+          -36
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          5,
+          18,
+          22,
+          32
+        ],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.62,
+          16,
+          0.92
+        ],
+        "symbol-placement": "point",
+        "icon-image": "poi_mountain",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(86, 107, 100, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label poi peak points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_PEAK_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "layout": {
+        "text-transform": "uppercase",
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": {"stops": [
+          [
+            11,
+            14
+          ],
+          [
+            15,
+            20
+          ],
+          [
+            16,
+            24
+          ]
+        ]},
+        "text-allow-overlap": false,
+        "icon-size": [
+          "literal",
+          1
+        ],
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 15,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(104, 117, 129, 1)",
+        "text-halo-width": 1,
+        "text-opacity": {"stops": [
+          [
+            6,
+            1
+          ],
+          [
+            14,
+            1
+          ],
+          [
+            15,
+            0.5
+          ]
+        ]}
+      },
+      "id": "label neighborhood points",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_NEIGHBORHOOD_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 10
+    },
+    {
+      "filter": [
+        "any",
+        [
+          "==",
+          "cityProminence",
+          "CITY_PROMINENCE_LOW"
+        ],
+        [
+          "==",
+          "cityProminence",
+          "CITY_PROMINENCE_VERY_LOW"
+        ],
+        [
+          "==",
+          "cityProminence",
+          "CITY_PROMINENCE_UNSPECIFIED"
+        ]
+      ],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": {"stops": [
+          [
+            4,
+            [
+              0,
+              -0.8
+            ]
+          ],
+          [
+            10,
+            [
+              0,
+              -0.8
+            ]
+          ]
+        ]},
+        "text-size": {"stops": [
+          [
+            5,
+            18
+          ],
+          [
+            15,
+            20
+          ]
+        ]},
+        "text-allow-overlap": false,
+        "icon-size": 0.6,
+        "symbol-placement": "point",
+        "text-padding": 10,
+        "icon-image": "map_settlement_marker",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 15,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(134, 147, 159, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label city points prominence low",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_CITY_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "any",
+        [
+          "==",
+          "cityProminence",
+          "CITY_PROMINENCE_MEDIUM"
+        ],
+        [
+          "==",
+          "cityProminence",
+          "none"
+        ]
+      ],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": {"stops": [
+          [
+            4,
+            [
+              0,
+              -0.8
+            ]
+          ],
+          [
+            10,
+            [
+              0,
+              -1
+            ]
+          ]
+        ]},
+        "text-size": {"stops": [
+          [
+            8,
+            20
+          ],
+          [
+            15,
+            24
+          ]
+        ]},
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          0.5,
+          7,
+          1
+        ],
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(134, 147, 159, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label city points prominence medium",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_CITY_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "cityProminence",
+          "CITY_PROMINENCE_HIGH"
+        ]
+      ],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": {"stops": [
+          [
+            4,
+            [
+              0,
+              -0.8
+            ]
+          ],
+          [
+            10,
+            [
+              0,
+              -1
+            ]
+          ]
+        ]},
+        "text-size": {"stops": [
+          [
+            5,
+            16
+          ],
+          [
+            15,
+            38
+          ]
+        ]},
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          0.5,
+          7,
+          1
+        ],
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(174, 187, 199, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label city points prominence high",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_CITY_LABELS_POINTS",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "cityProminence",
+          "CITY_PROMINENCE_VERY_HIGH"
+        ]
+      ],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-offset": {"stops": [
+          [
+            4,
+            [
+              0,
+              -0.8
+            ]
+          ],
+          [
+            10,
+            [
+              0,
+              -1
+            ]
+          ]
+        ]},
+        "text-size": {"stops": [
+          [
+            5,
+            18
+          ],
+          [
+            15,
+            40
+          ]
+        ]},
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          1,
+          7,
+          1
+        ],
+        "symbol-placement": "point",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "maxzoom": 15,
+      "paint": {
+        "text-halo-color": "rgba(21, 25, 29, 1)",
+        "text-color": "rgba(174, 187, 199, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label city points prominence very high",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_CITY_LABELS_POINTS",
+      "type": "symbol",
+      "minzoom": 4
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "isFerry",
+          true
+        ]
+      ],
+      "layout": {
+        "text-letter-spacing": 0.02,
+        "visibility": "visible",
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-size": [
+          "literal",
+          20
+        ],
+        "icon-size": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          10,
+          9.75,
+          18,
+          19.5
+        ],
+        "symbol-placement": "line",
+        "text-font": ["AdventureV2SemiBold"]
+      },
+      "paint": {
+        "text-halo-color": "rgba(14, 25, 37, 1)",
+        "text-color": "rgba(41, 75, 112, 1)",
+        "text-halo-width": 1
+      },
+      "id": "label street ferry lines",
+      "source": "feature_tiles",
+      "source-layer": "FEATURE_TYPE_ROAD_LABELS_LINES",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "incidentType",
+          "CRASH"
+        ]
+      ],
+      "layout": {
+        "icon-allow-overlap": false,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": "",
+        "text-offset": [
+          0,
+          0.8
+        ],
+        "icon-offset": [
+          0,
+          -20
+        ],
+        "text-size": 16,
+        "text-allow-overlap": true,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.6,
+          16,
+          0.6
+        ],
+        "symbol-placement": "point",
+        "icon-image": "incident_crash",
+        "text-font": ["AdventureV2Bold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(255, 255, 255, 1)",
+        "text-color": "rgba(91, 0, 0, 1)",
+        "text-halo-width": 2
+      },
+      "id": "traffic incidents_crash",
+      "source": "traffic_tiles",
+      "source-layer": "INCIDENT_LAYER",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "incidentType",
+          "CONSTRUCTION"
+        ]
+      ],
+      "layout": {
+        "icon-allow-overlap": true,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": "",
+        "text-offset": [
+          0,
+          0.8
+        ],
+        "icon-offset": [
+          0,
+          -20
+        ],
+        "text-size": 16,
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.6,
+          16,
+          0.6
+        ],
+        "symbol-placement": "point",
+        "icon-image": "incident_construction",
+        "text-font": ["AdventureV2Bold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(255, 255, 255, 1)",
+        "text-color": "rgba(91, 0, 0, 1)",
+        "text-halo-width": 2
+      },
+      "id": "traffic incidents_construction",
+      "source": "traffic_tiles",
+      "source-layer": "INCIDENT_LAYER",
+      "type": "symbol"
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "incidentType",
+          "ROAD_CLOSED"
+        ]
+      ],
+      "layout": {
+        "icon-allow-overlap": true,
+        "visibility": "visible",
+        "text-letter-spacing": 0.02,
+        "text-field": "",
+        "text-offset": [
+          0,
+          0.8
+        ],
+        "icon-offset": [
+          0,
+          0
+        ],
+        "text-size": 11,
+        "text-allow-overlap": false,
+        "icon-size": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          ["zoom"],
+          12,
+          0.6,
+          16,
+          0.6
+        ],
+        "symbol-placement": "point",
+        "icon-image": "incident_road_closed",
+        "text-font": ["AdventureV2Bold"]
+      },
+      "maxzoom": 24,
+      "paint": {
+        "text-halo-color": "rgba(255, 255, 255, 1)",
+        "text-color": "rgba(91, 0, 0, 1)",
+        "text-halo-width": 2
+      },
+      "id": "traffic incidents_closed_roads",
+      "source": "traffic_tiles",
+      "source-layer": "INCIDENT_LAYER",
+      "type": "symbol",
+      "minzoom": 12
+    }
+  ],
+  "glyphs": "https://static.rivianservices.com/mapping/static/maplibre/0.0.1/fonts/{fontstack}/{range}.pbf",
+  "id": "osm-liberty",
+  "version": 8
+}

@@ -53,16 +53,25 @@ const Tile* TilePyramid::getRenderedTile(const UnwrappedTileID& tileID) const {
 
 void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& layers,
                          const bool needsRendering,
-                         const bool needsRelayout,
+                         const bool needsRelayout_,
                          const TileParameters& parameters,
                          const style::Source::Impl& sourceImpl,
                          const uint16_t tileSize,
                          const Range<uint8_t> zoomRange,
                          std::optional<LatLngBounds> bounds,
                          std::function<std::unique_ptr<Tile>(const OverscaledTileID&, TileObserver*)> createTile) {
+    bool needsRelayout = needsRelayout_;
     // If we need a relayout, abandon any cached tiles; they're now stale.
     if (needsRelayout && !skipRelayoutClear) {
         cache.clear();
+    }
+
+    if (parameters.newStyleLoaded) {
+        for (auto& tile : tiles) {
+            tile.second->setLayers(layers, true);
+        }
+        cache.setLayers(layers);
+        needsRelayout = false;
     }
 
     // If we're not going to render anything, move our existing tiles into

@@ -61,6 +61,7 @@ private:
     RenderState renderState = RenderState::Never;
 
     uint64_t frameCount = 0;
+    bool styleLoaded = false;
 
 #if MLN_RENDER_BACKEND_METAL
     mtl::MTLCaptureScopePtr commandCaptureScope;

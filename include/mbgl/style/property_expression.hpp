@@ -7,6 +7,7 @@
 #include <mbgl/style/expression/find_zoom_curve.hpp>
 #include <mbgl/util/bitmask_operations.hpp>
 #include <mbgl/util/range.hpp>
+#include <mbgl/util/color.hpp>
 
 #if MLN_DRAWABLE_RENDERER
 #include <mbgl/gfx/gpu_expression.hpp>

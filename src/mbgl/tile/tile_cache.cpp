@@ -168,4 +168,11 @@ void TileCache::clear() {
     tiles.clear();
 }
 
+void TileCache::setLayers(const std::vector<Immutable<style::LayerProperties>>& layers) {
+    deferPendingReleases();
+    for (auto& item : tiles) {
+        item.second->setLayers(layers, true);
+    }
+}
+
 } // namespace mbgl

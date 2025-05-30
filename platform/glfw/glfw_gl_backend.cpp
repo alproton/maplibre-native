@@ -56,10 +56,6 @@ GLFWGLBackend::GLFWGLBackend(GLFWwindow* window_, const bool capFrameRate)
 
 GLFWGLBackend::~GLFWGLBackend() = default;
 
-mbgl::gfx::CustomPuckState GLFWGLBackend::getCurrentCustomPuckState() const {
-    return customPuckState_;
-}
-
 void GLFWGLBackend::setCustomPuckState(double lat, double lon, double bearing) {
     customPuckState_.lat = lat;
     customPuckState_.lon = lon;
@@ -70,9 +66,6 @@ void GLFWGLBackend::enableCustomPuck(bool onOff) {
     customPuckState_.enabled = onOff;
     customPuckState_.cameraTracking = false;
     customPuckState_.bearing = 0;
-    if (onOff) {
-        customPuck->setPuckBitmap(mbgl::decodeImage(mbgl::util::read_file("../../../platform/glfw/assets/puck.png")));
-    }
 };
 
 void GLFWGLBackend::activate() {
@@ -114,8 +107,8 @@ void GLFWGLBackend::swap() {
 
 mbgl::gfx::CustomPuckState GLFWGLBackend::getCurrentCustomPuckState() const {
     mbgl::gfx::CustomPuckState customPuckState;
-    customPuckState.lat = 12.36;
-    customPuckState.lon = -1.55;
+    customPuckState.lat = 37.55328;
+    customPuckState.lon = -122.29613;
     customPuckState.enabled = true;
     return customPuckState;
 }

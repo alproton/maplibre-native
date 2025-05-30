@@ -80,7 +80,7 @@ public:
     // tile (and i.e. it was successfully updated); returns `false` otherwise.
     virtual bool layerPropertiesUpdated(const Immutable<style::LayerProperties>& layerProperties) = 0;
     virtual void setShowCollisionBoxes(const bool) {}
-    virtual void setLayers(const std::vector<Immutable<style::LayerProperties>>&) {}
+    virtual void setLayers(const std::vector<Immutable<style::LayerProperties>>&, bool = false) {}
     virtual void setMask(TileMask&&) {}
 
     virtual void queryRenderedFeatures(std::unordered_map<std::string, std::vector<Feature>>& result,

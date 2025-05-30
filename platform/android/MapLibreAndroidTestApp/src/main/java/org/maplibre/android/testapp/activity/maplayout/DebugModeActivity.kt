@@ -127,11 +127,11 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         }
         maplibreMap.locationComponent.setMaxAnimationFps(30)
         if (useLocationEngine) {
-            maplibreMap.cameraPosition = CameraPosition.Builder().target(LatLng(0.0,0.0)).zoom(16.4).build()
             maplibreMap.locationComponent.setCameraMode(CameraMode.TRACKING_GPS)
         } else {
             maplibreMap.locationComponent.zoomWhileTracking(16.4, 1000)
         }
+        maplibreMap.cameraPosition = CameraPosition.Builder().target(LatLng(37.55328,-122.29613)).zoom(16.4).build()
 
         mapView.setPuckStyle("puck_style.json")
         mapView.setPuckVariant("day")
@@ -203,9 +203,14 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
     }
 
     override fun onMapReady(map: MapLibreMap) {
+        val json_string = application.assets.open(STYLES[currentStyleIndex]).bufferedReader().use{
+            it.readText()
+        }
+
         maplibreMap = map
         maplibreMap.setStyle(
-            Style.Builder().fromUri(STYLES[currentStyleIndex])
+            // Style.Builder().fromUri(STYLES[currentStyleIndex])
+            Style.Builder().fromJson(json_string)
         ) { style: Style ->
             prepareLocationComp(style)
             setupNavigationView(style.layers)
@@ -228,7 +233,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
     }
 
     private fun setupNavigationView(layerList: List<Layer>) {
-        Timber.v("New style loaded with JSON: %s", maplibreMap.style!!.json)
+        // Timber.v("New style loaded with JSON: %s", maplibreMap.style!!.json)
         val adapter = LayerListAdapter(this, layerList)
         val listView = findViewById<ListView>(R.id.listView)
         listView.adapter = adapter
@@ -286,8 +291,14 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
                 if (currentStyleIndex == STYLES.size) {
                     currentStyleIndex = 0
                 }
-                maplibreMap.setStyle(Style.Builder().fromUri(STYLES[currentStyleIndex]))
-                mapView.setPuckIconState("MorphState")
+                val json_string = application.assets.open(STYLES[currentStyleIndex]).bufferedReader().use{
+                    it.readText()
+                }
+                maplibreMap.setStyle(
+                    // Style.Builder().fromUri(STYLES[currentStyleIndex])
+                    Style.Builder().fromJson(json_string)
+                )
+                // mapView.setPuckIconState("MorphState")
             }
         }
     }
@@ -401,13 +412,14 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
 
     companion object {
         private val STYLES = arrayOf(
-            TestStyles.AMERICANA,
-            TestStyles.getPredefinedStyleWithFallback("Streets"),
-            TestStyles.getPredefinedStyleWithFallback("Outdoor"),
-            TestStyles.getPredefinedStyleWithFallback("Bright"),
-            TestStyles.getPredefinedStyleWithFallback("Pastel"),
-            TestStyles.getPredefinedStyleWithFallback("Satellite Hybrid"),
-            TestStyles.getPredefinedStyleWithFallback("Satellite Hybrid")
+            "dark_style.json",
+            "style.json"
         )
+        /*
+        private val STYLES = arrayOf(
+            "https://maptiles.dev.ue1.vcs.goriv.co/tiling/style.json",
+            "https://maptiles.dev.ue1.vcs.goriv.co/tiling/dark_style.json"
+        )
+        */
     }
 }

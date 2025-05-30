@@ -98,6 +98,8 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
     auto& context = backend.getContext();
     context.setObserver(this);
 
+    context.reduceMemoryUsage();
+
     assert(updateParameters);
 
 #if MLN_RENDER_BACKEND_METAL
@@ -219,27 +221,6 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
     const auto& layerRenderItems = renderTree.getLayerRenderItems();
 #endif
 
-    // - UPLOAD PASS -------------------------------------------------------------------------------
-    // Uploads all required buffers and images before we do any actual rendering.
-    {
-        const auto uploadPass = parameters.encoder->createUploadPass("upload",
-                                                                     parameters.backend.getDefaultRenderable());
-#if !defined(NDEBUG)
-        const auto debugGroup = uploadPass->createDebugGroup("upload");
-#endif
-
-        // Update all clipping IDs + upload buckets.
-        for (const RenderItem& item : sourceRenderItems) {
-            item.upload(*uploadPass);
-        }
-        for (const RenderItem& item : layerRenderItems) {
-            item.upload(*uploadPass);
-        }
-        staticData->upload(*uploadPass);
-        renderTree.getLineAtlas().upload(*uploadPass);
-        renderTree.getPatternAtlas().upload(*uploadPass);
-    }
-
 #if MLN_DRAWABLE_RENDERER
     // - LAYER GROUP UPDATE ------------------------------------------------------------------------
     // Updates all layer groups and process changes
@@ -299,6 +280,27 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
     auto& globalUniforms = context.mutableGlobalUniformBuffers();
     globalUniforms.createOrUpdate(shaders::idGlobalPaintParamsUBO, &globalPaintParamsUBO, context);
 #endif
+
+    // - UPLOAD PASS -------------------------------------------------------------------------------
+    // Uploads all required buffers and images before we do any actual rendering.
+    {
+        const auto uploadPass = parameters.encoder->createUploadPass("upload",
+                                                                     parameters.backend.getDefaultRenderable());
+#if !defined(NDEBUG)
+        const auto debugGroup = uploadPass->createDebugGroup("upload");
+#endif
+
+        // Update all clipping IDs + upload buckets.
+        for (const RenderItem& item : sourceRenderItems) {
+            item.upload(*uploadPass);
+        }
+        for (const RenderItem& item : layerRenderItems) {
+            item.upload(*uploadPass);
+        }
+        staticData->upload(*uploadPass);
+        renderTree.getLineAtlas().upload(*uploadPass);
+        renderTree.getPatternAtlas().upload(*uploadPass);
+    }
 
     // - 3D PASS
     // -------------------------------------------------------------------------------------
@@ -577,7 +579,10 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
 
     const auto startRendering = util::MonotonicTimer::now().count();
     // present submits render commands
-    parameters.encoder->present(parameters.backend.getDefaultRenderable());
+    if (updateParameters->styleLoaded && styleLoaded) {
+        parameters.encoder->present(parameters.backend.getDefaultRenderable());
+    }
+    styleLoaded = updateParameters->styleLoaded;
     const auto renderingTime = util::MonotonicTimer::now().count() - startRendering;
 
     parameters.encoder.reset();
@@ -614,6 +619,9 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
 
     frameCount += 1;
     MLN_END_FRAME();
+
+    // sleep 1 second
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 }
 
 void Renderer::Impl::reduceMemoryUse() {

@@ -140,7 +140,7 @@ void AndroidRendererFrontend::reduceMemoryUse() {
 }
 
 void AndroidRendererFrontend::clearData() {
-    mapRenderer.actor().invoke(&Renderer::clearData);
+    // mapRenderer.actor().invoke(&Renderer::clearData);
 }
 
 std::vector<Feature> AndroidRendererFrontend::querySourceFeatures(const std::string& sourceID,

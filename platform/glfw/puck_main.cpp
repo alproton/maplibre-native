@@ -10,6 +10,7 @@
 #include <mbgl/util/logging.hpp>
 #include <mbgl/util/platform.hpp>
 #include <mbgl/util/string.hpp>
+#include <mbgl/util/io.hpp>
 
 #include <args.hxx>
 
@@ -107,7 +108,7 @@ int main(int argc, char* argv[]) {
     mbgl::ResourceOptions resourceOptions;
     resourceOptions.withCachePath(cacheDB).withApiKey(apikey).withTileServerOptions(mapTilerConfiguration);
     mbgl::ClientOptions clientOptions;
-    auto orderedStyles = mapTilerConfiguration.defaultStyles();
+    // auto orderedStyles = mapTilerConfiguration.defaultStyles();
 
     PUCKView backend(fullscreen, benchmark, resourceOptions, clientOptions);
     view = &backend;
@@ -163,18 +164,24 @@ int main(int argc, char* argv[]) {
                             ". Press `O` to toggle online status.");
     });
 
-    view->setChangeStyleCallback([&map, &orderedStyles]() {
+    view->setChangeStyleCallback([&map]() {
         static uint8_t currentStyleIndex;
+
+        std::vector<std::string> orderedStyles = {
+            "/home/anaslasram/personal/code/maplibre-native/platform/android/MapLibreAndroidTestApp/src/main/assets/"
+            "style.json",
+            "/home/anaslasram/personal/code/maplibre-native/platform/android/MapLibreAndroidTestApp/src/main/assets/"
+            "dark_style.json"};
 
         if (++currentStyleIndex == orderedStyles.size()) {
             currentStyleIndex = 0;
         }
 
-        mbgl::util::DefaultStyle newStyle = orderedStyles[currentStyleIndex];
-        map.getStyle().loadURL(newStyle.getUrl());
-        view->setWindowTitle(newStyle.getName());
+        // map.getStyle().loadURL(newStyle.getUrl());
+        map.getStyle().loadJSON(mbgl::util::read_file(orderedStyles[currentStyleIndex]));
+        view->setWindowTitle("test");
 
-        mbgl::Log::Info(mbgl::Event::Setup, "Changed style to: " + newStyle.getName());
+        mbgl::Log::Info(mbgl::Event::Setup, "Changed style:");
     });
 
     // Resource loader controls top-level request processing and can resume /
@@ -204,6 +211,7 @@ int main(int argc, char* argv[]) {
         });
     });
 
+    /*
     // Load style
     if (style.empty()) {
         const char* url = getenv("MLN_STYLE_URL");
@@ -216,8 +224,11 @@ int main(int argc, char* argv[]) {
             view->setWindowTitle(url);
         }
     }
-
     map.getStyle().loadURL(style);
+    */
+    map.getStyle().loadJSON(
+        mbgl::util::read_file("/home/anaslasram/personal/code/maplibre-native/platform/android/MapLibreAndroidTestApp/"
+                              "src/main/assets/style.json"));
 
     view->run();
 

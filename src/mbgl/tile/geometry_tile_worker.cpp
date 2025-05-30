@@ -152,19 +152,21 @@ void GeometryTileWorker::setData(std::unique_ptr<const GeometryTileData> data_,
     }
 }
 
-void GeometryTileWorker::setLayers(std::vector<Immutable<LayerProperties>> layers_,
-                                   std::set<std::string> availableImages_,
-                                   uint64_t correlationID_) {
+std::shared_ptr<LayoutResult> GeometryTileWorker::setLayers(std::vector<Immutable<LayerProperties>> layers_,
+                                                            std::set<std::string> availableImages_,
+                                                            uint64_t correlationID_,
+                                                            bool sync) {
     MLN_TRACE_FUNC();
 
     try {
         layers = std::move(layers_);
         correlationID = correlationID_;
         availableImages = std::move(availableImages_);
+        std::shared_ptr<LayoutResult> layoutResult = nullptr;
 
         switch (state) {
             case Idle:
-                parse();
+                layoutResult = parse(sync);
                 coalesce();
                 break;
 
@@ -176,9 +178,11 @@ void GeometryTileWorker::setLayers(std::vector<Immutable<LayerProperties>> layer
             case NeedsParse:
                 break;
         }
+        return layoutResult;
     } catch (...) {
         parent.invoke(&GeometryTile::onError, std::current_exception(), correlationID);
     }
+    return nullptr;
 }
 
 void GeometryTileWorker::reset(uint64_t correlationID_) {
@@ -365,11 +369,11 @@ void GeometryTileWorker::requestNewImages(const ImageDependencies& imageDependen
     }
 }
 
-void GeometryTileWorker::parse() {
+std::shared_ptr<LayoutResult> GeometryTileWorker::parse(bool ret) {
     MLN_TRACE_FUNC();
 
     if (!data || !layers) {
-        return;
+        return nullptr;
     }
 
     MBGL_TIMING_START(watch)
@@ -400,7 +404,7 @@ void GeometryTileWorker::parse() {
     for (auto& pair : groupMap) {
         const auto& group = pair.second;
         if (obsolete) {
-            return;
+            return nullptr;
         }
 
         if (!*data) {
@@ -472,7 +476,7 @@ void GeometryTileWorker::parse() {
                                    << " SourceID: " << sourceID.c_str()
                                    << " Canonical: " << static_cast<int>(id.canonical.z) << "/" << id.canonical.x << "/"
                                    << id.canonical.y << " Time");
-    finalizeLayout();
+    return finalizeLayout(ret);
 }
 
 bool GeometryTileWorker::hasPendingDependencies() const {
@@ -488,11 +492,11 @@ bool GeometryTileWorker::hasPendingParseResult() const {
     return bool(featureIndex);
 }
 
-void GeometryTileWorker::finalizeLayout() {
+std::shared_ptr<LayoutResult> GeometryTileWorker::finalizeLayout(bool ret) {
     MLN_TRACE_FUNC();
 
     if (!data || !layers || !hasPendingParseResult() || hasPendingDependencies()) {
-        return;
+        return nullptr;
     }
 
     MBGL_TIMING_START(watch)
@@ -504,7 +508,7 @@ void GeometryTileWorker::finalizeLayout() {
 
         for (auto& layout : layouts) {
             if (obsolete) {
-                return;
+                return nullptr;
             }
 
             layout->prepareSymbols(glyphMap, glyphAtlas.positions, imageMap, iconAtlas.iconPositions);
@@ -529,10 +533,15 @@ void GeometryTileWorker::finalizeLayout() {
                                    << " Canonical: " << static_cast<int>(id.canonical.z) << "/" << id.canonical.x << "/"
                                    << id.canonical.y << " Time");
 
-    parent.invoke(&GeometryTile::onLayout,
-                  std::make_shared<GeometryTile::LayoutResult>(
-                      std::move(renderData), std::move(featureIndex), std::move(glyphAtlasImage), std::move(iconAtlas)),
-                  correlationID);
+    auto layourResult = std::make_shared<LayoutResult>(
+        std::move(renderData), std::move(featureIndex), std::move(glyphAtlasImage), std::move(iconAtlas));
+
+    if (ret) {
+        return layourResult;
+    }
+
+    parent.invoke(&GeometryTile::onLayout, std::move(layourResult), correlationID);
+    return nullptr;
 }
 
 } // namespace mbgl
