@@ -22,6 +22,25 @@ class GeometryTile;
 class GeometryTileData;
 class Layout;
 
+class LayoutResult {
+public:
+    mbgl::unordered_map<std::string, LayerRenderData> layerRenderData;
+    std::shared_ptr<FeatureIndex> featureIndex;
+    std::optional<AlphaImage> glyphAtlasImage;
+    ImageAtlas iconAtlas;
+
+    LayerRenderData* getLayerRenderData(const style::Layer::Impl&);
+
+    LayoutResult(mbgl::unordered_map<std::string, LayerRenderData> renderData_,
+                 std::unique_ptr<FeatureIndex> featureIndex_,
+                 std::optional<AlphaImage> glyphAtlasImage_,
+                 ImageAtlas iconAtlas_)
+        : layerRenderData(std::move(renderData_)),
+          featureIndex(std::move(featureIndex_)),
+          glyphAtlasImage(std::move(glyphAtlasImage_)),
+          iconAtlas(std::move(iconAtlas_)) {}
+};
+
 namespace style {
 class Layer;
 } // namespace style
@@ -39,9 +58,10 @@ public:
                        bool showCollisionBoxes_);
     ~GeometryTileWorker();
 
-    void setLayers(std::vector<Immutable<style::LayerProperties>>,
-                   std::set<std::string> availableImages,
-                   uint64_t correlationID);
+    std::shared_ptr<LayoutResult> setLayers(std::vector<Immutable<style::LayerProperties>>,
+                                            std::set<std::string> availableImages,
+                                            uint64_t correlationID,
+                                            bool sync = false);
     void setData(std::unique_ptr<const GeometryTileData>,
                  std::set<std::string> availableImages,
                  uint64_t correlationID);
@@ -56,8 +76,8 @@ public:
 
 private:
     void coalesced();
-    void parse();
-    void finalizeLayout();
+    std::shared_ptr<LayoutResult> parse(bool ret = false);
+    std::shared_ptr<LayoutResult> finalizeLayout(bool ret = false);
 
     void coalesce();
 

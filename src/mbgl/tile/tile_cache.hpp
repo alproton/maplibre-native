@@ -50,6 +50,8 @@ public:
 
     const std::string& getSource() const noexcept { return source; }
 
+    void setLayers(const std::vector<Immutable<style::LayerProperties>>& layers);
+
 private:
     std::map<OverscaledTileID, std::unique_ptr<Tile>> tiles;
     std::list<OverscaledTileID> orderedKeys;

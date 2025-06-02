@@ -325,9 +325,6 @@ jni::Local<jni::String> NativeMapView::getStyleUrl(jni::JNIEnv& env) {
 }
 
 void NativeMapView::setStyleUrl(jni::JNIEnv& env, const jni::String& url) {
-    if (rendererFrontend) {
-        rendererFrontend->clearData();
-    }
     map->getStyle().loadURL(jni::Make<std::string>(env, url));
     if (routeMgr) {
         routeMgr->setStyle(map->getStyle());
@@ -339,9 +336,6 @@ jni::Local<jni::String> NativeMapView::getStyleJson(jni::JNIEnv& env) {
 }
 
 void NativeMapView::setStyleJson(jni::JNIEnv& env, const jni::String& json) {
-    if (rendererFrontend) {
-        rendererFrontend->clearData();
-    }
     map->getStyle().loadJSON(jni::Make<std::string>(env, json));
     if (routeMgr) {
         routeMgr->setStyle(map->getStyle());

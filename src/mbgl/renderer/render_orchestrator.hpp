@@ -249,6 +249,8 @@ private:
     std::vector<RenderTargetPtr> renderTargets;
     RenderItem::DebugLayerGroupMap debugLayerGroups;
 #endif
+
+    bool prevStyleLoaded = false;
 };
 
 } // namespace mbgl

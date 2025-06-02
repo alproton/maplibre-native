@@ -28,7 +28,7 @@
 
 namespace mbgl {
 
-LayerRenderData* GeometryTile::LayoutResult::getLayerRenderData(const style::Layer::Impl& layerImpl) {
+LayerRenderData* LayoutResult::getLayerRenderData(const style::Layer::Impl& layerImpl) {
     MLN_TRACE_FUNC();
     MLN_ZONE_STR(layerImpl.id);
 
@@ -46,7 +46,7 @@ LayerRenderData* GeometryTile::LayoutResult::getLayerRenderData(const style::Lay
 
 class GeometryTileRenderData final : public TileRenderData {
 public:
-    GeometryTileRenderData(std::shared_ptr<GeometryTile::LayoutResult> layoutResult_,
+    GeometryTileRenderData(std::shared_ptr<LayoutResult> layoutResult_,
                            std::shared_ptr<TileAtlasTextures> atlasTextures_)
         : TileRenderData(std::move(atlasTextures_)),
           layoutResult(std::move(layoutResult_)) {}
@@ -59,7 +59,7 @@ private:
     void upload(gfx::UploadPass&) override;
     void prepare(const SourcePrepareParameters&) override;
 
-    std::shared_ptr<GeometryTile::LayoutResult> layoutResult;
+    std::shared_ptr<LayoutResult> layoutResult;
     std::vector<ImagePatch> imagePatches;
 };
 
@@ -269,7 +269,7 @@ std::unique_ptr<TileRenderData> GeometryTile::createRenderData() {
     return std::make_unique<GeometryTileRenderData>(layoutResult, atlasTextures);
 }
 
-void GeometryTile::setLayers(const std::vector<Immutable<LayerProperties>>& layers) {
+void GeometryTile::setLayers(const std::vector<Immutable<LayerProperties>>& layers, bool sync) {
     MLN_TRACE_FUNC();
 
     // Mark the tile as pending again if it was complete before to prevent
@@ -298,8 +298,19 @@ void GeometryTile::setLayers(const std::vector<Immutable<LayerProperties>>& laye
     }
 
     ++correlationID;
-    worker.self().invoke(
-        &GeometryTileWorker::setLayers, std::move(impls), imageManager->getAvailableImages(), correlationID);
+    if (sync) {
+        auto future = worker.self().ask(
+            &GeometryTileWorker::setLayers, std::move(impls), imageManager->getAvailableImages(), correlationID, true);
+        if (future.valid()) {
+            auto layout = future.get();
+            if (layout) {
+                onLayout(std::move(layout), correlationID);
+            }
+        }
+    } else {
+        worker.self().invoke(
+            &GeometryTileWorker::setLayers, std::move(impls), imageManager->getAvailableImages(), correlationID, false);
+    }
 }
 
 void GeometryTile::setShowCollisionBoxes(const bool showCollisionBoxes_) {
