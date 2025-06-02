@@ -1594,6 +1594,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeGetVanishing, "nativeRouteGetVanishing"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
+        METHOD(&NativeMapView::routeEnableCaptureNavStops, "nativeEnableCaptureRouteNavStops"),
         METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
         // Custom Dots API
         METHOD(&NativeMapView::setCustomDotsNextLayer, "nativeSetCustomDotsNextLayer"),
@@ -1791,6 +1792,12 @@ jboolean NativeMapView::routeSegmentCreateFractional(JNIEnv& env,
     return false;
 }
 
+void NativeMapView::routeEnableCaptureNavStops(JNIEnv& env, jni::jboolean enable) {
+    if (routeMgr) {
+        routeMgr->captureNavStops(enable);
+    }
+}
+
 jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {
     if (routeMgr) {
         return routeMgr->routeSetProgressPercent(RouteID(routeID), progress);
@@ -1800,11 +1807,10 @@ jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jd
 }
 
 jdouble NativeMapView::routeProgressSetPoint(
-    JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse, jni::jboolean capture) {
+    JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse) {
     if (routeMgr) {
         mbgl::route::Precision precision = coarse ? mbgl::route::Precision::Coarse : mbgl::route::Precision::Fine;
-        double percentage = routeMgr->routeSetProgressPoint(
-            RouteID(routeID), mbgl::Point<double>(x, y), precision, capture);
+        double percentage = routeMgr->routeSetProgressPoint(RouteID(routeID), mbgl::Point<double>(x, y), precision);
         return percentage;
     }
 

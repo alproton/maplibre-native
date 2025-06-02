@@ -442,6 +442,10 @@ bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
     return false;
 }
 
+void RouteManager::captureNavStops(bool onOff) {
+    captureNavStops_ = onOff;
+}
+
 void RouteManager::validateAddToDirtyBin(const RouteID& routeID, const DirtyType& dirtyBin) {
     // check if this route is in the list of dirty geometry routes. if so, then no need to set dirty segments, as it
     // will be created during finalize
@@ -523,13 +527,13 @@ bool RouteManager::hasRoutes() const {
     return !routeMap_.empty();
 }
 
-bool RouteManager::routeSetProgressPercent(const RouteID& routeID, const double progress, bool capture) {
+bool RouteManager::routeSetProgressPercent(const RouteID& routeID, const double progress) {
     assert(style_ != nullptr && "Style not set!");
     assert(routeID.isValid() && "invalid route ID");
     double validProgress = std::clamp(progress, 0.0, 1.0);
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-        routeMap_[routeID].routeSetProgress(validProgress, capture);
+        routeMap_[routeID].routeSetProgress(validProgress, captureNavStops_);
         validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
 
         success = true;
@@ -540,15 +544,14 @@ bool RouteManager::routeSetProgressPercent(const RouteID& routeID, const double 
 
 double RouteManager::routeSetProgressPoint(const RouteID& routeID,
                                            const mbgl::Point<double>& progressPoint,
-                                           const Precision& precision,
-                                           bool capture) {
+                                           const Precision& precision) {
     assert(routeID.isValid() && "invalid route ID");
     double percentage = -1.0;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         auto startTime = std::chrono::high_resolution_clock::now();
         {
             if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
-                percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, capture);
+                percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, captureNavStops_);
             }
         }
         auto endTime = std::chrono::high_resolution_clock::now();

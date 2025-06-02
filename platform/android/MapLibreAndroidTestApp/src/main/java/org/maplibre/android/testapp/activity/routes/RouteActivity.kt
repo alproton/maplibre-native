@@ -50,7 +50,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
         mapView.setAutoVanishingRoute(enableAutoVanishingRoute)
-
+        mapView.enableCaptureRouteNavStops(true)
         //Add route
         val addRouteButton = findViewById<Button>(R.id.add_route)
         addRouteButton?.setOnClickListener {
@@ -64,6 +64,12 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         removeRouteButton?.setOnClickListener {
             RouteUtils.disposeRoute(mapView)
             Toast.makeText(this, "Removed Route", Toast.LENGTH_SHORT).show()
+        }
+
+        val logRouteSnapshotButton = findViewById<Button>(R.id.log_route_snapshot)
+        logRouteSnapshotButton?.setOnClickListener {
+            val snapshot = mapView.getSnapshotCapture()
+            Timber.tag("ROUTE_PROGRESS").i("Route snapshot: $snapshot")
         }
 
         //route progress precision

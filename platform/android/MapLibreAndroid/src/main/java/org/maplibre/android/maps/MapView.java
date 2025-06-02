@@ -64,7 +64,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   private final MapChangeReceiver mapChangeReceiver = new MapChangeReceiver();
   private final MapCallback mapCallback = new MapCallback();
   private final InitialRenderCallback initialRenderCallback = new InitialRenderCallback();
-  private boolean isPointBasedRouteQueryCoarse = true;
+  private boolean isPointBasedRouteQueryCoarse = false;
   private boolean isAutoRouteVanishing = true;
   private double latestRouteProgressPercent = 0.0;
 
@@ -524,8 +524,8 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @param capture if true, the points sent downstream will be cached so that they can logged into the snapshot capture
    * @return true if successful, false otherwise. If the route does not exist, false is returned.
    */
-  public double setRouteProgressPoint(RouteID routeID, Point point, boolean coarsePrecision, boolean capture) {
-    return nativeMapView.setRouteProgressPoint(routeID, point, coarsePrecision, false);
+  public double setRouteProgressPoint(RouteID routeID, Point point, boolean coarsePrecision) {
+    return nativeMapView.setRouteProgressPoint(routeID, point, coarsePrecision);
   }
 
   /**
@@ -630,6 +630,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     return nativeMapView.getSnapshotCapture();
   }
 
+  public void enableCaptureRouteNavStops(boolean onOff) {
+    nativeMapView.captureRouteNavStops(onOff);
+  }
+
   /***
    * Queries map libre native is a screen space point is over a route.
    *
@@ -696,15 +700,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
     RouteID vanishingRouteID = getVanishingRouteID();
     if(isAutoRouteVanishing && vanishingRouteID.isValid()) {
-      double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse, false);
+      double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse);
       if(percent >= 0.0 && percent <= 1.0) {
         nativeMapView.finalizeRoutes();
         latestRouteProgressPercent = percent;
       }
-
-      Timber.i("Map_View_Route_Progress: route percent: "+ percent);
-    } else {
-      Timber.i("Map_View_Route_Progress: invalid active route");
     }
 
     customPuckLatestLat = lat;

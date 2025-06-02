@@ -56,6 +56,12 @@
                 />
 
         </LinearLayout>
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/log_route_snapshot"
+            android:text="route snapshot"
+            tools:ignore="HardcodedText"/>
 
 
     </LinearLayout>
