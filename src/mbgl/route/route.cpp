@@ -689,7 +689,7 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
     }
 
     // Handle zero-length route
-    if (totalLength_ <= std::numeric_limits<double>::epsilon()) {
+    if (totalLength_ <= EPSILON) {
         // If the route has no length, the closest point is the first point,
         // and percentage is arguably 0 or undefined. We'll return 0.
         // Check if query point *is* the single point location
@@ -719,7 +719,7 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
         double segmentLenSq = vecMagnitudeSq(segmentVec);
         double t = 0.0; // Parameter along the chord (0=v1, 1=v2)
 
-        if (segmentLenSq > std::numeric_limits<double>::epsilon()) {
+        if (segmentLenSq > EPSILON) {
             // Project queryVec onto segmentVec
             t = vecDot(queryVec, segmentVec) / segmentLenSq;
             t = std::clamp(t, 0.0, 1.0); // Clamp to the segment bounds [0, 1]
@@ -739,8 +739,7 @@ double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool c
         dot_prod = std::clamp(dot_prod, -1.0, 1.0); // Clamp for acos safety
         omega = std::acos(dot_prod);                // Angle of the arc segment
 
-        if (std::abs(omega) < std::numeric_limits<double>::epsilon() ||
-            std::abs(std::sin(omega)) < std::numeric_limits<double>::epsilon()) {
+        if (std::abs(omega) < EPSILON || std::abs(std::sin(omega)) < EPSILON) {
             // Arc angle is negligible (points identical) or antipodal.
             // If identical (omega ~ 0), the point is just p1 (or p2).
             // If antipodal (omega ~ PI), the path is ambiguous, but LERP is okay fallback.
