@@ -580,8 +580,24 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if the route segment was created successfully, false otherwise. If the route
    * does not exist, false is returned.
    */
+  @Deprecated
   public boolean createRouteSegment(RouteID routeID, RouteSegmentOptions rsopts) {
     return nativeMapView.createRouteSegment(routeID, rsopts);
+  }
+
+  /***
+   * Creates a new route segment on the map view. A route segment is defined by the first index and
+   * last index of the route geometry. Finer resolution of the route segment can be achieved by
+   * specifying the first and last index fractions. A route segment is typically used to visualize
+   * traffic zones and is customizable by the client code. Remember to call finalizeRoutes().
+   *
+   * @param routeID the specified routeID for the corresponding route.
+   * @param rsopts the specified visual appearance of the route segment
+   * @return true if the route segment was created successfully, false otherwise. If the route
+   * does not exist, false is returned.
+   */
+  public boolean createRouteSegmentFractional(RouteID routeID, RouteSegmentOptions rsopts) {
+    return nativeMapView.createRouteSegmentFractional(routeID, rsopts);
   }
 
   /***

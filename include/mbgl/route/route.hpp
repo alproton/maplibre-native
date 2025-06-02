@@ -40,7 +40,7 @@ class Route {
 public:
     Route() = default;
     Route(const LineString<double>& geometry, const RouteOptions& ropts);
-    bool routeSegmentCreate(const RouteSegmentOptions&);
+    bool routeSegmentCreate(const RouteSegmentOptions&, bool useFractionalIndices = false);
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const RouteType& routeType, const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;
@@ -83,7 +83,7 @@ private:
     double totalLength_ = 0.0;
     std::vector<double> capturedNavPercent_;
     std::vector<Point<double>> capturedNavStops_;
-    bool logPrecision = true;
+    bool logPrecision = false;
 };
 
 } // namespace route

@@ -415,16 +415,22 @@ bool RouteManager::routeSet(const RouteID& routeID, const LineString<double>& ge
     return false;
 }
 
+void RouteManager::setUseRouteSegmentIndexFractions(bool useFractions) {
+    useRouteSegmentIndexFractions_ = useFractions;
+}
+
 bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
     assert(routeID.isValid() && "Invalid route ID");
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         // route segments must have atleast 2 points
-        if (routeSegOpts.geometry.size() < 2) {
+        if (routeSegOpts.firstIndex == INVALID_UINT || routeSegOpts.lastIndex == INVALID_UINT ||
+            routeSegOpts.firstIndexFraction < 0.0f || routeSegOpts.lastIndexFraction < 0.0f ||
+            routeSegOpts.firstIndexFraction > 1.0f || routeSegOpts.lastIndexFraction > 1.0f) {
             return false;
         }
 
-        bool success = routeMap_[routeID].routeSegmentCreate(routeSegOpts);
+        bool success = routeMap_[routeID].routeSegmentCreate(routeSegOpts, useRouteSegmentIndexFractions_);
         if (success) {
             stats_.numRouteSegments++;
             validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
