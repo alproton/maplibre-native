@@ -699,10 +699,6 @@ double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool ca
     return distanceAlongRoute / totalLength_;
 }
 
-double Route::getProgressInMeters(double progressInMeters) const {
-    return progressInMeters / totalLength_;
-}
-
 double Route::getProgressProjectionSLERP(const Point<double>& queryPoint, bool capture) {
     if (capture) {
         capturedNavStops_.push_back(queryPoint);

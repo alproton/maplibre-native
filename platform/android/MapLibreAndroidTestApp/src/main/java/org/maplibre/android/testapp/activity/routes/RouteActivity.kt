@@ -35,7 +35,6 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var maplibreMap : MapLibreMap
     private var progressPrecisionCoarse : Boolean = true
     private val enableAutoVanishingRoute = false
-    private val useProgressInMeters = true
     private val useFractionalRouteSegments = true
     private val useLocationEngine = false
     private var permissionsManager: PermissionsManager? = null
@@ -106,13 +105,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
                 val pt : Point = RouteUtils.getPointProgress(progressPercent)
 
                 if(!enableAutoVanishingRoute) {
-                    if(useProgressInMeters) {
-                        val progressInMeters = progressPercent * RouteUtils.getTotalRouteLength()
-                        Timber.tag("RouteProgress").i("Progress in meters: $progressInMeters")
-                        RouteUtils.setPointProgressInMeters(mapView, progressInMeters)
-                    } else {
-                        RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
-                    }
+                    RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
                     mapView.finalizeRoutes()
                 }
 
