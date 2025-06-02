@@ -64,6 +64,7 @@ public:
     bool routeSegmentCreate(const RouteID&, const RouteSegmentOptions&);
     bool routeSetProgressPercent(const RouteID&, double progress);
     double routeSetProgressPoint(const RouteID&, const Point<double>& progressPoint, const Precision& precision);
+    void setUseRouteSegmentIndexFractions(bool useFractions);
     Point<double> getPoint(const RouteID& routeID,
                            double percent,
                            const Precision& precision,
@@ -114,6 +115,7 @@ private:
     long long totalVanishingRouteElapsedMillis = 0;
     long long numVanisingRouteInvocations = 0;
     bool captureNavStops_ = false;
+    bool useRouteSegmentIndexFractions_ = false;
 };
 }; // namespace route
 

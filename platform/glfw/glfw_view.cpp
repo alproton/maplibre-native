@@ -1164,7 +1164,7 @@ void GLFWView::addTrafficSegments() {
     };
 
     std::vector<TrafficBlock> trafficBlks;
-
+    bool useIndexFractions = true;
     for (const auto &iter : routeMap_) {
         const auto &routeID = iter.first;
         const auto &route = iter.second;
@@ -1175,7 +1175,7 @@ void GLFWView::addTrafficSegments() {
         bool useTestCode = false;
         if (useTestCode) {
             trafficBlks = testCases(RouteSegmentTestCases::Blk12SameColorIntersecting, route);
-        } else {
+        } else if (!useIndexFractions) { // TODO: remove deprecated use geometry in route segments
             if (route.numTrafficZones * 3 > route.resolution) {
                 float blockSize = 1.0f / float(route.numTrafficZones);
                 float innerBlockSize = blockSize / 2.0f;
@@ -1209,15 +1209,64 @@ void GLFWView::addTrafficSegments() {
                     trafficBlks.push_back(currTrafficBlk);
                 }
             }
+        } else {
+            // test case 1 - route segment extends wholly within the interval in first and last interval
+            // test case 2 - route segment is completely within the interval
+            // test case 3 - route segment is spans across into adjacent interval
+
+            // test case 1
+            TrafficBlock trafblk0;
+            trafblk0.firstIndex = 0;
+            trafblk0.firstIndexFraction = 0.0f;
+            trafblk0.lastIndex = 0;
+            trafblk0.lastIndexFraction = 1.0f;
+            trafblk0.color = mbgl::Color(1.0f, 0.0f, 0.0f, 1.0f);
+
+            TrafficBlock trafblk1;
+            trafblk1.firstIndex = route.points.size() - 2; // second last point
+            trafblk1.firstIndexFraction = 0.0f;
+            trafblk1.lastIndex = route.points.size() - 2;
+            trafblk1.lastIndexFraction = 1.0f;
+            trafblk0.color = mbgl::Color(1.0f, 1.0f, 1.0f, 1.0f);
+
+            // test case 2
+            TrafficBlock trafblk2;
+            trafblk2.firstIndex = 1;
+            trafblk2.firstIndexFraction = 0.2f;
+            trafblk2.lastIndex = 1;
+            trafblk2.lastIndexFraction = 0.8f;
+            trafblk2.color = mbgl::Color(0.0f, 1.0f, 0.0f, 1.0f);
+
+            // test case 3
+            TrafficBlock trafblk3;
+            trafblk3.firstIndex = 2;
+            trafblk3.firstIndexFraction = 0.5f;
+            trafblk3.lastIndex = 3;
+            trafblk3.lastIndexFraction = 0.5f;
+            trafblk3.color = mbgl::Color(0.0f, 1.0f, 1.0f, 1.0f);
+
+            trafficBlks.push_back(trafblk0);
+            trafficBlks.push_back(trafblk1);
+            trafficBlks.push_back(trafblk2);
+            trafficBlks.push_back(trafblk3);
         }
 
         // clear the route segments and create new ones from the traffic blocks
         rmptr_->routeClearSegments(routeID);
+        rmptr_->setUseRouteSegmentIndexFractions(useIndexFractions);
         for (size_t i = 0; i < trafficBlks.size(); i++) {
             mbgl::route::RouteSegmentOptions rsegopts;
             uint32_t coloridx = i % (trafficBlks.size() - 1);
             rsegopts.color = colors[coloridx];
-            rsegopts.geometry = trafficBlks[i].block;
+            if (useIndexFractions) {
+                rsegopts.firstIndex = trafficBlks[i].firstIndex;
+                rsegopts.firstIndexFraction = trafficBlks[i].firstIndexFraction;
+                rsegopts.lastIndex = trafficBlks[i].lastIndex;
+                rsegopts.lastIndexFraction = trafficBlks[i].lastIndexFraction;
+            } else {
+                rsegopts.geometry = trafficBlks[i].block; // TODO: remove deprecated use of "geometry"
+            }
+
             rsegopts.priority = trafficBlks[i].priority;
             rsegopts.outerColor = mbgl::Color(float(i) / float(trafficBlks.size() - 1), 0.0, 0.0, 1.0);
             const bool success = rmptr_->routeSegmentCreate(routeID, rsegopts);
@@ -1622,7 +1671,7 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                                 const rapidjson::Value &outerColor = segment_options["outer_color"];
                                 rsopts.outerColor = mbglColor(outerColor);
                             }
-
+                            // TODO: deprecated use of "geometry"
                             if (segment_options.HasMember("geometry") && segment_options["geometry"].IsArray()) {
                                 const rapidjson::Value &geometry = segment_options["geometry"];
                                 for (rapidjson::SizeType k = 0; k < geometry.Size(); k++) {
@@ -1633,6 +1682,26 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                                         rsopts.geometry.push_back({x, y});
                                     }
                                 }
+                            }
+
+                            if (segment_options.HasMember("first_index")) {
+                                const rapidjson::Value &firstIndexVal = segment_options["first_index"];
+                                rsopts.firstIndex = firstIndexVal.GetUint();
+                            }
+
+                            if (segment_options.HasMember("first_index_fraction")) {
+                                const rapidjson::Value &firstIndexFractionVal = segment_options["first_index_fraction"];
+                                rsopts.firstIndexFraction = firstIndexFractionVal.GetFloat();
+                            }
+
+                            if (segment_options.HasMember("last_index")) {
+                                const rapidjson::Value &lastIndexVal = segment_options["last_index"];
+                                rsopts.lastIndex = lastIndexVal.GetUint();
+                            }
+
+                            if (segment_options.HasMember("last_index_fraction")) {
+                                const rapidjson::Value &lastIndexFractionVal = segment_options["last_index_fraction"];
+                                rsopts.lastIndexFraction = lastIndexFractionVal.GetFloat();
                             }
 
                             if (segment_options.HasMember("priority")) {
