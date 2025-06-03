@@ -407,7 +407,7 @@ RouteID RouteManager::routePreCreate(const RouteID& routeID, uint32_t numRoutes)
 bool RouteManager::routeSet(const RouteID& routeID, const LineString<double>& geometry, const RouteOptions& ropts) {
     assert(routeID.isValid() && "Invalid route ID");
     assert(!geometry.empty() && "Invalid route geometry");
-    if (routeID.isValid() && !geometry.empty()) {
+    if (routeID.isValid() && !geometry.empty() && routeMap_.find(routeID) != routeMap_.end()) {
         Route route(geometry, ropts);
         routeMap_[routeID] = route;
         stats_.numRoutes++;
@@ -472,6 +472,29 @@ bool RouteManager::loadCapture(const std::string& capture) {
     if (document.HasMember("num_routes") && document["num_routes"].IsInt()) {
         numRoutes = document["num_routes"].GetInt();
         Log::Info(Event::Route, "De-serializing " + std::to_string(numRoutes) + " routes");
+    }
+
+    // iterate through the document and get the minimum and maximum routeIDs, lets pre-create these IDs in the route
+    // manager.
+    uint32_t minRoute = INT_MAX;
+    uint32_t maxRoute = 0;
+    if (document.HasMember("routes") && document["routes"].IsArray()) {
+        const rapidjson::Value& routes = document["routes"];
+        for (rapidjson::SizeType i = 0; i < routes.Size(); i++) {
+            const rapidjson::Value& route = routes[i];
+            if (route.HasMember("route_id") && route["route_id"].IsInt()) {
+                const rapidjson::Value& routeIDval = route["route_id"];
+                uint32_t rid = routeIDval.GetInt();
+                RouteID routeID = RouteID(rid);
+                routeMap_[routeID] = {};
+
+                if (minRoute > rid) minRoute = rid;
+                if (maxRoute < rid) maxRoute = rid;
+            }
+        }
+        RouteID minRouteID = RouteID(minRoute);
+        uint32_t numRoutesIDs = maxRoute - minRoute + 1;
+        routePreCreate(minRouteID, numRoutesIDs);
     }
 
     if (document.HasMember("routes") && document["routes"].IsArray()) {
@@ -597,7 +620,6 @@ bool RouteManager::loadCapture(const std::string& capture) {
                     }
                 }
 
-                finalize();
                 // if there is no vanishing route defined in the capture, it means we have not captured nav stops.
                 // lets just set the first route in the map as the vanishing route.
                 if (!vanishingRouteID_.isValid()) {
@@ -658,13 +680,12 @@ bool RouteManager::loadCapture(const std::string& capture) {
                                 rsopts.priority = segment_options["priority"].GetInt();
                             }
                         }
-
                         routeSegmentCreate(routeID, rsopts);
                     }
                 }
-                finalize();
             }
         }
+        finalize();
     }
 
     return true;

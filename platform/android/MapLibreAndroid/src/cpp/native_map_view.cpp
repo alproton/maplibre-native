@@ -1811,8 +1811,11 @@ jboolean NativeMapView::routeIsCaptureNavStopsEnabled(JNIEnv& env) {
 
 jboolean NativeMapView::routeLoadCapture(JNIEnv& env, const jni::String& captureStr) {
     if (routeMgr) {
+        if (!routeMgr->hasStyle()) {
+            routeMgr->setStyle(map->getStyle());
+        }
+
         std::string capture = jni::Make<std::string>(env, captureStr);
-        routeMgr->setStyle(map->getStyle());
         return routeMgr->loadCapture(capture);
     }
 

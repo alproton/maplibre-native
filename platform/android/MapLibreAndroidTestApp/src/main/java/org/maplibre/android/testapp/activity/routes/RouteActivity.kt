@@ -50,7 +50,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
         mapView.setAutoVanishingRoute(enableAutoVanishingRoute)
-        mapView.enableCaptureRouteNavStops(true)
+        mapView.enableCaptureRouteNavStops(false)
         //Add route
         val addRouteButton = findViewById<Button>(R.id.add_route)
         addRouteButton?.setOnClickListener {
@@ -103,30 +103,6 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-        //capture
-        val captureSpinner = findViewById<Spinner>(R.id.capture_entries)
-        val captureOptions = listOf("yosemite")
-        val captureAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, captureOptions)
-        captureAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        captureSpinner.adapter = captureAdapter
-
-        // Set a listener for the progress precision spinner
-        captureSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                // Get the selected item
-                val selectedItem = parent?.getItemAtPosition(position).toString()
-                // Handle the selected item
-
-                val routeCaptureSample = RouteUtils.readJsonFromRaw(applicationContext, R.raw.yosemite_route_capture)
-                RouteUtils.loadCapture(mapView, routeCaptureSample!!)
-
-                Toast.makeText(applicationContext, "Selected: $selectedItem", Toast.LENGTH_SHORT).show()
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                Toast.makeText(applicationContext, "Nothing selected", Toast.LENGTH_SHORT).show()
-            }
-        }
 
         //route progress slider
         val sliderBar = findViewById<SeekBar>(R.id.route_slider)
@@ -274,6 +250,32 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         prepareLocationManager()
+
+        //capture
+        val captureSpinner = findViewById<Spinner>(R.id.capture_entries)
+        val captureOptions = listOf("yosemite")
+        val captureAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, captureOptions)
+        captureAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        captureSpinner.adapter = captureAdapter
+
+        // Set a listener for the progress precision spinner
+        captureSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // Get the selected item
+                val selectedItem = parent?.getItemAtPosition(position).toString()
+                // Handle the selected item
+                if(!RouteUtils.isCaptureLoaded()) {
+                    val routeCaptureSample = RouteUtils.readJsonFromRaw(applicationContext, R.raw.yosemite_route_capture)
+                    RouteUtils.loadCapture(mapView, routeCaptureSample!!)
+
+                    Toast.makeText(applicationContext, "Selected: $selectedItem", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                Toast.makeText(applicationContext, "Nothing selected", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     override fun onStart() {
