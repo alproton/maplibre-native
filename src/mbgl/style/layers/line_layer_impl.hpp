@@ -21,7 +21,7 @@ public:
     LineLayoutProperties::Unevaluated layout;
     LinePaintProperties::Transitionable paint;
     LineGradientFilterType gradientFilterType = LineGradientFilterType::Linear;
-
+    bool isRouteLayer = false;
     DECLARE_LAYER_TYPE_INFO;
 };
 

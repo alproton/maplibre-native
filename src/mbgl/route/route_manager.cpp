@@ -1,4 +1,5 @@
 
+#include "mbgl/style/layers/line_layer_impl.hpp"
 #include "mbgl/util/containers.hpp"
 #include "mbgl/util/math.hpp"
 
@@ -699,6 +700,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         layer->setLineColor(color);
         layer->setLineCap(LineCapType::Round);
         layer->setLineJoin(LineJoinType::Round);
+        layer->setIsRoute(true);
 
         layer->setGradientLineFilter(LineGradientFilterType::Nearest);
         layer->setGradientLineClipColor(clipColor);
