@@ -292,6 +292,13 @@ public:
     jint routeGetVanishing(JNIEnv& env);
 
     void routeEnableCaptureNavStops(JNIEnv& env, jni::jboolean enable);
+
+    jboolean routeIsCaptureNavStopsEnabled(JNIEnv& env);
+
+    jboolean routeLoadCapture(JNIEnv& env, const jni::String& captureStr);
+
+    jboolean routeCatpureScrub(JNIEnv& env, jni::jboolean forward);
+
     //------------------------------------------------
 
     jni::Local<jni::String> getRenderingStats(JNIEnv& env, jni::jboolean oneline);

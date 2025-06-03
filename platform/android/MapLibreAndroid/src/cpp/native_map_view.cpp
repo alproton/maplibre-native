@@ -1595,6 +1595,9 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
         METHOD(&NativeMapView::routeEnableCaptureNavStops, "nativeEnableCaptureRouteNavStops"),
+        METHOD(&NativeMapView::routeIsCaptureNavStopsEnabled, "nativeIsCaptureRouteNavStopsEnabled"),
+        METHOD(&NativeMapView::routeLoadCapture, "nativeRouteLoadCapture"),
+        METHOD(&NativeMapView::routeCatpureScrub, "nativeScrubCapturedRouteNavStops"),
         METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
         // Custom Dots API
         METHOD(&NativeMapView::setCustomDotsNextLayer, "nativeSetCustomDotsNextLayer"),
@@ -1796,6 +1799,31 @@ void NativeMapView::routeEnableCaptureNavStops(JNIEnv& env, jni::jboolean enable
     if (routeMgr) {
         routeMgr->captureNavStops(enable);
     }
+}
+
+jboolean NativeMapView::routeIsCaptureNavStopsEnabled(JNIEnv& env) {
+    if (routeMgr) {
+        return routeMgr->isCaptureNavStopsEnabled();
+    }
+
+    return false;
+}
+
+jboolean NativeMapView::routeLoadCapture(JNIEnv& env, const jni::String& captureStr) {
+    if (routeMgr) {
+        std::string capture = jni::Make<std::string>(env, captureStr);
+        return routeMgr->loadCapture(capture);
+    }
+
+    return false;
+}
+
+jboolean NativeMapView::routeCatpureScrub(JNIEnv& env, jni::jboolean forward) {
+    if (routeMgr) {
+        return routeMgr->captureScrubRoute(forward);
+    }
+
+    return false;
 }
 
 jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {

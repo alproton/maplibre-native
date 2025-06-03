@@ -69,6 +69,7 @@ public:
                            double percent,
                            const Precision& precision,
                            double* bearing = nullptr) const;
+    std::optional<LineString<double>> routeGetGeometry(const RouteID& routeID) const;
     void routeClearSegments(const RouteID&);
     bool routeDispose(const RouteID&);
     bool setVanishingRouteID(const RouteID& routeID);
@@ -79,8 +80,11 @@ public:
     std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
     std::string captureSnapshot() const;
+    bool loadCapture(const std::string& capture);
+    bool captureScrubRoute(bool forward, Point<double>* optPointOut = nullptr, double* optBearingOut = nullptr);
     int getTopMost(const std::vector<RouteID>& routeList) const;
     void captureNavStops(bool onOff);
+    bool isCaptureNavStopsEnabled() const;
     bool hasRoutes() const;
     void finalize();
 
@@ -116,6 +120,7 @@ private:
     long long numVanisingRouteInvocations = 0;
     bool captureNavStops_ = false;
     bool useRouteSegmentIndexFractions_ = false;
+    double currRouteCaptureProgress = 0.0;
 };
 }; // namespace route
 

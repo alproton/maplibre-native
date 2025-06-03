@@ -292,6 +292,11 @@ interface NativeMap {
 
   void captureRouteNavStops(boolean onOff);;
 
+  boolean scrubCapturedRouteNavStops(boolean forward);
+
+  boolean isRouteNavStopsCaptured();
+
+  boolean loadRouteCapture(String routeCapture);
   void clearRouteSegments(RouteID routeID);
 
   boolean setVanishingRoute(RouteID routeID);

@@ -626,12 +626,54 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     return nativeMapView.getRenderingStats(oneline);
   }
 
+  /***
+   * Gets the snapshot capture of all the routes in map. This is a json formatted string that contains all relevant
+   * map libre native data to reconstruct the routes and route segments.
+   *
+   * @return the json string that contains the snapshot capture of all the routes in map.
+   */
   public String getSnapshotCapture() {
     return nativeMapView.getSnapshotCapture();
   }
 
+  /***
+   * Storing GNSS locations indefinitely can be expensive in terms of memory. This API allows the client code to
+   * enable or disable the capture of route navigation stops, which if true, will be captured in the snapshot capture
+   * for routes.
+   * @param onOff if true, the route navigation stops will be captured in the snapshot capture for routes.
+   */
   public void enableCaptureRouteNavStops(boolean onOff) {
     nativeMapView.captureRouteNavStops(onOff);
+  }
+
+  /***
+   * Queries if the map libre native is capturing route navigation stops.
+   *
+   * @return true if the map libre native is capturing route navigation stops, false otherwise.
+   */
+  public boolean isRouteNavStopsCaptured() {
+    return nativeMapView.isRouteNavStopsCaptured();
+  }
+
+  /***
+   * Loads a route capture from a JSON string.
+   *
+   * @param routeCapture the json formatted string that contains the snapshot capture of all the routes in map.
+   * @return true if successful, false otherwise.
+   */
+  public boolean loadRouteCapture(String routeCapture) {
+    return nativeMapView.loadRouteCapture(routeCapture);
+  }
+
+  /***
+   * Scrubs the captured route navigation stops in the map libre native. This is useful when the client code
+   * wants to scrub the captured route navigation stops in the map libre native.
+   *
+   * @param forward if true, the captured route navigation stops will be scrubbed in forward direction, else in reverse direction.
+   * @return true if successful, false otherwise.
+   */
+  public boolean scrubCapturedRouteNavStops(boolean forward) {
+    return nativeMapView.scrubCapturedRouteNavStops(forward);
   }
 
   /***

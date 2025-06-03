@@ -574,6 +574,14 @@ void Route::routeSetProgress(const double t, bool capture) {
     progress_ = t;
 }
 
+bool Route::hasNavStopsPercent() const {
+    return !capturedNavPercent_.empty();
+}
+
+bool Route::hasNavStopsPoints() const {
+    return !capturedNavStops_.empty();
+}
+
 double Route::routeGetProgress() const {
     return progress_;
 }
@@ -584,6 +592,14 @@ const std::vector<Point<double>>& Route::getCapturedNavStops() const {
 
 const std::vector<double>& Route::getCapturedNavPercent() const {
     return capturedNavPercent_;
+}
+
+void Route::addNavStopPercent(double percent) {
+    capturedNavPercent_.push_back(percent);
+}
+
+void Route::addNavStopPoint(const mbgl::Point<double>& point) {
+    capturedNavStops_.push_back(point);
 }
 
 double Route::getProgressPercent(const Point<double>& progressPoint, const Precision& precision, bool capture) {

@@ -1241,6 +1241,22 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public boolean scrubCapturedRouteNavStops(boolean forward) {
+    return nativeScrubCapturedRouteNavStops(forward);
+  }
+
+  @Override
+  public boolean isRouteNavStopsCaptured() {
+    return nativeIsCaptureRouteNavStopsEnabled();
+  }
+
+  @Override
+  public boolean loadRouteCapture(String routeCaptureString) {
+    return nativeRouteLoadCapture(routeCaptureString);
+  }
+
+
+  @Override
   public void clearRouteSegments(RouteID routeID) {
     if(routeID.isValid()) {
       nativeRouteClearSegments(routeID.getId());
@@ -1721,6 +1737,15 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   private native void nativeEnableCaptureRouteNavStops(boolean onOff);
+
+  @Keep
+  private native boolean nativeIsCaptureRouteNavStopsEnabled();
+
+  @Keep
+  private native boolean nativeRouteLoadCapture(String routeCapture);
+
+  @Keep
+  private native boolean nativeScrubCapturedRouteNavStops(boolean forward);
 
   @Keep
   private native void nativeRouteClearSegments(int routeID);
