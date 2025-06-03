@@ -297,7 +297,7 @@ public:
 
     jboolean routeLoadCapture(JNIEnv& env, const jni::String& captureStr);
 
-    jboolean routeCatpureScrub(JNIEnv& env, jni::jboolean forward);
+    jboolean routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue);
 
     //------------------------------------------------
 

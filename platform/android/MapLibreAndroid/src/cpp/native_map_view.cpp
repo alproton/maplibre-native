@@ -1597,7 +1597,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeEnableCaptureNavStops, "nativeEnableCaptureRouteNavStops"),
         METHOD(&NativeMapView::routeIsCaptureNavStopsEnabled, "nativeIsCaptureRouteNavStopsEnabled"),
         METHOD(&NativeMapView::routeLoadCapture, "nativeRouteLoadCapture"),
-        METHOD(&NativeMapView::routeCatpureScrub, "nativeScrubCapturedRouteNavStops"),
+        METHOD(&NativeMapView::routeCatpureScrub, "nativeScrubCapturedRoute"),
         METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
         // Custom Dots API
         METHOD(&NativeMapView::setCustomDotsNextLayer, "nativeSetCustomDotsNextLayer"),
@@ -1812,15 +1812,16 @@ jboolean NativeMapView::routeIsCaptureNavStopsEnabled(JNIEnv& env) {
 jboolean NativeMapView::routeLoadCapture(JNIEnv& env, const jni::String& captureStr) {
     if (routeMgr) {
         std::string capture = jni::Make<std::string>(env, captureStr);
+        routeMgr->setStyle(map->getStyle());
         return routeMgr->loadCapture(capture);
     }
 
     return false;
 }
 
-jboolean NativeMapView::routeCatpureScrub(JNIEnv& env, jni::jboolean forward) {
+jboolean NativeMapView::routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue) {
     if (routeMgr) {
-        return routeMgr->captureScrubRoute(forward);
+        return routeMgr->captureScrubRoute(scrubValue);
     }
 
     return false;

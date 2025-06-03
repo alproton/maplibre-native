@@ -1241,8 +1241,8 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public boolean scrubCapturedRouteNavStops(boolean forward) {
-    return nativeScrubCapturedRouteNavStops(forward);
+  public boolean scrubCapturedRoute(double scrubValue) {
+    return nativeScrubCapturedRoute(scrubValue);
   }
 
   @Override
@@ -1745,7 +1745,7 @@ final class NativeMapView implements NativeMap {
   private native boolean nativeRouteLoadCapture(String routeCapture);
 
   @Keep
-  private native boolean nativeScrubCapturedRouteNavStops(boolean forward);
+  private native boolean nativeScrubCapturedRoute(double scrubValue);
 
   @Keep
   private native void nativeRouteClearSegments(int routeID);

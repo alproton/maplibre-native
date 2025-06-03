@@ -81,7 +81,7 @@ public:
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
     std::string captureSnapshot() const;
     bool loadCapture(const std::string& capture);
-    bool captureScrubRoute(bool forward, Point<double>* optPointOut = nullptr, double* optBearingOut = nullptr);
+    bool captureScrubRoute(double scrubValue, Point<double>* optPointOut = nullptr, double* optBearingOut = nullptr);
     int getTopMost(const std::vector<RouteID>& routeList) const;
     void captureNavStops(bool onOff);
     bool isCaptureNavStopsEnabled() const;
@@ -120,7 +120,6 @@ private:
     long long numVanisingRouteInvocations = 0;
     bool captureNavStops_ = false;
     bool useRouteSegmentIndexFractions_ = false;
-    double currRouteCaptureProgress = 0.0;
 };
 }; // namespace route
 

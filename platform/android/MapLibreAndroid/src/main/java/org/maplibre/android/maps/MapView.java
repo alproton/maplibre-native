@@ -669,11 +669,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * Scrubs the captured route navigation stops in the map libre native. This is useful when the client code
    * wants to scrub the captured route navigation stops in the map libre native.
    *
-   * @param forward if true, the captured route navigation stops will be scrubbed in forward direction, else in reverse direction.
+   * @param scrubValue usually a slider value. This needs to be between 0.0 and 1.0.
    * @return true if successful, false otherwise.
    */
-  public boolean scrubCapturedRouteNavStops(boolean forward) {
-    return nativeMapView.scrubCapturedRouteNavStops(forward);
+  public boolean scrubCapturedRoute(double scrubValue) {
+    return nativeMapView.scrubCapturedRoute(scrubValue);
   }
 
   /***

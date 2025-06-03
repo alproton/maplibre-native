@@ -744,10 +744,8 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 } break;
 
                 case GLFW_KEY_L: {
-                    int lastCapturedIdx = view->getCaptureIdx() - 1;
-                    if (lastCapturedIdx == -1) lastCapturedIdx = 0;
-                    // std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
-                    std::string capture_file_name = "/home/spalaniappan/route_tools/route_capture.json";
+                    std::string capture_file_name =
+                        "../../../platform/android/MapLibreAndroidTestApp/src/main/res/raw/yosemite_route_capture.json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -1426,15 +1424,11 @@ void GLFWView::disposeRoute() {
 void GLFWView::captureSnapshot() {
     if (rmptr_) {
         std::string snapshot = rmptr_->captureSnapshot();
-        std::string snapshot_file_name = "snapshot" + std::to_string(lastCaptureIdx_++) + ".json";
+        std::string snapshot_file_name = "snapshot.json";
         writeCapture(snapshot, snapshot_file_name);
 
         std::cout << "Snapshot created: " << snapshot_file_name << std::endl;
     }
-}
-
-int GLFWView::getCaptureIdx() const {
-    return lastCaptureIdx_;
 }
 
 void GLFWView::writeCapture(const std::string &capture, const std::string &capture_file_name) const {
@@ -1494,13 +1488,14 @@ void GLFWView::scrubNavStops(bool forward) {
     if (loadedCapture_) {
         mbgl::Point<double> navstop;
         double bearing = 0.0;
-        rmptr_->captureScrubRoute(forward, &navstop, &bearing);
+        scrubCounter_ += forward ? 1 : -1;
+        double scrubValue = static_cast<double>(scrubCounter_) / 100.0;
+        scrubValue = std::clamp(scrubValue, 0.0, 1.0);
+        rmptr_->captureScrubRoute(scrubValue, &navstop, &bearing);
         setPuckLocation(navstop.y, navstop.x, bearing);
-    }
 
-    // if (!enableAutoVanishing) {
-    invalidate();
-    // }
+        invalidate();
+    }
 }
 
 void GLFWView::addRandomLineAnnotations(int count) {

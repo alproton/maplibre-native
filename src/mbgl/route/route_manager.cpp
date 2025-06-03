@@ -39,8 +39,6 @@ const std::string RouteManager::GEOJSON_ACTIVE_ROUTE_SOURCE_ID = "active_route_g
 
 namespace {
 
-const double ROUTE_PROGRESS_STEP = 0.001;
-
 std::string tabs(uint32_t tabcount) {
     std::string tabstr;
     for (size_t i = 0; i < tabcount; ++i) {
@@ -672,27 +670,23 @@ bool RouteManager::loadCapture(const std::string& capture) {
     return true;
 }
 
-bool RouteManager::captureScrubRoute(bool forward, Point<double>* optPointOut, double* optBearingOut) {
+bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointOut, double* optBearingOut) {
     if (vanishingRouteID_.isValid() && routeMap_.find(vanishingRouteID_) != routeMap_.end()) {
+        scrubValue = std::clamp(scrubValue, 0.0, 1.0);
         if (routeMap_[vanishingRouteID_].hasNavStopsPoints()) {
-            if (forward) {
-                ++currRouteCaptureProgress;
-            } else {
-                --currRouteCaptureProgress;
-            }
-            const uint32_t currRouteCaptureProgressDiscrete = static_cast<uint32_t>(currRouteCaptureProgress);
+            const uint32_t currRouteCaptureProgressDiscrete = static_cast<uint32_t>(scrubValue);
 
             const mbgl::LineString<double>& navstops = routeMap_[vanishingRouteID_].getCapturedNavStops();
             const uint32_t sz = navstops.size();
             const auto& navStop = navstops[currRouteCaptureProgressDiscrete % sz];
-            currRouteCaptureProgress = routeSetProgressPoint(vanishingRouteID_, navStop, Precision::Fine);
+            double percentage = routeSetProgressPoint(vanishingRouteID_, navStop, Precision::Fine);
+            Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(percentage));
             if (optPointOut) {
                 *optPointOut = navStop;
             }
             double bearing = 0.0;
             if (optBearingOut) {
-                mbgl::Point<double> pt = getPoint(
-                    vanishingRouteID_, currRouteCaptureProgress, Precision::Fine, &bearing);
+                mbgl::Point<double> pt = getPoint(vanishingRouteID_, percentage, Precision::Fine, &bearing);
                 *optPointOut = pt;
             }
             if (optBearingOut) {
@@ -701,20 +695,16 @@ bool RouteManager::captureScrubRoute(bool forward, Point<double>* optPointOut, d
             finalize();
 
         } else if (routeMap_[vanishingRouteID_].hasNavStopsPercent()) {
-            if (forward) {
-                ++currRouteCaptureProgress;
-            } else {
-                --currRouteCaptureProgress;
-            }
-            const uint32_t currRouteCaptureProgressDiscrete = static_cast<uint32_t>(currRouteCaptureProgress);
+            const uint32_t currRouteCaptureProgressDiscrete = static_cast<uint32_t>(scrubValue);
 
             const std::vector<double>& navstops = routeMap_[vanishingRouteID_].getCapturedNavPercent();
             const uint32_t sz = navstops.size();
             const auto& navStopPercent = navstops[currRouteCaptureProgressDiscrete % sz];
             routeSetProgressPercent(vanishingRouteID_, navStopPercent);
+            Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(navStopPercent));
             double bearing = 0.0;
             if (optPointOut) {
-                const auto& navstop = getPoint(vanishingRouteID_, currRouteCaptureProgress, Precision::Fine, &bearing);
+                const auto& navstop = getPoint(vanishingRouteID_, navStopPercent, Precision::Fine, &bearing);
                 *optPointOut = navstop;
             }
             if (optBearingOut) {
@@ -724,21 +714,16 @@ bool RouteManager::captureScrubRoute(bool forward, Point<double>* optPointOut, d
             finalize();
         } else {
             // we may not have any nav stops captured, so lets just use the route geometry
-            if (forward) {
-                currRouteCaptureProgress += ROUTE_PROGRESS_STEP;
-            } else {
-                currRouteCaptureProgress -= ROUTE_PROGRESS_STEP;
-            }
-            currRouteCaptureProgress = std::clamp(currRouteCaptureProgress, 0.0, 1.0);
-            routeSetProgressPercent(vanishingRouteID_, currRouteCaptureProgress);
+            routeSetProgressPercent(vanishingRouteID_, scrubValue);
             double bearing = 0.0;
             if (optPointOut) {
-                const auto& navstop = getPoint(vanishingRouteID_, currRouteCaptureProgress, Precision::Fine, &bearing);
+                const auto& navstop = getPoint(vanishingRouteID_, scrubValue, Precision::Fine, &bearing);
                 *optPointOut = navstop;
             }
             if (optBearingOut) {
                 *optBearingOut = bearing;
             }
+            finalize();
         }
     }
 

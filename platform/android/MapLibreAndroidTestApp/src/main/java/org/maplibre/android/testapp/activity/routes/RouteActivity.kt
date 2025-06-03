@@ -62,7 +62,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         //Remove route
         val removeRouteButton = findViewById<Button>(R.id.remove_route)
         removeRouteButton?.setOnClickListener {
-            RouteUtils.disposeRoute(mapView)
+            RouteUtils.disposeFirstRoute(mapView)
             Toast.makeText(this, "Removed Route", Toast.LENGTH_SHORT).show()
         }
 
@@ -103,25 +103,54 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
+        //capture
+        val captureSpinner = findViewById<Spinner>(R.id.capture_entries)
+        val captureOptions = listOf("yosemite")
+        val captureAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, captureOptions)
+        captureAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        captureSpinner.adapter = captureAdapter
+
+        // Set a listener for the progress precision spinner
+        captureSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // Get the selected item
+                val selectedItem = parent?.getItemAtPosition(position).toString()
+                // Handle the selected item
+
+                val routeCaptureSample = RouteUtils.readJsonFromRaw(applicationContext, R.raw.yosemite_route_capture)
+                RouteUtils.loadCapture(mapView, routeCaptureSample!!)
+
+                Toast.makeText(applicationContext, "Selected: $selectedItem", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                Toast.makeText(applicationContext, "Nothing selected", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         //route progress slider
         val sliderBar = findViewById<SeekBar>(R.id.route_slider)
         sliderBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val progressPercent = progress.toDouble() / 100.0
-                val pt : Point = RouteUtils.getPointProgress(progressPercent)
+                if(RouteUtils.isCaptureLoaded()) {
+                    RouteUtils.scrubCaptureRoute(mapView, progressPercent)
+                } else {
+                    val pt : Point = RouteUtils.getPointProgress(progressPercent)
 
-                if(!enableAutoVanishingRoute) {
-                    RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
+                    if(!enableAutoVanishingRoute) {
+                        RouteUtils.setPointProgress(mapView, progressPercent, progressPrecisionCoarse)
+                        mapView.finalizeRoutes()
+                    }
+
+                    val location = Location(LocationManager.GPS_PROVIDER)
+                    location.latitude = pt.latitude()
+                    location.longitude = pt.longitude()
+                    maplibreMap.locationComponent.forceLocationUpdate(location)
+
+                    Timber.d("#####Set######## " + location.latitude.toString() + "  ,  " + location.longitude.toString())
                     mapView.finalizeRoutes()
                 }
-
-                val location = Location(LocationManager.GPS_PROVIDER)
-                location.latitude = pt.latitude()
-                location.longitude = pt.longitude()
-                maplibreMap.locationComponent.forceLocationUpdate(location)
-
-                Timber.d("#####Set######## " + location.latitude.toString() + "  ,  " + location.longitude.toString())
-                mapView.finalizeRoutes()
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}

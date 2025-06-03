@@ -292,7 +292,7 @@ interface NativeMap {
 
   void captureRouteNavStops(boolean onOff);;
 
-  boolean scrubCapturedRouteNavStops(boolean forward);
+  boolean scrubCapturedRoute(double scrubValue);
 
   boolean isRouteNavStopsCaptured();
 
