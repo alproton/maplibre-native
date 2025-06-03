@@ -162,6 +162,10 @@ void Renderer::clearData() {
     reduceMemoryUse();
 }
 
+void Renderer::onStyleChange() {
+    impl->orchestrator.onStyleChange();
+}
+
 #if MLN_RENDER_BACKEND_OPENGL
 void Renderer::enableAndroidEmulatorGoldfishMitigation(bool enable) {
     impl->orchestrator.enableAndroidEmulatorGoldfishMitigation(enable);

@@ -46,6 +46,11 @@ public:
         maxSize = maxSize_;
     }
 
+    void updateZoomRange(size_t minZoom_, size_t maxZoom_) {
+        minZoom = minZoom_;
+        maxZoom = maxZoom_;
+    }
+
     void setSource(std::string source_) { source = std::move(source_); }
 
     const std::string& getSource() const noexcept { return source; }
@@ -61,6 +66,8 @@ private:
     size_t size;
     size_t minSize = 0;
     size_t maxSize = 65536;
+    int minZoom = 0;
+    int maxZoom = 32;
     std::string source = "";
 };
 

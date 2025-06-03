@@ -353,6 +353,14 @@ public final class MapLibreMap {
     nativeMapView.addTileCacheSettings(settings);
   }
 
+   /**
+   * Set background color for missing vector tiles
+   *
+   */
+  public void setBackgroundClearColor(int color) {
+    nativeMapView.setBackgroundClearColor(color);
+  }
+
   /**
    * Camera based tile level of detail controls
    *

@@ -8,6 +8,7 @@
 #include <mbgl/renderer/pattern_atlas.hpp>
 #include <mbgl/renderer/render_pass.hpp>
 #include <mbgl/renderer/render_static_data.hpp>
+#include <mbgl/renderer/render_tile.hpp>
 #include <mbgl/renderer/upload_parameters.hpp>
 #include <mbgl/style/layers/background_layer_impl.hpp>
 #include <mbgl/style/layer_properties.hpp>
@@ -225,11 +226,29 @@ void RenderBackgroundLayer::update(gfx::ShaderRegistry& shaders,
                                    [[maybe_unused]] UniqueChangeRequestVec& changes) {
     assert(updateParameters);
     const auto zoom = state.getIntegerZoom();
-    const auto tileCover = util::tileCover({state,
-                                            updateParameters->tileLodMinRadius,
-                                            updateParameters->tileLodScale,
-                                            updateParameters->tileLodPitchThreshold},
-                                           zoom);
+    auto tileCover = util::tileCover({state,
+                                      updateParameters->tileLodMinRadius,
+                                      updateParameters->tileLodScale,
+                                      updateParameters->tileLodPitchThreshold},
+                                     zoom);
+
+    std::set<OverscaledTileID> tileSet;
+    for (const auto& tilesPtr : backgroundRenderTiles) {
+        if (!tilesPtr) {
+            continue;
+        }
+        for (const RenderTile& tile : *tilesPtr) {
+            tileSet.insert(tile.getOverscaledTileID());
+        }
+    }
+    backgroundRenderTiles.clear();
+
+    if (!tileSet.empty()) {
+        tileCover.clear();
+        for (const auto& tile : tileSet) {
+            tileCover.push_back(tile);
+        }
+    }
 
     // renderTiles is always empty, we use tileCover instead
     if (tileCover.empty()) {
