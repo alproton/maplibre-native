@@ -27,6 +27,12 @@ final public class TileCacheSettings {
     public int maxZoom;
 
     /***
+     * The maximum age of cached tiles in seconds
+     * If 0, no tiles are removed based on age
+     */
+    public double cachedTileMaxAge;
+
+    /***
      * If true, tiles that are not ideal are also cached
      * Check update_renderables.hpp for details about ideal tiles
      */

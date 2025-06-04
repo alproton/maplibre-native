@@ -5,6 +5,7 @@
 #include <mbgl/util/instrumentation.hpp>
 
 #include <cassert>
+#include <vector>
 
 namespace mbgl {
 
@@ -27,18 +28,13 @@ void TileCache::setSize(size_t size_) {
     size = size_;
 
     while (orderedKeys.size() > size) {
-        const auto key = orderedKeys.front();
-        orderedKeys.remove(key);
-
-        auto hit = tiles.find(key);
-        if (hit != tiles.end()) {
-            auto tile = std::move(hit->second);
-            tiles.erase(hit);
-            deferredRelease(std::move(tile));
-        }
+        releaseTile(orderedKeys.front());
     }
 
+    releaseOldTiles();
+
     assert(orderedKeys.size() <= size);
+    assert(tileStamps.size() == tiles.size());
 }
 
 namespace {
@@ -115,13 +111,16 @@ void TileCache::add(const OverscaledTileID& key, std::unique_ptr<Tile>&& tile) {
     if (result.second) {
         // inserted
         result.first->second = std::move(tile);
+        assert(tileStamps.count(key) == 0);
     } else {
         // already present
         // remove existing tile key to move it to the end
         orderedKeys.remove(key);
         // release the newly-provided item
         deferredRelease(std::move(tile));
+        assert(tileStamps.count(key) == 1);
     }
+    tileStamps[key] = std::chrono::steady_clock::now();
 
     // (re-)insert tile key as newest
     orderedKeys.push_back(key);
@@ -137,8 +136,11 @@ void TileCache::add(const OverscaledTileID& key, std::unique_ptr<Tile>&& tile) {
 Tile* TileCache::get(const OverscaledTileID& key) {
     auto it = tiles.find(key);
     if (it != tiles.end()) {
+        assert(tileStamps.count(key) == 1);
+        tileStamps[key] = std::chrono::steady_clock::now();
         return it->second.get();
     } else {
+        assert(tileStamps.count(key) == 0);
         return nullptr;
     }
 }
@@ -151,7 +153,10 @@ std::unique_ptr<Tile> TileCache::pop(const OverscaledTileID& key) {
         tile = std::move(tiles.extract(it).mapped());
         orderedKeys.remove(key);
         assert(tile->isRenderable());
+        assert(tileStamps.count(key) == 1);
+        tileStamps.erase(key);
     }
+    assert(tileStamps.count(key) == 0);
 
     return tile;
 }
@@ -166,6 +171,40 @@ void TileCache::clear() {
     }
     orderedKeys.clear();
     tiles.clear();
+    tileStamps.clear();
+}
+
+void TileCache::releaseOldTiles() {
+    if (cachedTileMaxAge <= 0) {
+        return;
+    }
+    auto maxAge = std::chrono::duration<double>(cachedTileMaxAge);
+    auto now = std::chrono::steady_clock::now();
+    if (now - oldestTile < maxAge) {
+        return;
+    }
+    std::vector<OverscaledTileID> keysToRemove;
+    for (const auto& [key, stamp] : tileStamps) {
+        if (now - stamp >= maxAge) {
+            keysToRemove.push_back(key);
+            oldestTile = std::min(oldestTile, stamp);
+        }
+    }
+    for (const auto& key : keysToRemove) {
+        releaseTile(key);
+    }
+}
+
+void TileCache::releaseTile(const OverscaledTileID& key) {
+    orderedKeys.remove(key);
+    auto hit = tiles.find(key);
+    if (hit != tiles.end()) {
+        auto tile = std::move(hit->second);
+        tiles.erase(hit);
+        deferredRelease(std::move(tile));
+        assert(tileStamps.count(key) == 1);
+        tileStamps.erase(key);
+    }
 }
 
 } // namespace mbgl

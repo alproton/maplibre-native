@@ -842,6 +842,7 @@ final class NativeMapView implements NativeMap {
                                settings.maxTiles,
                                settings.minZoom,
                                settings.maxZoom,
+                               settings.cachedTileMaxAge,
                                settings.aggressiveCache,
                                settings.skipRelayoutClear);
   }
@@ -1986,6 +1987,7 @@ final class NativeMapView implements NativeMap {
                                                  int maxTiles,
                                                  int minZoom,
                                                  int maxZoom,
+                                                 double cachedTileMaxAge,
                                                  boolean aggressiveCache,
                                                  boolean skipRelayoutClear);
 
