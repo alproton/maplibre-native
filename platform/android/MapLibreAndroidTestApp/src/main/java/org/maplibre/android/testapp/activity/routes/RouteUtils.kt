@@ -1,12 +1,14 @@
 package org.maplibre.android.testapp.activity.routes
 
+import android.content.Context
 import android.graphics.Color
-import android.util.Log
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.RouteID
 import org.maplibre.geojson.Point
 import timber.log.Timber
+import java.io.InputStream
 import kotlin.math.*
+import java.nio.charset.Charset
 
 fun haversineDist(p1: Point, p2: Point): Double {
     val EARTH_RADIUS_METERS = 6371000.0
@@ -112,6 +114,7 @@ data class TrafficBlockFracational (
 
 class RouteUtils {
     companion object {
+        var captureLoaded : Boolean = false
         var routeMap : MutableMap<RouteID, RouteCircle> = mutableMapOf()
         var progressModePoint : Boolean = false
 
@@ -138,7 +141,7 @@ class RouteUtils {
             return routeCircle.getTotalLength()
         }
 
-        fun disposeRoute(mapView : MapView) {
+        fun disposeFirstRoute(mapView : MapView) {
             if (routeMap.isEmpty()) return
 
             val firstRouteID : RouteID = routeMap.keys.first()
@@ -147,6 +150,56 @@ class RouteUtils {
             }
             routeMap.remove(firstRouteID)
             mapView.finalizeRoutes()
+        }
+
+        fun readJsonFromRaw(context: Context, resourceId: Int): String? {
+            val inputStream: InputStream = context.resources.openRawResource(resourceId)
+            return try {
+                val writer = java.io.StringWriter()
+                val buffer = CharArray(1024)
+                inputStream.use { stream ->
+                    val reader = java.io.BufferedReader(java.io.InputStreamReader(stream, Charset.forName("UTF-8")))
+                    var n: Int
+                    while (reader.read(buffer).also { n = it } != -1) {
+                        writer.write(buffer, 0, n)
+                    }
+                }
+                writer.toString()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+
+        fun clearRoutes(mapView: MapView) {
+            if(!routeMap.isEmpty()) {
+                routeMap.entries.forEach { (routeID, routeCircle) ->
+                    if (routeID.isValid()) {
+                        mapView.disposeRoute(routeID)
+                    }
+                }
+                routeMap.clear()
+                mapView.finalizeRoutes()
+            }
+        }
+
+        fun loadCapture(mapView : MapView, captureStr : String) {
+            clearRoutes(mapView)
+
+            //native route capture loads will call finalize() internally
+            mapView.loadRouteCapture(captureStr)
+            captureLoaded = true
+        }
+
+        fun isCaptureLoaded() : Boolean {
+            return captureLoaded
+        }
+
+        fun scrubCaptureRoute(mapView : MapView, scrubValue : Double) {
+            if(!captureLoaded) return
+
+            //native route capture loads will call finalize() internally
+            mapView.scrubCapturedRoute(scrubValue)
         }
 
         fun addTrafficSegmentsFractional(routeID : RouteID, mapView : MapView) {
