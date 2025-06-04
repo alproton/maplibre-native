@@ -114,6 +114,7 @@ public:
     void addTileCacheSettings(const TileCacheSettings& settings);
     void reduceMemoryUse();
     void clearData();
+    void onStyleChange();
 
 #if MLN_RENDER_BACKEND_OPENGL
     void enableAndroidEmulatorGoldfishMitigation(bool enable);

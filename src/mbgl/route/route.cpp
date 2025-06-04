@@ -1,7 +1,6 @@
 #include "mbgl/programs/attributes.hpp"
 #include "mbgl/programs/uniforms.hpp"
 
-#include <iostream>
 #include <valarray>
 #include <mbgl/route/route.hpp>
 #include <mbgl/util/math.hpp>
@@ -541,7 +540,6 @@ std::map<double, mbgl::Color> Route::getRouteColorStopsDebugViz() {
     std::vector<double> normalizedPositions;
     for (size_t i = 0; i < geometry_.size(); i++) {
         double normalized = getProgressPercent(geometry_[i], Precision::Fine, false);
-        std::cout << std::to_string(normalized) << std::endl;
         normalizedPositions.push_back(normalized);
     }
 
@@ -605,6 +603,14 @@ void Route::routeSetProgress(const double t, bool capture) {
     progress_ = t;
 }
 
+bool Route::hasNavStopsPercent() const {
+    return !capturedNavPercent_.empty();
+}
+
+bool Route::hasNavStopsPoints() const {
+    return !capturedNavStops_.empty();
+}
+
 void Route::enableDebugViz(bool onOff) {
     enableDebugViz_ = onOff;
 }
@@ -623,6 +629,14 @@ const std::vector<Point<double>>& Route::getCapturedNavStops() const {
 
 const std::vector<double>& Route::getCapturedNavPercent() const {
     return capturedNavPercent_;
+}
+
+void Route::addNavStopPercent(double percent) {
+    capturedNavPercent_.push_back(percent);
+}
+
+void Route::addNavStopPoint(const mbgl::Point<double>& point) {
+    capturedNavStops_.push_back(point);
 }
 
 double Route::getProgressPercent(const Point<double>& progressPoint, const Precision& precision, bool capture) {

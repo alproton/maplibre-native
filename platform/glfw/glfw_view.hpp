@@ -161,7 +161,7 @@ private:
     bool pitching = false;
     bool show3DExtrusions = false;
 
-    struct RouteCircle {
+    struct RouteData {
         double resolution = 10;
         double xlate = 0;
         double radius = 5;
@@ -190,29 +190,26 @@ private:
         Invalid
     };
 
-    std::vector<TrafficBlock> testCases(const RouteSegmentTestCases &testcase,
-                                        const GLFWView::RouteCircle &route) const;
+    std::vector<TrafficBlock> testCases(const RouteSegmentTestCases &testcase, const GLFWView::RouteData &route) const;
     void writeCapture(const std::string &capture, const std::string &capture_file_name) const;
     void readAndLoadCapture(const std::string &capture_file_name);
-    int getCaptureIdx() const;
     void writeStats(bool oneline = false) const;
     std::vector<RouteID> getAllRoutes() const;
     std::string getBaseRouteLayerName(const RouteID &routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID &routeID) const;
     int getTopMost(const std::vector<RouteID> &routeList) const;
 
-    std::unordered_map<RouteID, RouteCircle, IDHasher<RouteID>> routeMap_;
+    std::unordered_map<RouteID, RouteData, IDHasher<RouteID>> routeMap_;
     std::unordered_map<RouteID, mbgl::LineString<double>, IDHasher<RouteID>> capturedNavStopMap_;
     std::unordered_map<RouteID, std::vector<double>, IDHasher<RouteID>> capturedNavPercentMap_;
     mbgl::route::Precision routeProgressPrecision_ = mbgl::route::Precision::Fine;
-    int lastCaptureIdx_ = 0;
-    uint32_t lastNavStop_ = 0;
     RouteID vanishingRouteID_;
     bool loadedCapture_ = false;
     double routeProgress_ = 0.0;
     bool routePickMode_ = false;
     bool enableAutoVanishing = false; // Simulates route progress in app
     mbgl::route::Precision routePrecision_ = mbgl::route::Precision::Fine;
+    int scrubCounter_ = 0;
     bool enableDebugViz_ = true;
 
     // Frame timer

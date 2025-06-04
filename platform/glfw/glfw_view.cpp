@@ -98,9 +98,6 @@ std::array<double, 3> toArray(const mbgl::LatLng &crd) {
 } // namespace
 #endif // ENABLE_LOCATION_INDICATOR
 
-namespace {
-const double ROUTE_PROGRESS_STEP = 0.001;
-}
 class SnapshotObserver final : public mbgl::MapSnapshotterObserver {
 public:
     ~SnapshotObserver() override = default;
@@ -747,12 +744,8 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 } break;
 
                 case GLFW_KEY_L: {
-                    int lastCapturedIdx = view->getCaptureIdx() - 1;
-                    if (lastCapturedIdx == -1) lastCapturedIdx = 0;
                     std::string capture_file_name =
-                        "/home/spalaniappan/route_tools/jack_gradient.json"; //"snapshot" +
-                                                                             // std::to_string(lastCapturedIdx)
-                                                                             //+ ".json";
+                        "../../../platform/android/MapLibreAndroidTestApp/src/main/res/raw/yosemite_route_capture.json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -943,7 +936,7 @@ void GLFWView::addRandomPointAnnotations(int count) {
     }
 }
 
-mbgl::Point<double> GLFWView::RouteCircle::getPoint(double percent) const {
+mbgl::Point<double> GLFWView::RouteData::getPoint(double percent) const {
     if (points.empty()) {
         return {0.0, 0.0};
     }
@@ -1039,7 +1032,7 @@ void GLFWView::addRoute() {
     mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
     std::vector<mbgl::Color> colors = {color0, color1};
 
-    auto getRouteGeom = [](const RouteCircle &route) -> mbgl::LineString<double> {
+    auto getRouteGeom = [](const RouteData &route) -> mbgl::LineString<double> {
         mbgl::LineString<double> linestring;
         float radius = route.radius;
         for (int i = 0; i < route.resolution; i++) {
@@ -1052,7 +1045,7 @@ void GLFWView::addRoute() {
     };
 
     rmptr_->setStyle(map->getStyle());
-    RouteCircle route;
+    RouteData route;
     route.xlate = routeMap_.size() * route.radius * 2.0;
     mbgl::LineString<double> geom = getRouteGeom(route);
     route.points = geom;
@@ -1094,7 +1087,7 @@ void GLFWView::setPuckLocation(double lat, double lon, double bearing) {
 }
 
 std::vector<GLFWView::TrafficBlock> GLFWView::testCases(const RouteSegmentTestCases &testcase,
-                                                        const GLFWView::RouteCircle &route) const {
+                                                        const GLFWView::RouteData &route) const {
     TrafficBlock block1;
     TrafficBlock block2;
 
@@ -1368,7 +1361,7 @@ GLFWRendererFrontend *GLFWView::getRenderFrontend() const {
 
 void GLFWView::incrementRouteProgress() {
     if (vanishingRouteID_.isValid() && routeMap_.find(vanishingRouteID_) != routeMap_.end()) {
-        routeProgress_ += ROUTE_PROGRESS_STEP;
+        routeProgress_ += 0.001;
         routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
 
         double bearing = 0.0;
@@ -1390,7 +1383,7 @@ void GLFWView::incrementRouteProgress() {
 
 void GLFWView::decrementRouteProgress() {
     if (vanishingRouteID_.isValid() && routeMap_.find(vanishingRouteID_) != routeMap_.end()) {
-        routeProgress_ -= ROUTE_PROGRESS_STEP;
+        routeProgress_ -= 0.001;
         routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
 
         double bearing = 0.0;
@@ -1432,15 +1425,11 @@ void GLFWView::disposeRoute() {
 void GLFWView::captureSnapshot() {
     if (rmptr_) {
         std::string snapshot = rmptr_->captureSnapshot();
-        std::string snapshot_file_name = "snapshot" + std::to_string(lastCaptureIdx_++) + ".json";
+        std::string snapshot_file_name = "snapshot.json";
         writeCapture(snapshot, snapshot_file_name);
 
         std::cout << "Snapshot created: " << snapshot_file_name << std::endl;
     }
-}
-
-int GLFWView::getCaptureIdx() const {
-    return lastCaptureIdx_;
 }
 
 void GLFWView::writeCapture(const std::string &capture, const std::string &capture_file_name) const {
@@ -1471,305 +1460,41 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
     std::stringstream buffer;
     buffer << jsonfile.rdbuf();
 
-    rapidjson::Document document;
-    rapidjson::ParseResult result = document.Parse(buffer.str());
-
-    if (document.HasParseError()) {
-        const auto errorCode = document.GetParseError();
-        std::cerr << "JSON parse error: " << rapidjson::GetParseError_En(result.Code()) << " (" << result.Offset()
-                  << ")" << std::endl;
-
-        std::cerr << "Error parsing JSON: " << errorCode << std::endl;
-
-        return;
-    }
-
-    uint32_t numRoutes = 0;
-    if (document.HasMember("num_routes") && document["num_routes"].IsInt()) {
-        numRoutes = document["num_routes"].GetInt();
-        std::cout << "De-serializing " << numRoutes << " routes" << std::endl;
-    }
-
-    // iterate through the document and get the minimum and maximum routeIDs, lets pre-create these IDs in the route
-    // manager.
-    uint32_t minRoute = INT_MAX;
-    uint32_t maxRoute = 0;
-    if (document.HasMember("routes") && document["routes"].IsArray()) {
-        const rapidjson::Value &routes = document["routes"];
-        for (rapidjson::SizeType i = 0; i < routes.Size(); i++) {
-            const rapidjson::Value &route = routes[i];
-            if (route.HasMember("route_id") && route["route_id"].IsInt()) {
-                const rapidjson::Value &routeIDval = route["route_id"];
-                uint32_t rid = routeIDval.GetInt();
-                RouteID routeID = RouteID(rid);
-                routeMap_[routeID] = {};
-
-                if (minRoute > rid) minRoute = rid;
-                if (maxRoute < rid) maxRoute = rid;
+    loadedCapture_ = rmptr_->loadCapture(buffer.str());
+    vanishingRouteID_ = rmptr_->getVanishingRouteID();
+    // store the route data
+    if (loadedCapture_) {
+        const std::vector<RouteID> &routeIDs = rmptr_->getAllRoutes();
+        for (const RouteID &routeID : routeIDs) {
+            RouteData routeData;
+            auto routeGeom = rmptr_->routeGetGeometry(routeID);
+            if (routeGeom.has_value()) {
+                routeData.points = routeGeom.value();
+                routeData.resolution = routeData.points.size();
             }
+            routeData.radius = 50;
+            routeData.xlate = 0; // TODO fixme later
+            routeMap_[routeID] = routeData;
         }
-        RouteID minRouteID = RouteID(minRoute);
-        uint32_t numRoutesIDs = maxRoute - minRoute + 1;
-        rmptr_->routePreCreate(minRouteID, numRoutesIDs);
-    }
 
-    if (document.HasMember("routes") && document["routes"].IsArray()) {
-        const rapidjson::Value &routes = document["routes"];
-        for (rapidjson::SizeType i = 0; i < routes.Size(); i++) {
-            const rapidjson::Value &route = routes[i];
-            RouteID routeID;
-            if (route.HasMember("route_id") && route["route_id"].IsInt()) {
-                const rapidjson::Value &routeIDval = route["route_id"];
-                uint32_t rid = routeIDval.GetInt();
-                routeID = RouteID(rid);
-            }
-            assert(routeID.isValid() && "captured route ID not valid");
-
-            if (route.HasMember("route") && route["route"].IsObject()) {
-                const rapidjson::Value &route_obj = route["route"];
-
-                mbgl::route::RouteOptions routeOpts;
-                const auto &mbglColor = [](const rapidjson::Value &jsonColor) -> mbgl::Color {
-                    std::array<float, 4> innerColorArr;
-                    for (rapidjson::SizeType j = 0; j < jsonColor.Size(); j++) {
-                        innerColorArr[j] = jsonColor[j].GetFloat();
-                    }
-                    mbgl::Color color(innerColorArr[0], innerColorArr[1], innerColorArr[2], innerColorArr[3]);
-
-                    return color;
-                };
-
-                if (route_obj.HasMember("route_options") && route_obj["route_options"].IsObject()) {
-                    const rapidjson::Value &route_options = route_obj["route_options"];
-
-                    // innerColor
-                    if (route_options.HasMember("innerColor") && route_options["innerColor"].IsArray()) {
-                        const rapidjson::Value &innerColor = route_options["innerColor"];
-                        routeOpts.innerColor = mbglColor(innerColor);
-                    }
-
-                    // outerColor
-                    if (route_options.HasMember("outerColor") && route_options["outerColor"].IsArray()) {
-                        const rapidjson::Value &outerColor = route_options["outerColor"];
-                        routeOpts.outerColor = mbglColor(outerColor);
-                    }
-
-                    // innerClipColor
-                    if (route_options.HasMember("innerClipColor") && route_options["innerClipColor"].IsArray()) {
-                        const rapidjson::Value &innerClipColor = route_options["innerClipColor"];
-                        routeOpts.innerClipColor = mbglColor(innerClipColor);
-                    }
-
-                    // outerClipColor
-                    if (route_options.HasMember("outerClipColor") && route_options["outerClipColor"].IsArray()) {
-                        const rapidjson::Value &outerClipColor = route_options["outerClipColor"];
-                        routeOpts.outerClipColor = mbglColor(outerClipColor);
-                    }
-
-                    // innerWidth
-                    if (route_options.HasMember("innerWidth") && route_options["innerWidth"].IsArray()) {
-                        const rapidjson::Value &innerWidth = route_options["innerWidth"];
-                        routeOpts.innerWidth = innerWidth.GetFloat();
-                    }
-
-                    // outerWidth
-                    if (route_options.HasMember("outerWidth") && route_options["outerWidth"].IsArray()) {
-                        const rapidjson::Value &outerWidth = route_options["outerWidth"];
-                        routeOpts.outerWidth = outerWidth.GetFloat();
-                    }
-
-                    // layerBefore
-                    if (route_options.HasMember("layerBefore") && route_options["layerBefore"].IsArray()) {
-                        const rapidjson::Value &layerBefore = route_options["layerBefore"];
-                        routeOpts.layerBefore = layerBefore.GetString();
-                    }
-
-                    // useDynamicWidths
-                    if (route_options.HasMember("useDynamicWidths") && route_options["useDynamicWidths"].IsArray()) {
-                        const rapidjson::Value &useDynamicWidths = route_options["useDynamicWidths"];
-                        routeOpts.useDynamicWidths = useDynamicWidths.GetBool();
-                    }
-                }
-
-                mbgl::LineString<double> route_geom;
-                if (route_obj.HasMember("geometry") && route_obj["geometry"].IsArray()) {
-                    const rapidjson::Value &geometry = route_obj["geometry"];
-                    for (rapidjson::SizeType j = 0; j < geometry.Size(); j++) {
-                        const rapidjson::Value &point = geometry[j];
-                        if (point.IsArray() && point.Size() == 2) {
-                            double x = point[0].GetDouble();
-                            double y = point[1].GetDouble();
-                            route_geom.push_back({x, y});
-                        }
-                    }
-                }
-
-                bool success = rmptr_->routeSet(routeID, route_geom, routeOpts);
-                assert(success && "failed to create route on pre-created route ID");
-                if (!success) {
-                    std::cerr << "failed to create route on pre-created route ID" << std::endl;
-                }
-                RouteCircle routeCircle;
-                routeCircle.points = route_geom;
-                routeCircle.resolution = route_geom.size();
-                routeCircle.radius = 50;
-                routeCircle.xlate = 0; // TODO fixme later
-                routeMap_[routeID] = routeCircle;
-
-                if (route_obj.HasMember("nav_stops") && route_obj["nav_stops"].IsArray()) {
-                    const rapidjson::Value &nav_stops = route_obj["nav_stops"];
-                    for (rapidjson::SizeType j = 0; j < nav_stops.Size(); j++) {
-                        const rapidjson::Value &point = nav_stops[j];
-                        if (point.IsArray() && point.Size() == 2) {
-                            double x = point[0].GetDouble();
-                            double y = point[1].GetDouble();
-                            capturedNavStopMap_[routeID].push_back({x, y});
-                        }
-                    }
-                    if (!vanishingRouteID_.isValid()) {
-                        vanishingRouteID_ = routeID;
-                        enablePuck(true);
-                        double bearing = 0.0;
-                        const mbgl::Point<double> &pt = rmptr_->getPoint(
-                            vanishingRouteID_, 0.0, routePrecision_, &bearing);
-                        setPuckLocation(pt.y, pt.x, bearing);
-                    }
-                }
-
-                if (route_obj.HasMember("nav_stops_percent") && route_obj["nav_stops_percent"].IsArray()) {
-                    const rapidjson::Value &nav_stops_percent = route_obj["nav_stops_percent"];
-                    for (rapidjson::SizeType j = 0; j < nav_stops_percent.Size(); j++) {
-                        const rapidjson::Value &percent_value = nav_stops_percent[j];
-                        if (percent_value.IsDouble()) {
-                            double percent = percent_value.GetDouble();
-                            capturedNavPercentMap_[routeID].push_back(percent);
-                        }
-                    }
-                }
-                rmptr_->enableDebugViz(routeID, enableDebugViz_);
-                rmptr_->finalize();
-                // if there is no vanishing route defined in the capture, it means we have not captured nav stops.
-                // lets just set the first route in the map as the vanishing route.
-                if (!vanishingRouteID_.isValid()) {
-                    vanishingRouteID_ = routeMap_.begin()->first;
-                    rmptr_->setVanishingRouteID(vanishingRouteID_);
-                    enablePuck(true);
-                    double bearing = 0.0;
-                    const mbgl::Point<double> &pt = rmptr_->getPoint(vanishingRouteID_, 0.0, routePrecision_, &bearing);
-                    setPuckLocation(pt.y, pt.x, bearing);
-                }
-                // create route segments
-                if (!enableDebugViz_) {
-                    if (route_obj.HasMember("route_segments") && route_obj["route_segments"].IsArray()) {
-                        const rapidjson::Value &route_segments = route_obj["route_segments"];
-                        for (rapidjson::SizeType j = 0; j < route_segments.Size(); j++) {
-                            mbgl::route::RouteSegmentOptions rsopts;
-                            const rapidjson::Value &segment = route_segments[j];
-                            if (segment.HasMember("route_segment_options") &&
-                                segment["route_segment_options"].IsObject()) {
-                                const rapidjson::Value &segment_options = segment["route_segment_options"];
-                                if (segment_options.HasMember("color") && segment_options["color"].IsArray()) {
-                                    const rapidjson::Value &color = segment_options["color"];
-                                    rsopts.color = mbglColor(color);
-                                }
-
-                                if (segment_options.HasMember("outer_color") &&
-                                    segment_options["outer_color"].IsArray()) {
-                                    const rapidjson::Value &outerColor = segment_options["outer_color"];
-                                    rsopts.outerColor = mbglColor(outerColor);
-                                }
-                                // TODO: deprecated use of "geometry"
-                                if (segment_options.HasMember("geometry") && segment_options["geometry"].IsArray()) {
-                                    const rapidjson::Value &geometry = segment_options["geometry"];
-                                    for (rapidjson::SizeType k = 0; k < geometry.Size(); k++) {
-                                        const rapidjson::Value &point = geometry[k];
-                                        if (point.IsArray() && point.Size() == 2) {
-                                            double x = point[0].GetDouble();
-                                            double y = point[1].GetDouble();
-                                            rsopts.geometry.push_back({x, y});
-                                        }
-                                    }
-                                }
-
-                                if (segment_options.HasMember("first_index")) {
-                                    const rapidjson::Value &firstIndexVal = segment_options["first_index"];
-                                    rsopts.firstIndex = firstIndexVal.GetUint();
-                                }
-
-                                if (segment_options.HasMember("first_index_fraction")) {
-                                    const rapidjson::Value &firstIndexFractionVal =
-                                        segment_options["first_index_fraction"];
-                                    rsopts.firstIndexFraction = firstIndexFractionVal.GetFloat();
-                                }
-
-                                if (segment_options.HasMember("last_index")) {
-                                    const rapidjson::Value &lastIndexVal = segment_options["last_index"];
-                                    rsopts.lastIndex = lastIndexVal.GetUint();
-                                }
-
-                                if (segment_options.HasMember("last_index_fraction")) {
-                                    const rapidjson::Value &lastIndexFractionVal =
-                                        segment_options["last_index_fraction"];
-                                    rsopts.lastIndexFraction = lastIndexFractionVal.GetFloat();
-                                }
-
-                                if (segment_options.HasMember("priority")) {
-                                    rsopts.priority = segment_options["priority"].GetInt();
-                                }
-                            }
-
-                            rmptr_->routeSegmentCreate(routeID, rsopts);
-                        }
-                    }
-                    rmptr_->finalize();
-                }
-                loadedCapture_ = true;
-                std::cout << "Loaded route with ID: " << routeID.id << std::endl;
-            }
-        }
+        enablePuck(true);
+        double bearing = 0.0;
+        const mbgl::Point<double> &pt = rmptr_->getPoint(
+            vanishingRouteID_, 0.0, mbgl::route::Precision::Fine, &bearing);
+        setPuckLocation(pt.y, pt.x, bearing);
     }
 }
 
 void GLFWView::scrubNavStops(bool forward) {
-    if (loadedCapture_ && vanishingRouteID_.isValid() &&
-        capturedNavStopMap_.find(vanishingRouteID_) != capturedNavStopMap_.end()) {
-        if (forward) {
-            ++lastNavStop_;
-        } else {
-            --lastNavStop_;
-        }
+    if (loadedCapture_) {
+        mbgl::Point<double> navstop;
+        double bearing = 0.0;
+        scrubCounter_ += forward ? 1 : -1;
+        double scrubValue = static_cast<double>(scrubCounter_) / 100.0;
+        scrubValue = std::clamp(scrubValue, 0.0, 1.0);
+        rmptr_->captureScrubRoute(scrubValue, &navstop, &bearing);
+        setPuckLocation(navstop.y, navstop.x, bearing);
 
-        const mbgl::LineString<double> &navstops = capturedNavStopMap_[vanishingRouteID_];
-        const uint32_t sz = navstops.size();
-        const auto &navStop = navstops[lastNavStop_ % sz];
-        if (!enableAutoVanishing) {
-            double percentage = rmptr_->routeSetProgressPoint(vanishingRouteID_, navStop, routePrecision_);
-            rmptr_->finalize();
-            std::cout << "percent: " << std::to_string(percentage) << std::endl;
-        }
-        setPuckLocation(navStop.y, navStop.x, 90.0);
-    } else if (loadedCapture_ && vanishingRouteID_.isValid()) {
-        // perhaps the capture file did not have nav stops, lets just pick the first route we see and traverse it.
-        if (!routeMap_.empty()) {
-            if (forward) {
-                routeProgress_ += ROUTE_PROGRESS_STEP;
-            } else {
-                routeProgress_ -= ROUTE_PROGRESS_STEP;
-            }
-            const auto &routeID = routeMap_.begin()->first;
-            routeProgress_ = std::clamp<double>(routeProgress_, 0.0, 1.0f);
-            double bearing = 0.0;
-            const auto &navstop = rmptr_->getPoint(routeID, routeProgress_, routePrecision_, &bearing);
-            if (!enableAutoVanishing) {
-                double percentage = rmptr_->routeSetProgressPoint(routeID, navstop, routePrecision_);
-                std::cout << ", ip %: " << std::to_string(routeProgress_)
-                          << ", calculated %: " << std::to_string(percentage) << std::endl;
-                rmptr_->finalize();
-            }
-            setPuckLocation(navstop.y, navstop.x, bearing);
-        }
-    }
-    if (enableAutoVanishing) {
         invalidate();
     }
 }

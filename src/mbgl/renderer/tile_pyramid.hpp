@@ -75,6 +75,12 @@ public:
     void updateFadingTiles();
     bool hasFadingTiles() const { return fadingTiles; }
 
+    void onStyleChange() {
+        if (skipRelayoutClear) {
+            clearAll();
+        }
+    }
+
 private:
     void addRenderTile(const UnwrappedTileID& tileID, Tile& tile);
 

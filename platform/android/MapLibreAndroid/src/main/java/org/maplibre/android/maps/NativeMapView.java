@@ -840,8 +840,18 @@ final class NativeMapView implements NativeMap {
     nativeAddTileCacheSettings(settings.source,
                                settings.minTiles,
                                settings.maxTiles,
+                               settings.minZoom,
+                               settings.maxZoom,
                                settings.aggressiveCache,
                                settings.skipRelayoutClear);
+  }
+
+  @Override
+  public void setBackgroundClearColor(int color) {
+    if (checkState("setBackgroundClearColor")) {
+      return;
+    }
+    nativeSetBackgroundClearColor(color);
   }
 
   @Override
@@ -1239,6 +1249,22 @@ final class NativeMapView implements NativeMap {
   public void captureRouteNavStops(boolean onOff) {
     nativeEnableCaptureRouteNavStops(onOff);
   }
+
+  @Override
+  public boolean scrubCapturedRoute(double scrubValue) {
+    return nativeScrubCapturedRoute(scrubValue);
+  }
+
+  @Override
+  public boolean isRouteNavStopsCaptured() {
+    return nativeIsCaptureRouteNavStopsEnabled();
+  }
+
+  @Override
+  public boolean loadRouteCapture(String routeCaptureString) {
+    return nativeRouteLoadCapture(routeCaptureString);
+  }
+
 
   @Override
   public void clearRouteSegments(RouteID routeID) {
@@ -1728,6 +1754,15 @@ final class NativeMapView implements NativeMap {
   private native void nativeEnableCaptureRouteNavStops(boolean onOff);
 
   @Keep
+  private native boolean nativeIsCaptureRouteNavStopsEnabled();
+
+  @Keep
+  private native boolean nativeRouteLoadCapture(String routeCapture);
+
+  @Keep
+  private native boolean nativeScrubCapturedRoute(double scrubValue);
+
+  @Keep
   private native void nativeRouteClearSegments(int routeID);
 
   @Keep
@@ -1957,8 +1992,13 @@ final class NativeMapView implements NativeMap {
   private native void nativeAddTileCacheSettings(String source,
                                                  int minTiles,
                                                  int maxTiles,
+                                                 int minZoom,
+                                                 int maxZoom,
                                                  boolean aggressiveCache,
                                                  boolean skipRelayoutClear);
+
+  @Keep
+  private native void nativeSetBackgroundClearColor(int color);
 
   @Keep
   private native int nativeGetPrefetchZoomDelta();

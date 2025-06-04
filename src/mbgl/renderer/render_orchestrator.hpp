@@ -105,6 +105,7 @@ public:
     void collectPlacedSymbolData(bool);
     const std::vector<PlacedSymbolData>& getPlacedSymbolsData() const;
     void clearData();
+    void onStyleChange();
 
     void update(const std::shared_ptr<UpdateParameters>&);
 

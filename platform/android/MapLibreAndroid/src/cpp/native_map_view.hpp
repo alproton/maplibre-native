@@ -293,6 +293,12 @@ public:
 
     void routeEnableCaptureNavStops(JNIEnv& env, jni::jboolean enable);
 
+    jboolean routeIsCaptureNavStopsEnabled(JNIEnv& env);
+
+    jboolean routeLoadCapture(JNIEnv& env, const jni::String& captureStr);
+
+    jboolean routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue);
+
     jboolean routeEnableDebugViz(JNIEnv& env, jni::jint routeID, jni::jboolean enable);
     //------------------------------------------------
 
@@ -364,7 +370,10 @@ public:
 
     jni::jboolean getTileCacheEnabled(JNIEnv&);
 
-    void addTileCacheSettings(JNIEnv&, const jni::String&, jni::jint, jni::jint, jni::jboolean, jni::jboolean);
+    void addTileCacheSettings(
+        JNIEnv&, const jni::String&, jni::jint, jni::jint, jni::jint, jni::jint, jni::jboolean, jni::jboolean);
+
+    void setBackgroundClearColor(JNIEnv&, jni::jint);
 
     void setTileLodMinRadius(JNIEnv&, jni::jdouble);
 

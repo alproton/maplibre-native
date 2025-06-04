@@ -106,7 +106,7 @@ void TileCache::deferPendingReleases() {
 void TileCache::add(const OverscaledTileID& key, std::unique_ptr<Tile>&& tile) {
     MLN_TRACE_FUNC();
 
-    if (!tile->isRenderable() || !size) {
+    if (!tile->isRenderable() || !size || tile->id.overscaledZ < minZoom || tile->id.overscaledZ > maxZoom) {
         deferredRelease(std::move(tile));
         return;
     }

@@ -243,6 +243,8 @@ interface NativeMap {
 
   void addTileCacheSettings(TileCacheSettings settings);
 
+  void setBackgroundClearColor(int color);
+
   void setTileLodMinRadius(double radius);
 
   double getTileLodMinRadius();
@@ -292,6 +294,11 @@ interface NativeMap {
 
   void captureRouteNavStops(boolean onOff);;
 
+  boolean scrubCapturedRoute(double scrubValue);
+
+  boolean isRouteNavStopsCaptured();
+
+  boolean loadRouteCapture(String routeCapture);
   void clearRouteSegments(RouteID routeID);
 
   boolean setVanishingRoute(RouteID routeID);
