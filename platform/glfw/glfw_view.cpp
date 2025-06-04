@@ -749,7 +749,10 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_L: {
                     int lastCapturedIdx = view->getCaptureIdx() - 1;
                     if (lastCapturedIdx == -1) lastCapturedIdx = 0;
-                    std::string capture_file_name = "snapshot" + std::to_string(lastCapturedIdx) + ".json";
+                    std::string capture_file_name =
+                        "/home/spalaniappan/route_tools/jack_gradient.json"; //"snapshot" +
+                                                                             // std::to_string(lastCapturedIdx)
+                                                                             //+ ".json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -1063,6 +1066,7 @@ void GLFWView::addRoute() {
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
+    rmptr_->enableDebugViz(routeID, enableDebugViz_);
     routeMap_[routeID] = route;
     rmptr_->finalize();
 
@@ -1642,7 +1646,7 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                         }
                     }
                 }
-
+                rmptr_->enableDebugViz(routeID, enableDebugViz_);
                 rmptr_->finalize();
                 // if there is no vanishing route defined in the capture, it means we have not captured nav stops.
                 // lets just set the first route in the map as the vanishing route.
@@ -1655,64 +1659,70 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
                     setPuckLocation(pt.y, pt.x, bearing);
                 }
                 // create route segments
-                if (route_obj.HasMember("route_segments") && route_obj["route_segments"].IsArray()) {
-                    const rapidjson::Value &route_segments = route_obj["route_segments"];
-                    for (rapidjson::SizeType j = 0; j < route_segments.Size(); j++) {
-                        mbgl::route::RouteSegmentOptions rsopts;
-                        const rapidjson::Value &segment = route_segments[j];
-                        if (segment.HasMember("route_segment_options") && segment["route_segment_options"].IsObject()) {
-                            const rapidjson::Value &segment_options = segment["route_segment_options"];
-                            if (segment_options.HasMember("color") && segment_options["color"].IsArray()) {
-                                const rapidjson::Value &color = segment_options["color"];
-                                rsopts.color = mbglColor(color);
-                            }
+                if (!enableDebugViz_) {
+                    if (route_obj.HasMember("route_segments") && route_obj["route_segments"].IsArray()) {
+                        const rapidjson::Value &route_segments = route_obj["route_segments"];
+                        for (rapidjson::SizeType j = 0; j < route_segments.Size(); j++) {
+                            mbgl::route::RouteSegmentOptions rsopts;
+                            const rapidjson::Value &segment = route_segments[j];
+                            if (segment.HasMember("route_segment_options") &&
+                                segment["route_segment_options"].IsObject()) {
+                                const rapidjson::Value &segment_options = segment["route_segment_options"];
+                                if (segment_options.HasMember("color") && segment_options["color"].IsArray()) {
+                                    const rapidjson::Value &color = segment_options["color"];
+                                    rsopts.color = mbglColor(color);
+                                }
 
-                            if (segment_options.HasMember("outer_color") && segment_options["outer_color"].IsArray()) {
-                                const rapidjson::Value &outerColor = segment_options["outer_color"];
-                                rsopts.outerColor = mbglColor(outerColor);
-                            }
-                            // TODO: deprecated use of "geometry"
-                            if (segment_options.HasMember("geometry") && segment_options["geometry"].IsArray()) {
-                                const rapidjson::Value &geometry = segment_options["geometry"];
-                                for (rapidjson::SizeType k = 0; k < geometry.Size(); k++) {
-                                    const rapidjson::Value &point = geometry[k];
-                                    if (point.IsArray() && point.Size() == 2) {
-                                        double x = point[0].GetDouble();
-                                        double y = point[1].GetDouble();
-                                        rsopts.geometry.push_back({x, y});
+                                if (segment_options.HasMember("outer_color") &&
+                                    segment_options["outer_color"].IsArray()) {
+                                    const rapidjson::Value &outerColor = segment_options["outer_color"];
+                                    rsopts.outerColor = mbglColor(outerColor);
+                                }
+                                // TODO: deprecated use of "geometry"
+                                if (segment_options.HasMember("geometry") && segment_options["geometry"].IsArray()) {
+                                    const rapidjson::Value &geometry = segment_options["geometry"];
+                                    for (rapidjson::SizeType k = 0; k < geometry.Size(); k++) {
+                                        const rapidjson::Value &point = geometry[k];
+                                        if (point.IsArray() && point.Size() == 2) {
+                                            double x = point[0].GetDouble();
+                                            double y = point[1].GetDouble();
+                                            rsopts.geometry.push_back({x, y});
+                                        }
                                     }
+                                }
+
+                                if (segment_options.HasMember("first_index")) {
+                                    const rapidjson::Value &firstIndexVal = segment_options["first_index"];
+                                    rsopts.firstIndex = firstIndexVal.GetUint();
+                                }
+
+                                if (segment_options.HasMember("first_index_fraction")) {
+                                    const rapidjson::Value &firstIndexFractionVal =
+                                        segment_options["first_index_fraction"];
+                                    rsopts.firstIndexFraction = firstIndexFractionVal.GetFloat();
+                                }
+
+                                if (segment_options.HasMember("last_index")) {
+                                    const rapidjson::Value &lastIndexVal = segment_options["last_index"];
+                                    rsopts.lastIndex = lastIndexVal.GetUint();
+                                }
+
+                                if (segment_options.HasMember("last_index_fraction")) {
+                                    const rapidjson::Value &lastIndexFractionVal =
+                                        segment_options["last_index_fraction"];
+                                    rsopts.lastIndexFraction = lastIndexFractionVal.GetFloat();
+                                }
+
+                                if (segment_options.HasMember("priority")) {
+                                    rsopts.priority = segment_options["priority"].GetInt();
                                 }
                             }
 
-                            if (segment_options.HasMember("first_index")) {
-                                const rapidjson::Value &firstIndexVal = segment_options["first_index"];
-                                rsopts.firstIndex = firstIndexVal.GetUint();
-                            }
-
-                            if (segment_options.HasMember("first_index_fraction")) {
-                                const rapidjson::Value &firstIndexFractionVal = segment_options["first_index_fraction"];
-                                rsopts.firstIndexFraction = firstIndexFractionVal.GetFloat();
-                            }
-
-                            if (segment_options.HasMember("last_index")) {
-                                const rapidjson::Value &lastIndexVal = segment_options["last_index"];
-                                rsopts.lastIndex = lastIndexVal.GetUint();
-                            }
-
-                            if (segment_options.HasMember("last_index_fraction")) {
-                                const rapidjson::Value &lastIndexFractionVal = segment_options["last_index_fraction"];
-                                rsopts.lastIndexFraction = lastIndexFractionVal.GetFloat();
-                            }
-
-                            if (segment_options.HasMember("priority")) {
-                                rsopts.priority = segment_options["priority"].GetInt();
-                            }
+                            rmptr_->routeSegmentCreate(routeID, rsopts);
                         }
-
-                        rmptr_->routeSegmentCreate(routeID, rsopts);
                     }
+                    rmptr_->finalize();
                 }
-                rmptr_->finalize();
                 loadedCapture_ = true;
                 std::cout << "Loaded route with ID: " << routeID.id << std::endl;
             }

@@ -213,6 +213,7 @@ private:
     bool routePickMode_ = false;
     bool enableAutoVanishing = false; // Simulates route progress in app
     mbgl::route::Precision routePrecision_ = mbgl::route::Precision::Fine;
+    bool enableDebugViz_ = true;
 
     // Frame timer
     int frames = 0;

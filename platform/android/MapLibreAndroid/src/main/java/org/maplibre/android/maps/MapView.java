@@ -626,12 +626,34 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     return nativeMapView.getRenderingStats(oneline);
   }
 
+  /***
+   * Gets the snapshot capture of the map view. This is a json string that contains the state of all routes that
+   * can be user to re-create them.
+   *
+   * @return the json formatted string representing routes
+   */
   public String getSnapshotCapture() {
     return nativeMapView.getSnapshotCapture();
   }
 
+  /***
+   * Enables storing of routes navigation stops. This is useful for debugging purposes.
+   *
+   * @param onOff if true, the route navigation stops will be captured and cached.
+   */
   public void enableCaptureRouteNavStops(boolean onOff) {
     nativeMapView.captureRouteNavStops(onOff);
+  }
+
+  /***
+   * Enables or disables the route debug visualization. This is useful for debugging purposes.
+   *
+   * @param routeID the specified routeID
+   * @param enable if true, the route debug visualization will be enabled, else it will be disabled.
+   * @return true if the route debug visualization was enabled successfully, false otherwise.
+   */
+  public boolean enableRouteDebugViz(RouteID routeID, boolean enable) {
+    return nativeMapView.enableRouteDebugViz(routeID, enable);
   }
 
   /***

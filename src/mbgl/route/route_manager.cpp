@@ -416,6 +416,17 @@ bool RouteManager::routeSet(const RouteID& routeID, const LineString<double>& ge
     return false;
 }
 
+bool RouteManager::enableDebugViz(const RouteID& routeID, bool onOff) {
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        auto& route = routeMap_[routeID];
+        route.enableDebugViz(onOff);
+        validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
+        return true;
+    }
+
+    return false;
+}
+
 void RouteManager::setUseRouteSegmentIndexFractions(bool useFractions) {
     useRouteSegmentIndexFractions_ = useFractions;
 }
@@ -827,8 +838,10 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         std::unordered_map<std::string, std::string> gradientDebugMap;
         if (updateGradients) {
             // create the gradient expression for active route.
-            std::map<double, mbgl::Color> innerGradientMap = route.getRouteSegmentColorStops(RouteType::Inner,
-                                                                                             routeOptions.innerColor);
+            std::map<double, mbgl::Color> innerGradientMap = route.isDebugVizEnabled()
+                                                                 ? route.getRouteColorStopsDebugViz()
+                                                                 : route.getRouteSegmentColorStops(
+                                                                       RouteType::Inner, routeOptions.innerColor);
 
             std::unique_ptr<expression::Expression> innerGradientExpression = createGradientExpression(
                 innerGradientMap);

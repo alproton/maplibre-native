@@ -259,18 +259,20 @@ class RouteUtils {
             routeOptions.outerColor = Color.RED
 
             val routeID = mapView.createRoute(routeGeometry, routeOptions)
+            mapView.enableRouteDebugViz(routeID, true)
             mapView.finalizeRoutes()
+
             //set the first routeID as the vanishing route
             if  (routeMap.isEmpty()) {
                 mapView.setVanishingRoute(routeID)
             }
             routeMap[routeID] = routeCircle
 
-            if(useFractionalSegments) {
-                addTrafficSegmentsFractional(routeID, mapView)
-            } else {
-                addTrafficSegments(routeID, mapView)
-            }
+//            if(useFractionalSegments) {
+//                addTrafficSegmentsFractional(routeID, mapView)
+//            } else {
+//                addTrafficSegments(routeID, mapView)
+//            }
         }
     }
 }

@@ -43,12 +43,15 @@ public:
     bool routeSegmentCreate(const RouteSegmentOptions&, bool useFractionalIndices = false);
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const RouteType& routeType, const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
+    std::map<double, mbgl::Color> getRouteColorStopsDebugViz();
     std::vector<double> getRouteSegmentDistances() const;
     void routeSetProgress(const double t, bool capture = false);
     double routeGetProgress() const;
     double getTotalDistance() const;
     double getProgressPercent(const Point<double>& queryPoint, const Precision& precision, bool capture = false);
     Point<double> getPoint(double percent, const Precision& precision, double* bearing = nullptr) const;
+    void enableDebugViz(bool onOff);
+    bool isDebugVizEnabled() const;
 
     mbgl::LineString<double> getGeometry() const;
     bool hasRouteSegments() const;
@@ -84,6 +87,7 @@ private:
     std::vector<double> capturedNavPercent_;
     std::vector<Point<double>> capturedNavStops_;
     bool logPrecision = false;
+    bool enableDebugViz_ = false;
 };
 
 } // namespace route

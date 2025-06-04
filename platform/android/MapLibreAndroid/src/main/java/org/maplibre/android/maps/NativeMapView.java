@@ -1279,6 +1279,11 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public boolean enableRouteDebugViz(RouteID routeID, boolean enable) {
+    return nativeRouteEnableDebugViz(routeID.getId(), enable);
+  }
+
+  @Override
   public void setCustomDotsNextLayer(String layer) {
     nativeSetCustomDotsNextLayer(layer);
   }
@@ -1738,7 +1743,10 @@ final class NativeMapView implements NativeMap {
   private native int nativeRouteGetVanishing();
 
   @Keep
-  native void nativeRoutesClearStats();
+  private native void nativeRoutesClearStats();
+
+  @Keep
+  private native boolean nativeRouteEnableDebugViz(int routeID, boolean enable);
 
   //---------------------Custom Dots APIs---------------------
   @Keep

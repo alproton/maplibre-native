@@ -79,6 +79,7 @@ public:
     std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
     std::string captureSnapshot() const;
+    bool enableDebugViz(const RouteID& routeID, bool onOff);
     int getTopMost(const std::vector<RouteID>& routeList) const;
     void captureNavStops(bool onOff);
     bool hasRoutes() const;

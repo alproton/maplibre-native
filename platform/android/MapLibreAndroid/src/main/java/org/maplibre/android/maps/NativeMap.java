@@ -304,6 +304,8 @@ interface NativeMap {
 
   String getSnapshotCapture();
 
+  boolean enableRouteDebugViz(RouteID routeID, boolean enable);
+
   //
   // Custom Dots API
   //

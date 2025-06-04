@@ -292,6 +292,8 @@ public:
     jint routeGetVanishing(JNIEnv& env);
 
     void routeEnableCaptureNavStops(JNIEnv& env, jni::jboolean enable);
+
+    jboolean routeEnableDebugViz(JNIEnv& env, jni::jint routeID, jni::jboolean enable);
     //------------------------------------------------
 
     jni::Local<jni::String> getRenderingStats(JNIEnv& env, jni::jboolean oneline);

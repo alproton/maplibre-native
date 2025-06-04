@@ -1594,6 +1594,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeGetVanishing, "nativeRouteGetVanishing"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
+        METHOD(&NativeMapView::routeEnableDebugViz, "nativeRouteEnableDebugViz"),
         METHOD(&NativeMapView::routeEnableCaptureNavStops, "nativeEnableCaptureRouteNavStops"),
         METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
         // Custom Dots API
@@ -1796,6 +1797,14 @@ void NativeMapView::routeEnableCaptureNavStops(JNIEnv& env, jni::jboolean enable
     if (routeMgr) {
         routeMgr->captureNavStops(enable);
     }
+}
+
+jboolean NativeMapView::routeEnableDebugViz(JNIEnv& env, jni::jint routeID, jni::jboolean enable) {
+    if (routeMgr) {
+        return routeMgr->enableDebugViz(RouteID(routeID), enable);
+    }
+
+    return false;
 }
 
 jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {
