@@ -47,6 +47,7 @@ public:
     std::vector<double> getRouteSegmentDistances() const;
     void routeSetProgress(const double t, bool capture = false);
     double routeGetProgress() const;
+    Point<double> getVanishingPoint() const;
     double getTotalDistance() const;
     double getProgressPercent(const Point<double>& queryPoint, const Precision& precision, bool capture = false);
     Point<double> getPoint(double percent, const Precision& precision, double* bearing = nullptr) const;
@@ -82,6 +83,7 @@ private:
 
     RouteOptions routeOptions_;
     double progress_ = 0.0;
+    mbgl::Point<double> vanishingPoint_;
     std::vector<double> intervalLengths_;
     std::vector<double> cumulativeIntervalDistances_;
     std::vector<RouteSegment> segments_;

@@ -22,6 +22,7 @@ public:
     LinePaintProperties::Transitionable paint;
     LineGradientFilterType gradientFilterType = LineGradientFilterType::Linear;
     bool isRouteLayer = false;
+    mbgl::Point<double> vanishingPoint;
     DECLARE_LAYER_TYPE_INFO;
 };
 

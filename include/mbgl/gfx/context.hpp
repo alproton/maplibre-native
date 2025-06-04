@@ -35,6 +35,7 @@ using RenderTargetPtr = std::shared_ptr<RenderTarget>;
 #endif
 
 namespace gfx {
+class RendererBackend;
 
 class OffscreenTexture;
 class ShaderRegistry;
@@ -185,6 +186,8 @@ public:
     // This is a workaround to issue #3135
     // Remove the custom puck code when #3135 is resolved
     virtual std::unique_ptr<CustomPuck> createCustomPuck() { return nullptr; }
+
+    virtual std::unique_ptr<CustomPuckState> getCurrentCustomPuckState() { return std::make_unique<CustomPuckState>(); }
 
     // Similar to custom puck, CustomDots should be replaced with CustomLayerV3
     // once texture atlas updates are optimized out

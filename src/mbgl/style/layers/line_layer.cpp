@@ -157,6 +157,13 @@ void LineLayer::setIsRoute(bool isRoute) {
     observer->onLayerChanged(*this);
 }
 
+void LineLayer::setVanishingPoint(const mbgl::Point<double>& vanishingPt) {
+    auto impl_ = mutableImpl();
+    impl_->vanishingPoint = vanishingPt;
+    baseImpl = std::move(impl_);
+    observer->onLayerChanged(*this);
+}
+
 // Paint properties
 
 PropertyValue<float> LineLayer::getDefaultLineBlur() {

@@ -1186,6 +1186,8 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             double progress = route.routeGetProgress();
             activeRouteLineLayer->setGradientLineClip(progress);
             casingRouteLineLayer->setGradientLineClip(progress);
+            activeRouteLineLayer->setVanishingPoint(route.getVanishingPoint());
+            casingRouteLineLayer->setVanishingPoint(route.getVanishingPoint());
         }
     }
 }

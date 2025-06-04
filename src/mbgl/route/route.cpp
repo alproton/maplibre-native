@@ -601,6 +601,7 @@ void Route::routeSetProgress(const double t, bool capture) {
         capturedNavPercent_.push_back(t);
     }
     progress_ = t;
+    vanishingPoint_ = getPoint(t, Precision::Fine);
 }
 
 bool Route::hasNavStopsPercent() const {
@@ -621,6 +622,10 @@ bool Route::isDebugVizEnabled() const {
 
 double Route::routeGetProgress() const {
     return progress_;
+}
+
+Point<double> Route::getVanishingPoint() const {
+    return vanishingPoint_;
 }
 
 const std::vector<Point<double>>& Route::getCapturedNavStops() const {
