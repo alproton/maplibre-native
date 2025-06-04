@@ -69,6 +69,7 @@ public:
                            double percent,
                            const Precision& precision,
                            double* bearing = nullptr) const;
+    double getTotalDistance(const RouteID& routeID);
     std::optional<LineString<double>> routeGetGeometry(const RouteID& routeID) const;
     void routeClearSegments(const RouteID&);
     bool routeDispose(const RouteID&);

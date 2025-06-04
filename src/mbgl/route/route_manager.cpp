@@ -917,6 +917,15 @@ mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID,
     return {0.0, 0.0};
 }
 
+double RouteManager::getTotalDistance(const RouteID& routeID) {
+    assert(routeID.isValid() && "invalid route ID");
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        return routeMap_.at(routeID).getTotalDistance();
+    }
+
+    return -1.0;
+}
+
 std::string RouteManager::getActiveRouteLayerName(const RouteID& routeID) const {
     return ACTIVE_ROUTE_LAYER + std::to_string(routeID.id);
 }

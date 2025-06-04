@@ -58,11 +58,15 @@ RenderLineLayer::RenderLineLayer(Immutable<style::LineLayer::Impl> _impl)
     : RenderLayer(makeMutable<LineLayerProperties>(std::move(_impl))),
       unevaluated(impl_cast(baseImpl).paint.untransitioned()),
       colorRamp(std::make_shared<PremultipliedImage>(Size(256, 1))) {
-    // if (impl_cast(baseImpl).isRouteLayer) {
-    //     colorRamp = std::make_shared<PremultipliedImage>(Size(1024, 1));
+    // if (isRouteLayer()) {
+    //     colorRamp = std::make_shared<PremultipliedImage>(Size(2048, 1));
     // }
 
     styleDependencies = unevaluated.getDependencies();
+}
+
+bool RenderLineLayer::isRouteLayer() const {
+    return impl_cast(baseImpl).isRouteLayer;
 }
 
 RenderLineLayer::~RenderLineLayer() = default;
@@ -379,6 +383,10 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
     if (!renderTiles || renderTiles->empty()) {
         removeAllDrawables();
         return;
+    }
+
+    if (isRouteLayer()) {
+        context.get
     }
 
     // Set up a layer group
