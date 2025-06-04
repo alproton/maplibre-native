@@ -534,6 +534,10 @@ std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeTy
     return compacted;
 }
 
+double Route::getProgressInMeters(double progressInMeters) const {
+    return progressInMeters / totalLength_;
+}
+
 std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& routeType,
                                                                const mbgl::Color& routeColor) {
     std::map<double, mbgl::Color> colorStops;
