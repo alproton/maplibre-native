@@ -953,6 +953,21 @@ const std::string RouteManager::getStats() {
     return buffer.GetString();
 }
 
+double RouteManager::routeSetProgressInMeters(const RouteID& routeID, double progressInMeters) {
+    assert(routeID.isValid() && "invalid route ID");
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        double percentage = routeMap_.at(routeID).getProgressInMeters(progressInMeters);
+        if (percentage >= 0.0 && percentage <= 1.0) {
+            routeMap_[routeID].routeSetProgress(percentage);
+            validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
+        }
+        std::string msg = "routeSetProgressPassthrough(), percentage: " + std::to_string(percentage);
+        mbgl::Log::Info(mbgl::Event::Route, msg);
+        return percentage;
+    }
+    return -1.0;
+}
+
 void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
     assert(routeID.isValid() && "invalid route ID");
     using namespace mbgl::style;

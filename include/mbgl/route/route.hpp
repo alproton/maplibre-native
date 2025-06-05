@@ -49,6 +49,7 @@ public:
     double getTotalDistance() const;
     double getProgressPercent(const Point<double>& queryPoint, const Precision& precision, bool capture = false);
     Point<double> getPoint(double percent, const Precision& precision, double* bearing = nullptr) const;
+    double getProgressInMeters(double progressInMeters) const;
     void addNavStopPercent(double percent);
     void addNavStopPoint(const mbgl::Point<double>& point);
     bool hasNavStopsPercent() const;
