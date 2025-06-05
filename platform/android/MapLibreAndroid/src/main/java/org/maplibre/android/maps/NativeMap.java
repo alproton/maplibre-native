@@ -292,6 +292,8 @@ interface NativeMap {
 
   double setRouteProgressPoint(RouteID routeID, Point point, boolean coarsePrecision);
 
+  double setRouteProgressInMeters(RouteID routeID, double progressInMeters);
+
   void captureRouteNavStops(boolean onOff);;
 
   boolean scrubCapturedRoute(double scrubValue);

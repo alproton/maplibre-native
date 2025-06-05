@@ -65,6 +65,7 @@ public:
     bool routeSetProgressPercent(const RouteID&, double progress);
     double routeSetProgressPoint(const RouteID&, const Point<double>& progressPoint, const Precision& precision);
     void setUseRouteSegmentIndexFractions(bool useFractions);
+    double routeSetProgressInMeters(const RouteID& routeID, double progresInMeters);
     Point<double> getPoint(const RouteID& routeID,
                            double percent,
                            const Precision& precision,
