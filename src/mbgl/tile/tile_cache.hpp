@@ -4,12 +4,14 @@
 #include <mbgl/tile/tile_id.hpp>
 #include <mbgl/tile/tile.hpp>
 
+#include <chrono>
 #include <list>
 #include <memory>
 #include <map>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <unordered_map>
 
 namespace mbgl {
 
@@ -51,9 +53,15 @@ public:
         maxZoom = maxZoom_;
     }
 
+    void updateCachedTileMaxAge(double cachedTileMaxAge_) { cachedTileMaxAge = cachedTileMaxAge_; }
+
     void setSource(std::string source_) { source = std::move(source_); }
 
     const std::string& getSource() const noexcept { return source; }
+
+private:
+    void releaseOldTiles();
+    void releaseTile(const OverscaledTileID& key);
 
 private:
     std::map<OverscaledTileID, std::unique_ptr<Tile>> tiles;
@@ -69,6 +77,11 @@ private:
     int minZoom = 0;
     int maxZoom = 32;
     std::string source = "";
+
+    using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
+    std::unordered_map<OverscaledTileID, TimePoint> tileStamps;
+    TimePoint oldestTile{};
+    double cachedTileMaxAge = 0;
 };
 
 } // namespace mbgl

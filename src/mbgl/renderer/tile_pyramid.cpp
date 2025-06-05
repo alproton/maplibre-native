@@ -437,6 +437,7 @@ void TilePyramid::updateTileCacheSettings(const TileCacheSettingsMap& settings) 
     assert(cache.getSource() == it->second.source);
     cache.updateSizeRange(it->second.minTiles, it->second.maxTiles);
     cache.updateZoomRange(it->second.minZoom, it->second.maxZoom);
+    cache.updateCachedTileMaxAge(it->second.cachedTileMaxAge);
     aggressiveTileCache = it->second.aggressiveCache;
     skipRelayoutClear = it->second.skipRelayoutClear;
 }
