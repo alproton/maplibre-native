@@ -58,7 +58,19 @@ RenderLineLayer::RenderLineLayer(Immutable<style::LineLayer::Impl> _impl)
     : RenderLayer(makeMutable<LineLayerProperties>(std::move(_impl))),
       unevaluated(impl_cast(baseImpl).paint.untransitioned()),
       colorRamp(std::make_shared<PremultipliedImage>(Size(256, 1))) {
+    // if (isRouteLayer()) {
+    //     colorRamp = std::make_shared<PremultipliedImage>(Size(2048, 1));
+    // }
+
     styleDependencies = unevaluated.getDependencies();
+}
+
+bool RenderLineLayer::isRouteLayer() const {
+    return impl_cast(baseImpl).isRouteLayer;
+}
+
+mbgl::Point<double> RenderLineLayer::getVanishingPoint() {
+    return impl_cast(baseImpl).vanishingPoint;
 }
 
 RenderLineLayer::~RenderLineLayer() = default;
@@ -368,13 +380,59 @@ inline void setSegments(std::unique_ptr<gfx::DrawableBuilder>& builder, const Li
 
 void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                              gfx::Context& context,
-                             const TransformState&,
+                             const TransformState& transformState,
                              [[maybe_unused]] const std::shared_ptr<UpdateParameters>& parameters,
                              const RenderTree&,
                              UniqueChangeRequestVec& changes) {
     if (!renderTiles || renderTiles->empty()) {
         removeAllDrawables();
         return;
+    }
+
+    if (isRouteLayer()) {
+        // get the custom puck center in screen coordinates
+        const auto customPuckState = context.getCurrentCustomPuckState();
+        double pucklat = customPuckState->lat;
+        double pucklon = customPuckState->lon;
+        LatLng puckLatLng(pucklat, pucklon);
+        std::string msg;
+        // msg = "customPuckState.lat: "+std::to_string(pucklat) + ", customPuckState.lon: " + std::to_string(pucklon);
+        // mbgl::Log::Info(Event::Route, msg);
+        const ScreenCoordinate& puckScreenCoord = transformState.latLngToScreenCoordinate(puckLatLng);
+
+        // get the vanishing point in screen coordinates
+        mbgl::Point<double> vanishingPt = getVanishingPoint();
+        LatLng vanishingLatLng(vanishingPt.y, vanishingPt.x);
+        // msg = "vanishingPoint.x: " + std::to_string(vanishingPt.x) + ", vanishingPoint.y: " +
+        // std::to_string(vanishingPt.y); mbgl::Log::Info(Event::Route, msg);
+        const ScreenCoordinate& vanishingPtScreenCoord = transformState.latLngToScreenCoordinate(vanishingLatLng);
+
+        double dx = puckScreenCoord.x - vanishingPtScreenCoord.x;
+        double dy = puckScreenCoord.y - vanishingPtScreenCoord.y;
+
+        [[maybe_unused]] double dist = dx * dx + dy * dy;
+        if (dist > 0) {
+            msg = "pick-vanishing screen space distance: " + std::to_string(dist) +
+                  ", puckScreenCoord: " + std::to_string(puckScreenCoord.x) + " " + std::to_string(puckScreenCoord.y) +
+                  ", vanishingPtScreenCoord: " + std::to_string(vanishingPtScreenCoord.x) + " " +
+                  std::to_string(vanishingPtScreenCoord.y);
+            mbgl::Log::Info(Event::Route, msg);
+        }
+
+        auto puckLatLngNew = transformState.screenCoordinateToLatLng(puckScreenCoord);
+        auto vanishingPtLatLng = transformState.screenCoordinateToLatLng(vanishingPtScreenCoord);
+
+        dx = puckLatLngNew.longitude() - vanishingPtLatLng.longitude();
+        dy = puckLatLngNew.latitude() - vanishingPtLatLng.latitude();
+        dist = dx * dx + dy * dy;
+        if (dist > 0) {
+            msg = "pick-vanishing latlon space distance: " + std::to_string(dist) +
+                  ", puckLatLngNew: " + std::to_string(puckLatLngNew.longitude()) + " " +
+                  std::to_string(puckLatLngNew.latitude()) +
+                  ", vanishingPtLatLng: " + std::to_string(vanishingPtLatLng.longitude()) + " " +
+                  std::to_string(vanishingPtLatLng.latitude());
+            mbgl::Log::Info(Event::Route, msg);
+        }
     }
 
     // Set up a layer group

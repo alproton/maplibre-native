@@ -69,6 +69,7 @@ public:
                            double percent,
                            const Precision& precision,
                            double* bearing = nullptr) const;
+    double getTotalDistance(const RouteID& routeID);
     std::optional<LineString<double>> routeGetGeometry(const RouteID& routeID) const;
     void routeClearSegments(const RouteID&);
     bool routeDispose(const RouteID&);
@@ -80,6 +81,7 @@ public:
     std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
     std::string captureSnapshot() const;
+    bool enableDebugViz(const RouteID& routeID, bool onOff);
     bool loadCapture(const std::string& capture);
     bool captureScrubRoute(double scrubValue, Point<double>* optPointOut = nullptr, double* optBearingOut = nullptr);
     int getTopMost(const std::vector<RouteID>& routeList) const;

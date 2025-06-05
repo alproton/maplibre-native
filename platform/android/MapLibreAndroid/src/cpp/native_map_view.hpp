@@ -299,6 +299,7 @@ public:
 
     jboolean routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue);
 
+    jboolean routeEnableDebugViz(JNIEnv& env, jni::jint routeID, jni::jboolean enable);
     //------------------------------------------------
 
     jni::Local<jni::String> getRenderingStats(JNIEnv& env, jni::jboolean oneline);

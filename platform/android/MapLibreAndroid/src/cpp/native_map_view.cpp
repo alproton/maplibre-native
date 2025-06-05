@@ -1609,6 +1609,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeGetVanishing, "nativeRouteGetVanishing"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
+        METHOD(&NativeMapView::routeEnableDebugViz, "nativeRouteEnableDebugViz"),
         METHOD(&NativeMapView::routeEnableCaptureNavStops, "nativeEnableCaptureRouteNavStops"),
         METHOD(&NativeMapView::routeIsCaptureNavStopsEnabled, "nativeIsCaptureRouteNavStopsEnabled"),
         METHOD(&NativeMapView::routeLoadCapture, "nativeRouteLoadCapture"),
@@ -1840,6 +1841,14 @@ jboolean NativeMapView::routeLoadCapture(JNIEnv& env, const jni::String& capture
 jboolean NativeMapView::routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue) {
     if (routeMgr) {
         return routeMgr->captureScrubRoute(scrubValue);
+    }
+
+    return false;
+}
+
+jboolean NativeMapView::routeEnableDebugViz(JNIEnv& env, jni::jint routeID, jni::jboolean enable) {
+    if (routeMgr) {
+        return routeMgr->enableDebugViz(RouteID(routeID), enable);
     }
 
     return false;

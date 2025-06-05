@@ -1059,6 +1059,7 @@ void GLFWView::addRoute() {
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
+    rmptr_->enableDebugViz(routeID, enableDebugViz_);
     routeMap_[routeID] = route;
     rmptr_->finalize();
 
@@ -1481,6 +1482,13 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
         const mbgl::Point<double> &pt = rmptr_->getPoint(
             vanishingRouteID_, 0.0, mbgl::route::Precision::Fine, &bearing);
         setPuckLocation(pt.y, pt.x, bearing);
+
+        double totalRouteDistMeters = rmptr_->getTotalDistance(vanishingRouteID_);
+        double totalRouteDistFeet = totalRouteDistMeters * 3.28084; // Convert meters to feet
+        feet_percent_step_ = 1.0 / totalRouteDistFeet;
+        meter_percent_step_ = 1.0 / totalRouteDistMeters;
+        std::cout << "feet_step_percent: " << std::to_string(feet_percent_step_) << std::endl;
+        std::cout << "meter_step_percent: " << std::to_string(meter_percent_step_) << std::endl;
     }
 }
 
@@ -1488,10 +1496,15 @@ void GLFWView::scrubNavStops(bool forward) {
     if (loadedCapture_) {
         mbgl::Point<double> navstop;
         double bearing = 0.0;
-        scrubCounter_ += forward ? 1 : -1;
-        double scrubValue = static_cast<double>(scrubCounter_) / 100.0;
-        scrubValue = std::clamp(scrubValue, 0.0, 1.0);
-        rmptr_->captureScrubRoute(scrubValue, &navstop, &bearing);
+        // scrubCounter_ += forward ? 1 : -1;
+        // double scrubValue = static_cast<double>(scrubCounter_) / 100.0;
+        // scrubValue = std::clamp(scrubValue, 0.0, 1.0);
+        // rmptr_->captureScrubRoute(scrubValue, &navstop, &bearing);
+        testPercent_ += forward ? feet_percent_step_ : -feet_percent_step_;
+        testPercent_ = std::clamp(testPercent_, 0.0, 1.0);
+        std::cout << "testPercent_: " << std::to_string(testPercent_) << std::endl;
+
+        rmptr_->captureScrubRoute(testPercent_, &navstop, &bearing);
         setPuckLocation(navstop.y, navstop.x, bearing);
 
         invalidate();

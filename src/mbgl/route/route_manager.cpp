@@ -1,4 +1,5 @@
 
+#include "mbgl/style/layers/line_layer_impl.hpp"
 #include "mbgl/util/containers.hpp"
 #include "mbgl/util/math.hpp"
 
@@ -413,6 +414,17 @@ bool RouteManager::routeSet(const RouteID& routeID, const LineString<double>& ge
         stats_.numRoutes++;
         dirtyRouteMap_[DirtyType::dtRouteGeometry].insert(routeID);
 
+        return true;
+    }
+
+    return false;
+}
+
+bool RouteManager::enableDebugViz(const RouteID& routeID, bool onOff) {
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        auto& route = routeMap_[routeID];
+        route.enableDebugViz(onOff);
+        validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
         return true;
     }
 
@@ -905,6 +917,15 @@ mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID,
     return {0.0, 0.0};
 }
 
+double RouteManager::getTotalDistance(const RouteID& routeID) {
+    assert(routeID.isValid() && "invalid route ID");
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        return routeMap_.at(routeID).getTotalDistance();
+    }
+
+    return -1.0;
+}
+
 std::string RouteManager::getActiveRouteLayerName(const RouteID& routeID) const {
     return ACTIVE_ROUTE_LAYER + std::to_string(routeID.id);
 }
@@ -1012,6 +1033,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         layer->setLineColor(color);
         layer->setLineCap(LineCapType::Round);
         layer->setLineJoin(LineJoinType::Round);
+        layer->setIsRoute(true);
 
         layer->setGradientLineFilter(LineGradientFilterType::Nearest);
         layer->setGradientLineClipColor(clipColor);
@@ -1138,8 +1160,10 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         std::unordered_map<std::string, std::string> gradientDebugMap;
         if (updateGradients) {
             // create the gradient expression for active route.
-            std::map<double, mbgl::Color> innerGradientMap = route.getRouteSegmentColorStops(RouteType::Inner,
-                                                                                             routeOptions.innerColor);
+            std::map<double, mbgl::Color> innerGradientMap = route.isDebugVizEnabled()
+                                                                 ? route.getRouteColorStopsDebugViz()
+                                                                 : route.getRouteSegmentColorStops(
+                                                                       RouteType::Inner, routeOptions.innerColor);
 
             std::unique_ptr<expression::Expression> innerGradientExpression = createGradientExpression(
                 innerGradientMap);
@@ -1162,6 +1186,8 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             double progress = route.routeGetProgress();
             activeRouteLineLayer->setGradientLineClip(progress);
             casingRouteLineLayer->setGradientLineClip(progress);
+            activeRouteLineLayer->setVanishingPoint(route.getVanishingPoint());
+            casingRouteLineLayer->setVanishingPoint(route.getVanishingPoint());
         }
     }
 }

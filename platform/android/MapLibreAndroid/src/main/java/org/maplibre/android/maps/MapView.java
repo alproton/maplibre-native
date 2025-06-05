@@ -677,6 +677,17 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   }
 
   /***
+   * Enables or disables the route debug visualization. This is useful for debugging purposes.
+   *
+   * @param routeID the specified routeID
+   * @param enable if true, the route debug visualization will be enabled, else it will be disabled.
+   * @return true if the route debug visualization was enabled successfully, false otherwise.
+   */
+  public boolean enableRouteDebugViz(RouteID routeID, boolean enable) {
+    return nativeMapView.enableRouteDebugViz(routeID, enable);
+  }
+
+  /***
    * Queries map libre native is a screen space point is over a route.
    *
    * @param x the screen space x coordinate
