@@ -167,6 +167,9 @@ CustomPuckIconsStyle parseIconsStyle(const auto& icon, const auto& iconNames) {
 }
 
 void mergeIconStyle(const CustomPuckIconStyle& defaultStyle, CustomPuckIconStyle& style) {
+    if (style.name.empty()) {
+        style.name = defaultStyle.name;
+    }
     if (style.scale.empty()) {
         style.scale = defaultStyle.scale;
     }
