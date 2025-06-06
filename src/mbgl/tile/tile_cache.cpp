@@ -175,7 +175,7 @@ void TileCache::clear() {
 }
 
 void TileCache::releaseOldTiles() {
-    if (cachedTileMaxAge <= 0) {
+    if (cachedTileMaxAge <= 0 || tileStamps.empty()) {
         return;
     }
     auto maxAge = std::chrono::duration<double>(cachedTileMaxAge);
@@ -183,10 +183,12 @@ void TileCache::releaseOldTiles() {
     if (now - oldestTile < maxAge) {
         return;
     }
+    oldestTile = now;
     std::vector<OverscaledTileID> keysToRemove;
     for (const auto& [key, stamp] : tileStamps) {
         if (now - stamp >= maxAge) {
             keysToRemove.push_back(key);
+        } else {
             oldestTile = std::min(oldestTile, stamp);
         }
     }
