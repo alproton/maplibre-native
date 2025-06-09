@@ -20,6 +20,14 @@ import org.maplibre.android.testapp.styles.TestStyles
 import timber.log.Timber
 import java.util.*
 
+import android.annotation.SuppressLint
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.LocationComponentOptions
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
+
 /**
  * Test activity showcasing the different debug modes and allows to cycle between the default map styles.
  */
@@ -77,11 +85,53 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         return MapLibreMapOptions.createFromAttributes(this, null)
     }
 
+    @SuppressLint("MissingPermission")
+    private fun initLocationComponent(style: Style) {
+        val context : Context = this
+        val locationComponentOptions =
+            LocationComponentOptions.builder(context)
+                .compassAnimationEnabled(true)
+                .gpsDrawable(R.drawable.ic_transparent)
+                .foregroundDrawableStale(R.drawable.ic_transparent)
+                .foregroundDrawable(R.drawable.ic_transparent)
+                .backgroundDrawable(R.drawable.ic_transparent)
+                .bearingDrawable(R.drawable.ic_transparent)
+                .trackingAnimationDurationMultiplier(1.0f)
+                .build()
+
+        maplibreMap.locationComponent.apply {
+            activateLocationComponent(
+                LocationComponentActivationOptions.Builder(
+                    context,
+                    style
+                ).locationComponentOptions(locationComponentOptions)
+                    .useDefaultLocationEngine(true)
+                    .customPuckAnimationEnabled(true)
+                    .customPuckAnimationIntervalMS(30)
+                    .customPuckLagMS(900)
+                    .customPuckIconScale(0.8f)
+                    .build()
+            )
+            applyStyle(locationComponentOptions)
+            isLocationComponentEnabled = true
+            renderMode = RenderMode.GPS
+            cameraMode = CameraMode.TRACKING_GPS
+        }
+        maplibreMap.locationComponent.setMaxAnimationFps(30)
+        maplibreMap.locationComponent.zoomWhileTracking(16.4, 1000)
+        mapView.setPuckStyle("puck_style.json")
+        mapView.setPuckVariant("default")
+        mapView.setPuckIconState("default")
+    }
+
     override fun onMapReady(map: MapLibreMap) {
         maplibreMap = map
         maplibreMap.setStyle(
             Style.Builder().fromUri(STYLES[currentStyleIndex])
-        ) { style: Style -> setupNavigationView(style.layers) }
+        ) { style: Style ->
+            initLocationComponent(style)
+            setupNavigationView(style.layers)
+        }
         setupZoomView()
         setFpsView()
     }
@@ -268,6 +318,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
 
     companion object {
         private val STYLES = arrayOf(
+            TestStyles.AMERICANA,
             TestStyles.getPredefinedStyleWithFallback("Streets"),
             TestStyles.getPredefinedStyleWithFallback("Outdoor"),
             TestStyles.getPredefinedStyleWithFallback("Bright"),
