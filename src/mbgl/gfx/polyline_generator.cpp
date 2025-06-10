@@ -657,10 +657,11 @@ void PolylineGenerator<PLV, PS>::addCurrentVertex(const GeometryCoordinate& curr
     }
     if (popts.isRoutePath) {
         std::cout << "add vertex: scaledDistance: " << scaledDistance << ", unscaledDistance: " << unscaledDistanceF
-                  << ", " << routeMode << " {clipstart: " << clipstart << ", clipend: " << clipend
-                  << ", total: " << total << ", distance: " << distance << ", relative: " << relativeDistance
-                  << ", vertexAttribLineSoFarIn: " << vertexAttribLineSoFar << ", Invertex shader: " << inVertexShader
-                  << "}" << std::endl;
+                  << ", " << routeMode << ", tileID: " << std::to_string(popts.canonicalTileID.z) << " "
+                  << popts.canonicalTileID.x << " " << popts.canonicalTileID.y << " {clipstart: " << clipstart
+                  << ", clipend: " << clipend << ", total: " << total << ", distance: " << distance
+                  << ", relative: " << relativeDistance << ", vertexAttribLineSoFarIn: " << vertexAttribLineSoFar
+                  << ", Invertex shader: " << inVertexShader << "}" << std::endl;
     }
 
     float lineSoFar = popts.isRoutePath ? vertexAttribLineSoFar : scaledDistance * LINE_DISTANCE_SCALE;
