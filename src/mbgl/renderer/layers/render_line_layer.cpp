@@ -377,7 +377,8 @@ inline void setSegments(std::unique_ptr<gfx::DrawableBuilder>& builder, const Li
 }
 
 } // namespace
-
+double maxScrnSpaceDist = 0.0;
+double minScrnSpaceDist = std::numeric_limits<double>::max();
 void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                              gfx::Context& context,
                              const TransformState& transformState,
@@ -411,28 +412,33 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
         double dy = puckScreenCoord.y - vanishingPtScreenCoord.y;
 
         [[maybe_unused]] double dist = dx * dx + dy * dy;
-        if (dist > 0) {
-            msg = "pick-vanishing screen space distance: " + std::to_string(dist) +
-                  ", puckScreenCoord: " + std::to_string(puckScreenCoord.x) + " " + std::to_string(puckScreenCoord.y) +
-                  ", vanishingPtScreenCoord: " + std::to_string(vanishingPtScreenCoord.x) + " " +
-                  std::to_string(vanishingPtScreenCoord.y);
-            mbgl::Log::Info(Event::Route, msg);
-        }
+        // if (dist > 0) {
+        //     if(minScrnSpaceDist > dist) {
+        //         minScrnSpaceDist = dist;
+        //     }
+        //     msg = "pick-vanishing screen space distance: " + std::to_string(dist) +
+        //             ", minScreenSpaceDist: " + std::to_string(minScrnSpaceDist) +
+        //             ", puckScreenCoord: " + std::to_string(puckScreenCoord.x) + " " +
+        //             std::to_string(puckScreenCoord.y) +
+        //             ", vanishingPtScreenCoord: " + std::to_string(vanishingPtScreenCoord.x) + " " +
+        //           std::to_string(vanishingPtScreenCoord.y);
+        //     mbgl::Log::Info(Event::Route, msg);
+        // }
 
-        auto puckLatLngNew = transformState.screenCoordinateToLatLng(puckScreenCoord);
-        auto vanishingPtLatLng = transformState.screenCoordinateToLatLng(vanishingPtScreenCoord);
-
-        dx = puckLatLngNew.longitude() - vanishingPtLatLng.longitude();
-        dy = puckLatLngNew.latitude() - vanishingPtLatLng.latitude();
-        dist = dx * dx + dy * dy;
-        if (dist > 0) {
-            msg = "pick-vanishing latlon space distance: " + std::to_string(dist) +
-                  ", puckLatLngNew: " + std::to_string(puckLatLngNew.longitude()) + " " +
-                  std::to_string(puckLatLngNew.latitude()) +
-                  ", vanishingPtLatLng: " + std::to_string(vanishingPtLatLng.longitude()) + " " +
-                  std::to_string(vanishingPtLatLng.latitude());
-            mbgl::Log::Info(Event::Route, msg);
-        }
+        // auto puckLatLngNew = transformState.screenCoordinateToLatLng(puckScreenCoord);
+        // auto vanishingPtLatLng = transformState.screenCoordinateToLatLng(vanishingPtScreenCoord);
+        //
+        // dx = puckLatLngNew.longitude() - vanishingPtLatLng.longitude();
+        // dy = puckLatLngNew.latitude() - vanishingPtLatLng.latitude();
+        // dist = dx * dx + dy * dy;
+        // if (dist > 0) {
+        //     msg = "pick-vanishing latlon space distance: " + std::to_string(dist) +
+        //           ", puckLatLngNew: " + std::to_string(puckLatLngNew.longitude()) + " " +
+        //           std::to_string(puckLatLngNew.latitude()) +
+        //           ", vanishingPtLatLng: " + std::to_string(vanishingPtLatLng.longitude()) + " " +
+        //           std::to_string(vanishingPtLatLng.latitude());
+        //     mbgl::Log::Info(Event::Route, msg);
+        // }
     }
 
     // Set up a layer group
@@ -457,6 +463,14 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
 
     const RenderPass renderPass = static_cast<RenderPass>(evaluatedProperties->renderPasses &
                                                           ~mbgl::underlying_type(RenderPass::Opaque));
+
+    // if(isRouteLayer()) {
+    //     for (const RenderTile& tile : *renderTiles) {
+    //         const LayerRenderData* renderData = getRenderDataForPass(tile, renderPass);
+    //         auto& bucket = static_cast<LineBucket&>(*renderData->bucket);
+    //         bucket.setRouteBucket(true);
+    //     }
+    // }
 
     stats.drawablesRemoved += tileLayerGroup->removeDrawablesIf([&](gfx::Drawable& drawable) {
         // If the render pass has changed or the tile has  dropped out of the cover set, remove it.
@@ -501,6 +515,14 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                                        /*vertexOffset=*/0,
                                        sizeof(LineLayoutVertex),
                                        gfx::AttributeDataType::UByte4);
+            }
+
+            if (const auto& attr = vertexAttrs->set(idLineLineSofarAttribute)) {
+                attr->setSharedRawData(bucket.sharedVertices,
+                                       offsetof(LineLayoutVertex, a3),
+                                       /*vertexOffset=*/0,
+                                       sizeof(LineLayoutVertex),
+                                       gfx::AttributeDataType::Float);
             }
 
             builder.setVertexAttributes(std::move(vertexAttrs));

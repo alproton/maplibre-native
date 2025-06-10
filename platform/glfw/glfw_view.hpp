@@ -129,6 +129,7 @@ private:
     void captureSnapshot();
     void setRoutePickMode();
     void scrubNavStops(bool forward);
+    void incrementStep(bool increment);
 
     void cycleDebugOptions();
     void clearAnnotations();
@@ -213,6 +214,7 @@ private:
     bool enableDebugViz_ = true;
     double testPercent_ = 0.0; // Used for testing route progress
     double feet_percent_step_ = 0.0;
+    double feet_percent_step_multiplier = 1.0;
     double meter_percent_step_ = 0.0;
 
     // Frame timer
