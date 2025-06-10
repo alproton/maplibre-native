@@ -96,7 +96,7 @@ NativeMapView::NativeMapView(jni::JNIEnv& _env,
     }
 
     // Create a renderer frontend
-    rendererFrontend = AndroidRendererFrontend::create(mapRenderer);
+    rendererFrontend = AndroidRendererFrontend::create(_env, jMapRenderer);
     routeMgr = std::make_unique<mbgl::route::RouteManager>();
 
     // Create Map options

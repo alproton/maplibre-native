@@ -17,6 +17,8 @@
 
 #include "map_renderer.hpp"
 
+#include <jni/jni.hpp>
+
 namespace mbgl {
 
 class RenderedQueryOptions;
@@ -36,10 +38,9 @@ class AndroidRendererFrontend : public RendererFrontend, public std::enable_shar
     };
 
 public:
-    AndroidRendererFrontend(Private, MapRenderer&);
-
-    static std::shared_ptr<AndroidRendererFrontend> create(MapRenderer&);
-    void init();
+    AndroidRendererFrontend(Private, jni::JNIEnv&, const jni::Object<MapRenderer>&);
+    static std::shared_ptr<AndroidRendererFrontend> create(jni::JNIEnv&, const jni::Object<MapRenderer>&);
+    void init(jni::JNIEnv&, const jni::Object<MapRenderer>&);
 
     ~AndroidRendererFrontend() override;
 
