@@ -760,6 +760,14 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 case GLFW_KEY_C:
                     view->scrubNavStops(true);
                     break;
+
+                case GLFW_KEY_V:
+                    view->incrementStep(true);
+                    break;
+
+                case GLFW_KEY_B:
+                    view->incrementStep(false);
+                    break;
             }
         } else {
             switch (key) {
@@ -1080,8 +1088,9 @@ void GLFWView::setPuckLocation(double lat, double lon, double bearing) {
     backend->setCustomPuckState(lat, lon, bearing);
     mbgl::Point<double> progressPt = {lon, lat};
     if (vanishingRouteID_.isValid()) {
-        double percent = rmptr_->routeSetProgressPoint(vanishingRouteID_, progressPt, routeProgressPrecision_);
-        std::cout << "set puck location - percent: " << std::to_string(percent) << std::endl;
+        [[maybe_unused]] double percent = rmptr_->routeSetProgressPoint(
+            vanishingRouteID_, progressPt, routeProgressPrecision_);
+        // std::cout << "set puck location - percent: " << percent << std::endl;
     }
 }
 
@@ -1481,17 +1490,35 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
         const mbgl::Point<double> &pt = rmptr_->getPoint(
             vanishingRouteID_, 0.0, mbgl::route::Precision::Fine, &bearing);
         setPuckLocation(pt.y, pt.x, bearing);
+
+        double totalRouteDistMeters = rmptr_->getTotalDistance(vanishingRouteID_);
+        double totalRouteDistFeet = totalRouteDistMeters * 3.28084; // Convert meters to feet
+        feet_percent_step_ = 1.0 / totalRouteDistFeet;
+        meter_percent_step_ = 1.0 / totalRouteDistMeters;
+        std::cout << "feet_step_percent: " << std::to_string(feet_percent_step_) << std::endl;
+        std::cout << "meter_step_percent: " << std::to_string(meter_percent_step_) << std::endl;
     }
+}
+
+void GLFWView::incrementStep(bool increment) {
+    feet_percent_step_multiplier += increment ? 1 : -1;
 }
 
 void GLFWView::scrubNavStops(bool forward) {
     if (loadedCapture_) {
         mbgl::Point<double> navstop;
         double bearing = 0.0;
-        scrubCounter_ += forward ? 1 : -1;
-        double scrubValue = static_cast<double>(scrubCounter_) / 100.0;
-        scrubValue = std::clamp(scrubValue, 0.0, 1.0);
-        rmptr_->captureScrubRoute(scrubValue, &navstop, &bearing);
+        // scrubCounter_ += forward ? 1 : -1;
+        // double scrubValue = static_cast<double>(scrubCounter_) / 100.0;
+        // scrubValue = std::clamp(scrubValue, 0.0, 1.0);
+        // rmptr_->captureScrubRoute(scrubValue, &navstop, &bearing);
+        testPercent_ += forward ? (feet_percent_step_ * feet_percent_step_multiplier)
+                                : (-feet_percent_step_ * feet_percent_step_multiplier);
+        testPercent_ = std::clamp(testPercent_, 0.0, 1.0);
+        // testPercent_ = 0.85;
+        // std::cout << "testPercent_: " << std::to_string(testPercent_) << std::endl;
+
+        rmptr_->captureScrubRoute(testPercent_, &navstop, &bearing);
         setPuckLocation(navstop.y, navstop.x, bearing);
 
         invalidate();

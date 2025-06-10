@@ -572,6 +572,10 @@ void Route::routeSetProgress(const double t, bool capture) {
         capturedNavPercent_.push_back(t);
     }
     progress_ = t;
+    vanishingPoint_ = getPoint(t, Precision::Fine);
+    if (capture) {
+        capturedNavStops_.push_back(vanishingPoint_);
+    }
 }
 
 bool Route::hasNavStopsPercent() const {
