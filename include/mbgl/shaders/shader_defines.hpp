@@ -432,6 +432,7 @@ enum {
 enum {
     idLinePosNormalVertexAttribute,
     idLineDataVertexAttribute,
+    idLineLineSofarAttribute,
 
     // Data driven
     idLineColorVertexAttribute,
