@@ -365,7 +365,8 @@ inline void setSegments(std::unique_ptr<gfx::DrawableBuilder>& builder, const Li
 }
 
 } // namespace
-
+double maxScrnSpaceDist = 0.0;
+double minScrnSpaceDist = std::numeric_limits<double>::max();
 void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                              gfx::Context& context,
                              const TransformState&,
@@ -443,6 +444,14 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                                        /*vertexOffset=*/0,
                                        sizeof(LineLayoutVertex),
                                        gfx::AttributeDataType::UByte4);
+            }
+
+            if (const auto& attr = vertexAttrs->set(idLineLineSofarAttribute)) {
+                attr->setSharedRawData(bucket.sharedVertices,
+                                       offsetof(LineLayoutVertex, a3),
+                                       /*vertexOffset=*/0,
+                                       sizeof(LineLayoutVertex),
+                                       gfx::AttributeDataType::Float);
             }
 
             builder.setVertexAttributes(std::move(vertexAttrs));

@@ -179,6 +179,9 @@ public:
                       const bool /*showCollisionBoxes*/,
                       const CanonicalTileID& canonical) override {
         auto bucket = std::make_shared<BucketType>(layout, layerPropertiesMap, zoom, overscaling);
+        if (bucketLeaderID.find("route_layer") != std::string::npos) {
+            bucket->setRouteBucket(true);
+        }
         for (auto& patternFeature : features) {
             const auto i = patternFeature.i;
             std::unique_ptr<GeometryTileFeature> feature = std::move(patternFeature.feature);

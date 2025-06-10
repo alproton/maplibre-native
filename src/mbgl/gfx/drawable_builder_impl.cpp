@@ -17,7 +17,8 @@ using namespace shaders;
 // MARK: - Polylines
 
 DrawableBuilder::Impl::LineLayoutVertex DrawableBuilder::Impl::layoutVertex(
-    Point<int16_t> p, Point<double> e, bool round, bool up, int8_t dir, int32_t linesofar /*= 0*/) {
+    Point<int16_t> p, Point<double> e, bool round, bool up, int8_t dir, float linesofar /*= 0*/) {
+    int32_t linesofarI = static_cast<int32_t>(linesofar);
     /*
      * Scale the extrusion vector so that the normal length is this value.
      * Contains the "texture" normals (-1..1). This is distinct from the extrude
@@ -44,8 +45,9 @@ DrawableBuilder::Impl::LineLayoutVertex DrawableBuilder::Impl::layoutVertex(
                 // merge them. The z component's first bit, as well as the sign
                 // bit is reserved for the direction, so we need to shift the
                 // linesofar.
-                static_cast<uint8_t>(((dir == 0 ? 0 : (dir < 0 ? -1 : 1)) + 1) | ((linesofar & 0x3F) << 2)),
-                static_cast<uint8_t>(linesofar >> 6)}}};
+                static_cast<uint8_t>(((dir == 0 ? 0 : (dir < 0 ? -1 : 1)) + 1) | ((linesofarI & 0x3F) << 2)),
+                static_cast<uint8_t>(linesofarI >> 6)}},
+        .a3 = linesofar};
 }
 
 void DrawableBuilder::Impl::addPolyline(gfx::DrawableBuilder& builder,
