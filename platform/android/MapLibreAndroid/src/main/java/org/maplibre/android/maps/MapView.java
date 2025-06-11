@@ -563,7 +563,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   }
 
   public RouteID getVanishingRouteID() {
-    return nativeMapView.getVanishingRoute();
+    if(nativeMapView != null) {
+      return nativeMapView.getVanishingRoute();
+    }
+    return new RouteID(-1);
   }
 
   /**
