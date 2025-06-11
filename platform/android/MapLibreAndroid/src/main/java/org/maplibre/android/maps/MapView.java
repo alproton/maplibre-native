@@ -458,7 +458,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return a unique id for the route
    */
   public RouteID createRoute(LineString routeGeom, RouteOptions routeOptions) {
-    return nativeMapView.createRoute(routeGeom, routeOptions);
+    if(nativeMapView != null) {
+      return nativeMapView.createRoute(routeGeom, routeOptions);
+    }
+    return new RouteID(-1);
   }
 
   /***
@@ -469,7 +472,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return the active layer name for the specified routeID
    */
   String getRouteActiveLayerName(RouteID routeID) {
-    return nativeMapView.getRouteActiveLayerName(routeID);
+    if(nativeMapView != null) {
+      return nativeMapView.getRouteActiveLayerName(routeID);
+    }
+
+    return "";
   }
 
   /***
@@ -480,7 +487,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return the base/casing layer name for the specified routeID
    */
   String getRouteBaseLayerName(RouteID routeID) {
-    return nativeMapView.getRouteBaseLayerName(routeID);
+    if(nativeMapView != null) {
+      return nativeMapView.getRouteBaseLayerName(routeID);
+    }
+
+    return "";
   }
 
 
@@ -492,7 +503,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if disposal was successful, false otherwise
    */
   public boolean disposeRoute(RouteID routeID) {
-    return nativeMapView.disposeRoute(routeID);
+    if(nativeMapView != null) {
+      return nativeMapView.disposeRoute(routeID);
+    }
+
+    return false;
   }
 
   /***
@@ -504,7 +519,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if setting the progress was a success
    */
   public boolean setRouteProgressPercent(RouteID routeID, double progress) {
-    return nativeMapView.setRouteProgress(routeID, progress);
+    if(nativeMapView != null) {
+      return nativeMapView.setRouteProgress(routeID, progress);
+    }
+
+    return false;
   }
 
   /***
@@ -525,7 +544,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if successful, false otherwise. If the route does not exist, false is returned.
    */
   public double setRouteProgressPoint(RouteID routeID, Point point, boolean coarsePrecision) {
-    return nativeMapView.setRouteProgressPoint(routeID, point, coarsePrecision);
+    if(nativeMapView != null) {
+      return nativeMapView.setRouteProgressPoint(routeID, point, coarsePrecision);
+    }
+
+    return -1.0;
   }
 
   /**
@@ -534,7 +557,9 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @param routeID the specified route ID for the corresponding route to vanish.
    */
   public void setVanishingRoute(RouteID routeID) {
-    nativeMapView.setVanishingRoute(routeID);
+    if(nativeMapView != null) {
+      nativeMapView.setVanishingRoute(routeID);
+    }
   }
 
   public RouteID getVanishingRouteID() {
@@ -565,7 +590,9 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    *                this operation is a no-op.
    */
   public void clearRouteSegments(RouteID routeID) {
-    nativeMapView.clearRouteSegments(routeID);
+    if(nativeMapView != null) {
+      nativeMapView.clearRouteSegments(routeID);
+    }
   }
 
   /***
@@ -582,7 +609,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    */
   @Deprecated
   public boolean createRouteSegment(RouteID routeID, RouteSegmentOptions rsopts) {
-    return nativeMapView.createRouteSegment(routeID, rsopts);
+    if(nativeMapView != null) {
+      return nativeMapView.createRouteSegment(routeID, rsopts);
+    }
+
+    return false;
   }
 
   /***
@@ -597,7 +628,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * does not exist, false is returned.
    */
   public boolean createRouteSegmentFractional(RouteID routeID, RouteSegmentOptions rsopts) {
-    return nativeMapView.createRouteSegmentFractional(routeID, rsopts);
+    if(nativeMapView != null) {
+      return nativeMapView.createRouteSegmentFractional(routeID, rsopts);
+    }
+
+    return false;
   }
 
   /***
@@ -611,7 +646,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if the routes were finalized successfully, false otherwise
    */
   public boolean finalizeRoutes() {
-    return nativeMapView.finalizeRoutes();
+    if(nativeMapView != null) {
+      return nativeMapView.finalizeRoutes();
+    }
+
+    return false;
   }
 
   /***
@@ -623,7 +662,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return a formatted string containing the statistics
    */
   public String getRenderingStats(boolean oneline) {
-    return nativeMapView.getRenderingStats(oneline);
+    if(nativeMapView != null) {
+      return nativeMapView.getRenderingStats(oneline);
+    }
+
+    return "";
   }
 
   /***
@@ -633,7 +676,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return the json string that contains the snapshot capture of all the routes in map.
    */
   public String getSnapshotCapture() {
-    return nativeMapView.getSnapshotCapture();
+    if(nativeMapView != null) {
+      return nativeMapView.getSnapshotCapture();
+    }
+
+    return "";
   }
 
   /***
@@ -643,7 +690,9 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @param onOff if true, the route navigation stops will be captured in the snapshot capture for routes.
    */
   public void enableCaptureRouteNavStops(boolean onOff) {
-    nativeMapView.captureRouteNavStops(onOff);
+    if(nativeMapView != null) {
+      nativeMapView.captureRouteNavStops(onOff);
+    }
   }
 
   /***
@@ -652,7 +701,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if the map libre native is capturing route navigation stops, false otherwise.
    */
   public boolean isRouteNavStopsCaptured() {
-    return nativeMapView.isRouteNavStopsCaptured();
+    if(nativeMapView != null) {
+      return nativeMapView.isRouteNavStopsCaptured();
+    }
+
+    return false;
   }
 
   /***
@@ -662,7 +715,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if successful, false otherwise.
    */
   public boolean loadRouteCapture(String routeCapture) {
-    return nativeMapView.loadRouteCapture(routeCapture);
+    if(nativeMapView != null) {
+      return nativeMapView.loadRouteCapture(routeCapture);
+    }
+
+    return false;
   }
 
   /***
@@ -673,7 +730,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return true if successful, false otherwise.
    */
   public boolean scrubCapturedRoute(double scrubValue) {
-    return nativeMapView.scrubCapturedRoute(scrubValue);
+    if(nativeMapView != null) {
+      return nativeMapView.scrubCapturedRoute(scrubValue);
+    }
+
+    return false;
   }
 
   /***
@@ -685,7 +746,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    *         valid by calling isValid() on it.
    */
   public RouteID queryRoute(double x, double y, int radius) {
-    return nativeMapView.queryRoute(x, y, radius);
+    if(nativeMapView != null) {
+      return nativeMapView.queryRoute(x, y, radius);
+    }
+
+    return new RouteID(-1);
   }
 
   /***
@@ -740,12 +805,14 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
                                  float iconScale,
                                  boolean cameraTracking) {
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
-    RouteID vanishingRouteID = getVanishingRouteID();
-    if(isAutoRouteVanishing && vanishingRouteID.isValid()) {
-      double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse);
-      if(percent >= 0.0 && percent <= 1.0) {
-        nativeMapView.finalizeRoutes();
-        latestRouteProgressPercent = percent;
+    if(isAutoRouteVanishing) {
+      RouteID vanishingRouteID = getVanishingRouteID();
+      if(vanishingRouteID.isValid() && nativeMapView != null) {
+        double percent = nativeMapView.setRouteProgressPoint(vanishingRouteID, Point.fromLngLat(lon, lat), isPointBasedRouteQueryCoarse);
+        if(percent >= 0.0 && percent <= 1.0) {
+          nativeMapView.finalizeRoutes();
+          latestRouteProgressPercent = percent;
+        }
       }
     }
 
