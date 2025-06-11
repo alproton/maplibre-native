@@ -84,7 +84,10 @@ public:
     std::string captureSnapshot() const;
     bool enableDebugViz(const RouteID& routeID, bool onOff);
     bool loadCapture(const std::string& capture);
-    bool captureScrubRoute(double scrubValue, Point<double>* optPointOut = nullptr, double* optBearingOut = nullptr);
+    bool captureScrubRoute(double scrubValue,
+                           bool isAutoVanishingEnabled = false,
+                           Point<double>* optPointOut = nullptr,
+                           double* optBearingOut = nullptr);
     int getTopMost(const std::vector<RouteID>& routeList) const;
     void captureNavStops(bool onOff);
     bool isCaptureNavStopsEnabled() const;

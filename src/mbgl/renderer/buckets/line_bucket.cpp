@@ -1,3 +1,5 @@
+#include "mbgl/util/tile_coordinate.hpp"
+
 #include <mbgl/renderer/buckets/line_bucket.hpp>
 #include <mbgl/renderer/bucket_parameters.hpp>
 #include <mbgl/style/layers/line_layer_impl.hpp>
@@ -13,11 +15,17 @@ namespace mbgl {
 
 using namespace style;
 
+#define DEBUG_SINGLE_THREAD
+#ifdef DEBUG_SINGLE_THREAD
+std::mutex g_debug_mutex;
+#endif
+
 LineBucket::LineBucket(LineBucket::PossiblyEvaluatedLayoutProperties layout_,
                        const std::map<std::string, Immutable<LayerProperties>>& layerPaintProperties,
                        const float zoom_,
                        const uint32_t overscaling_)
     : layout(std::move(layout_)),
+      canonicalTileID(0, 0, 0),
       zoom(zoom_),
       overscaling(overscaling_) {
     for (const auto& pair : layerPaintProperties) {
@@ -37,6 +45,11 @@ void LineBucket::addFeature(const GeometryTileFeature& feature,
                             const PatternLayerMap& patternDependencies,
                             std::size_t index,
                             const CanonicalTileID& canonical) {
+#ifdef DEBUG_SINGLE_THREAD
+    std::lock_guard<std::mutex> lock(g_debug_mutex);
+#endif
+
+    canonicalTileID = canonical;
     for (auto& line : geometryCollection) {
         addGeometry(line, feature, canonical);
     }
@@ -52,17 +65,86 @@ void LineBucket::addFeature(const GeometryTileFeature& feature,
     }
 }
 
-#ifdef DEBUG_SINGLE_THREAD
-std::mutex g_debug_mutex;
-#endif
+double LineBucket::queryIntersection(const GeometryCoordinate& queryPoint) {
+    const double EPSILON = 1e-8; // Small value to avoid division by zero
+    const auto& getClosestInterval = [&](uint32_t startIdx, uint32_t endIdx) -> std::pair<uint32_t, double> {
+        uint32_t bestIntervalIndex = ~0;
+        double bestIntervalFraction = -1.0;
+        double minDistanceSq = std::numeric_limits<double>::max();
+
+        for (size_t i = startIdx; i <= endIdx; ++i) {
+            const GeometryCoordinate& p1 = routeDataList_[i].lineCoordinate;     // Start point of the segment
+            const GeometryCoordinate& p2 = routeDataList_[i + 1].lineCoordinate; // End point of the segment
+
+            // --- Project queryPoint onto the 2D line segment (p1, p2) ---
+            // Treat Lat/Lon as simple 2D coordinates for projection (approximation)
+            double segmentDX = p2.x - p1.x; // longitude
+            double segmentDY = p2.y - p1.y; // lattitude
+
+            double segmentLenSq = segmentDX * segmentDX + segmentDY * segmentDY;
+
+            double t = 0.0; // Parameter along the line segment (0=p1, 1=p2)
+            GeometryCoordinate closestPointOnSegment = p1;
+
+            if (segmentLenSq > EPSILON) {
+                // Project (queryPoint - p1) onto (p2 - p1)
+                double queryPointDX = queryPoint.x - p1.x;
+                double queryPointDY = queryPoint.y - p1.y;
+                t = (queryPointDX * segmentDX + queryPointDY * segmentDY) / segmentLenSq;
+                t = std::clamp(t, 0.0, 1.0); // Clamp to the segment bounds [0, 1]
+
+                // Calculate the point on the segment corresponding to clamped t
+                closestPointOnSegment.y = p1.y + t * segmentDY;
+                closestPointOnSegment.x = p1.x + t * segmentDX;
+            } else {
+                // Segment has zero length, closest point is p1 (or p2, they are the same)
+                // t remains 0.0;
+                closestPointOnSegment = p1;
+            }
+
+            // --- Calculate distance from queryPoint to this closest point ---
+            // IMPORTANT: Use Haversine distance for the actual distance check,
+            // even though projection used linear approximation.
+            double dist = mbgl::util::haversineDist(queryPoint, closestPointOnSegment);
+            double distSq = dist * dist; // Compare squared distances to avoid sqrt
+
+            if (distSq < minDistanceSq) {
+                minDistanceSq = distSq;
+                bestIntervalIndex = i;
+                bestIntervalFraction = t; // Use the clamped fraction
+            }
+        }
+
+        return {bestIntervalIndex, bestIntervalFraction};
+    };
+
+    // closestInterval.first is the interval index, closestInterval.second is the fraction along the interval
+    std::pair<uint32_t, double> closestInterval = getClosestInterval(0, routeDataList_.size() - 1);
+
+    // --- Calculate final percentage ---
+    uint32_t bestIntervalIndex = closestInterval.first;
+    double bestIntervalFraction = closestInterval.second;
+    double distanceAlongRoute = cumulativeIntervalDistances_[bestIntervalIndex] +
+                                (bestIntervalFraction * intervalLengths_[bestIntervalIndex]);
+
+    return distanceAlongRoute / totalLength_;
+}
+
+double LineBucket::getPointIntersect(const Point<double>& pt) {
+    LatLng latlng = LatLng(pt.y, pt.x);
+    TileCoordinate tc = TileCoordinate::fromLatLng(zoom, latlng);
+    UnwrappedTileID tile_id(0, canonicalTileID);
+    const GeometryCoordinate& queryTilePt = tc.toGeometryCoordinate(tile_id, tc.p);
+
+    // iterate through the cached line coordinates and find the closest point
+    double mindist = queryIntersection(queryTilePt);
+
+    return mindist;
+}
 
 void LineBucket::addGeometry(const GeometryCoordinates& coordinates,
                              const GeometryTileFeature& feature,
                              const CanonicalTileID& canonical) {
-#ifdef DEBUG_SINGLE_THREAD
-    std::lock_guard<std::mutex> lock(g_debug_mutex);
-#endif
-
     gfx::PolylineGeneratorOptions options;
 
     options.type = feature.getType();
@@ -107,11 +189,35 @@ void LineBucket::addGeometry(const GeometryCoordinates& coordinates,
     if (clip_start_it != props.end() && clip_end_it != props.end()) {
         double total_length = 0.0;
         for (std::size_t i = first; i < len - 1; ++i) {
-            total_length += util::dist<double>(coordinates[i], coordinates[i + 1]);
+            double intervalLength = util::dist<double>(coordinates[i], coordinates[i + 1]);
+            intervalLengths_.emplace_back(intervalLength);
+            total_length += intervalLength;
         }
+        totalLength_ = total_length;
 
-        options.clipDistances = gfx::PolylineGeneratorDistances{
-            *numericValue<double>(clip_start_it->second), *numericValue<double>(clip_end_it->second), total_length};
+        double clip_start = *numericValue<double>(clip_start_it->second);
+        double clip_end = *numericValue<double>(clip_end_it->second);
+        options.clipDistances = gfx::PolylineGeneratorDistances{clip_start, clip_end, total_length};
+
+        double total_length_so_far = 0.0;
+        RouteData rd;
+        rd.lineCoordinate = *coordinates.begin();
+        rd.distanceSoFar = clip_start;
+        routeDataList_.emplace_back(rd);
+        cumulativeIntervalDistances_.push_back(0.0);
+        for (std::size_t i = first + 1; i < len - 1; i++) {
+            GeometryCoordinate coord0 = coordinates[i - 1];
+            GeometryCoordinate coord1 = coordinates[i];
+            total_length_so_far += util::dist<double>(coord0, coord1);
+            cumulativeIntervalDistances_.push_back(total_length_so_far);
+
+            double relativeDist = total_length_so_far / total_length;
+            double interpolatedDist = relativeDist * (clip_end - clip_start) + clip_start;
+
+            rd.lineCoordinate = coord1;
+            rd.distanceSoFar = interpolatedDist;
+            routeDataList_.emplace_back(rd);
+        }
     }
 
     options.isRoutePath = isRouteBucket;

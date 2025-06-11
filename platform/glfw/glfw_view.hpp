@@ -208,7 +208,7 @@ private:
     bool loadedCapture_ = false;
     double routeProgress_ = 0.0;
     bool routePickMode_ = false;
-    bool enableAutoVanishing = false; // Simulates route progress in app
+    bool enableAutoVanishing = true; // Simulates route progress in app
     mbgl::route::Precision routePrecision_ = mbgl::route::Precision::Fine;
     int scrubCounter_ = 0;
     bool enableDebugViz_ = true;

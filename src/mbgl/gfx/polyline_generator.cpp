@@ -633,7 +633,7 @@ void PolylineGenerator<PLV, PS>::addCurrentVertex(const GeometryCoordinate& curr
                                                   const PolylineGeneratorOptions& popts) {
     Point<double> extrude = normal;
     const double scaledDistance = lineDistances ? lineDistances->scaleToMaxLineDistance(distance) : distance;
-    double unscaledDistance = lineDistances ? lineDistances->unscaledDistance(distance) : (distance / 32767.0);
+    double unscaledDistance = lineDistances ? lineDistances->unscaledDistance(distance) : -1.0;
     float unscaledDistanceF = static_cast<float>(unscaledDistance);
 
     if (endLeft) extrude = extrude - (util::perp(normal) * endLeft);
@@ -645,15 +645,28 @@ void PolylineGenerator<PLV, PS>::addCurrentVertex(const GeometryCoordinate& curr
     double inVertexShader;
     std::string routeMode = popts.isRoutePath ? "route mode ON" : "route mode OFF";
     if (popts.isRoutePath) {
-        relativeDistance = distanceInMeters / popts.totalInMeters;
-        total = popts.totalInMeters;
-        vertexAttribLineSoFar = lineDistances->routeDistance(distanceInMeters, popts.totalInMeters);
-        inVertexShader = vertexAttribLineSoFar;
-    } else {
-        relativeDistance = lineDistances ? distance / lineDistances->total : -1.0;
-        total = lineDistances ? lineDistances->total : 0.0;
-        vertexAttribLineSoFar = scaledDistance * LINE_DISTANCE_SCALE;
-        inVertexShader = vertexAttribLineSoFar * 2.0 / MAX_LINE_DISTANCE;
+        switch (popts.routeAlgo) {
+            case RouteDistanceAlgorithm::Haversine: {
+                relativeDistance = distanceInMeters / popts.totalInMeters;
+                total = popts.totalInMeters;
+                vertexAttribLineSoFar = lineDistances->routeDistance(distanceInMeters, popts.totalInMeters);
+                inVertexShader = vertexAttribLineSoFar;
+            } break;
+
+            case RouteDistanceAlgorithm::unCompressed: {
+                relativeDistance = unscaledDistanceF;
+                total = lineDistances ? lineDistances->total : -1.0;
+                vertexAttribLineSoFar = unscaledDistanceF;
+                inVertexShader = vertexAttribLineSoFar;
+            } break;
+
+            case RouteDistanceAlgorithm::Compressed: {
+                relativeDistance = lineDistances ? distance / lineDistances->total : -1.0;
+                total = lineDistances ? lineDistances->total : -1.0;
+                vertexAttribLineSoFar = scaledDistance * LINE_DISTANCE_SCALE;
+                inVertexShader = vertexAttribLineSoFar * 2.0 / MAX_LINE_DISTANCE;
+            } break;
+        }
     }
     if (popts.isRoutePath) {
         std::cout << "add vertex: scaledDistance: " << scaledDistance << ", unscaledDistance: " << unscaledDistanceF

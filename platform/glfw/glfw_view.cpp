@@ -1519,7 +1519,7 @@ void GLFWView::scrubNavStops(bool forward) {
         // testPercent_ = 0.85;
         // std::cout << "testPercent_: " << std::to_string(testPercent_) << std::endl;
 
-        rmptr_->captureScrubRoute(testPercent_, &navstop, &bearing);
+        rmptr_->captureScrubRoute(testPercent_, enableAutoVanishing, &navstop, &bearing);
         setPuckLocation(navstop.y, navstop.x, bearing);
 
         invalidate();

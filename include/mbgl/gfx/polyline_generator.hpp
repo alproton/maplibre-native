@@ -38,6 +38,12 @@ public:
     double total;
 };
 
+enum class RouteDistanceAlgorithm {
+    Haversine, // Use haversine distance for route distance calculation.
+    unCompressed,
+    Compressed // Use tile units for route distance calculation.
+};
+
 struct PolylineGeneratorOptions {
     FeatureType type{FeatureType::LineString};
     style::LineJoinType joinType{style::LineJoinType::Miter};
@@ -48,6 +54,7 @@ struct PolylineGeneratorOptions {
     uint32_t overscaling{1};
     std::optional<PolylineGeneratorDistances> clipDistances;
     bool isRoutePath = false;
+    RouteDistanceAlgorithm routeAlgo = RouteDistanceAlgorithm::unCompressed;
     double totalInMeters;
     CanonicalTileID canonicalTileID = CanonicalTileID(0, 0, 0);
 

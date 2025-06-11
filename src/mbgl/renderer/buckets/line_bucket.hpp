@@ -39,6 +39,7 @@ public:
     void upload(gfx::UploadPass&) override;
 
     float getQueryRadius(const RenderLayer&) const override;
+    double getPointIntersect(const Point<double>& pt);
 
     void update(const FeatureStates&, const GeometryTileLayer&, const std::string&, const ImagePositions&) override;
 
@@ -51,7 +52,6 @@ public:
     using TriangleIndexVector = gfx::IndexVector<gfx::Triangles>;
     const std::shared_ptr<TriangleIndexVector> sharedTriangles = std::make_shared<TriangleIndexVector>();
     TriangleIndexVector& triangles = *sharedTriangles;
-
     SegmentVector<LineAttributes> segments;
 
 #if MLN_LEGACY_RENDERER
@@ -62,11 +62,24 @@ public:
     std::map<std::string, LineProgram::Binders> paintPropertyBinders;
 
 private:
+    struct RouteData {
+        GeometryCoordinate lineCoordinate;
+        float distanceSoFar = 0.0f;
+    };
     void addGeometry(const GeometryCoordinates&, const GeometryTileFeature&, const CanonicalTileID&);
+    double queryIntersection(const GeometryCoordinate& queryPt);
+
+    CanonicalTileID canonicalTileID;
 
     const float zoom;
     const uint32_t overscaling;
     bool isRouteBucket = false;
+    double totalLength_ = 0.0;
+    // GeometryCoordinates lineCoordinates;
+    // std::vector<float> lineCoordinatesDistanceSoFar;
+    std::vector<RouteData> routeDataList_;
+    std::vector<double> intervalLengths_;
+    std::vector<double> cumulativeIntervalDistances_;
 };
 
 } // namespace mbgl

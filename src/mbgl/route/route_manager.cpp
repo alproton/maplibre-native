@@ -703,7 +703,10 @@ bool RouteManager::loadCapture(const std::string& capture) {
     return true;
 }
 
-bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointOut, double* optBearingOut) {
+bool RouteManager::captureScrubRoute(double scrubValue,
+                                     bool isAutoVanishingEnabled,
+                                     Point<double>* optPointOut,
+                                     double* optBearingOut) {
     if (vanishingRouteID_.isValid() && routeMap_.find(vanishingRouteID_) != routeMap_.end()) {
         scrubValue = std::clamp(scrubValue, 0.0, 1.0);
         if (routeMap_[vanishingRouteID_].hasNavStopsPoints()) {
@@ -712,8 +715,11 @@ bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointO
             const mbgl::LineString<double>& navstops = routeMap_[vanishingRouteID_].getCapturedNavStops();
             const uint32_t sz = navstops.size();
             const auto& navStop = navstops[currRouteCaptureProgressDiscrete % sz];
-            double percentage = routeSetProgressPoint(vanishingRouteID_, navStop, Precision::Fine);
-            Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(percentage));
+            double percentage = 0.0;
+            if (!isAutoVanishingEnabled) {
+                percentage = routeSetProgressPoint(vanishingRouteID_, navStop, Precision::Fine);
+                Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(percentage));
+            }
             if (optPointOut) {
                 *optPointOut = navStop;
             }
@@ -733,8 +739,10 @@ bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointO
             const std::vector<double>& navstops = routeMap_[vanishingRouteID_].getCapturedNavPercent();
             const uint32_t sz = navstops.size();
             const auto& navStopPercent = navstops[currRouteCaptureProgressDiscrete % sz];
-            routeSetProgressPercent(vanishingRouteID_, navStopPercent);
-            Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(navStopPercent));
+            if (!isAutoVanishingEnabled) {
+                routeSetProgressPercent(vanishingRouteID_, navStopPercent);
+                Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(navStopPercent));
+            }
             double bearing = 0.0;
             if (optPointOut) {
                 const auto& navstop = getPoint(vanishingRouteID_, navStopPercent, Precision::Fine, &bearing);
@@ -747,7 +755,9 @@ bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointO
             finalize();
         } else {
             // we may not have any nav stops captured, so lets just use the route geometry
-            routeSetProgressPercent(vanishingRouteID_, scrubValue);
+            if (!isAutoVanishingEnabled) {
+                routeSetProgressPercent(vanishingRouteID_, scrubValue);
+            }
             double bearing = 0.0;
             if (optPointOut) {
                 const auto& navstop = getPoint(vanishingRouteID_, scrubValue, Precision::Fine, &bearing);
