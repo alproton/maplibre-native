@@ -1,0 +1,15 @@
+{
+    "variants": [
+        "default"
+    ],
+    "icons": [
+        {"default" : "platform/glfw/assets/puck.png"}
+    ],
+    "states": {
+        "default": [
+            {
+                "icon_1": "default"
+            }
+        ]
+    }
+}
