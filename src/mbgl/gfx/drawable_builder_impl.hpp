@@ -31,6 +31,7 @@ public:
     struct LineLayoutVertex {
         std::array<int16_t, 2> a1;
         std::array<uint8_t, 4> a2;
+        float a3;
     };
 
 public:
@@ -94,7 +95,7 @@ public:
 
 private:
     LineLayoutVertex layoutVertex(
-        Point<int16_t> p, Point<double> e, bool round, bool up, int8_t dir, int32_t linesofar = 0);
+        Point<int16_t> p, Point<double> e, bool round, bool up, int8_t dir, float linesofar = 0);
 
     Mode mode{Mode::Custom};
 };
