@@ -1,4 +1,5 @@
 
+#include "mbgl/style/layers/line_layer_impl.hpp"
 #include "mbgl/util/containers.hpp"
 #include "mbgl/util/math.hpp"
 
@@ -419,6 +420,17 @@ bool RouteManager::routeSet(const RouteID& routeID, const LineString<double>& ge
     return false;
 }
 
+bool RouteManager::enableDebugViz(const RouteID& routeID, bool onOff) {
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        auto& route = routeMap_[routeID];
+        route.enableDebugViz(onOff);
+        validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
+        return true;
+    }
+
+    return false;
+}
+
 void RouteManager::setUseRouteSegmentIndexFractions(bool useFractions) {
     useRouteSegmentIndexFractions_ = useFractions;
 }
@@ -691,7 +703,10 @@ bool RouteManager::loadCapture(const std::string& capture) {
     return true;
 }
 
-bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointOut, double* optBearingOut) {
+bool RouteManager::captureScrubRoute(double scrubValue,
+                                     bool isAutoVanishingEnabled,
+                                     Point<double>* optPointOut,
+                                     double* optBearingOut) {
     if (vanishingRouteID_.isValid() && routeMap_.find(vanishingRouteID_) != routeMap_.end()) {
         scrubValue = std::clamp(scrubValue, 0.0, 1.0);
         if (routeMap_[vanishingRouteID_].hasNavStopsPoints()) {
@@ -700,8 +715,11 @@ bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointO
             const mbgl::LineString<double>& navstops = routeMap_[vanishingRouteID_].getCapturedNavStops();
             const uint32_t sz = navstops.size();
             const auto& navStop = navstops[currRouteCaptureProgressDiscrete % sz];
-            double percentage = routeSetProgressPoint(vanishingRouteID_, navStop, Precision::Fine);
-            Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(percentage));
+            double percentage = 0.0;
+            if (!isAutoVanishingEnabled) {
+                percentage = routeSetProgressPoint(vanishingRouteID_, navStop, Precision::Fine);
+                Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(percentage));
+            }
             if (optPointOut) {
                 *optPointOut = navStop;
             }
@@ -721,8 +739,10 @@ bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointO
             const std::vector<double>& navstops = routeMap_[vanishingRouteID_].getCapturedNavPercent();
             const uint32_t sz = navstops.size();
             const auto& navStopPercent = navstops[currRouteCaptureProgressDiscrete % sz];
-            routeSetProgressPercent(vanishingRouteID_, navStopPercent);
-            Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(navStopPercent));
+            if (!isAutoVanishingEnabled) {
+                routeSetProgressPercent(vanishingRouteID_, navStopPercent);
+                Log::Info(Event::Route, "scrubbed calculated percentage :" + std::to_string(navStopPercent));
+            }
             double bearing = 0.0;
             if (optPointOut) {
                 const auto& navstop = getPoint(vanishingRouteID_, navStopPercent, Precision::Fine, &bearing);
@@ -735,7 +755,9 @@ bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointO
             finalize();
         } else {
             // we may not have any nav stops captured, so lets just use the route geometry
-            routeSetProgressPercent(vanishingRouteID_, scrubValue);
+            if (!isAutoVanishingEnabled) {
+                routeSetProgressPercent(vanishingRouteID_, scrubValue);
+            }
             double bearing = 0.0;
             if (optPointOut) {
                 const auto& navstop = getPoint(vanishingRouteID_, scrubValue, Precision::Fine, &bearing);
@@ -905,6 +927,15 @@ mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID,
     return {0.0, 0.0};
 }
 
+double RouteManager::getTotalDistance(const RouteID& routeID) {
+    assert(routeID.isValid() && "invalid route ID");
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        return routeMap_.at(routeID).getTotalDistance();
+    }
+
+    return -1.0;
+}
+
 std::string RouteManager::getActiveRouteLayerName(const RouteID& routeID) const {
     return ACTIVE_ROUTE_LAYER + std::to_string(routeID.id);
 }
@@ -951,6 +982,21 @@ const std::string RouteManager::getStats() {
     document.Accept(writer);
 
     return buffer.GetString();
+}
+
+double RouteManager::routeSetProgressInMeters(const RouteID& routeID, double progressInMeters) {
+    assert(routeID.isValid() && "invalid route ID");
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        double percentage = routeMap_.at(routeID).getProgressInMeters(progressInMeters);
+        if (percentage >= 0.0 && percentage <= 1.0) {
+            routeMap_[routeID].routeSetProgress(percentage);
+            validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
+        }
+        std::string msg = "routeSetProgressPassthrough(), percentage: " + std::to_string(percentage);
+        mbgl::Log::Info(mbgl::Event::Route, msg);
+        return percentage;
+    }
+    return -1.0;
 }
 
 void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
@@ -1012,6 +1058,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         layer->setLineColor(color);
         layer->setLineCap(LineCapType::Round);
         layer->setLineJoin(LineJoinType::Round);
+        layer->setIsRoute(true);
 
         layer->setGradientLineFilter(LineGradientFilterType::Nearest);
         layer->setGradientLineClipColor(clipColor);
@@ -1138,8 +1185,10 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         std::unordered_map<std::string, std::string> gradientDebugMap;
         if (updateGradients) {
             // create the gradient expression for active route.
-            std::map<double, mbgl::Color> innerGradientMap = route.getRouteSegmentColorStops(RouteType::Inner,
-                                                                                             routeOptions.innerColor);
+            std::map<double, mbgl::Color> innerGradientMap = route.isDebugVizEnabled()
+                                                                 ? route.getRouteColorStopsDebugViz()
+                                                                 : route.getRouteSegmentColorStops(
+                                                                       RouteType::Inner, routeOptions.innerColor);
 
             std::unique_ptr<expression::Expression> innerGradientExpression = createGradientExpression(
                 innerGradientMap);
@@ -1162,6 +1211,8 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             double progress = route.routeGetProgress();
             activeRouteLineLayer->setGradientLineClip(progress);
             casingRouteLineLayer->setGradientLineClip(progress);
+            activeRouteLineLayer->setVanishingPoint(route.getVanishingPoint());
+            casingRouteLineLayer->setVanishingPoint(route.getVanishingPoint());
         }
     }
 }

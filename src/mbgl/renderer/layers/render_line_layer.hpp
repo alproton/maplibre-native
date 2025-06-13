@@ -53,6 +53,8 @@ private:
     bool hasTransition() const override;
     bool hasCrossfade() const override;
     void prepare(const LayerPrepareParameters&) override;
+    bool isRouteLayer() const;
+    mbgl::Point<double> getVanishingPoint();
 
 #if MLN_LEGACY_RENDERER
     void upload(gfx::UploadPass&) override;
@@ -72,6 +74,7 @@ private:
 
     float getLineWidth(const GeometryTileFeature&, float, const FeatureState&) const;
     void updateColorRamp();
+    float currentVanishingPercent = 0.0;
 
     std::shared_ptr<PremultipliedImage> colorRamp;
     std::optional<gfx::Texture> colorRampTexture;

@@ -121,7 +121,8 @@ public:
     void setGradientLineClipColor(const PropertyValue<Color>&);
     const PropertyValue<Color>& getGradientLineClipColor() const;
 
-
+    void setIsRoute(bool isRoute);
+    void setVanishingPoint(const mbgl::Point<double>& vanishingPt);
     // Private implementation
 
     class Impl;

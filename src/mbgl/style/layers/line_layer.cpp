@@ -150,6 +150,19 @@ LineGradientFilterType LineLayer::getGradientLineFilter() const {
     return impl().gradientFilterType;
 }
 
+void LineLayer::setIsRoute(bool isRoute) {
+    auto impl_ = mutableImpl();
+    impl_->isRouteLayer = isRoute;
+    baseImpl = std::move(impl_);
+    observer->onLayerChanged(*this);
+}
+
+void LineLayer::setVanishingPoint(const mbgl::Point<double>& vanishingPt) {
+    auto impl_ = mutableImpl();
+    impl_->vanishingPoint = vanishingPt;
+    baseImpl = std::move(impl_);
+    observer->onLayerChanged(*this);
+}
 
 // Paint properties
 

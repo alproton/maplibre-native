@@ -279,6 +279,11 @@ std::unique_ptr<gfx::CustomPuck> Context::createCustomPuck() {
     return std::make_unique<gl::CustomPuck>(*this);
 }
 
+std::unique_ptr<gfx::CustomPuckState> Context::getCurrentCustomPuckState() {
+    mbgl::gfx::CustomPuckState cps = backend.customPuck->getState();
+    return std::make_unique<gfx::CustomPuckState>(cps);
+}
+
 std::unique_ptr<gfx::CustomDots> Context::createCustomDots() {
     return std::make_unique<gl::CustomDots>(*this);
 }

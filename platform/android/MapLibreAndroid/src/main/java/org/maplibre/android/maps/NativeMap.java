@@ -292,6 +292,8 @@ interface NativeMap {
 
   double setRouteProgressPoint(RouteID routeID, Point point, boolean coarsePrecision);
 
+  double setRouteProgressInMeters(RouteID routeID, double progressInMeters);
+
   void captureRouteNavStops(boolean onOff);;
 
   boolean scrubCapturedRoute(double scrubValue);
@@ -310,6 +312,8 @@ interface NativeMap {
   String getRenderingStats(boolean oneline);
 
   String getSnapshotCapture();
+
+  boolean enableRouteDebugViz(RouteID routeID, boolean enable);
 
   //
   // Custom Dots API

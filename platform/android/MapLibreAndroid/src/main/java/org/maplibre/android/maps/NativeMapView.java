@@ -1247,6 +1247,15 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public double setRouteProgressInMeters(RouteID routeID, double progressInMeters) {
+    if(routeID.isValid()) {
+      return nativeRouteSetProgressInMeters(routeID.getId(), progressInMeters);
+    }
+
+    return -1.0;
+  }
+
+  @Override
   public void captureRouteNavStops(boolean onOff) {
     nativeEnableCaptureRouteNavStops(onOff);
   }
@@ -1303,6 +1312,11 @@ final class NativeMapView implements NativeMap {
   @Override
   public String getSnapshotCapture() {
     return nativeRoutesCaptureSnapshot();
+  }
+
+  @Override
+  public boolean enableRouteDebugViz(RouteID routeID, boolean enable) {
+    return nativeRouteEnableDebugViz(routeID.getId(), enable);
   }
 
   @Override
@@ -1747,6 +1761,9 @@ final class NativeMapView implements NativeMap {
   private native double nativeRouteSetProgressPoint(int routeID, double x, double y, boolean coursePrecision);
 
   @Keep
+  private native double nativeRouteSetProgressInMeters(int routeID, double progressInMeters);
+
+  @Keep
   private native void nativeEnableCaptureRouteNavStops(boolean onOff);
 
   @Keep
@@ -1774,7 +1791,10 @@ final class NativeMapView implements NativeMap {
   private native int nativeRouteGetVanishing();
 
   @Keep
-  native void nativeRoutesClearStats();
+  private native void nativeRoutesClearStats();
+
+  @Keep
+  private native boolean nativeRouteEnableDebugViz(int routeID, boolean enable);
 
   //---------------------Custom Dots APIs---------------------
   @Keep

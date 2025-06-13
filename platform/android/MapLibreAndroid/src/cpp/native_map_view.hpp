@@ -275,6 +275,8 @@ public:
 
     jdouble routeProgressSetPoint(JNIEnv& env, jni::jint routeID, jni::jdouble x, jni::jdouble y, jni::jboolean coarse);
 
+    jdouble routeSetProgressInMeters(JNIEnv& env, jni::jint routeID, jni::jdouble progressInMeters);
+
     void routeSegmentsClear(JNIEnv& env, jint routeID);
 
     jni::Local<jni::String> routesGetStats(JNIEnv& env);
@@ -299,6 +301,7 @@ public:
 
     jboolean routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue);
 
+    jboolean routeEnableDebugViz(JNIEnv& env, jni::jint routeID, jni::jboolean enable);
     //------------------------------------------------
 
     jni::Local<jni::String> getRenderingStats(JNIEnv& env, jni::jboolean oneline);

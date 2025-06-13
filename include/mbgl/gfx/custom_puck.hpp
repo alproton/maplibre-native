@@ -27,12 +27,12 @@ public:
 
     PremultipliedImage getPuckBitmap();
 
+    virtual CustomPuckState getState() = 0;
+
 protected:
     using ScreenQuad = std::array<ScreenCoordinate, 4>;
 
     virtual void drawImpl(const ScreenQuad&) = 0;
-
-    virtual CustomPuckState getState() = 0;
 
 private:
     PremultipliedImage bitmap{};

@@ -534,6 +534,39 @@ std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeTy
     return compacted;
 }
 
+std::map<double, mbgl::Color> Route::getRouteColorStopsDebugViz() {
+    std::vector<mbgl::Color> colors = {mbgl::Color(0.2, 0.2, 0.2, 1.0), mbgl::Color(0.8, 0.8, 0.8, 1.0)};
+
+    std::vector<double> normalizedPositions;
+    for (size_t i = 0; i < geometry_.size(); i++) {
+        double normalized = getProgressPercent(geometry_[i], Precision::Fine, false);
+        normalizedPositions.push_back(normalized);
+    }
+
+    std::vector<SegmentRange> segments;
+    for (size_t i = 1; i < normalizedPositions.size(); i++) {
+        SegmentRange sr = {{normalizedPositions[i - 1], normalizedPositions[i]}, colors[i % 2]};
+        segments.push_back(sr);
+    }
+
+    std::map<double, mbgl::Color> colorStops;
+    mbgl::Color outlierColor = {0.8, 0.0, 0.0, 1.0}; // red color for outliers
+
+    for (size_t i = 0; i < segments.size(); i++) {
+        const auto& sr = segments[i];
+        colorStops[sr.range.first] = outlierColor;
+        colorStops[sr.range.first + HALF_EPSILON] = sr.color;
+        colorStops[sr.range.second - HALF_EPSILON] = sr.color;
+        colorStops[sr.range.second] = outlierColor;
+    }
+
+    return colorStops;
+}
+
+double Route::getProgressInMeters(double progressInMeters) const {
+    return progressInMeters / totalLength_;
+}
+
 std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& routeType,
                                                                const mbgl::Color& routeColor) {
     std::map<double, mbgl::Color> colorStops;
@@ -572,6 +605,10 @@ void Route::routeSetProgress(const double t, bool capture) {
         capturedNavPercent_.push_back(t);
     }
     progress_ = t;
+    vanishingPoint_ = getPoint(t, Precision::Fine);
+    if (capture) {
+        capturedNavStops_.push_back(vanishingPoint_);
+    }
 }
 
 bool Route::hasNavStopsPercent() const {
@@ -582,8 +619,20 @@ bool Route::hasNavStopsPoints() const {
     return !capturedNavStops_.empty();
 }
 
+void Route::enableDebugViz(bool onOff) {
+    enableDebugViz_ = onOff;
+}
+
+bool Route::isDebugVizEnabled() const {
+    return enableDebugViz_;
+}
+
 double Route::routeGetProgress() const {
     return progress_;
+}
+
+Point<double> Route::getVanishingPoint() const {
+    return vanishingPoint_;
 }
 
 const std::vector<Point<double>>& Route::getCapturedNavStops() const {

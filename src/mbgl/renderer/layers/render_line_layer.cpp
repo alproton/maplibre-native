@@ -58,7 +58,19 @@ RenderLineLayer::RenderLineLayer(Immutable<style::LineLayer::Impl> _impl)
     : RenderLayer(makeMutable<LineLayerProperties>(std::move(_impl))),
       unevaluated(impl_cast(baseImpl).paint.untransitioned()),
       colorRamp(std::make_shared<PremultipliedImage>(Size(256, 1))) {
+    // if (isRouteLayer()) {
+    //     colorRamp = std::make_shared<PremultipliedImage>(Size(2048, 1));
+    // }
+
     styleDependencies = unevaluated.getDependencies();
+}
+
+bool RenderLineLayer::isRouteLayer() const {
+    return impl_cast(baseImpl).isRouteLayer;
+}
+
+mbgl::Point<double> RenderLineLayer::getVanishingPoint() {
+    return impl_cast(baseImpl).vanishingPoint;
 }
 
 RenderLineLayer::~RenderLineLayer() = default;
@@ -365,10 +377,11 @@ inline void setSegments(std::unique_ptr<gfx::DrawableBuilder>& builder, const Li
 }
 
 } // namespace
-
+// double maxScrnSpaceDist = 0.0;
+// double minScrnSpaceDist = std::numeric_limits<double>::max();
 void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                              gfx::Context& context,
-                             const TransformState&,
+                             [[maybe_unused]] const TransformState& transformState,
                              [[maybe_unused]] const std::shared_ptr<UpdateParameters>& parameters,
                              const RenderTree&,
                              UniqueChangeRequestVec& changes) {
@@ -376,6 +389,57 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
         removeAllDrawables();
         return;
     }
+
+    // if (isRouteLayer()) {
+    // // get the custom puck center in screen coordinates
+    // const auto customPuckState = context.getCurrentCustomPuckState();
+    // double pucklat = customPuckState->lat;
+    // double pucklon = customPuckState->lon;
+    // LatLng puckLatLng(pucklat, pucklon);
+    // std::string msg;
+    // // msg = "customPuckState.lat: "+std::to_string(pucklat) + ", customPuckState.lon: " + std::to_string(pucklon);
+    // // mbgl::Log::Info(Event::Route, msg);
+    // const ScreenCoordinate& puckScreenCoord = transformState.latLngToScreenCoordinate(puckLatLng);
+    //
+    // // get the vanishing point in screen coordinates
+    // mbgl::Point<double> vanishingPt = getVanishingPoint();
+    // LatLng vanishingLatLng(vanishingPt.y, vanishingPt.x);
+    // // msg = "vanishingPoint.x: " + std::to_string(vanishingPt.x) + ", vanishingPoint.y: " +
+    // // std::to_string(vanishingPt.y); mbgl::Log::Info(Event::Route, msg);
+    // const ScreenCoordinate& vanishingPtScreenCoord = transformState.latLngToScreenCoordinate(vanishingLatLng);
+    //
+    // double dx = puckScreenCoord.x - vanishingPtScreenCoord.x;
+    // double dy = puckScreenCoord.y - vanishingPtScreenCoord.y;
+    //
+    // [[maybe_unused]] double dist = dx * dx + dy * dy;
+    // if (dist > 0) {
+    //     if(minScrnSpaceDist > dist) {
+    //         minScrnSpaceDist = dist;
+    //     }
+    //     msg = "pick-vanishing screen space distance: " + std::to_string(dist) +
+    //             ", minScreenSpaceDist: " + std::to_string(minScrnSpaceDist) +
+    //             ", puckScreenCoord: " + std::to_string(puckScreenCoord.x) + " " +
+    //             std::to_string(puckScreenCoord.y) +
+    //             ", vanishingPtScreenCoord: " + std::to_string(vanishingPtScreenCoord.x) + " " +
+    //           std::to_string(vanishingPtScreenCoord.y);
+    //     mbgl::Log::Info(Event::Route, msg);
+    // }
+
+    // auto puckLatLngNew = transformState.screenCoordinateToLatLng(puckScreenCoord);
+    // auto vanishingPtLatLng = transformState.screenCoordinateToLatLng(vanishingPtScreenCoord);
+    //
+    // dx = puckLatLngNew.longitude() - vanishingPtLatLng.longitude();
+    // dy = puckLatLngNew.latitude() - vanishingPtLatLng.latitude();
+    // dist = dx * dx + dy * dy;
+    // if (dist > 0) {
+    //     msg = "pick-vanishing latlon space distance: " + std::to_string(dist) +
+    //           ", puckLatLngNew: " + std::to_string(puckLatLngNew.longitude()) + " " +
+    //           std::to_string(puckLatLngNew.latitude()) +
+    //           ", vanishingPtLatLng: " + std::to_string(vanishingPtLatLng.longitude()) + " " +
+    //           std::to_string(vanishingPtLatLng.latitude());
+    //     mbgl::Log::Info(Event::Route, msg);
+    // }
+    // }
 
     // Set up a layer group
     if (!layerGroup) {
@@ -399,6 +463,23 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
 
     const RenderPass renderPass = static_cast<RenderPass>(evaluatedProperties->renderPasses &
                                                           ~mbgl::underlying_type(RenderPass::Opaque));
+
+    if (isRouteLayer()) {
+        Point<double> vanishingPoint = getVanishingPoint();
+        double minPercentage = std::numeric_limits<double>::max();
+        for (const RenderTile& tile : *renderTiles) {
+            const LayerRenderData* renderData = getRenderDataForPass(tile, renderPass);
+            if (renderData) {
+                auto& bucket = static_cast<LineBucket&>(*renderData->bucket);
+                double percentage = bucket.getPointIntersect(vanishingPoint);
+                if (percentage >= 0.0 && percentage <= 1.0 && percentage < minPercentage) {
+                    minPercentage = percentage;
+                }
+            }
+        }
+        currentVanishingPercent = minPercentage;
+        std::cout << "currentVanishingPercent: " << currentVanishingPercent << std::endl;
+    }
 
     stats.drawablesRemoved += tileLayerGroup->removeDrawablesIf([&](gfx::Drawable& drawable) {
         // If the render pass has changed or the tile has  dropped out of the cover set, remove it.
@@ -443,6 +524,14 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                                        /*vertexOffset=*/0,
                                        sizeof(LineLayoutVertex),
                                        gfx::AttributeDataType::UByte4);
+            }
+
+            if (const auto& attr = vertexAttrs->set(idLineLineSofarAttribute)) {
+                attr->setSharedRawData(bucket.sharedVertices,
+                                       offsetof(LineLayoutVertex, a3),
+                                       /*vertexOffset=*/0,
+                                       sizeof(LineLayoutVertex),
+                                       gfx::AttributeDataType::Float);
             }
 
             builder.setVertexAttributes(std::move(vertexAttrs));
@@ -597,6 +686,7 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                 if (layerTweaker) {
                     LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
                     lineLayerTweaker->setGradientLineClip(currLineClipPropValue);
+                    // lineLayerTweaker->setGradientLineClip(currentVanishingPercent);
                 }
             }
             const auto& currLineClipColor = impl_cast(baseImpl).paint.get<LineClipColor>().value;

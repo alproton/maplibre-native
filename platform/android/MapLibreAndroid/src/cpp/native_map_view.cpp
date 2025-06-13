@@ -1601,6 +1601,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeDispose, "nativeRouteDispose"),
         METHOD(&NativeMapView::routeProgressSet, "nativeRouteSetProgress"),
         METHOD(&NativeMapView::routeProgressSetPoint, "nativeRouteSetProgressPoint"),
+        METHOD(&NativeMapView::routeSetProgressInMeters, "nativeRouteSetProgressInMeters"),
         METHOD(&NativeMapView::routeSegmentsClear, "nativeRouteClearSegments"),
         METHOD(&NativeMapView::routeSegmentCreate, "nativeRouteSegmentCreate"),
         METHOD(&NativeMapView::routeSegmentCreateFractional, "nativeRouteSegmentCreateFractional"),
@@ -1609,6 +1610,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeGetVanishing, "nativeRouteGetVanishing"),
         METHOD(&NativeMapView::routeQueryRendered, "nativeRouteQuery"),
         METHOD(&NativeMapView::routesGetCaptureSnapshot, "nativeRoutesCaptureSnapshot"),
+        METHOD(&NativeMapView::routeEnableDebugViz, "nativeRouteEnableDebugViz"),
         METHOD(&NativeMapView::routeEnableCaptureNavStops, "nativeEnableCaptureRouteNavStops"),
         METHOD(&NativeMapView::routeIsCaptureNavStopsEnabled, "nativeIsCaptureRouteNavStopsEnabled"),
         METHOD(&NativeMapView::routeLoadCapture, "nativeRouteLoadCapture"),
@@ -1703,6 +1705,14 @@ jint NativeMapView::routeCreate(JNIEnv& env,
     }
 
     return routeID.id;
+}
+
+jdouble NativeMapView::routeSetProgressInMeters(JNIEnv& env, jni::jint routeID, jni::jdouble progressInMeters) {
+    if (routeMgr) {
+        return routeMgr->routeSetProgressInMeters(RouteID(routeID), progressInMeters);
+    }
+
+    return -1.0;
 }
 
 jni::Local<jni::String> NativeMapView::routeGetActiveLayerName(JNIEnv& env, const jint routeID) {
@@ -1840,6 +1850,14 @@ jboolean NativeMapView::routeLoadCapture(JNIEnv& env, const jni::String& capture
 jboolean NativeMapView::routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue) {
     if (routeMgr) {
         return routeMgr->captureScrubRoute(scrubValue);
+    }
+
+    return false;
+}
+
+jboolean NativeMapView::routeEnableDebugViz(JNIEnv& env, jni::jint routeID, jni::jboolean enable) {
+    if (routeMgr) {
+        return routeMgr->enableDebugViz(RouteID(routeID), enable);
     }
 
     return false;

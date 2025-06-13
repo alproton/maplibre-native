@@ -21,7 +21,8 @@ public:
     LineLayoutProperties::Unevaluated layout;
     LinePaintProperties::Transitionable paint;
     LineGradientFilterType gradientFilterType = LineGradientFilterType::Linear;
-
+    bool isRouteLayer = false;
+    mbgl::Point<double> vanishingPoint;
     DECLARE_LAYER_TYPE_INFO;
 };
 

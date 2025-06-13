@@ -526,6 +526,11 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     return false;
   }
 
+  @Deprecated
+  public double setRouteProgressInMeters(RouteID routeID, double progressInMeters) {
+    return nativeMapView.setRouteProgressInMeters(routeID, progressInMeters);
+  }
+
   /***
    * Gets the latest progress of the route on the map view.
    *
@@ -739,6 +744,17 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     }
 
     return false;
+  }
+
+  /***
+   * Enables or disables the route debug visualization. This is useful for debugging purposes.
+   *
+   * @param routeID the specified routeID
+   * @param enable if true, the route debug visualization will be enabled, else it will be disabled.
+   * @return true if the route debug visualization was enabled successfully, false otherwise.
+   */
+  public boolean enableRouteDebugViz(RouteID routeID, boolean enable) {
+    return nativeMapView.enableRouteDebugViz(routeID, enable);
   }
 
   /***

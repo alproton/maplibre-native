@@ -27,7 +27,7 @@ MBGL_DEFINE_UNIFORM_VECTOR(float, 2, patternscale_b);
 MBGL_DEFINE_UNIFORM_VECTOR(float, 2, units_to_pixels);
 } // namespace uniforms
 
-using LineLayoutAttributes = TypeList<attributes::pos_normal, attributes::data<uint8_t, 4>>;
+using LineLayoutAttributes = TypeList<attributes::pos_normal, attributes::data<uint8_t, 4>, attributes::line_so_far>;
 
 class LineProgram final
     : public Program<
@@ -52,7 +52,8 @@ public:
      * @param dir direction of the line cap (-1/0/1)
      */
     static LayoutVertex layoutVertex(
-        Point<int16_t> p, Point<double> e, bool round, bool up, int8_t dir, int32_t linesofar = 0) {
+        Point<int16_t> p, Point<double> e, bool round, bool up, int8_t dir, float linesofar) {
+        int32_t linesofarI = static_cast<int32_t>(linesofar);
         return LayoutVertex{
             {{static_cast<int16_t>((p.x * 2) | (round ? 1 : 0)), static_cast<int16_t>((p.y * 2) | (up ? 1 : 0))}},
             {{// add 128 to store a byte in an unsigned byte
@@ -71,8 +72,9 @@ public:
               // merge them. The z component's first bit, as well as the sign
               // bit is reserved for the direction, so we need to shift the
               // linesofar.
-              static_cast<uint8_t>(((dir == 0 ? 0 : (dir < 0 ? -1 : 1)) + 1) | ((linesofar & 0x3F) << 2)),
-              static_cast<uint8_t>(linesofar >> 6)}}};
+              static_cast<uint8_t>(((dir == 0 ? 0 : (dir < 0 ? -1 : 1)) + 1) | ((linesofarI & 0x3F) << 2)),
+              static_cast<uint8_t>(linesofarI >> 6)}},
+            {linesofar}};
     }
 
     /*
