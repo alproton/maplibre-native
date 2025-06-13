@@ -469,10 +469,12 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
         double minPercentage = std::numeric_limits<double>::max();
         for (const RenderTile& tile : *renderTiles) {
             const LayerRenderData* renderData = getRenderDataForPass(tile, renderPass);
-            auto& bucket = static_cast<LineBucket&>(*renderData->bucket);
-            double percentage = bucket.getPointIntersect(vanishingPoint);
-            if (percentage >= 0.0 && percentage <= 1.0 && percentage < minPercentage) {
-                minPercentage = percentage;
+            if (renderData) {
+                auto& bucket = static_cast<LineBucket&>(*renderData->bucket);
+                double percentage = bucket.getPointIntersect(vanishingPoint);
+                if (percentage >= 0.0 && percentage <= 1.0 && percentage < minPercentage) {
+                    minPercentage = percentage;
+                }
             }
         }
         currentVanishingPercent = minPercentage;
