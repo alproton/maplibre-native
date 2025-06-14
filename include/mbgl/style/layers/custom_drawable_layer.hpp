@@ -149,6 +149,8 @@ public:
     util::SimpleIdentity addPolyline(const GeometryCoordinates& coordinates,
                                      LineShaderType shaderType = LineShaderType::Classic);
 
+    // util::SimpleIdentity addRoute(const LineString<double>& coordinates);
+
     /**
      * @brief Add a polyline
      *

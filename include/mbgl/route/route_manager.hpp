@@ -30,6 +30,12 @@ struct RouteMgrStats {
     double avgRouteVanishingElapsedMillis = 0.0;
 };
 
+struct RouteMgrOptions {
+    bool useCustomLayer = false;
+    bool captureNavStops = true;
+    bool useSegmentIndexFractions = true;
+};
+
 /***
  * A route manager manages construction, disposal and updating of one or more routes. It is the API facade and is 1:1
  *with a map view. You can create and mutate multiple routes as many times and after you're done with mutating routes,
@@ -77,6 +83,7 @@ public:
     std::vector<RouteID> getAllRoutes() const;
     std::string getActiveRouteLayerName(const RouteID& routeID) const;
     std::string getBaseRouteLayerName(const RouteID& routeID) const;
+    std::string getCustomRouteLayerName() const;
     std::string getActiveGeoJSONsourceName(const RouteID& routeID) const;
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
     std::string captureSnapshot() const;
@@ -86,6 +93,7 @@ public:
     void captureNavStops(bool onOff);
     bool isCaptureNavStopsEnabled() const;
     bool hasRoutes() const;
+    void setManagerOptions(const RouteMgrOptions& rmgrOpts);
     void finalize();
 
     ~RouteManager();
@@ -95,6 +103,7 @@ private:
     static const std::string ACTIVE_ROUTE_LAYER;
     static const std::string GEOJSON_CASING_ROUTE_SOURCE_ID;
     static const std::string GEOJSON_ACTIVE_ROUTE_SOURCE_ID;
+    static const std::string ROUTE_CUSTOM_lAYER;
 
     enum class DirtyType {
         dtRouteSegments,
@@ -106,11 +115,12 @@ private:
 
     std::unordered_map<DirtyType, std::unordered_set<RouteID, IDHasher<RouteID>>> dirtyRouteMap_;
     std::vector<std::string> apiCalls_;
-
+    RouteMgrOptions routeMgrOpts_;
     RouteMgrStats stats_;
     gfx::IDpool routeIDpool_ = gfx::IDpool(100);
 
     void finalizeRoute(const RouteID& routeID, const DirtyType& dt);
+
     void validateAddToDirtyBin(const RouteID& routeID, const DirtyType& dirtyBin);
     // TODO: change this to weak reference
     style::Style* style_ = nullptr;

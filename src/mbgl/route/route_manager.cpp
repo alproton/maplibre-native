@@ -1,4 +1,7 @@
 
+#include "mbgl/route/route_layer_host.hpp"
+#include "mbgl/style/layers/custom_drawable_layer.hpp"
+#include "mbgl/style/layers/custom_drawable_layer_impl.hpp"
 #include "mbgl/util/containers.hpp"
 #include "mbgl/util/math.hpp"
 
@@ -24,6 +27,7 @@
 #include <chrono>
 #include <iomanip> // For formatting
 #include <iterator>
+#include <boost/smart_ptr/shared_ptr.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/error/en.h>
@@ -36,6 +40,7 @@ const std::string RouteManager::CASING_ROUTE_LAYER = "base_route_layer_";
 const std::string RouteManager::ACTIVE_ROUTE_LAYER = "active_route_layer_";
 const std::string RouteManager::GEOJSON_CASING_ROUTE_SOURCE_ID = "base_route_geojson_source_";
 const std::string RouteManager::GEOJSON_ACTIVE_ROUTE_SOURCE_ID = "active_route_geojson_source_";
+const std::string RouteManager::ROUTE_CUSTOM_lAYER = "route_custom_layer";
 
 namespace {
 
@@ -905,6 +910,10 @@ mbgl::Point<double> RouteManager::getPoint(const RouteID& routeID,
     return {0.0, 0.0};
 }
 
+std::string RouteManager::getCustomRouteLayerName() const {
+    return ROUTE_CUSTOM_lAYER;
+}
+
 std::string RouteManager::getActiveRouteLayerName(const RouteID& routeID) const {
     return ACTIVE_ROUTE_LAYER + std::to_string(routeID.id);
 }
@@ -951,6 +960,10 @@ const std::string RouteManager::getStats() {
     document.Accept(writer);
 
     return buffer.GetString();
+}
+
+void RouteManager::setManagerOptions(const RouteMgrOptions& rmgrOpts) {
+    routeMgrOpts_ = rmgrOpts;
 }
 
 void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
@@ -1190,14 +1203,34 @@ void RouteManager::finalize() {
     {
         assert(style_ != nullptr);
         if (style_ != nullptr) {
-            // create the layers and geojsonsource for casing route
-            for (const auto& iter : dirtyRouteMap_) {
-                DirtyType dirtyType = iter.first;
-                for (const auto& routeID : iter.second) {
-                    finalizeRoute(routeID, dirtyType);
+            if (routeMgrOpts_.useCustomLayer) {
+                const auto customLayerName = getCustomRouteLayerName();
+                if (style_->getLayer(customLayerName) == nullptr) {
+                    style_->addLayer(std::make_unique<mbgl::style::CustomDrawableLayer>(
+                        customLayerName, std::make_unique<RouteLayerHost>()));
+                    Layer* customRouteLayer = style_->getLayer(customLayerName);
+                    CustomDrawableLayer* customDrawableLayer = static_cast<CustomDrawableLayer*>(customRouteLayer);
+                    if (customDrawableLayer) {
+                        for (const auto& iter : routeMap_) {
+                            const Route& route = iter.second;
+                            std::shared_ptr<mbgl::style::CustomDrawableLayerHost> customLayerHost =
+                                customDrawableLayer->mutableImpl()->host;
+                            std::shared_ptr<RouteLayerHost> routeLayerHost = std::static_pointer_cast<RouteLayerHost>(
+                                customLayerHost);
+                            routeLayerHost->addRoute(route.getGeometry(), route.getRouteOptions());
+                        }
+                    }
                 }
+            } else {
+                // create the layers and geojsonsource for casing route
+                for (const auto& iter : dirtyRouteMap_) {
+                    DirtyType dirtyType = iter.first;
+                    for (const auto& routeID : iter.second) {
+                        finalizeRoute(routeID, dirtyType);
+                    }
+                }
+                dirtyRouteMap_.clear();
             }
-            dirtyRouteMap_.clear();
         }
     }
     auto stopclock = high_resolution_clock::now();

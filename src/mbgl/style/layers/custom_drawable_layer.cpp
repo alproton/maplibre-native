@@ -33,6 +33,7 @@
 #include <mbgl/gfx/uniform_buffer.hpp>
 
 #include <cmath>
+#include <iostream>
 
 namespace mbgl {
 
@@ -512,6 +513,10 @@ bool CustomDrawableLayerHost::Interface::updateBuilder(BuilderType type,
     return true;
 };
 
+// util::SimpleIdentity CustomDrawableLayerHost::addRoute(const LineString<double>& coordinates) {
+//
+// }
+
 util::SimpleIdentity CustomDrawableLayerHost::Interface::addPolyline(const LineString<double>& coordinates,
                                                                      LineShaderType shaderType) {
 #if !MLN_RENDER_BACKEND_METAL
@@ -520,8 +525,26 @@ util::SimpleIdentity CustomDrawableLayerHost::Interface::addPolyline(const LineS
 
     switch (shaderType) {
         case LineShaderType::Classic: {
-            // TODO: build classic polyline with Geo coordinates
-            return util::SimpleIdentity::Empty;
+            if (!updateBuilder(BuilderType::LineClassic, "custom-lines", lineShaderDefault())) {
+                return util::SimpleIdentity::Empty;
+            }
+
+            // geographic coordinates require tile {0, 0, 0}
+            setTileID({0, 0, 0});
+
+            constexpr int32_t zoom = 0;
+            GeometryCoordinates tileCoordinates;
+            for (const auto& coord : coordinates) {
+                const auto point = Projection::project(LatLng(coord.y, coord.x), zoom);
+                const Point<double> pointScaled = {point.x * mbgl::util::EXTENT, point.y * mbgl::util::EXTENT};
+                const Point<int16_t> tileSpace = {static_cast<int16_t>(pointScaled.x),
+                                                  static_cast<int16_t>(pointScaled.y)};
+                std::cout << "point: " << point.x << " " << point.y << "| point tile scaled: " << pointScaled.x << " "
+                          << pointScaled.y << "| tile space: " << tileSpace.x << " " << tileSpace.y << std::endl;
+                tileCoordinates.push_back(tileSpace);
+            }
+
+            builder->addPolyline(tileCoordinates, lineOptions.geometry);
         } break;
 
         case LineShaderType::WideVector: {
