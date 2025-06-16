@@ -3,6 +3,7 @@
 #include <mbgl/actor/scheduler.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/gfx/custom_dots.hpp>
+#include <mbgl/gfx/custom_blue_line.hpp>
 #include <mbgl/util/util.hpp>
 #include <mbgl/gfx/rendering_stats.hpp>
 
@@ -98,6 +99,7 @@ protected:
 public:
     std::unique_ptr<gfx::CustomPuck> customPuck = nullptr;
     std::unique_ptr<gfx::CustomDots> customDots = nullptr;
+    std::unique_ptr<gfx::CustomBlueLine> customBlueLine = nullptr;
 };
 
 constexpr bool operator==(const RendererBackend& a, const RendererBackend& b) {

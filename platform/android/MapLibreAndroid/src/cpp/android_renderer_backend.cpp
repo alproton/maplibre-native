@@ -71,5 +71,33 @@ bool AndroidRendererBackend::isCustomDotsInitialized() {
     return getImpl().customDots != nullptr;
 }
 
+bool AndroidRendererBackend::isCustomBlueLineInitialized() {
+    return getImpl().customBlueLine != nullptr;
+}
+
+void AndroidRendererBackend::clearCustomBlueLine() {
+    if (!isCustomBlueLineInitialized()) {
+        Log::Error(Event::Android, "Custom blue line not initialized yet. Ignoring blue line");
+        return;
+    }
+    getImpl().customBlueLine->clearCustomBlueLine();
+}
+
+void AndroidRendererBackend::setCustomBlueLine(LineString<double> line) {
+    if (!isCustomBlueLineInitialized()) {
+        Log::Error(Event::Android, "Custom blue line not initialized yet. Ignoring blue line");
+        return;
+    }
+    getImpl().customBlueLine->setCustomBlueLine(std::move(line));
+}
+
+void AndroidRendererBackend::setCustomBlueLinePercent(double percent) {
+    if (!isCustomBlueLineInitialized()) {
+        Log::Error(Event::Android, "Custom blue line not initialized yet. Ignoring blue line");
+        return;
+    }
+    getImpl().customBlueLine->setCustomBlueLinePercent(percent);
+}
+
 } // namespace android
 } // namespace mbgl

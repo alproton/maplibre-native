@@ -1065,10 +1065,15 @@ void GLFWView::addRoute() {
     if (!vanishingRouteID_.isValid()) {
         vanishingRouteID_ = routeID;
         rmptr_->setVanishingRouteID(vanishingRouteID_);
-        enablePuck(true);
+        // enablePuck(true);
 
         const mbgl::Point<double> &pt = routeMap_[vanishingRouteID_].getPoint(0.0);
         setPuckLocation(pt.y, pt.x, 90.0);
+    }
+
+    if (getRendererBackend().customBlueLine) {
+        getRendererBackend().customBlueLine->clearCustomBlueLine();
+        getRendererBackend().customBlueLine->setCustomBlueLine(std::move(geom));
     }
 }
 
@@ -1418,6 +1423,9 @@ void GLFWView::disposeRoute() {
             routeMap_.erase(routeID);
         }
         rmptr_->finalize();
+    }
+    if (getRendererBackend().customBlueLine) {
+        getRendererBackend().customBlueLine->clearCustomBlueLine();
     }
 }
 

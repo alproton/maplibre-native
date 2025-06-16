@@ -149,6 +149,7 @@ endif()
 if(MLN_DRAWABLE_RENDERER)
     list(APPEND INCLUDE_FILES
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/context.hpp
+        ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/custom_blue_line.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/custom_dots.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/custom_puck.hpp
         ${PROJECT_SOURCE_DIR}/include/mbgl/gfx/drawable.hpp
@@ -487,6 +488,7 @@ list(APPEND SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/color_mode.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/command_encoder.hpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/cull_face_mode.hpp
+    ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/custom_blue_line.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/custom_dots.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/custom_puck.cpp
     ${PROJECT_SOURCE_DIR}/src/mbgl/gfx/debug_group.hpp
@@ -1047,6 +1049,7 @@ if(MLN_WITH_OPENGL)
             ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/prelude.hpp
             ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/background.hpp
             ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/drawable_background.hpp
+            ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/custom_blue_line.hpp
             ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/custom_dots.hpp
             ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/custom_puck.hpp
             ${PROJECT_SOURCE_DIR}/include/mbgl/shaders/gl/drawable_background_pattern.hpp
@@ -1112,6 +1115,8 @@ if(MLN_WITH_OPENGL)
             ${PROJECT_SOURCE_DIR}/src/mbgl/gl/command_encoder.hpp
             ${PROJECT_SOURCE_DIR}/src/mbgl/gl/context.cpp
             ${PROJECT_SOURCE_DIR}/src/mbgl/gl/context.hpp
+            ${PROJECT_SOURCE_DIR}/src/mbgl/gl/custom_blue_line.cpp
+            ${PROJECT_SOURCE_DIR}/src/mbgl/gl/custom_blue_line.hpp
             ${PROJECT_SOURCE_DIR}/src/mbgl/gl/custom_dots.cpp
             ${PROJECT_SOURCE_DIR}/src/mbgl/gl/custom_dots.hpp
             ${PROJECT_SOURCE_DIR}/src/mbgl/gl/custom_puck.cpp

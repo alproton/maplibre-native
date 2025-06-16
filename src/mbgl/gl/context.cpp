@@ -2,6 +2,7 @@
 
 #include <mbgl/gfx/shader_registry.hpp>
 #include <mbgl/gl/command_encoder.hpp>
+#include <mbgl/gl/custom_blue_line.hpp>
 #include <mbgl/gl/custom_dots.hpp>
 #include <mbgl/gl/custom_puck.hpp>
 #include <mbgl/gl/defines.hpp>
@@ -281,6 +282,10 @@ std::unique_ptr<gfx::CustomPuck> Context::createCustomPuck() {
 
 std::unique_ptr<gfx::CustomDots> Context::createCustomDots() {
     return std::make_unique<gl::CustomDots>(*this);
+}
+
+std::unique_ptr<gfx::CustomBlueLine> Context::createCustomBlueLine() {
+    return std::make_unique<gl::CustomBlueLine>(*this);
 }
 
 UniqueTexture Context::createUniqueTexture(const Size& size,

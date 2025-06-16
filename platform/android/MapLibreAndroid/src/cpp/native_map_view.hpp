@@ -464,6 +464,8 @@ private:
     std::unique_ptr<mbgl::Map> map;
 
     std::map<double, double> convert(JNIEnv& env, const jni::Array<jdouble>& keys, const jni::Array<jdouble>& values);
+
+    bool newBlueLine = false;
 };
 
 } // namespace android

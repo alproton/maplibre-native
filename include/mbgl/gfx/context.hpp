@@ -4,6 +4,7 @@
 #include <mbgl/gfx/backend.hpp>
 #include <mbgl/gfx/command_encoder.hpp>
 #include <mbgl/gfx/context_observer.hpp>
+#include <mbgl/gfx/custom_blue_line.hpp>
 #include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/gfx/draw_scope.hpp>
@@ -189,6 +190,8 @@ public:
     // Similar to custom puck, CustomDots should be replaced with CustomLayerV3
     // once texture atlas updates are optimized out
     virtual std::unique_ptr<CustomDots> createCustomDots() { return nullptr; }
+
+    virtual std::unique_ptr<CustomBlueLine> createCustomBlueLine() { return nullptr; }
 
 protected:
     virtual std::unique_ptr<TextureResource> createTextureResource(Size, TexturePixelType, TextureChannelDataType) = 0;

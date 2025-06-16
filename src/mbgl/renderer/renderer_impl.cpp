@@ -559,6 +559,17 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         backend.customDots->draw(updateParameters->transformState);
     }
 
+    if (!backend.customBlueLine) {
+        backend.customBlueLine = context.createCustomBlueLine();
+        if (backend.customBlueLine == nullptr) {
+            Log::Error(Event::Render, "Failed to create a custom blue line.");
+        }
+        assert(backend.customBlueLine != nullptr);
+    }
+    if (backend.customBlueLine) {
+        backend.customBlueLine->draw(updateParameters->transformState);
+    }
+
     if (!backend.customPuck) {
         backend.customPuck = context.createCustomPuck();
         if (backend.customPuck == nullptr) {

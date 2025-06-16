@@ -169,6 +169,7 @@ public:
 
     std::unique_ptr<gfx::CustomPuck> createCustomPuck() override;
     std::unique_ptr<gfx::CustomDots> createCustomDots() override;
+    std::unique_ptr<gfx::CustomBlueLine> createCustomBlueLine() override;
 
 private:
     RendererBackend& backend;
