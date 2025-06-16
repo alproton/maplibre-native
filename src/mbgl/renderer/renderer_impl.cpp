@@ -567,7 +567,11 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         assert(backend.customBlueLine != nullptr);
     }
     if (backend.customBlueLine) {
-        backend.customBlueLine->draw(updateParameters->transformState);
+        ScreenCoordinate puckScreenCoordinate = ScreenCoordinate(-1, -1);
+        if (backend.customPuck) {
+            puckScreenCoordinate = backend.customPuck->getPuckScreenCoordinate(updateParameters->transformState);
+        }
+        backend.customBlueLine->draw(updateParameters->transformState, puckScreenCoordinate);
     }
 
     if (!backend.customPuck) {

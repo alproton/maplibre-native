@@ -14,9 +14,26 @@ struct Vertex {
     double distance;
 };
 
+// Project vertex b on segment [a, b]
+Vertex project(const Vertex& p, const Vertex& a, const Vertex& b) {
+    double dx = b.x - a.x;
+    double dy = b.y - a.y;
+    if (dx == 0 && dy == 0) {
+        // a and b are the same point
+        return a;
+    }
+    double t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy);
+    t = std::clamp(t, 0.0, 1.0);
+    Vertex result;
+    result.x = a.x + t * dx;
+    result.y = a.y + t * dy;
+    result.distance = (result.x - p.x) * (result.x - p.x) + (result.y - p.y) * (result.y - p.y);
+    return result;
+}
+
 } // namespace
 
-void CustomBlueLine::draw(const TransformState& transform) {
+void CustomBlueLine::draw(const TransformState& transform, const ScreenCoordinate& puckScreenCoord) {
     std::lock_guard<std::mutex> lock(mux);
 
     if (clearVertexBuffer) {
@@ -52,8 +69,27 @@ void CustomBlueLine::draw(const TransformState& transform) {
         }
         double vanishDistance = totalDistance * percent;
 
-        // Clip vanished points
-        if (vanishDistance > 0) {
+        // Find the nearest point on the line to the puck
+        Vertex puck = {
+            (puckScreenCoord.x / screenSize.width) * 2 - 1, (puckScreenCoord.y / screenSize.height) * 2 - 1, 0.0};
+        Vertex nearestPoint = {0, 0, std::numeric_limits<double>::max()};
+        size_t nearestIndex = 0;
+        for (size_t i = 1; i < vertices.size(); ++i) {
+            auto projected = project(puck, vertices[i - 1], vertices[i]);
+            if (projected.distance < nearestPoint.distance) {
+                nearestPoint = projected;
+                nearestIndex = i;
+            }
+        }
+        assert(nearestIndex > 0);
+        // snap to puck if the distance is less than pixelDistanceThreshold
+        const double pixelDistanceThreshold = 32.0 / screenSize.width;
+        if (nearestPoint.distance < pixelDistanceThreshold * pixelDistanceThreshold) {
+            for (size_t i = 0; i < nearestIndex; ++i) {
+                vertices.pop_front();
+            }
+            vertices.push_front(nearestPoint);
+        } else if (vanishDistance > 0) {
             int firstVisibile = 0;
             while (firstVisibile < static_cast<int>(vertices.size()) &&
                    vertices[firstVisibile].distance < vanishDistance) {

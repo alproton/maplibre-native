@@ -60,6 +60,18 @@ void CustomPuck::setPuckBitmap(const PremultipliedImage& src) {
     std::memcpy(bitmap.data.get(), src.data.get(), src.bytes());
 }
 
+ScreenCoordinate CustomPuck::getPuckScreenCoordinate(const TransformState& transform) {
+    const auto& state = getState();
+    if (!state.enabled) {
+        return ScreenCoordinate{-1, -1};
+    }
+    auto latlon = transform.getLatLng();
+    if (!state.cameraTracking) {
+        latlon = LatLng(state.lat, state.lon);
+    }
+    return transform.latLngToScreenCoordinate(latlon);
+}
+
 PremultipliedImage CustomPuck::getPuckBitmap() {
     std::lock_guard<std::mutex> lock(bitmapMutex);
     return std::move(bitmap);

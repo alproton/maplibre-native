@@ -12,7 +12,7 @@ class CustomBlueLine {
 public:
     virtual ~CustomBlueLine() noexcept {};
 
-    void draw(const TransformState& transform);
+    void draw(const TransformState& transform, const ScreenCoordinate& puckScreenCoord);
 
     void clearCustomBlueLine();
     void setCustomBlueLine(LineString<double> line_);

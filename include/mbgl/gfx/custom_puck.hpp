@@ -27,6 +27,8 @@ public:
 
     PremultipliedImage getPuckBitmap();
 
+    ScreenCoordinate getPuckScreenCoordinate(const TransformState& transform);
+
 protected:
     using ScreenQuad = std::array<ScreenCoordinate, 4>;
 

@@ -151,9 +151,9 @@ void CustomBlueLine::drawImpl() {
     MBGL_CHECK_ERROR(glBindBuffer(GL_ARRAY_BUFFER, vbo));
     MBGL_CHECK_ERROR(glUseProgram(program));
 
-    MBGL_CHECK_ERROR(glUniform4f(0, 0.f, 1.f, 0.f, .4f));
+    MBGL_CHECK_ERROR(glUniform4f(0, 1.f, 0.f, 1.f, .6f));
 
-    MBGL_CHECK_ERROR(glLineWidth(5.0f));
+    MBGL_CHECK_ERROR(glLineWidth(6.0f));
     MBGL_CHECK_ERROR(glDrawArrays(GL_LINE_STRIP, 0, vertexCount));
     MBGL_CHECK_ERROR(glLineWidth(1.0f));
 }
