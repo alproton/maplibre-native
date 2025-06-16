@@ -3,6 +3,7 @@
 #include <mbgl/gfx/backend.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/gfx/custom_dots.hpp>
+#include <mbgl/gfx/custom_blue_line.hpp>
 #include <mbgl/gfx/renderer_backend.hpp>
 #include <mbgl/gfx/renderable.hpp>
 
@@ -57,6 +58,11 @@ public:
     void setCustomDotsEnabled(bool enabled);
 
     bool isCustomDotsInitialized();
+
+    bool isCustomBlueLineInitialized();
+    void clearCustomBlueLine();
+    void setCustomBlueLine(LineString<double> line);
+    void setCustomBlueLinePercent(double percent);
 
 protected:
     gfx::Renderable::SwapBehaviour swapBehaviour = gfx::Renderable::SwapBehaviour::NoFlush;

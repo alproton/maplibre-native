@@ -48,6 +48,8 @@ public:
     void setPuckVariant(std::string variant);
     void setPuckIconState(std::string state);
 
+    ScreenCoordinate getPuckScreenCoordinate(const TransformState& transform);
+
 #ifdef __ANDROID__
     void setAssetManager(AAssetManager* asset_manager);
     AAssetManager* getAssetManager();

@@ -68,6 +68,7 @@ enum class BuiltIn {
     SymbolTextAndIconProgram,
     CustomDotsProgram,
     CustomPuckProgram,
+    CustomBlueLineProgram,
 };
 
 /// @brief Select shader source based on a program type and a desired

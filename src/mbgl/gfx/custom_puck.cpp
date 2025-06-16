@@ -113,6 +113,18 @@ void CustomPuck::draw(const TransformState& transform) {
     drawImpl(sampledStyle);
 }
 
+ScreenCoordinate CustomPuck::getPuckScreenCoordinate(const TransformState& transform) {
+    const auto& state = getState();
+    if (!state.enabled) {
+        return ScreenCoordinate{-1, -1};
+    }
+    auto latlon = transform.getLatLng();
+    if (!state.cameraTracking) {
+        latlon = LatLng(state.lat, state.lon);
+    }
+    return transform.latLngToScreenCoordinate(latlon);
+}
+
 void CustomPuck::setPuckStyle(const std::string& style_file_path) {
     auto json = readFile(style_file_path);
 

@@ -15,6 +15,7 @@
 
 #include <jni/jni.hpp>
 
+#include <mbgl/gfx/custom_blue_line.hpp>
 #include <mbgl/gfx/custom_dots.hpp>
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/map/map.hpp>
@@ -1673,6 +1674,9 @@ jint NativeMapView::routeCreate(JNIEnv& env,
                                 const jni::Array<jdouble>& outerDynamicWidths,
                                 const jni::Array<jdouble>& innerDynamicWidthZooms,
                                 const jni::Array<jdouble>& innerDynamicWidths) {
+    newBlueLine = true;
+    mapRenderer.getRendererBackend().clearCustomBlueLine();
+
     if (!routeMgr->hasStyle()) {
         routeMgr->setStyle(map->getStyle());
     }
@@ -1865,7 +1869,18 @@ jboolean NativeMapView::routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue) 
 
 jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {
     if (routeMgr) {
-        return routeMgr->routeSetProgressPercent(RouteID(routeID), progress);
+        bool success = routeMgr->routeSetProgressPercent(RouteID(routeID), progress);
+        if (success) {
+            if (newBlueLine) {
+                auto lineString = routeMgr->routeGetGeometry(RouteID(routeID));
+                if (lineString) {
+                    mapRenderer.getRendererBackend().setCustomBlueLine(std::move(*lineString));
+                    newBlueLine = false;
+                }
+            }
+            mapRenderer.getRendererBackend().setCustomBlueLinePercent(progress);
+            return true;
+        }
     }
 
     return false;
