@@ -464,22 +464,22 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
     const RenderPass renderPass = static_cast<RenderPass>(evaluatedProperties->renderPasses &
                                                           ~mbgl::underlying_type(RenderPass::Opaque));
 
-    if (isRouteLayer()) {
-        Point<double> vanishingPoint = getVanishingPoint();
-        double minPercentage = std::numeric_limits<double>::max();
-        for (const RenderTile& tile : *renderTiles) {
-            const LayerRenderData* renderData = getRenderDataForPass(tile, renderPass);
-            if (renderData) {
-                auto& bucket = static_cast<LineBucket&>(*renderData->bucket);
-                double percentage = bucket.getPointIntersect(vanishingPoint);
-                if (percentage >= 0.0 && percentage <= 1.0 && percentage < minPercentage) {
-                    minPercentage = percentage;
-                }
-            }
-        }
-        currentVanishingPercent = minPercentage;
-        std::cout << "currentVanishingPercent: " << currentVanishingPercent << std::endl;
-    }
+    // if (isRouteLayer()) {
+    //     Point<double> vanishingPoint = getVanishingPoint();
+    //     double minPercentage = std::numeric_limits<double>::max();
+    //     for (const RenderTile& tile : *renderTiles) {
+    //         const LayerRenderData* renderData = getRenderDataForPass(tile, renderPass);
+    //         if (renderData) {
+    //             auto& bucket = static_cast<LineBucket&>(*renderData->bucket);
+    //             double percentage = bucket.getPointIntersect(vanishingPoint);
+    //             if (percentage >= 0.0 && percentage <= 1.0 && percentage < minPercentage) {
+    //                 minPercentage = percentage;
+    //             }
+    //         }
+    //     }
+    //     currentVanishingPercent = minPercentage;
+    //     std::cout << "currentVanishingPercent: " << currentVanishingPercent << std::endl;
+    // }
 
     stats.drawablesRemoved += tileLayerGroup->removeDrawablesIf([&](gfx::Drawable& drawable) {
         // If the render pass has changed or the tile has  dropped out of the cover set, remove it.

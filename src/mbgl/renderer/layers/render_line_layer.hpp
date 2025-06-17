@@ -74,7 +74,7 @@ private:
 
     float getLineWidth(const GeometryTileFeature&, float, const FeatureState&) const;
     void updateColorRamp();
-    float currentVanishingPercent = 0.0;
+    // float currentVanishingPercent = 0.0;
 
     std::shared_ptr<PremultipliedImage> colorRamp;
     std::optional<gfx::Texture> colorRampTexture;
