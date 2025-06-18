@@ -120,7 +120,7 @@ public:
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
         if (duration.count() > 100) {
-            mbgl::Log::Debug(mbgl::Event::General,
+            mbgl::Log::Error(mbgl::Event::General,
                              "###################################@@@ " + zoneName + " : " +
                                  std::to_string(duration.count()) + " ms");
         }
