@@ -29,6 +29,7 @@ struct RouteOptions {
     std::map<double, double> innerWidthZoomStops;
     bool useDynamicWidths = false;
     std::string layerBefore;
+    bool useMercatorProjection = false;
 };
 
 /***
@@ -75,7 +76,7 @@ private:
     Point<double> getPointFine(double percent, double* bearing = nullptr) const;
     double getProgressProjectionLERP(const Point<double>& queryPoint, bool capture = false);
     double getProgressProjectionSLERP(const Point<double>& queryPoint, bool capture = false);
-
+    double getProgressProjectionMerc(const Point<double>& queryPoint, bool capture = false);
     RouteOptions routeOptions_;
     double progress_ = 0.0;
     std::vector<double> intervalLengths_;

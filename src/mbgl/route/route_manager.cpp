@@ -23,6 +23,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <chrono>
 #include <iomanip> // For formatting
+#include <iostream>
 #include <iterator>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
@@ -573,6 +574,9 @@ bool RouteManager::loadCapture(const std::string& capture) {
                         const rapidjson::Value& useDynamicWidths = route_options["useDynamicWidths"];
                         routeOpts.useDynamicWidths = useDynamicWidths.GetBool();
                     }
+
+                    // TODO: add this to route capture
+                    routeOpts.useMercatorProjection = true;
                 }
 
                 mbgl::LineString<double> route_geom;
@@ -691,7 +695,10 @@ bool RouteManager::loadCapture(const std::string& capture) {
     return true;
 }
 
-bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointOut, double* optBearingOut) {
+bool RouteManager::captureScrubRoute(double scrubValue,
+                                     const ScrubOptions& scrubOpts,
+                                     Point<double>* optPointOut,
+                                     double* optBearingOut) {
     if (vanishingRouteID_.isValid() && routeMap_.find(vanishingRouteID_) != routeMap_.end()) {
         scrubValue = std::clamp(scrubValue, 0.0, 1.0);
         if (routeMap_[vanishingRouteID_].hasNavStopsPoints()) {
@@ -735,10 +742,15 @@ bool RouteManager::captureScrubRoute(double scrubValue, Point<double>* optPointO
             finalize();
         } else {
             // we may not have any nav stops captured, so lets just use the route geometry
-            routeSetProgressPercent(vanishingRouteID_, scrubValue);
             double bearing = 0.0;
+            const auto& navstop = getPoint(vanishingRouteID_, scrubValue, Precision::Fine, &bearing);
+            if (scrubOpts.fallbackPoint) {
+                std::cout << "merc mode- nav point: " << navstop.x << " " << navstop.y << std::endl;
+                routeSetProgressPoint(vanishingRouteID_, navstop, Precision::Mercator);
+            } else {
+                routeSetProgressPercent(vanishingRouteID_, scrubValue);
+            }
             if (optPointOut) {
-                const auto& navstop = getPoint(vanishingRouteID_, scrubValue, Precision::Fine, &bearing);
                 *optPointOut = navstop;
             }
             if (optBearingOut) {
@@ -998,6 +1010,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
         GeoJSONOptions opts;
         opts.lineMetrics = true;
+        opts.disableBufferForLineMetrics = true;
         std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(
             sourceID, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts)));
         geoJSONsrc->setGeoJSON(featureCollection);
@@ -1178,6 +1191,16 @@ bool RouteManager::setVanishingRouteID(const RouteID& routeID) {
 
 RouteID RouteManager::getVanishingRouteID() const {
     return vanishingRouteID_;
+}
+
+double RouteManager::getTotalDistance(const RouteID& routeID) {
+    assert(routeID.isValid() && "invalid route ID");
+    double result = -1.0;
+    if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        result = routeMap_.at(routeID).getTotalDistance();
+    }
+
+    return result;
 }
 
 void RouteManager::finalize() {

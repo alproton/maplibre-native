@@ -1065,6 +1065,7 @@ void GLFWView::addRoute() {
     routeOpts.useDynamicWidths = false;
     routeOpts.outerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
+    routeOpts.useMercatorProjection = true;
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
     routeMap_[routeID] = route;
@@ -1492,33 +1493,48 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
         setPuckLocation(pt.y, pt.x, bearing);
 
         double totalRouteDistMeters = rmptr_->getTotalDistance(vanishingRouteID_);
-        double totalRouteDistFeet = totalRouteDistMeters * 3.28084; // Convert meters to feet
-        feet_percent_step_ = 1.0 / totalRouteDistFeet;
-        meter_percent_step_ = 1.0 / totalRouteDistMeters;
+        bool useMercator = true;
+        if (useMercator) {
+            feet_percent_step_ = 0.000000076;
+        } else {
+            double totalRouteDistFeet = totalRouteDistMeters * 3.28084; // Convert meters to feet
+            feet_percent_step_ = 1.0 / totalRouteDistFeet;
+        }
+
         std::cout << "feet_step_percent: " << std::to_string(feet_percent_step_) << std::endl;
-        std::cout << "meter_step_percent: " << std::to_string(meter_percent_step_) << std::endl;
     }
 }
 
 void GLFWView::incrementStep(bool increment) {
     feet_percent_step_multiplier += increment ? 1 : -1;
+    std::cout << "Increment Mutliplier: " << feet_percent_step_multiplier << std::endl;
 }
 
-void GLFWView::scrubNavStops(bool forward) {
+void GLFWView::scrubNavStops([[maybe_unused]] bool forward) {
     if (loadedCapture_) {
         mbgl::Point<double> navstop;
         double bearing = 0.0;
         // scrubCounter_ += forward ? 1 : -1;
         // double scrubValue = static_cast<double>(scrubCounter_) / 100.0;
         // scrubValue = std::clamp(scrubValue, 0.0, 1.0);
-        // rmptr_->captureScrubRoute(scrubValue, &navstop, &bearing);
+        // rmptr_->captureScrubRoute(scrubValue, {true}, &navstop, &bearing);
+        // std::vector<double> testPercents = {
+        //     0.0, 0.000219865,
+        //     0.000334413,
+        //     0.000774066,
+        //     0.00133632,
+        //     0.00155078,
+        //     0.00189614,
+        //     0.00247102
+        // };
+        // testPercent_ = testPercents[scrubCounter_++ % testPercents.size()];
+
         testPercent_ += forward ? (feet_percent_step_ * feet_percent_step_multiplier)
                                 : (-feet_percent_step_ * feet_percent_step_multiplier);
         testPercent_ = std::clamp(testPercent_, 0.0, 1.0);
-        // testPercent_ = 0.85;
         // std::cout << "testPercent_: " << std::to_string(testPercent_) << std::endl;
 
-        rmptr_->captureScrubRoute(testPercent_, &navstop, &bearing);
+        rmptr_->captureScrubRoute(testPercent_, {true}, &navstop, &bearing);
         setPuckLocation(navstop.y, navstop.x, bearing);
 
         invalidate();

@@ -655,13 +655,15 @@ void PolylineGenerator<PLV, PS>::addCurrentVertex(const GeometryCoordinate& curr
         vertexAttribLineSoFar = scaledDistance * LINE_DISTANCE_SCALE;
         inVertexShader = vertexAttribLineSoFar * 2.0 / MAX_LINE_DISTANCE;
     }
-    if (popts.isRoutePath) {
-        std::cout << "add vertex: scaledDistance: " << scaledDistance << ", unscaledDistance: " << unscaledDistanceF
-                  << ", " << routeMode << ", tileID: " << std::to_string(popts.canonicalTileID.z) << " "
-                  << popts.canonicalTileID.x << " " << popts.canonicalTileID.y << " {clipstart: " << clipstart
-                  << ", clipend: " << clipend << ", total: " << total << ", distance: " << distance
-                  << ", relative: " << relativeDistance << ", vertexAttribLineSoFarIn: " << vertexAttribLineSoFar
-                  << ", Invertex shader: " << inVertexShader << "}" << std::endl;
+    if (popts.isRoutePath && logVertices) {
+        std::stringstream ss;
+        ss << "add vertex: scaledDistance: " << scaledDistance << ", unscaledDistance: " << unscaledDistanceF << ", "
+           << routeMode << ", tileID: " << std::to_string(popts.canonicalTileID.z) << " " << popts.canonicalTileID.x
+           << " " << popts.canonicalTileID.y << " {clipstart: " << clipstart << ", clipend: " << clipend
+           << ", total: " << total << ", distance: " << distance << ", relative: " << relativeDistance
+           << ", vertexAttribLineSoFarIn: " << vertexAttribLineSoFar << ", Invertex shader: " << inVertexShader << "}"
+           << std::endl;
+        mbgl::Log::Info(Event::Route, ss.str());
     }
 
     float lineSoFar = popts.isRoutePath ? vertexAttribLineSoFar : scaledDistance * LINE_DISTANCE_SCALE;

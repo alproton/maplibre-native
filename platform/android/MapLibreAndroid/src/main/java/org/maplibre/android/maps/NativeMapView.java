@@ -1177,8 +1177,8 @@ final class NativeMapView implements NativeMap {
     double[] innerDynamicWidths = getDoubleArrayValues(routeOptions.innerDynamicWidthZoomStops);
 
     RouteID routeID = new RouteID(nativeRouteCreate(routeGeom, routeOptions.outerColor, routeOptions.innerColor,
-            routeOptions.outerClipColor, routeOptions.innerClipColor,
-            routeOptions.outerWidth, routeOptions.innerWidth, routeOptions.layerBefore, routeOptions.useDynamicWidths,
+            routeOptions.outerClipColor, routeOptions.innerClipColor, routeOptions.outerWidth, routeOptions.innerWidth,
+            routeOptions.layerBefore, routeOptions.useDynamicWidths, routeOptions.useMercatorProjections,
             outerDynamicWidthZooms, outerDynamicWidths, innerDynamicWidthZooms, innerDynamicWidths));
     return routeID;
   }
@@ -1718,9 +1718,9 @@ final class NativeMapView implements NativeMap {
   private native int nativeRouteCreate(LineString routeGeometry, int outerColor, int innerColor,
                                        int outerClipColor, int innerClipColor,
                                        double outerWidth, double innerWidth, String layerBefore,
-                                       boolean useDynamicWidths, double[] outerDynamicWidthZooms,
-                                       double[] outerDynamicWidths, double[] innerDynamicWidthZooms,
-                                       double[] innerDynamicWidths);
+                                       boolean useDynamicWidths, boolean useMercatorProjections,
+                                       double[] outerDynamicWidthZooms, double[] outerDynamicWidths,
+                                       double[] innerDynamicWidthZooms, double[] innerDynamicWidths);
 
   @Keep
   private native int nativeRouteQuery(double x, double y, int radius);

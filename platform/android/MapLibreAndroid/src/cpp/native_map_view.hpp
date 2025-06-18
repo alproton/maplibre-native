@@ -243,6 +243,7 @@ public:
                      jdouble innerWidth,
                      const jni::String& layerbefore,
                      jboolean useDyanmicWidths,
+                     jboolean useMercatorProjections,
                      const jni::Array<jdouble>& outerDynamicWidthZooms,
                      const jni::Array<jdouble>& outerDynamicWidths,
                      const jni::Array<jdouble>& innerDynamicWidthZooms,

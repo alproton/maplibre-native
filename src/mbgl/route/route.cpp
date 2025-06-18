@@ -1,6 +1,7 @@
 #include "mbgl/programs/attributes.hpp"
 #include "mbgl/programs/uniforms.hpp"
 
+#include <iostream>
 #include <valarray>
 #include <mbgl/route/route.hpp>
 #include <mbgl/util/math.hpp>
@@ -144,6 +145,16 @@ Point<double> cartesianToLatLon(const Vector3D& v) {
     return {radiansToDegrees(longitudeRad), radiansToDegrees(latitudeRad)};
 }
 
+const auto toMercProject = [](const mbgl::Point<double>& p) {
+    // This is the C++ logic to replicate.// 'p.y' is latitude, 'p.x' is longitude.
+    const double sine = std::sin(p.y * M_PI / 180.0);
+    const double x = p.x / 360.0 + 0.5;
+    const double y = 0.5 - 0.25 * std::log((1.0 + sine) / (1.0 - sine)) / M_PI;
+    // The projected coordinates (x, y) will be in the range [0.0, 1.0].
+
+    return mbgl::Point<double>{x, y};
+};
+
 } // namespace
 
 Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
@@ -161,10 +172,23 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
         const mbgl::Point<double>& p2 = geometry_[i + 1];
         assert((!std::isnan(p1.x) && !std::isnan(p1.y) && !std::isnan(p2.x) && !std::isnan(p2.y)) &&
                "invalid geometry point");
-        double segLen = mbgl::util::haversineDist(p1, p2);
+        double segLen;
+        if (ropts.useMercatorProjection) {
+            const mbgl::Point<double>& p1merc = toMercProject(p1);
+            const mbgl::Point<double>& p2merc = toMercProject(p2);
+            segLen = mbgl::util::dist<double>(p1merc, p2merc);
+
+        } else {
+            segLen = mbgl::util::haversineDist(p1, p2);
+        }
+
         intervalLengths_.push_back(segLen);
         totalLength_ += segLen;
         cumulativeIntervalDistances_.push_back(totalLength_);
+    }
+
+    if (ropts.useMercatorProjection) {
+        std::cout << "totalLength(Merc mode): " << totalLength_ << std::endl;
     }
 }
 
@@ -572,10 +596,10 @@ void Route::routeSetProgress(const double t, bool capture) {
         capturedNavPercent_.push_back(t);
     }
     progress_ = t;
-    vanishingPoint_ = getPoint(t, Precision::Fine);
-    if (capture) {
-        capturedNavStops_.push_back(vanishingPoint_);
-    }
+    // vanishingPoint_ = getPoint(t, Precision::Fine);
+    // if (capture) {
+    //     capturedNavStops_.push_back(vanishingPoint_);
+    // }
 }
 
 bool Route::hasNavStopsPercent() const {
@@ -608,17 +632,23 @@ void Route::addNavStopPoint(const mbgl::Point<double>& point) {
 
 double Route::getProgressPercent(const Point<double>& progressPoint, const Precision& precision, bool capture) {
     double percentage = -1.0;
-    switch (precision) {
-        case Precision::Coarse: {
-            percentage = getProgressProjectionLERP(progressPoint, capture);
-            break;
+    // TODO: refactor to a better such that we can co
+    if (routeOptions_.useMercatorProjection || precision == Precision::Mercator) {
+        percentage = getProgressProjectionMerc(progressPoint, capture);
+        std::cout << "merc percentage: " << percentage << std::endl;
+    } else {
+        switch (precision) {
+            case Precision::Coarse: {
+                percentage = getProgressProjectionLERP(progressPoint, capture);
+                break;
+            }
+            case Precision::Fine: {
+                percentage = getProgressProjectionSLERP(progressPoint, capture);
+                break;
+            }
+            default:
+                throw std::invalid_argument("Invalid precision type.");
         }
-        case Precision::Fine: {
-            percentage = getProgressProjectionSLERP(progressPoint, capture);
-            break;
-        }
-        default:
-            throw std::invalid_argument("Invalid precision type.");
     }
 
     if (logPrecision) {
@@ -632,6 +662,91 @@ double Route::getProgressPercent(const Point<double>& progressPoint, const Preci
     }
 
     return percentage;
+}
+
+double Route::getProgressProjectionMerc(const Point<double>& queryPoint, bool capture) {
+    if (capture) {
+        capturedNavStops_.push_back(queryPoint);
+    }
+
+    if (geometry_.size() < 2) {
+        return -1.0; // Cannot form segments
+    }
+    const Point<double>& queryPtProjected = toMercProject(queryPoint);
+    // Handle zero-length route
+    if (totalLength_ <= EPSILON) {
+        // If the route has no length, the closest point is the first point,
+        // and percentage is arguably 0 or undefined. We'll return 0.
+        // Check if query point *is* the single point location
+        if (mbgl::util::dist<double>(toMercProject(geometry_[0]), queryPtProjected) > EPSILON) {
+            // If query point is different, maybe success should be false? Depends on requirements.
+            // Let's keep it true but maybe add a warning/note.
+            Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");
+        }
+        return 0.0;
+    }
+
+    // NB: we are computing the closest point on the line in mercator projection space/coordinates here.
+    const auto& getClosestInterval = [&](uint32_t startIdx, uint32_t endIdx) -> std::pair<uint32_t, double> {
+        uint32_t bestIntervalIndex = INVALID_UINT;
+        double bestIntervalFraction = -1.0;
+        double minDistanceSq = std::numeric_limits<double>::max();
+
+        for (size_t i = startIdx; i <= endIdx; ++i) {
+            const mbgl::Point<double>& p1 = toMercProject(geometry_[i]);     // Start point of the segment
+            const mbgl::Point<double>& p2 = toMercProject(geometry_[i + 1]); // End point of the segment
+
+            // --- Project queryPoint onto the 2D line segment (p1, p2) ---
+            // Treat Lat/Lon as simple 2D coordinates for projection (approximation)
+            double segmentDX = p2.x - p1.x;
+            double segmentDY = p2.y - p1.y;
+
+            double segmentLenSq = segmentDX * segmentDX + segmentDY * segmentDY;
+
+            double t = 0.0; // Parameter along the line segment (0=p1, 1=p2)
+            Point<double> closestPointOnSegment = p1;
+
+            if (segmentLenSq > EPSILON) {
+                // Project (queryPoint - p1) onto (p2 - p1)
+                double queryPointDX = queryPtProjected.x - p1.x;
+                double queryPointDY = queryPtProjected.y - p1.y;
+                t = (queryPointDX * segmentDX + queryPointDY * segmentDY) / segmentLenSq;
+                t = std::clamp(t, 0.0, 1.0); // Clamp to the segment bounds [0, 1]
+
+                // Calculate the point on the segment corresponding to clamped t
+                closestPointOnSegment.y = p1.y + t * segmentDY;
+                closestPointOnSegment.x = p1.x + t * segmentDX;
+            } else {
+                // Segment has zero length, closest point is p1 (or p2, they are the same)
+                // t remains 0.0;
+                closestPointOnSegment = p1;
+            }
+
+            // --- Calculate distance from queryPoint to this closest point ---
+            // IMPORTANT: Use normal dist for mercator projections
+            double dist = mbgl::util::dist<double>(queryPtProjected, closestPointOnSegment);
+            double distSq = dist * dist; // Compare squared distances to avoid sqrt
+
+            if (distSq < minDistanceSq) {
+                minDistanceSq = distSq;
+                bestIntervalIndex = i;
+                bestIntervalFraction = t; // Use the clamped fraction
+            }
+        }
+
+        return {bestIntervalIndex, bestIntervalFraction};
+    };
+
+    // closestInterval.first is the interval index, closestInterval.second is the fraction along the interval
+    std::pair<uint32_t, double> closestInterval = getClosestInterval(0, geometry_.size() - 1);
+
+    // --- Calculate final percentage ---
+    uint32_t bestIntervalIndex = closestInterval.first;
+    double bestIntervalFraction = closestInterval.second;
+    double distanceAlongRoute = cumulativeIntervalDistances_[bestIntervalIndex] +
+                                (bestIntervalFraction * intervalLengths_[bestIntervalIndex]);
+
+    return distanceAlongRoute / totalLength_;
 }
 
 double Route::getProgressProjectionLERP(const Point<double>& queryPoint, bool capture) {

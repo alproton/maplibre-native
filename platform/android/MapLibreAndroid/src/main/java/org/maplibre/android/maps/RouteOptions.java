@@ -9,6 +9,7 @@ final public class RouteOptions {
     public int innerClipColor;
     public double outerWidth = 10;
     public double innerWidth = 6;
+    public boolean useMercatorProjections = false;
 
     public String layerBefore;
     public boolean useDynamicWidths = false;
