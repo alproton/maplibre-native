@@ -22,6 +22,7 @@ struct ShaderSource<BuiltIn::LineGradientShader, gfx::Backend::Type::OpenGL> {
 
 layout (location = 0) in vec2 a_pos_normal;
 layout (location = 1) in vec4 a_data;
+layout (location = 2) in float a_line_so_far;
 
 layout (std140) uniform GlobalPaintParamsUBO {
     highp vec2 u_pattern_atlas_texsize;
@@ -67,6 +68,7 @@ out float v_gamma_scale;
 out highp float v_lineprogress;
 flat out highp float v_line_clip;
 flat out vec4 v_clip_color;
+out highp float v_line_so_far;
 
 #ifndef HAS_UNIFORM_u_blur
 layout (location = 2) in lowp vec2 a_blur;
@@ -121,7 +123,7 @@ mediump float width = u_width;
     float a_direction = mod(a_data.z, 4.0) - 1.0;
 
     v_lineprogress = (floor(a_data.z / 4.0) + a_data.w * 64.0) * 2.0 / MAX_LINE_DISTANCE;
-
+    v_line_so_far = a_line_so_far;
     vec2 pos = floor(a_pos_normal * 0.5);
 
     // x is 1 if it's a round cap, 0 otherwise
@@ -185,6 +187,7 @@ in float v_gamma_scale;
 in highp float v_lineprogress;
 flat in highp float v_line_clip;
 flat in vec4 v_clip_color;
+in highp float v_line_so_far;
 
 #ifndef HAS_UNIFORM_u_blur
 in lowp float blur;
@@ -214,9 +217,13 @@ lowp float opacity = u_opacity;
     // scaled to [0, 2^15), and the gradient ramp is stored in a texture.
     vec4 color = texture(u_image, vec2(v_lineprogress, 0.5));
 
-    if(v_lineprogress < v_line_clip) {
+    if(v_line_so_far <= v_line_clip) {
         color = v_clip_color;
     }
+
+    //color = vec4(v_lineprogress, 0.0f, 0.0f, 1.0f);
+    //color = vec4(v_line_so_far, 0.0f, 0.0f, 1.0f);
+    //color.a = v_line_so_far;
 
     fragColor = color * (alpha * opacity);
 

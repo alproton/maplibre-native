@@ -32,6 +32,8 @@ public:
                     std::size_t,
                     const CanonicalTileID&) override;
 
+    void setRouteBucket(bool isBucketForRoute) override { isRouteBucket = isBucketForRoute; }
+
     bool hasData() const override;
 
     void upload(gfx::UploadPass&) override;
@@ -64,6 +66,7 @@ private:
 
     const float zoom;
     const uint32_t overscaling;
+    bool isRouteBucket = false;
 };
 
 } // namespace mbgl

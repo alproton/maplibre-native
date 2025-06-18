@@ -1651,6 +1651,7 @@ jint NativeMapView::routeCreate(JNIEnv& env,
                                 jdouble innerWidth,
                                 const jni::String& layerbefore,
                                 jboolean useDynamicWidths,
+                                jboolean useMercatorProjections,
                                 const jni::Array<jdouble>& outerDynamicWidthZooms,
                                 const jni::Array<jdouble>& outerDynamicWidths,
                                 const jni::Array<jdouble>& innerDynamicWidthZooms,
@@ -1689,6 +1690,7 @@ jint NativeMapView::routeCreate(JNIEnv& env,
             routeOptions.outerWidth = outerWidth;
             routeOptions.innerWidth = innerWidth;
             routeOptions.useDynamicWidths = useDynamicWidths;
+            routeOptions.useMercatorProjection = useMercatorProjections;
             if (layerbefore) {
                 routeOptions.layerBefore = jni::Make<std::string>(env, layerbefore);
             }
@@ -1839,7 +1841,7 @@ jboolean NativeMapView::routeLoadCapture(JNIEnv& env, const jni::String& capture
 
 jboolean NativeMapView::routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue) {
     if (routeMgr) {
-        return routeMgr->captureScrubRoute(scrubValue);
+        return routeMgr->captureScrubRoute(scrubValue, {});
     }
 
     return false;

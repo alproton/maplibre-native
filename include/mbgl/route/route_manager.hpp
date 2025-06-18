@@ -30,6 +30,12 @@ struct RouteMgrStats {
     double avgRouteVanishingElapsedMillis = 0.0;
 };
 
+struct ScrubOptions {
+    // if there is no recorded points or percents, then use scrub value as a % on the route to get a point and
+    // then use that point to get back a % value to set on the route.
+    bool fallbackPoint = true;
+};
+
 /***
  * A route manager manages construction, disposal and updating of one or more routes. It is the API facade and is 1:1
  *with a map view. You can create and mutate multiple routes as many times and after you're done with mutating routes,
@@ -65,6 +71,7 @@ public:
     bool routeSetProgressPercent(const RouteID&, double progress);
     double routeSetProgressPoint(const RouteID&, const Point<double>& progressPoint, const Precision& precision);
     void setUseRouteSegmentIndexFractions(bool useFractions);
+    double getTotalDistance(const RouteID& routeID);
     Point<double> getPoint(const RouteID& routeID,
                            double percent,
                            const Precision& precision,
@@ -81,7 +88,10 @@ public:
     std::string getBaseGeoJSONsourceName(const RouteID& routeID) const;
     std::string captureSnapshot() const;
     bool loadCapture(const std::string& capture);
-    bool captureScrubRoute(double scrubValue, Point<double>* optPointOut = nullptr, double* optBearingOut = nullptr);
+    bool captureScrubRoute(double scrubValue,
+                           const ScrubOptions& scrubOpts,
+                           Point<double>* optPointOut = nullptr,
+                           double* optBearingOut = nullptr);
     int getTopMost(const std::vector<RouteID>& routeList) const;
     void captureNavStops(bool onOff);
     bool isCaptureNavStopsEnabled() const;

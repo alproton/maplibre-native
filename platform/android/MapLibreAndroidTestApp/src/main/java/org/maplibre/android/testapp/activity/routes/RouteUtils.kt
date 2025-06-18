@@ -310,6 +310,7 @@ class RouteUtils {
             routeOptions.outerWidth = 16.0
             routeOptions.innerColor = if (routeMap.size == 0) segmentColors[0] else segmentColors[1]
             routeOptions.outerColor = Color.RED
+            routeOptions.useMercatorProjections = true
 
             val routeID = mapView.createRoute(routeGeometry, routeOptions)
             mapView.finalizeRoutes()

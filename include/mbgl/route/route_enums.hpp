@@ -5,7 +5,8 @@ namespace route {
 
 enum class Precision {
     Coarse,
-    Fine
+    Fine,
+    Mercator
 };
 
 enum class RouteType {

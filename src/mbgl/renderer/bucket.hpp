@@ -54,6 +54,8 @@ public:
 
     virtual bool hasData() const = 0;
 
+    virtual void setRouteBucket([[maybe_unused]] bool isBucketForRoute) {}
+
     virtual float getQueryRadius(const RenderLayer&) const { return 0; };
 
     bool needsUpload() const { return hasData() && !uploaded; }

@@ -24,7 +24,8 @@
 	url = https://github.com/mapbox/eternal.git
 [submodule "vendor/mapbox-base"]
 	path = vendor/mapbox-base
-	url = https://github.com/maplibre/maplibre-native-base.git
+	url = git@github.com:alproton/maplibre-native-base.git
+	branch = rivmain
 [submodule "vendor/googletest"]
 	path = vendor/googletest
 	url = https://github.com/google/googletest.git
