@@ -65,7 +65,10 @@ jni::Local<jni::Array<jni::Object<Feature>>> Feature::convert(jni::JNIEnv& env,
     auto features = jni::Array<jni::Object<Feature>>::New(env, value.size());
 
     for (size_t i = 0; i < value.size(); ++i) {
-        features.Set(env, i, convertFeature(env, static_cast<mbgl::GeoJSONFeature>(value.at(i))));
+        const mbgl::Feature& feature = value.at(i);
+        mbgl::GeoJSONFeature geojsonFeature = static_cast<mbgl::GeoJSONFeature>(feature);
+        geojsonFeature.properties["sourceLayer"] = feature.sourceLayer;
+        features.Set(env, i, convertFeature(env, geojsonFeature));
     }
 
     return features;

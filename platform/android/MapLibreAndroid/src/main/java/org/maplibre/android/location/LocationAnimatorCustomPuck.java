@@ -102,23 +102,22 @@ final class LocationAnimatorCustomPuck {
           targetPuckLocation = new StampedLatLon(currentPuckLocation);
         }
 
-        // Make sure the style is loaded before rendering the puck
-        if (mapView == null
-            || mapView.getMapLibreMap() == null
-            || mapView.getMapLibreMap().getStyle() == null
-            || !mapView.getMapLibreMap().getStyle().isFullyLoaded()) {
-          return;
-        }
-
         // Get a handler that can be used to post to the main thread
         Handler mainHandler = new Handler(context.getMainLooper());
 
         Runnable myRunnable = new Runnable() {
           @Override
           public void run() {
-            locationLayerRenderer.setLatLng(new LatLng(location.lat, location.lon));
-            locationLayerRenderer.setGpsBearing((float)(location.bearing));
-            locationLayerRenderer.hide();
+            // Make sure the style is loaded before using locationLayerRenderer
+            if (mapView != null
+                && mapView.getMapLibreMap() != null
+                && mapView.getMapLibreMap().getStyle() != null
+                && mapView.getMapLibreMap().getStyle().isFullyLoaded()) {
+              locationLayerRenderer.setLatLng(new LatLng(location.lat, location.lon));
+              locationLayerRenderer.setGpsBearing((float)(location.bearing));
+              locationLayerRenderer.hide();
+            }
+
             if (locationCameraController.isLocationTracking()) {
               locationCameraController.setLatLng(new LatLng(location.lat, location.lon));
             }
@@ -131,13 +130,15 @@ final class LocationAnimatorCustomPuck {
             }
 
             boolean tracking = locationCameraController.isLocationTracking() && !locationCameraController.isTransitioning();
-            mapView.setCustomPuckState(
-              location.lat,
-              location.lon,
-              location.bearing,
-              customPuckAnimationOptions.iconScale,
-              tracking);
-          }
+            if (mapView != null) {
+                mapView.setCustomPuckState(
+                location.lat,
+                location.lon,
+                location.bearing,
+                customPuckAnimationOptions.iconScale,
+                tracking);
+              }
+            }
         };
         mainHandler.post(myRunnable);
       }
