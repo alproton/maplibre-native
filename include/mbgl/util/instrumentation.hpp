@@ -107,6 +107,41 @@ constexpr const char* tracyConstMemoryLabel = "Constant Buffer Memory";
 
 #else // MLN_TRACY_ENABLE
 
+#include <chrono>
+#include <string>
+#include <mbgl/util/logging.hpp>
+
+class InstrumentationZoneTimer {
+public:
+    InstrumentationZoneTimer(std::string zoneName_)
+        : zoneName(std::move(zoneName_)),
+          start(std::chrono::high_resolution_clock::now()) {}
+    ~InstrumentationZoneTimer() {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        if (duration.count() > 100) {
+            mbgl::Log::Debug(mbgl::Event::General,
+                             "###################################@@@ " + zoneName + " : " +
+                                 std::to_string(duration.count()) + " ms");
+        }
+    }
+
+private:
+    std::string zoneName;
+    std::chrono::high_resolution_clock::time_point start;
+};
+
+#define COMBINE_VAR_NAME1(X, Y) X##Y
+#define COMBINE_VAR_NAME(X, Y) COMBINE_VAR_NAME1(X, Y)
+
+#define MLN_TRACE_FUNC()                                               \
+    InstrumentationZoneTimer COMBINE_VAR_NAME(_ZoneTimer__, __LINE__)( \
+        std::string(__PRETTY_FUNCTION__) + " @ " + std::to_string(__LINE__) + " in " + std::string(__FILE__))
+#define MLN_TRACE_ZONE(label)                                                                           \
+    InstrumentationZoneTimer COMBINE_VAR_NAME(                                                          \
+        _ZoneTimer__, __LINE__)(std::string(#label) + "  " + std::string(__PRETTY_FUNCTION__) + " @ " + \
+                                std::to_string(__LINE__) + " in " + std::string(__FILE__))
+
 #define MLN_TRACE_GL_CONTEXT() ((void)0)
 #define MLN_TRACE_GL_ZONE(label) ((void)0)
 #define MLN_ZONE_TEXT(label) ((void)0)
@@ -124,7 +159,7 @@ constexpr const char* tracyConstMemoryLabel = "Constant Buffer Memory";
 #define MLN_TRACE_FREE_INDEX_BUFFER(id) ((void)0)
 #define MLN_TRACE_ALLOC_CONST_BUFFER(id, size) ((void)0)
 #define MLN_TRACE_FREE_CONST_BUFFER(id) ((void)0)
-#define MLN_TRACE_FUNC() ((void)0)
-#define MLN_TRACE_ZONE(label) ((void)0)
+// #define MLN_TRACE_FUNC() ((void)0)
+// #define MLN_TRACE_ZONE(label) ((void)0)
 
 #endif // MLN_TRACY_ENABLE

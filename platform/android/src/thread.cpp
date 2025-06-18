@@ -16,6 +16,11 @@ namespace platform {
 thread_local static JNIEnv* env;
 thread_local static bool detach;
 
+namespace {
+constexpr bool FORCE_ALWAYS_HIGH_PRIORITY = false;
+constexpr bool FORCE_ALWAYS_LOW_PRIORITY = false;
+} // namespace
+
 std::string getCurrentThreadName() {
     char name[32] = "unknown";
 
@@ -33,6 +38,11 @@ void setCurrentThreadName(const std::string& name) {
 }
 
 void makeThreadLowPriority() {
+    if (FORCE_ALWAYS_HIGH_PRIORITY) {
+        makeThreadHighPriority();
+        return;
+    }
+
     // ANDROID_PRIORITY_LOWEST = 19
     //
     // Supposedly would set the priority for the whole process, but
@@ -41,6 +51,11 @@ void makeThreadLowPriority() {
 }
 
 void makeThreadHighPriority() {
+    if (FORCE_ALWAYS_LOW_PRIORITY) {
+        makeThreadLowPriority();
+        return;
+    }
+
     // ANDROID_PRIORITY_HIGHEST = -20
     //
     // Supposedly would set the priority for the whole process, but
@@ -53,6 +68,15 @@ double getCurrentThreadPriority() {
 }
 
 void setCurrentThreadPriority(double priority) {
+    if (FORCE_ALWAYS_LOW_PRIORITY) {
+        makeThreadLowPriority();
+        return;
+    }
+    if (FORCE_ALWAYS_HIGH_PRIORITY) {
+        makeThreadHighPriority();
+        return;
+    }
+
     if (priority < -20 || priority > 19) {
         Log::Warning(Event::General, "Couldn't set thread priority");
         return;
