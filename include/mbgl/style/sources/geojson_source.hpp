@@ -24,7 +24,6 @@ struct GeoJSONOptions {
     uint16_t buffer = 128;
     double tolerance = 0.375;
     bool lineMetrics = false;
-    bool disableBufferForLineMetrics = false;
 
     // Supercluster options
     bool cluster = false;
