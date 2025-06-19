@@ -4,6 +4,7 @@
 #include <mbgl/storage/response.hpp>
 #include <mbgl/util/client_options.hpp>
 #include <mbgl/util/logging.hpp>
+#include <mbgl/util/instrumentation.hpp>
 
 #include <mbgl/util/async_request.hpp>
 #include <mbgl/util/async_task.hpp>
@@ -13,6 +14,8 @@
 
 #include <jni/jni.hpp>
 #include "attach_env.hpp"
+
+#include <chrono>
 
 namespace mbgl {
 
@@ -61,6 +64,8 @@ private:
     Response response;
 
     util::AsyncTask async{[this] {
+        MLN_TRACE_FUNC();
+
         // Calling `callback` may result in deleting `this`. Copy data to temporaries first.
         auto callback_ = callback;
         auto response_ = response;
@@ -70,6 +75,8 @@ private:
     static const int connectionError = 0;
     static const int temporaryError = 1;
     static const int permanentError = 2;
+
+    std::chrono::high_resolution_clock::time_point start;
 };
 
 namespace android {
@@ -90,7 +97,10 @@ void RegisterNativeHTTPRequest(jni::JNIEnv& env) {
 
 HTTPRequest::HTTPRequest(jni::JNIEnv& env, const Resource& resource_, FileSource::Callback callback_)
     : resource(resource_),
-      callback(callback_) {
+      callback(callback_),
+      start(std::chrono::high_resolution_clock::now()) {
+    MLN_TRACE_FUNC();
+
     std::string dataRangeStr;
     std::string etagStr;
     std::string modifiedStr;
@@ -124,6 +134,8 @@ HTTPRequest::HTTPRequest(jni::JNIEnv& env, const Resource& resource_, FileSource
 }
 
 HTTPRequest::~HTTPRequest() {
+    MLN_TRACE_FUNC();
+
     android::UniqueEnv env = android::AttachEnv();
 
     static auto& javaClass = jni::Class<HTTPRequest>::Singleton(*env);
@@ -142,6 +154,16 @@ void HTTPRequest::onResponse(jni::JNIEnv& env,
                              const jni::String& jXRateLimitReset,
                              const jni::Array<jni::jbyte>& body) {
     using Error = Response::Error;
+
+    MLN_TRACE_FUNC();
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    if (duration.count() > 5) {
+        mbgl::Log::Error(mbgl::Event::General,
+                         "###################################@@@ Got HTTP response after " +
+                             std::to_string(duration.count()) + " ms");
+    }
 
     if (etag) {
         response.etag = jni::Make<std::string>(env, etag);
@@ -198,6 +220,8 @@ void HTTPRequest::onResponse(jni::JNIEnv& env,
 }
 
 void HTTPRequest::onFailure(jni::JNIEnv& env, int type, const jni::String& message) {
+    MLN_TRACE_FUNC();
+
     std::string messageStr = jni::Make<std::string>(env, message);
 
     using Error = Response::Error;
@@ -222,22 +246,32 @@ HTTPFileSource::HTTPFileSource(const ResourceOptions& resourceOptions, const Cli
 HTTPFileSource::~HTTPFileSource() = default;
 
 std::unique_ptr<AsyncRequest> HTTPFileSource::request(const Resource& resource, Callback callback) {
+    MLN_TRACE_FUNC();
+
     return std::make_unique<HTTPRequest>(*impl->env, resource, callback);
 }
 
 void HTTPFileSource::setResourceOptions(ResourceOptions options) {
+    MLN_TRACE_FUNC();
+
     impl->setResourceOptions(options.clone());
 }
 
 ResourceOptions HTTPFileSource::getResourceOptions() {
+    MLN_TRACE_FUNC();
+
     return impl->getResourceOptions();
 }
 
 void HTTPFileSource::setClientOptions(ClientOptions options) {
+    MLN_TRACE_FUNC();
+
     impl->setClientOptions(options.clone());
 }
 
 ClientOptions HTTPFileSource::getClientOptions() {
+    MLN_TRACE_FUNC();
+
     return impl->getClientOptions();
 }
 

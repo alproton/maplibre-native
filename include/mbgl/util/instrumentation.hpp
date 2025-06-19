@@ -121,8 +121,8 @@ public:
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
         if (duration.count() > 100) {
             mbgl::Log::Error(mbgl::Event::General,
-                             "###################################@@@ " + zoneName + " : " +
-                                 std::to_string(duration.count()) + " ms");
+                             "###################################@@@ " + zoneName +
+                                 " :: " + std::to_string(duration.count()) + " ms");
         }
     }
 
@@ -136,7 +136,7 @@ private:
 
 #define MLN_TRACE_FUNC()                                               \
     InstrumentationZoneTimer COMBINE_VAR_NAME(_ZoneTimer__, __LINE__)( \
-        std::string(__PRETTY_FUNCTION__) + " @ " + std::to_string(__LINE__) + " in " + std::string(__FILE__))
+        std::string(__FILE__) + ":" + std::string(__PRETTY_FUNCTION__) + ":" + std::to_string(__LINE__))
 #define MLN_TRACE_ZONE(label)                                                                           \
     InstrumentationZoneTimer COMBINE_VAR_NAME(                                                          \
         _ZoneTimer__, __LINE__)(std::string(#label) + "  " + std::string(__PRETTY_FUNCTION__) + " @ " + \

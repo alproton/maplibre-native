@@ -4,6 +4,7 @@
 #include <mbgl/storage/response.hpp>
 #include <mbgl/util/client_options.hpp>
 #include <mbgl/util/logging.hpp>
+#include <mbgl/util/instrumentation.hpp>
 
 #include <mbgl/util/util.hpp>
 #include <mbgl/util/run_loop.hpp>
@@ -108,6 +109,8 @@ private:
 HTTPFileSource::Impl::Impl(const ResourceOptions &resourceOptions_, const ClientOptions &clientOptions_)
     : resourceOptions(resourceOptions_.clone()),
       clientOptions(clientOptions_.clone()) {
+    MLN_TRACE_FUNC();
+
     if (curl_global_init(CURL_GLOBAL_ALL)) {
         throw std::runtime_error("Could not init cURL");
     }
@@ -122,6 +125,8 @@ HTTPFileSource::Impl::Impl(const ResourceOptions &resourceOptions_, const Client
 }
 
 HTTPFileSource::Impl::~Impl() {
+    MLN_TRACE_FUNC();
+
     while (!handles.empty()) {
         curl_easy_cleanup(handles.front());
         handles.pop();
@@ -137,6 +142,8 @@ HTTPFileSource::Impl::~Impl() {
 }
 
 CURL *HTTPFileSource::Impl::getHandle() {
+    MLN_TRACE_FUNC();
+
     if (!handles.empty()) {
         auto handle = handles.front();
         handles.pop();
@@ -147,11 +154,15 @@ CURL *HTTPFileSource::Impl::getHandle() {
 }
 
 void HTTPFileSource::Impl::returnHandle(CURL *handle) {
+    MLN_TRACE_FUNC();
+
     curl_easy_reset(handle);
     handles.push(handle);
 }
 
 void HTTPFileSource::Impl::checkMultiInfo() {
+    MLN_TRACE_FUNC();
+
     CURLMsg *message = nullptr;
     int pending = 0;
 
@@ -172,6 +183,8 @@ void HTTPFileSource::Impl::checkMultiInfo() {
 }
 
 void HTTPFileSource::Impl::perform(curl_socket_t s, util::RunLoop::Event events) {
+    MLN_TRACE_FUNC();
+
     int flags = 0;
 
     if (events == util::RunLoop::Event::Read) {
@@ -188,6 +201,8 @@ void HTTPFileSource::Impl::perform(curl_socket_t s, util::RunLoop::Event events)
 
 int HTTPFileSource::Impl::handleSocket(
     CURL * /* handle */, curl_socket_t s, int action, void *userp, void * /* socketp */) {
+    MLN_TRACE_FUNC();
+
     assert(userp);
     auto context = reinterpret_cast<Impl *>(userp);
 
@@ -221,6 +236,8 @@ int HTTPFileSource::Impl::handleSocket(
 }
 
 void HTTPFileSource::Impl::onTimeout(Impl *context) {
+    MLN_TRACE_FUNC();
+
     int running_handles;
     CURLMcode error = curl_multi_socket_action(context->multi, CURL_SOCKET_TIMEOUT, 0, &running_handles);
     if (error != CURLM_OK) {
@@ -230,6 +247,8 @@ void HTTPFileSource::Impl::onTimeout(Impl *context) {
 }
 
 int HTTPFileSource::Impl::startTimeout(CURLM * /* multi */, long timeout_ms, void *userp) {
+    MLN_TRACE_FUNC();
+
     assert(userp);
     auto context = reinterpret_cast<Impl *>(userp);
 
@@ -245,6 +264,8 @@ int HTTPFileSource::Impl::startTimeout(CURLM * /* multi */, long timeout_ms, voi
 }
 
 void HTTPFileSource::Impl::setResourceOptions(ResourceOptions options) {
+    MLN_TRACE_FUNC();
+
     std::lock_guard<std::mutex> lock(resourceOptionsMutex);
     resourceOptions = options;
 }
@@ -269,6 +290,8 @@ HTTPRequest::HTTPRequest(HTTPFileSource::Impl *context_, Resource resource_, Fil
       resource(std::move(resource_)),
       callback(std::move(callback_)),
       handle(context->getHandle()) {
+    MLN_TRACE_FUNC();
+
     if (resource.dataRange) {
         const std::string header = std::string("Range: bytes=") + std::to_string(resource.dataRange->first) +
                                    std::string("-") + std::to_string(resource.dataRange->second);
@@ -311,6 +334,8 @@ HTTPRequest::HTTPRequest(HTTPFileSource::Impl *context_, Resource resource_, Fil
 }
 
 HTTPRequest::~HTTPRequest() {
+    MLN_TRACE_FUNC();
+
     if (curl_multi_remove_handle(context->multi, handle) != CURLM_OK) {
         mbgl::Log::Error(mbgl::Event::HttpRequest, "Error removing curl multi handle");
     }
@@ -327,6 +352,8 @@ HTTPRequest::~HTTPRequest() {
 // This function is called when we have new data for a request. We just append
 // it to the string containing the previous data.
 size_t HTTPRequest::writeCallback(void *const contents, const size_t size, const size_t nmemb, void *userp) {
+    MLN_TRACE_FUNC();
+
     assert(userp);
     auto impl = reinterpret_cast<HTTPRequest *>(userp);
 
@@ -344,6 +371,8 @@ size_t HTTPRequest::writeCallback(void *const contents, const size_t size, const
 // of the value, otherwise it returns npos. The comparison of the header is
 // ASCII-case-insensitive.
 size_t headerMatches(const char *const header, const char *const buffer, const size_t length) {
+    MLN_TRACE_FUNC();
+
     const size_t headerLength = strlen(header);
     if (length < headerLength) {
         return std::string::npos;
@@ -356,6 +385,8 @@ size_t headerMatches(const char *const header, const char *const buffer, const s
 }
 
 size_t HTTPRequest::headerCallback(char *const buffer, const size_t size, const size_t nmemb, void *userp) {
+    MLN_TRACE_FUNC();
+
     assert(userp);
     auto baton = reinterpret_cast<HTTPRequest *>(userp);
 
@@ -395,6 +426,8 @@ size_t HTTPRequest::headerCallback(char *const buffer, const size_t size, const 
 }
 
 void HTTPRequest::handleResult(CURLcode code) {
+    MLN_TRACE_FUNC();
+
     // Make sure a response object exists in case we haven't got any headers or content.
     if (!response) {
         response = std::make_unique<Response>();
@@ -459,6 +492,8 @@ HTTPFileSource::HTTPFileSource(const ResourceOptions &resourceOptions, const Cli
 HTTPFileSource::~HTTPFileSource() = default;
 
 std::unique_ptr<AsyncRequest> HTTPFileSource::request(const Resource &resource, Callback callback) {
+    MLN_TRACE_FUNC();
+
     return std::make_unique<HTTPRequest>(impl.get(), resource, callback);
 }
 
