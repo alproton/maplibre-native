@@ -69,7 +69,9 @@ void GLFWGLBackend::enableCustomPuck(bool onOff) {
     customPuckState_.cameraTracking = false;
     customPuckState_.bearing = 0;
     if (onOff) {
-        customPuck->setPuckBitmap(mbgl::decodeImage(mbgl::util::read_file("../../../platform/glfw/assets/puck.png")));
+        customPuck->setPuckStyle("platform/glfw/assets/puck_style.json");
+        customPuck->setPuckVariant("default");
+        customPuck->setPuckIconState("default");
     }
 };
 
