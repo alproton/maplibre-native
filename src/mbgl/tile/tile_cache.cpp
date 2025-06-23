@@ -145,7 +145,7 @@ Tile* TileCache::get(const OverscaledTileID& key) {
     }
 }
 
-std::unique_ptr<Tile> TileCache::pop(const OverscaledTileID& key) {
+std::unique_ptr<Tile> TileCache::pop(OverscaledTileID key) {
     std::unique_ptr<Tile> tile;
 
     const auto it = tiles.find(key);
