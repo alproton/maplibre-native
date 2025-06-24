@@ -140,7 +140,7 @@ private:
     TaggedScheduler threadPool;
     const MailboxData mailboxData;
 
-    std::mutex initialisationMutex;
+    mutable std::mutex initialisationMutex;
     std::shared_ptr<RendererObserver> rendererObserver;
 
     std::unique_ptr<AndroidRendererBackend> backend;
