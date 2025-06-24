@@ -82,6 +82,13 @@ void MapRenderer::reset() {
 }
 
 ActorRef<Renderer> MapRenderer::actor() const {
+    // Make sure we don't return a reference in the middle of a onSurfaceCreated call
+    // No need to lock this before any invoke call to also protect "renderer" and
+    // "backend" objects because the variables are only used after onSurfaceCreated while
+    // rendererRef is used to pass settings from the frontend to the backend
+    std::lock_guard<std::mutex> lock(initialisationMutex);
+
+    assert(rendererRef != nullptr);
     return *rendererRef;
 }
 
