@@ -3,45 +3,93 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Release - MapLibre Native Developer Documentation</title>
+        <title>Using Docker - MapLibre Native Developer Documentation</title>
 
 
         <!-- Custom HTML head -->
+        <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/+esm';
+        
+        const darkThemes = ['ayu', 'navy', 'coal'];
+        const lightThemes = ['light', 'rust'];
+        
+        const classList = document.getElementsByTagName('html')[0].classList;
+        
+        let lastThemeWasLight = true;
+        for (const cssClass of classList) {
+            if (darkThemes.includes(cssClass)) {
+                lastThemeWasLight = false;
+                break;
+            }
+        }
+        
+        const theme = lastThemeWasLight ? 'default' : 'dark';
+        mermaid.initialize({ startOnLoad: true, theme });
+        
+        // Simplest way to make mermaid re-render the diagrams in the new theme is via refreshing the page
+        
+        for (const darkTheme of darkThemes) {
+            document.getElementById(darkTheme).addEventListener('click', () => {
+                if (lastThemeWasLight) {
+                    window.location.reload();
+                }
+            });
+        }
+        
+        for (const lightTheme of lightThemes) {
+            document.getElementById(lightTheme).addEventListener('click', () => {
+                if (!lastThemeWasLight) {
+                    window.location.reload();
+                }
+            });
+        }
+        </script>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="../favicon.svg">
-        <link rel="shortcut icon" href="../favicon.png">
-        <link rel="stylesheet" href="../css/variables.css">
-        <link rel="stylesheet" href="../css/general.css">
-        <link rel="stylesheet" href="../css/chrome.css">
-        <link rel="stylesheet" href="../css/print.css" media="print">
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="../fonts/fonts.css">
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
-        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
-        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="../diff.css">
+        <link rel="stylesheet" href="../../diff.css">
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "../";
+            const path_to_root = "../../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc.js"></script>
+        <script src="../../toc.js"></script>
     </head>
     <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
     <div id="body-container">
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script>
@@ -92,7 +140,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
             </noscript>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -119,7 +167,7 @@
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
                         </ul>
-                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
                             <i class="fa fa-search"></i>
                         </button>
                     </div>
@@ -127,7 +175,7 @@
                     <h1 class="menu-title">MapLibre Native Developer Documentation</h1>
 
                     <div class="right-buttons">
-                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
 
@@ -223,44 +271,54 @@
 }
 
 </style>
-<h1 id="release-maplibre-ios"><a class="header" href="#release-maplibre-ios">Release MapLibre iOS</a></h1>
-<p>We make iOS releases to GitHub (a downloadable XCFramework), the <a href="https://swiftpackageindex.com/maplibre/maplibre-gl-native-distribution">Swift Package Index</a> and <a href="https://cocoapods.org/">CocoaPods</a>. Everyone with write access to the repository is able to make releases using the instructions below.</p>
-<p>Also see the current <a href="../release-policy.html">release policy</a>.</p>
-<h2 id="making-a-release"><a class="header" href="#making-a-release">Making a release</a></h2>
-<ol>
-<li>
-<p>Prepare a PR, see <a href="https://github.com/maplibre/maplibre-native/pull/3193">this PR</a> as an example.</p>
-<ul>
-<li>Update the <a href="https://github.com/maplibre/maplibre-native/blob/main/platform/ios/CHANGELOG.md">changelog</a>. The changelog should contain links to all relevant PRs for iOS since the last release. You can use the script below with a <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">GitHub access token</a> with the <code>public_repo</code> scope. You will need to filter out PRs that do not relate to iOS.
-<pre><code>GITHUB_ACCESS_TOKEN=... node scripts/generate-changelog.mjs ios
+<h1 id="building-with-docker"><a class="header" href="#building-with-docker">Building with Docker</a></h1>
+<p>These steps will allow you to compile code as described <a href="./README.html">here</a> using a Docker container. All the steps should be executed from the root of the repository.</p>
+<div class="mdbook-alerts mdbook-alerts-important">
+<p class="mdbook-alerts-title">
+  <span class="mdbook-alerts-icon"></span>
+  important
+</p>
+<p>Not all platform builds are currently supported. Docker builds are a work in progress.</p>
+</div>
+<div class="mdbook-alerts mdbook-alerts-important">
+<p class="mdbook-alerts-title">
+  <span class="mdbook-alerts-icon"></span>
+  important
+</p>
+<p>You cannot build MapLibre native using both Docker and host methods at the same time. If you want to switch, you need to clean the repository first, e.g. by using this command:</p>
+<pre><code class="language-bash">git clean -dxfi -e .idea -e .clwb -e .vscode
 </code></pre>
-The heading in the changelog must match <code>## &lt;VERSION&gt;</code> exactly, or it will not be picked up. For example, for version 6.0.0:
-<pre><code class="language-md">## 6.0.0
+</div>
+<h3 id="build-docker-image"><a class="header" href="#build-docker-image">Build Docker Image</a></h3>
+<p>You must build your own Docker image, specific with your user and group IDs to ensure file permissions stay correct.</p>
+<pre><code class="language-bash"># Build docker image from the repo __root__
+# Specifying USER_UID and USER_GID allows container to create files with the same owner as the host user,
+# and avoids having to pass -u $(id -u):$(id -g) to docker run.
+docker build \
+  -t maplibre-native-image \
+  --build-arg USER_UID=$(id -u) \
+  --build-arg USER_GID=$(id -g) \
+  -f docker/Dockerfile \
+  docker
 </code></pre>
-</li>
-<li>Update the <code>VERSION</code> file in <code>platform/ios/VERSION</code> with the version to be released. We use <a href="https://semver.org/">semantic versioning</a>, so any breaking changes require a major version bump. Use a minor version bump when functionality has been added in a backward compatible manner, and a patch version bump when the release contains only backward compatible bug fixes.</li>
-</ul>
-</li>
-<li>
-<p>Once the PR is merged the <code>ios-ci.yml</code> workflow will detect that the <code>VERSION</code> file is changed, and a release will be made automatically.</p>
-</li>
-</ol>
-<h2 id="pre-release"><a class="header" href="#pre-release">Pre-release</a></h2>
-<p>Run the <code>ios-ci</code> workflow. You can use the <a href="https://cli.github.com/manual/gh_workflow_run">GitHub CLI</a>:</p>
-<pre><code>gh workflow run ios-ci.yml -f release=pre --ref main
+<h2 id="run-docker-container"><a class="header" href="#run-docker-container">Run Docker Container</a></h2>
+<pre><code class="language-bash"># Run all build commands using the docker container.
+# You can also execute build commands from inside the docker container by starting it without the build command.
+docker run --rm -it -v "$PWD:/app/" -v "$PWD/docker/.cache:/home/ubuntu/.cache" maplibre-native-image
 </code></pre>
-<p>Or run the workflow from the Actions tab on GitHub.</p>
-<p>The items under the <code>## main</code> heading in <code>platform/ios/CHANGELOG.md</code> will be used as changelog for the pre-release.</p>
+<p>You can also use the container to run just one specific commands, e.g. <code>cmake</code> or <code>bazel</code>. Any downloaded dependencies will be cached in the <code>docker/.cache</code> directory.</p>
+<pre><code class="language-bash">docker run --rm -it -v "$PWD:/app/" -v "$PWD/docker/.cache:/home/ubuntu/.cache" maplibre-native-image cmake ...
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../ios/ios-documentation.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../platforms/linux/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../ios/dev-apps.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../release-policy.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -270,11 +328,11 @@ The heading in the changelog must match <code>## &lt;VERSION&gt;</code> exactly,
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../ios/ios-documentation.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../platforms/linux/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../ios/dev-apps.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../release-policy.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -289,13 +347,13 @@ The heading in the changelog must match <code>## &lt;VERSION&gt;</code> exactly,
         </script>
 
 
-        <script src="../elasticlunr.min.js"></script>
-        <script src="../mark.min.js"></script>
-        <script src="../searcher.js"></script>
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
 
-        <script src="../clipboard.min.js"></script>
-        <script src="../highlight.js"></script>
-        <script src="../book.js"></script>
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
 
         <!-- Custom JS scripts -->
 
