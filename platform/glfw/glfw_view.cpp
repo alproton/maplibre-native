@@ -1501,7 +1501,7 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
             feet_percent_step_ = 1.0 / totalRouteDistFeet;
         }
 
-        std::cout << "feet_step_percent: " << std::to_string(feet_percent_step_) << std::endl;
+        //        std::cout << "feet_step_percent: " << std::to_string(feet_percent_step_) << std::endl;
     }
 }
 

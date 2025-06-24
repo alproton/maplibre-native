@@ -635,7 +635,7 @@ double Route::getProgressPercent(const Point<double>& progressPoint, const Preci
     // TODO: refactor to a better such that we can co
     if (routeOptions_.useMercatorProjection || precision == Precision::Mercator) {
         percentage = getProgressProjectionMerc(progressPoint, capture);
-        std::cout << "merc percentage: " << percentage << std::endl;
+        // std::cout << "merc percentage: " << percentage << std::endl;
     } else {
         switch (precision) {
             case Precision::Coarse: {
