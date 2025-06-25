@@ -647,7 +647,8 @@ void PolylineGenerator<PLV, PS>::addCurrentVertex(const GeometryCoordinate& curr
     if (popts.isRoutePath) {
         relativeDistance = distanceInMeters / popts.totalInMeters;
         total = popts.totalInMeters;
-        vertexAttribLineSoFar = lineDistances->routeDistance(distanceInMeters, popts.totalInMeters);
+        // vertexAttribLineSoFar = lineDistances->routeDistance(distanceInMeters, popts.totalInMeters);
+        vertexAttribLineSoFar = lineDistances->unscaledDistance(distance);
         inVertexShader = vertexAttribLineSoFar;
     } else {
         relativeDistance = lineDistances ? distance / lineDistances->total : -1.0;
@@ -726,11 +727,12 @@ void PolylineGenerator<PLV, PS>::addPieSliceVertex(const GeometryCoordinate& cur
         distance = lineDistances->scaleToMaxLineDistance(distance);
     }
 
-    // double unscaledDistance = lineDistances ? lineDistances->unscaledDistance(distance) : distance/32767.0;
-    // float unscaledDistanceF = static_cast<float>(unscaledDistance);
-    double vertexAttribLineSoFar = popts.isRoutePath
-                                       ? lineDistances->routeDistance(distanceInMeters, popts.totalInMeters)
-                                       : 0.0;
+    double unscaledDistance = lineDistances ? lineDistances->unscaledDistance(distance) : distance / 32767.0;
+    float unscaledDistanceF = static_cast<float>(unscaledDistance);
+    // double vertexAttribLineSoFar = popts.isRoutePath ? lineDistances->routeDistance(distanceInMeters,
+    // popts.totalInMeters) : 0.0;
+    double vertexAttribLineSoFar = popts.isRoutePath ? unscaledDistanceF : 0.0;
+
     float lineSoFar = popts.isRoutePath ? vertexAttribLineSoFar : distance * LINE_DISTANCE_SCALE;
     vertices.emplace_back(layoutVertex(currentVertex, flippedExtrude, false, lineTurnsLeft, 0, lineSoFar));
     e3 = vertices.elements() - 1 - startVertex;

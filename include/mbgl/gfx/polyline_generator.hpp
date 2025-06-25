@@ -122,7 +122,7 @@ private:
     CreateSegmentFunc createSegment;
     GetSegmentFunc getSegment;
     Indexes& indexes;
-    const bool logVertices = false;
+    const bool logVertices = true;
 
     std::ptrdiff_t e1;
     std::ptrdiff_t e2;

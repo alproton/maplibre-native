@@ -1495,13 +1495,13 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
         double totalRouteDistMeters = rmptr_->getTotalDistance(vanishingRouteID_);
         bool useMercator = true;
         if (useMercator) {
-            feet_percent_step_ = 0.000000076;
+            feet_percent_step_ = 1e-6;
         } else {
             double totalRouteDistFeet = totalRouteDistMeters * 3.28084; // Convert meters to feet
             feet_percent_step_ = 1.0 / totalRouteDistFeet;
         }
 
-        //        std::cout << "feet_step_percent: " << std::to_string(feet_percent_step_) << std::endl;
+        std::cout << "feet_step_percent: " << std::to_string(feet_percent_step_) << std::endl;
     }
 }
 
@@ -1532,7 +1532,7 @@ void GLFWView::scrubNavStops([[maybe_unused]] bool forward) {
         testPercent_ += forward ? (feet_percent_step_ * feet_percent_step_multiplier)
                                 : (-feet_percent_step_ * feet_percent_step_multiplier);
         testPercent_ = std::clamp(testPercent_, 0.0, 1.0);
-        // std::cout << "testPercent_: " << std::to_string(testPercent_) << std::endl;
+        std::cout << "testPercent_: " << std::to_string(testPercent_) << std::endl;
 
         rmptr_->captureScrubRoute(testPercent_, {true}, &navstop, &bearing);
         setPuckLocation(navstop.y, navstop.x, bearing);
