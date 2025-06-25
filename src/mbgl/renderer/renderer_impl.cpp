@@ -423,7 +423,16 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         parameters.currentLayer = static_cast<uint32_t>(orchestrator.numLayerGroups()) - 1;
         orchestrator.visitLayerGroups([&](LayerGroupBase& layerGroup) {
             drawCustomDots(layerGroup.getName());
+
+            if (layerGroup.getName().rfind("base_route_layer", 0) == 0 ||
+                layerGroup.getName().rfind("active_route_layer", 0) == 0) {
+                context.disableStencil = true;
+            }
+
             layerGroup.render(orchestrator, parameters);
+
+            context.disableStencil = false;
+
             if (parameters.currentLayer > 0) {
                 parameters.currentLayer--;
             }
@@ -438,7 +447,13 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
             parameters.currentLayer = i;
             const RenderItem& item = *it;
             if (item.hasRenderPass(parameters.pass)) {
+                if (item.getName().rfind("base_route_layer", 0) == 0 ||
+                    item.getName().rfind("active_route_layer", 0) == 0) {
+                    context.disableStencil = true;
+                }
+
                 item.render(parameters);
+                context.disableStencil = false;
             }
         }
     };

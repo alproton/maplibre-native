@@ -803,9 +803,39 @@ std::shared_ptr<gl::Fence> Context::getCurrentFrameFence() const {
 }
 #endif
 
+class ScopedGlStates final {
+public:
+    ScopedGlStates() {
+        // Save states
+        MBGL_CHECK_ERROR(glGetBooleanv(GL_DEPTH_TEST, &depthTestEnabled));
+        MBGL_CHECK_ERROR(glGetBooleanv(GL_STENCIL_TEST, &stencilTestEnabled));
+    }
+
+    ~ScopedGlStates() {
+        // Restore states
+        enableGlSate(GL_DEPTH_TEST, depthTestEnabled);
+        enableGlSate(GL_STENCIL_TEST, stencilTestEnabled);
+    }
+
+private:
+    void enableGlSate(GLenum state, GLboolean enabled) {
+        if (enabled) {
+            MBGL_CHECK_ERROR(glEnable(state));
+        } else {
+            MBGL_CHECK_ERROR(glDisable(state));
+        }
+    }
+
+private:
+    GLboolean depthTestEnabled = false;
+    GLboolean stencilTestEnabled = false;
+};
+
 void Context::draw(const gfx::DrawMode& drawMode, std::size_t indexOffset, std::size_t indexLength) {
     MLN_TRACE_FUNC();
     MLN_TRACE_FUNC_GL();
+
+    ScopedGlStates save_states;
 
     switch (drawMode.type) {
         case gfx::DrawModeType::Points:
@@ -817,6 +847,11 @@ void Context::draw(const gfx::DrawMode& drawMode, std::size_t indexOffset, std::
             break;
         default:
             break;
+    }
+
+    if (disableStencil) {
+        MBGL_CHECK_ERROR(glDisable(GL_DEPTH_TEST));
+        MBGL_CHECK_ERROR(glDisable(GL_STENCIL_TEST));
     }
 
     MBGL_CHECK_ERROR(glDrawElements(Enum<gfx::DrawModeType>::to(drawMode.type),

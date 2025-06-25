@@ -745,7 +745,7 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
 
                 case GLFW_KEY_L: {
                     std::string capture_file_name =
-                        "../../../platform/android/MapLibreAndroidTestApp/src/main/res/raw/yosemite_route_capture.json";
+                        "platform/android/MapLibreAndroidTestApp/src/main/res/raw/yosemite_route_capture.json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 

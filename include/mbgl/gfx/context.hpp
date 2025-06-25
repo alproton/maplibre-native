@@ -65,6 +65,7 @@ protected:
           observer(&nullObserver) {}
 
 public:
+    bool disableStencil = false;
     static constexpr const uint32_t minimumRequiredVertexBindingCount = 8;
     const uint32_t maximumVertexBindingCount;
 

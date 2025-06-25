@@ -1010,7 +1010,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
         GeoJSONOptions opts;
         opts.lineMetrics = true;
-        opts.buffer = 4; // empirical value chosen by tests to avoid visual artifacts while having good line so far
+        opts.buffer = 0; // empirical value chosen by tests to avoid visual artifacts while having good line so far
         std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(
             sourceID, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts)));
         geoJSONsrc->setGeoJSON(featureCollection);
