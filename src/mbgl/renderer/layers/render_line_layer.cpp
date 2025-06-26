@@ -508,9 +508,8 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
             drawable->setRenderTile(renderTilesOwner, &tile);
             drawable->setBinders(renderData->bucket, &paintPropertyBinders);
             if (isLayerUsingRoute) {
-                // drawable->setEnableStencil(false);
-                // drawable->setEnableDepth(true);
-                // drawable->setEnableDepth(false);
+                drawable->setEnableStencil(false);
+                drawable->setEnableDepth(false);
             }
             const bool roundCap = bucket.layout.get<LineCap>() == LineCapType::Round;
             const auto capType = roundCap ? LinePatternCap::Round : LinePatternCap::Square;
