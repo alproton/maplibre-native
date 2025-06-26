@@ -1010,7 +1010,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
         GeoJSONOptions opts;
         opts.lineMetrics = true;
-        opts.disableBufferForLineMetrics = true;
+        opts.buffer = 0;
         std::unique_ptr<GeoJSONSource> geoJSONsrc = std::make_unique<GeoJSONSource>(
             sourceID, mbgl::makeMutable<mbgl::style::GeoJSONOptions>(std::move(opts)));
         geoJSONsrc->setGeoJSON(featureCollection);
@@ -1028,6 +1028,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
 
         layer->setGradientLineFilter(LineGradientFilterType::Nearest);
         layer->setGradientLineClipColor(clipColor);
+        layer->setIsLayerUsingRoute(true);
 
         if (zoomstops.empty()) {
             layer->setLineWidth(width);

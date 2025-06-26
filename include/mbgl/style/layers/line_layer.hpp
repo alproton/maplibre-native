@@ -121,7 +121,8 @@ public:
     void setGradientLineClipColor(const PropertyValue<Color>&);
     const PropertyValue<Color>& getGradientLineClipColor() const;
 
-
+    void setIsLayerUsingRoute(bool isRouteLayer);
+    bool getIsLayerUsingRoute() const;
     // Private implementation
 
     class Impl;
