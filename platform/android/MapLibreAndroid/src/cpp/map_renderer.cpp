@@ -82,6 +82,13 @@ void MapRenderer::reset() {
 }
 
 ActorRef<Renderer> MapRenderer::actor() const {
+    // Make sure we don't return a reference in the middle of a onSurfaceCreated call
+    // No need to lock this before any invoke call to also protect "renderer" and
+    // "backend" objects because the variables are only used after onSurfaceCreated while
+    // rendererRef is used to pass settings from the frontend to the backend
+    std::lock_guard<std::mutex> lock(initialisationMutex);
+
+    assert(rendererRef != nullptr);
     return *rendererRef;
 }
 
@@ -133,6 +140,18 @@ void MapRenderer::requestRender() {
         auto weakReference = javaPeer.get(*_env);
         if (weakReference) {
             weakReference.Call(*_env, onInvalidate);
+        }
+    } catch (const std::exception& exception) {
+        Log::Error(Event::Android, std::string("MapRenderer::requestRender failed: ") + exception.what());
+    }
+}
+
+void MapRenderer::requestRender(JNIEnv& env, jni::Local<jni::Object<MapRenderer>>& ref) {
+    try {
+        static auto& javaClass = jni::Class<MapRenderer>::Singleton(env);
+        static auto onInvalidate = javaClass.GetMethod<void()>(env, "requestRender");
+        if (ref) {
+            ref.Call(env, onInvalidate);
         }
     } catch (const std::exception& exception) {
         Log::Error(Event::Android, std::string("MapRenderer::requestRender failed: ") + exception.what());

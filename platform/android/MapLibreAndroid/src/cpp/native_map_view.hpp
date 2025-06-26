@@ -445,7 +445,7 @@ public:
     void onSpriteRequested(const std::optional<mbgl::style::Sprite>&) override;
 
 private:
-    std::unique_ptr<AndroidRendererFrontend> rendererFrontend;
+    std::shared_ptr<AndroidRendererFrontend> rendererFrontend;
     std::unique_ptr<mbgl::route::RouteManager> routeMgr;
 
     JavaVM* vm = nullptr;

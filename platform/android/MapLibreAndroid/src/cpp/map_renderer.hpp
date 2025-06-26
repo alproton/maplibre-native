@@ -84,6 +84,7 @@ public:
     void waitForEmpty(const util::SimpleIdentity tag) override;
 
     void requestRender();
+    void requestRender(JNIEnv&, jni::Local<jni::Object<MapRenderer>>&);
 
     // Snapshot - requires a RunLoop on the calling thread
     using SnapshotCallback = std::function<void(PremultipliedImage)>;
@@ -140,7 +141,7 @@ private:
     TaggedScheduler threadPool;
     const MailboxData mailboxData;
 
-    std::mutex initialisationMutex;
+    mutable std::mutex initialisationMutex;
     std::shared_ptr<RendererObserver> rendererObserver;
 
     std::unique_ptr<AndroidRendererBackend> backend;
