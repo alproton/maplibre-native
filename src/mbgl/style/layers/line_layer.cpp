@@ -475,7 +475,21 @@ void LineLayer::setGradientLineClipColor(const PropertyValue<Color>& value) {
     impl_->paint.template get<LineClipColor>().value = value;
     baseImpl = std::move(impl_);
     observer->onLayerChanged(*this);
+}
 
+void LineLayer::setIsLayerUsingRoute(bool isRouteLayer) {
+    if(isRouteLayer == getIsLayerUsingRoute()) {
+        return;
+    }
+
+    auto impl_ = mutableImpl();
+    impl_->isRouteLayer = isRouteLayer;
+    baseImpl = std::move(impl_);
+    observer->onLayerChanged(*this);
+}
+
+bool LineLayer::getIsLayerUsingRoute() const {
+    return impl().isRouteLayer;
 }
 
 const PropertyValue<Color>& LineLayer::getGradientLineClipColor() const {

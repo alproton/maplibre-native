@@ -61,6 +61,10 @@ RenderLineLayer::RenderLineLayer(Immutable<style::LineLayer::Impl> _impl)
     styleDependencies = unevaluated.getDependencies();
 }
 
+bool RenderLineLayer::isLayerUsingRoute() const {
+    return impl_cast(baseImpl).isRouteLayer;
+}
+
 RenderLineLayer::~RenderLineLayer() = default;
 
 void RenderLineLayer::transition(const TransitionParameters& parameters) {
@@ -495,13 +499,19 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
             continue;
         }
 
-        const auto addDrawable = [&](std::unique_ptr<gfx::Drawable>&& drawable, LineLayerTweaker::LineType type) {
+        const auto addDrawable = [&](std::unique_ptr<gfx::Drawable>&& drawable,
+                                     LineLayerTweaker::LineType type,
+                                     bool isLayerUsingRoute = false) {
             drawable->setTileID(tileID);
             drawable->setType(mbgl::underlying_type(type));
             drawable->setLayerTweaker(layerTweaker);
             drawable->setRenderTile(renderTilesOwner, &tile);
             drawable->setBinders(renderData->bucket, &paintPropertyBinders);
-
+            if (isLayerUsingRoute) {
+                // drawable->setEnableStencil(false);
+                // drawable->setEnableDepth(true);
+                // drawable->setEnableDepth(false);
+            }
             const bool roundCap = bucket.layout.get<LineCap>() == LineCapType::Round;
             const auto capType = roundCap ? LinePatternCap::Round : LinePatternCap::Square;
             drawable->setData(std::make_unique<gfx::LineDrawableData>(capType));
@@ -646,7 +656,7 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
 
                 builder->flush(context);
                 for (auto& drawable : builder->clearDrawables()) {
-                    addDrawable(std::move(drawable), LineLayerTweaker::LineType::Gradient);
+                    addDrawable(std::move(drawable), LineLayerTweaker::LineType::Gradient, isLayerUsingRoute());
                 }
             }
         } else {
