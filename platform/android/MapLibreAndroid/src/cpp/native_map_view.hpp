@@ -400,6 +400,12 @@ public:
 
     jni::jint getLastRenderedTileCount(JNIEnv&);
 
+    void setPuckStyle(JNIEnv&, const jni::String& style_file_path);
+
+    void setPuckVariant(JNIEnv&, const jni::String& variant);
+
+    void setPuckIconState(JNIEnv&, const jni::String& state);
+
     void setCustomDotsNextLayer(JNIEnv&, const jni::String& layer);
 
     void setCustomDotsPoints(JNIEnv&, jni::jint id, const jni::Object<mbgl::android::geojson::MultiPoint>& points);

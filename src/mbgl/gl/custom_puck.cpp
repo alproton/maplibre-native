@@ -3,6 +3,7 @@
 #include <mbgl/gl/renderer_backend.hpp>
 #include <mbgl/shaders/gl/custom_puck.hpp>
 #include <mbgl/util/instrumentation.hpp>
+#include <mbgl/util/image.hpp>
 #include <mbgl/util/logging.hpp>
 #include <algorithm>
 
@@ -30,7 +31,13 @@ UniqueProgram createPuckShader(gl::Context& context) {
 }
 
 TextureID createTexture(const PremultipliedImage& image) {
-    GLuint texture;
+    TextureID texture = 0;
+    auto storage = image.size.width * image.size.height * 4;
+    if (storage <= 0) {
+        Log::Error(Event::OpenGL, "Invalid image");
+        return texture;
+    }
+    MLN_TRACE_ALLOC_TEXTURE(texture, storage);
     MBGL_CHECK_ERROR(glGenTextures(1, &texture));
     MBGL_CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, texture));
     MBGL_CHECK_ERROR(glTexImage2D(GL_TEXTURE_2D,
@@ -127,36 +134,22 @@ CustomPuck::CustomPuck(gl::Context& context_)
     : context(context_),
       program(createPuckShader(context_)) {}
 
-void CustomPuck::drawImpl(const ScreenQuad& quad) {
+void CustomPuck::drawImpl(const gfx::CustomPuckSampledStyle& style) {
     MLN_TRACE_FUNC();
 
     ScopedGlStates glStates;
 
-    auto bitmap = getPuckBitmap();
-    if (bitmap.valid()) {
-        // Create or recreate the texture because the bitmap has changed
-        if (texture) {
-            MBGL_CHECK_ERROR(glDeleteTextures(1, &texture));
-            context.renderingStats().memTextures -= storage;
-            MLN_TRACE_ALLOC_TEXTURE(texture, storage);
-        }
-        texture = createTexture(bitmap);
-        storage = bitmap.size.width * bitmap.size.height * 4;
-        context.renderingStats().memTextures += storage;
-        MLN_TRACE_ALLOC_TEXTURE(texture, storage);
-    }
-    if (!texture) {
-        // The UI thread has not set the puck bitmap yet
-        // Skip puck rendering in this frame while MapView is being initialized
-        return;
+    if (!style.icons.empty()) {
+        updateTextures(style.icons);
     }
 
-    MBGL_CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, texture));
     MBGL_CHECK_ERROR(glUseProgram(program));
-    for (int i = 0; i < 4; ++i) {
-        MBGL_CHECK_ERROR(glUniform2f(i, static_cast<float>(quad[i].x), static_cast<float>(quad[i].y)));
+    if (!style.icon1.name.empty()) {
+        draw(style.icon1);
     }
-    MBGL_CHECK_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+    if (!style.icon2.name.empty()) {
+        draw(style.icon2);
+    }
 }
 
 gfx::CustomPuckState CustomPuck::getState() {
@@ -164,13 +157,47 @@ gfx::CustomPuckState CustomPuck::getState() {
 }
 
 CustomPuck::~CustomPuck() noexcept {
-    // Only the texture is deleted here when the program ends
+    // Only textures are deleted here when the program ends
     // The shader is deleted by the context
-    if (texture) {
-        MBGL_CHECK_ERROR(glDeleteTextures(1, &texture));
-        context.renderingStats().memTextures -= storage;
-        MLN_TRACE_ALLOC_TEXTURE(texture, storage);
+    updateTextures({});
+}
+
+void CustomPuck::updateTextures(const gfx::CustomPuckIconMap& icons) {
+    // Free previous textures
+    context.renderingStats().memTextures -= storage;
+    storage = 0;
+    for (auto& [name, tex] : textures) {
+        if (tex) {
+            MBGL_CHECK_ERROR(glDeleteTextures(1, &tex));
+            MLN_TRACE_FREE_TEXTURE(tex);
+        }
     }
+    textures.clear();
+
+    // Create new textures
+    for (const auto& [name, path] : icons) {
+        TextureID tex = 0;
+        auto image = mbgl::decodeImage(readFile(path));
+        if (!image.valid()) {
+            Log::Error(Event::OpenGL, "Failed to load puck icon " + path);
+            throw std::runtime_error("Failed to load puck icon " + path);
+        }
+        tex = createTexture(image);
+        storage += image.size.width * image.size.height * 4;
+        textures[name] = tex;
+    }
+    context.renderingStats().memTextures += storage;
+}
+
+void CustomPuck::draw(const gfx::CustomPuckSampledIcon& icon) const {
+    assert(textures.count(icon.name) > 0);
+    auto tex = textures.at(icon.name);
+    MBGL_CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, tex));
+    for (int i = 0; i < 4; ++i) {
+        MBGL_CHECK_ERROR(glUniform2f(i, static_cast<float>(icon.quad[i].x), static_cast<float>(icon.quad[i].y)));
+    }
+    MBGL_CHECK_ERROR(glUniform4f(4, icon.color.r, icon.color.g, icon.color.b, icon.color.a));
+    MBGL_CHECK_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 }
 
 } // namespace gl
