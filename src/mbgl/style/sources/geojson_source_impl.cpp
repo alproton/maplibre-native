@@ -128,7 +128,6 @@ std::shared_ptr<GeoJSONData> GeoJSONData::create(const GeoJSON& geoJSON,
     vtOptions.buffer = static_cast<uint16_t>(::round(scale * options->buffer));
     vtOptions.tolerance = scale * options->tolerance;
     vtOptions.lineMetrics = options->lineMetrics;
-    vtOptions.disableBufferForLineMetrics = options->disableBufferForLineMetrics;
     return std::shared_ptr<GeoJSONData>(new GeoJSONVTData(geoJSON, vtOptions, std::move(sequencedScheduler)));
 }
 

@@ -217,7 +217,7 @@ lowp float opacity = u_opacity;
     // scaled to [0, 2^15), and the gradient ramp is stored in a texture.
     vec4 color = texture(u_image, vec2(v_lineprogress, 0.5));
 
-    if(v_line_so_far <= v_line_clip) {
+    if(v_lineprogress <= v_line_clip) {
         color = v_clip_color;
     }
 

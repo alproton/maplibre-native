@@ -114,7 +114,7 @@ void LineBucket::addGeometry(const GeometryCoordinates& coordinates,
             *numericValue<double>(clip_start_it->second), *numericValue<double>(clip_end_it->second), total_length};
     }
 
-    options.isRoutePath = isRouteBucket;
+    // options.isRoutePath = isRouteBucket;
     options.canonicalTileID = canonical;
     if (isRouteBucket) {
         double total_length_in_meters = 0.0;
