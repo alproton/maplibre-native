@@ -6,12 +6,44 @@
 #include <sys/resource.h>
 
 #include <cassert>
+#include <cctype>
+#include <string>
+#include <sys/system_properties.h>
 #include "jni.hpp"
 
 // Implementation based on Chromium's platform_thread_android.cc.
 
 namespace mbgl {
 namespace platform {
+
+namespace {
+
+std::string androidSysProp(const char* key) {
+    assert(strlen(key) < PROP_NAME_MAX);
+    if (__system_property_find(key) == nullptr) {
+        return "";
+    }
+    char prop[PROP_VALUE_MAX + 1];
+    __system_property_get(key, prop);
+    return prop;
+}
+
+void setThreadPriority(int priority) {
+    auto dbgPriority = androidSysProp("rivian.nav-thread-priority");
+    for (auto& c : dbgPriority) {
+        c = tolower(c);
+    }
+    if (dbgPriority == "low") {
+        priority = 19;
+    } else if (dbgPriority == "high") {
+        priority = -20;
+    } else if (dbgPriority == "none") {
+        return;
+    }
+    setpriority(PRIO_PROCESS, 0, priority);
+}
+
+} // namespace
 
 thread_local static JNIEnv* env;
 thread_local static bool detach;
@@ -37,7 +69,7 @@ void makeThreadLowPriority() {
     //
     // Supposedly would set the priority for the whole process, but
     // on Linux/Android it only sets for the current thread.
-    setpriority(PRIO_PROCESS, 0, 19);
+    setThreadPriority(19);
 }
 
 void makeThreadHighPriority() {
@@ -45,7 +77,7 @@ void makeThreadHighPriority() {
     //
     // Supposedly would set the priority for the whole process, but
     // on Linux/Android it only sets for the current thread.
-    setpriority(PRIO_PROCESS, 0, -20);
+    setThreadPriority(-20);
 }
 
 double getCurrentThreadPriority() {
@@ -57,7 +89,7 @@ void setCurrentThreadPriority(double priority) {
         Log::Warning(Event::General, "Couldn't set thread priority");
         return;
     }
-    setpriority(PRIO_PROCESS, 0, int(priority));
+    setThreadPriority(int(priority));
 }
 
 void attachThread() {

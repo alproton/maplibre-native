@@ -109,6 +109,7 @@ void TileLoader<T>::loadFromCache() {
     tile.onTileAction(TileOperation::RequestedFromCache);
 
     resource.loadingMethod = Resource::LoadingMethod::CacheOnly;
+    resource.renderThreadRequestTime = std::chrono::steady_clock::now();
     request = fileSource->request(resource, [this, shared_{shared}](const Response& res) {
         do {
             if (shared_->requestLock.try_lock_shared()) {
