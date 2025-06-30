@@ -11,6 +11,7 @@
 #include <mbgl/util/string.hpp>
 #include <mbgl/util/util.hpp>
 
+#include <chrono>
 #include <jni/jni.hpp>
 #include "attach_env.hpp"
 
@@ -70,6 +71,8 @@ private:
     static const int connectionError = 0;
     static const int temporaryError = 1;
     static const int permanentError = 2;
+
+    std::chrono::time_point<std::chrono::steady_clock> requestTime;
 };
 
 namespace android {
@@ -90,10 +93,19 @@ void RegisterNativeHTTPRequest(jni::JNIEnv& env) {
 
 HTTPRequest::HTTPRequest(jni::JNIEnv& env, const Resource& resource_, FileSource::Callback callback_)
     : resource(resource_),
-      callback(callback_) {
+      callback(callback_),
+      requestTime(std::chrono::steady_clock::now()) {
     std::string dataRangeStr;
     std::string etagStr;
     std::string modifiedStr;
+
+    auto renderToRequestDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        requestTime - resource.renderThreadRequestTime);
+    if (renderToRequestDuration > std::chrono::milliseconds(100)) {
+        Log::Error(Event::HttpRequest,
+                   "######@@@ " + resource.url +
+                       " Render Thread to HTTP request: " + std::to_string(renderToRequestDuration.count()) + " ms");
+    }
 
     if (resource.dataRange) {
         dataRangeStr = std::string("bytes=") + std::to_string(resource.dataRange->first) + std::string("-") +
@@ -142,6 +154,19 @@ void HTTPRequest::onResponse(jni::JNIEnv& env,
                              const jni::String& jXRateLimitReset,
                              const jni::Array<jni::jbyte>& body) {
     using Error = Response::Error;
+
+    auto responseTime = std::chrono::steady_clock::now();
+    auto requestToResponseDuration = std::chrono::duration_cast<std::chrono::milliseconds>(responseTime - requestTime);
+    auto renderToResponseDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        responseTime - resource.renderThreadRequestTime);
+    if (requestToResponseDuration > std::chrono::milliseconds(400) ||
+        renderToResponseDuration > std::chrono::milliseconds(400)) {
+        Log::Error(Event::HttpRequest,
+                   "######@@@ " + resource.url +
+                       " Render Thread to HTTP response: " + std::to_string(renderToResponseDuration.count()) +
+                       " ms. HTTP Request to HTTP response: " + std::to_string(requestToResponseDuration.count()) +
+                       " ms");
+    }
 
     if (etag) {
         response.etag = jni::Make<std::string>(env, etag);

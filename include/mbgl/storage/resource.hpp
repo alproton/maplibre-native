@@ -5,6 +5,7 @@
 #include <mbgl/util/font_stack.hpp>
 #include <mbgl/util/tileset.hpp>
 
+#include <chrono>
 #include <string>
 #include <optional>
 
@@ -102,6 +103,8 @@ public:
     std::shared_ptr<const std::string> priorData;
     Duration minimumUpdateInterval{Duration::zero()};
     StoragePolicy storagePolicy{StoragePolicy::Permanent};
+
+    std::chrono::time_point<std::chrono::steady_clock> renderThreadRequestTime;
 };
 
 inline bool Resource::hasLoadingMethod(Resource::LoadingMethod method) const {
