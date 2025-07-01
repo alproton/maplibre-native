@@ -69,7 +69,9 @@ void GLFWGLBackend::enableCustomPuck(bool onOff) {
     customPuckState_.cameraTracking = false;
     customPuckState_.bearing = 0;
     if (onOff) {
-        customPuck->setPuckStyle("platform/glfw/assets/puck_style.json");
+        assert(!assetPath.empty() && "Asset path must be set before enabling custom puck.");
+        std::string puckStylePath = assetPath + "puck_style.json";
+        customPuck->setPuckStyle(puckStylePath);
         customPuck->setPuckVariant("default");
         customPuck->setPuckIconState("default");
     }

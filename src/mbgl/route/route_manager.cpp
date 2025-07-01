@@ -576,7 +576,7 @@ bool RouteManager::loadCapture(const std::string& capture) {
                     }
 
                     // TODO: add this to route capture
-                    routeOpts.useMercatorProjection = true;
+                    // routeOpts.useMercatorProjection = true;
                 }
 
                 mbgl::LineString<double> route_geom;
@@ -745,8 +745,8 @@ bool RouteManager::captureScrubRoute(double scrubValue,
             double bearing = 0.0;
             const auto& navstop = getPoint(vanishingRouteID_, scrubValue, Precision::Fine, &bearing);
             if (scrubOpts.fallbackPoint) {
-                std::cout << "merc mode- nav point: " << navstop.x << " " << navstop.y << std::endl;
-                routeSetProgressPoint(vanishingRouteID_, navstop, Precision::Mercator);
+                std::cout << "nav point: " << navstop.x << " " << navstop.y << std::endl;
+                routeSetProgressPoint(vanishingRouteID_, navstop, Precision::Fine);
             } else {
                 routeSetProgressPercent(vanishingRouteID_, scrubValue);
             }
@@ -877,6 +877,7 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
         {
             if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
                 percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, captureNavStops_);
+                std::cout << "Percentage: " << percentage << std::endl;
             }
         }
         auto endTime = std::chrono::high_resolution_clock::now();

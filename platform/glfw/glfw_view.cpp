@@ -354,6 +354,7 @@ GLFWView::GLFWView(bool fullscreen_,
 
     bool capFrameRate = !benchmark; // disable VSync in benchmark mode
     backend = GLFWBackend::Create(window, capFrameRate);
+    backend->assetPath = MLN_ASSETS_PATH;
 
 #if defined(__APPLE__) && !defined(MLN_RENDER_BACKEND_VULKAN)
     int fbW, fbH;
@@ -1065,7 +1066,7 @@ void GLFWView::addRoute() {
     routeOpts.useDynamicWidths = false;
     routeOpts.outerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
-    routeOpts.useMercatorProjection = true;
+    routeOpts.useMercatorProjection = false;
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
     routeMap_[routeID] = route;
@@ -1493,7 +1494,7 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
         setPuckLocation(pt.y, pt.x, bearing);
 
         double totalRouteDistMeters = rmptr_->getTotalDistance(vanishingRouteID_);
-        bool useMercator = true;
+        bool useMercator = false;
         if (useMercator) {
             feet_percent_step_ = 0.000000076;
         } else {
