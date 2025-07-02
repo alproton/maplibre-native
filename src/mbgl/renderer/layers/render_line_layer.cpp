@@ -449,14 +449,6 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                                        gfx::AttributeDataType::UByte4);
             }
 
-            if (const auto& attr = vertexAttrs->set(idLineLineSofarAttribute)) {
-                attr->setSharedRawData(bucket.sharedVertices,
-                                       offsetof(LineLayoutVertex, a3),
-                                       /*vertexOffset=*/0,
-                                       sizeof(LineLayoutVertex),
-                                       gfx::AttributeDataType::Float);
-            }
-
             builder.setVertexAttributes(std::move(vertexAttrs));
         };
 

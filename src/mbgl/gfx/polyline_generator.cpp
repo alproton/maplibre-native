@@ -10,7 +10,6 @@
 #include <mbgl/gfx/drawable_impl.hpp>
 #endif
 
-#include <iostream>
 #include <memory>
 #include <numbers>
 
@@ -57,28 +56,6 @@ double PolylineGeneratorDistances::scaleToMaxLineDistance(double tileDistance) c
         relativeTileDistance = 0.0;
     }
     return (relativeTileDistance * (clipEnd - clipStart) + clipStart) * (MAX_LINE_DISTANCE - 1);
-}
-
-double PolylineGeneratorDistances::unscaledDistance(double tileDistance) const {
-    double relativeTileDistance = tileDistance / total;
-    if (std::isinf(relativeTileDistance) || std::isnan(relativeTileDistance)) {
-        assert(false);
-        relativeTileDistance = 0.0;
-    }
-
-    double unscaled = (relativeTileDistance * (clipEnd - clipStart) + clipStart);
-    return unscaled;
-}
-
-double PolylineGeneratorDistances::routeDistance(double routeDistanceSoFar, double totalRouteDistance) const {
-    double relativeTileDistance = routeDistanceSoFar / totalRouteDistance;
-    if (std::isinf(relativeTileDistance) || std::isnan(relativeTileDistance)) {
-        assert(false);
-        relativeTileDistance = 0.0;
-    }
-
-    double routeDist = (relativeTileDistance * (clipEnd - clipStart) + clipStart);
-    return routeDist;
 }
 
 template <class PLV, class PS>
@@ -146,7 +123,6 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
     const style::LineCapType endCap = options.type == FeatureType::Polygon ? style::LineCapType::Butt : options.endCap;
 
     double distance = 0.0;
-    double distanceInMeters = 0.0;
     bool startOfLine = true;
     std::optional<GeometryCoordinate> currentCoordinate;
     std::optional<GeometryCoordinate> prevCoordinate;
@@ -256,18 +232,15 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
                                                        convertPoint<double>(*currentCoordinate - *prevCoordinate) *
                                                        (sharpCornerOffset / prevSegmentLength)));
                 distance += util::dist<double>(newPrevVertex, *prevCoordinate);
-                distanceInMeters += options.haversineDist(newPrevVertex, *prevCoordinate);
                 addCurrentVertex(newPrevVertex,
                                  distance,
-                                 distanceInMeters,
                                  *prevNormal,
                                  0,
                                  0,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
                 prevCoordinate = newPrevVertex;
             }
         }
@@ -309,7 +282,6 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
         // Calculate how far along the line the currentVertex is
         if (prevCoordinate) {
             distance += util::dist<double>(*currentCoordinate, *prevCoordinate);
-            distanceInMeters += options.haversineDist(*currentCoordinate, *prevCoordinate);
         }
 
         if (middleVertex && currentJoin == style::LineJoinType::Miter) {
@@ -317,15 +289,13 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
 
             addCurrentVertex(*currentCoordinate,
                              distance,
-                             distanceInMeters,
                              joinNormal,
                              0,
                              0,
                              false,
                              startVertex,
                              triangleStore,
-                             options.clipDistances,
-                             options);
+                             options.clipDistances);
 
         } else if (middleVertex && currentJoin == style::LineJoinType::FlipBevel) {
             // miter is too big, flip the direction to make a beveled join
@@ -342,27 +312,23 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
 
             addCurrentVertex(*currentCoordinate,
                              distance,
-                             distanceInMeters,
                              joinNormal,
                              0,
                              0,
                              false,
                              startVertex,
                              triangleStore,
-                             options.clipDistances,
-                             options);
+                             options.clipDistances);
 
             addCurrentVertex(*currentCoordinate,
                              distance,
-                             distanceInMeters,
                              joinNormal * -1.0,
                              0,
                              0,
                              false,
                              startVertex,
                              triangleStore,
-                             options.clipDistances,
-                             options);
+                             options.clipDistances);
         } else if (middleVertex &&
                    (currentJoin == style::LineJoinType::Bevel || currentJoin == style::LineJoinType::FakeRound)) {
             const bool lineTurnsLeft = (prevNormal->x * nextNormal->y - prevNormal->y * nextNormal->x) > 0;
@@ -382,15 +348,13 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
             if (!startOfLine) {
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *prevNormal,
                                  offsetA,
                                  offsetB,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
             }
 
             if (currentJoin == style::LineJoinType::FakeRound) {
@@ -417,13 +381,11 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
                     auto approxFractionalNormal = util::unit(*prevNormal * (1.0 - t) + *nextNormal * t);
                     addPieSliceVertex(*currentCoordinate,
                                       distance,
-                                      distanceInMeters,
                                       approxFractionalNormal,
                                       lineTurnsLeft,
                                       startVertex,
                                       triangleStore,
-                                      options.clipDistances,
-                                      options);
+                                      options.clipDistances);
                 }
             }
 
@@ -431,15 +393,13 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
             if (nextCoordinate) {
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *nextNormal,
                                  -offsetA,
                                  -offsetB,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
             }
 
         } else if (!middleVertex && currentCap == style::LineCapType::Butt) {
@@ -447,30 +407,26 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
                 // Close previous segment with a butt
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *prevNormal,
                                  0,
                                  0,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
             }
 
             // Start next segment with a butt
             if (nextCoordinate) {
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *nextNormal,
                                  0,
                                  0,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
             }
 
         } else if (!middleVertex && currentCap == style::LineCapType::Square) {
@@ -478,15 +434,13 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
                 // Close previous segment with a square cap
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *prevNormal,
                                  1,
                                  1,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
 
                 // The segment is done. Unset vertices to disconnect segments.
                 e1 = e2 = -1;
@@ -496,15 +450,13 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
             if (nextCoordinate) {
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *nextNormal,
                                  -1,
                                  -1,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
             }
 
         } else if (middleVertex ? currentJoin == style::LineJoinType::Round : currentCap == style::LineCapType::Round) {
@@ -512,28 +464,24 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
                 // Close previous segment with a butt
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *prevNormal,
                                  0,
                                  0,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
 
                 // Add round cap or linejoin at end of segment
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *prevNormal,
                                  1,
                                  1,
                                  true,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
 
                 // The segment is done. Unset vertices to disconnect segments.
                 e1 = e2 = -1;
@@ -544,27 +492,23 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
                 // Add round cap before first segment
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *nextNormal,
                                  -1,
                                  -1,
                                  true,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
 
                 addCurrentVertex(*currentCoordinate,
                                  distance,
-                                 distanceInMeters,
                                  *nextNormal,
                                  0,
                                  0,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
             }
         }
 
@@ -576,18 +520,15 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
                                                           convertPoint<double>(*nextCoordinate - *currentCoordinate) *
                                                           (sharpCornerOffset / nextSegmentLength)));
                 distance += util::dist<double>(newCurrentVertex, *currentCoordinate);
-                distanceInMeters += options.haversineDist(newCurrentVertex, *currentCoordinate);
                 addCurrentVertex(newCurrentVertex,
                                  distance,
-                                 distanceInMeters,
                                  *nextNormal,
                                  0,
                                  0,
                                  false,
                                  startVertex,
                                  triangleStore,
-                                 options.clipDistances,
-                                 options);
+                                 options.clipDistances);
                 currentCoordinate = newCurrentVertex;
             }
         }
@@ -622,54 +563,25 @@ void PolylineGenerator<PLV, PS>::generate(const GeometryCoordinates& coordinates
 template <class PLV, class PS>
 void PolylineGenerator<PLV, PS>::addCurrentVertex(const GeometryCoordinate& currentCoordinate,
                                                   double& distance,
-                                                  [[maybe_unused]] double& distanceInMeters,
                                                   const Point<double>& normal,
                                                   double endLeft,
                                                   double endRight,
                                                   bool round,
                                                   std::size_t startVertex,
                                                   std::vector<TriangleElement>& triangleStore,
-                                                  std::optional<PolylineGeneratorDistances> lineDistances,
-                                                  const PolylineGeneratorOptions& popts) {
+                                                  std::optional<PolylineGeneratorDistances> lineDistances) {
     Point<double> extrude = normal;
     const double scaledDistance = lineDistances ? lineDistances->scaleToMaxLineDistance(distance) : distance;
-    double unscaledDistance = lineDistances ? lineDistances->unscaledDistance(distance) : (distance / 32767.0);
-    float unscaledDistanceF = static_cast<float>(unscaledDistance);
 
     if (endLeft) extrude = extrude - (util::perp(normal) * endLeft);
-    double clipstart = lineDistances ? lineDistances->clipStart : 0.0;
-    double clipend = lineDistances ? lineDistances->clipEnd : 0.0;
-    double relativeDistance;
-    double total;
-    double vertexAttribLineSoFar;
-    double inVertexShader;
-    std::string routeMode = popts.isRoutePath ? "route mode ON" : "route mode OFF";
-    if (popts.isRoutePath) {
-        relativeDistance = distanceInMeters / popts.totalInMeters;
-        total = popts.totalInMeters;
-        vertexAttribLineSoFar = lineDistances->routeDistance(distanceInMeters, popts.totalInMeters);
-        inVertexShader = vertexAttribLineSoFar;
-    } else {
-        relativeDistance = lineDistances ? distance / lineDistances->total : -1.0;
-        total = lineDistances ? lineDistances->total : 0.0;
-        vertexAttribLineSoFar = scaledDistance * LINE_DISTANCE_SCALE;
-        inVertexShader = vertexAttribLineSoFar * 2.0 / MAX_LINE_DISTANCE;
-    }
-    if (popts.isRoutePath && logVertices) {
-        std::stringstream ss;
-        ss << "add vertex: scaledDistance: " << scaledDistance << ", unscaledDistance: " << unscaledDistanceF << ", "
-           << routeMode << ", tileID: " << std::to_string(popts.canonicalTileID.z) << " " << popts.canonicalTileID.x
-           << " " << popts.canonicalTileID.y << " {clipstart: " << clipstart << ", clipend: " << clipend
-           << ", total: " << total << ", distance: " << distance << ", relative: " << relativeDistance
-           << ", vertexAttribLineSoFarIn: " << vertexAttribLineSoFar << ", Invertex shader: " << inVertexShader << "}"
-           << std::endl;
-        mbgl::Log::Info(Event::Route, ss.str());
-    }
 
-    float lineSoFar = popts.isRoutePath ? vertexAttribLineSoFar : scaledDistance * LINE_DISTANCE_SCALE;
     // distance is distance so far.
-    vertices.emplace_back(
-        layoutVertex(currentCoordinate, extrude, round, false, static_cast<int8_t>(endLeft), lineSoFar));
+    vertices.emplace_back(layoutVertex(currentCoordinate,
+                                       extrude,
+                                       round,
+                                       false,
+                                       static_cast<int8_t>(endLeft),
+                                       static_cast<int32_t>(scaledDistance * LINE_DISTANCE_SCALE)));
 
     e3 = vertices.elements() - 1 - startVertex;
     if (e1 >= 0 && e2 >= 0) {
@@ -680,8 +592,12 @@ void PolylineGenerator<PLV, PS>::addCurrentVertex(const GeometryCoordinate& curr
 
     extrude = normal * -1.0;
     if (endRight) extrude = extrude - (util::perp(normal) * endRight);
-    vertices.emplace_back(
-        layoutVertex(currentCoordinate, extrude, round, true, static_cast<int8_t>(-endRight), lineSoFar));
+    vertices.emplace_back(layoutVertex(currentCoordinate,
+                                       extrude,
+                                       round,
+                                       true,
+                                       static_cast<int8_t>(-endRight),
+                                       static_cast<int32_t>(scaledDistance * LINE_DISTANCE_SCALE)));
     e3 = vertices.elements() - 1 - startVertex;
     if (e1 >= 0 && e2 >= 0) {
         triangleStore.emplace_back(static_cast<uint16_t>(e1), static_cast<uint16_t>(e2), static_cast<uint16_t>(e3));
@@ -693,46 +609,29 @@ void PolylineGenerator<PLV, PS>::addCurrentVertex(const GeometryCoordinate& curr
     // buffers. When we get close to the distance, reset it to zero and add the
     // vertex again with a distance of zero. The max distance is determined by
     // the number of bits we allocate to `linesofar`.
-    if (distance > MAX_LINE_DISTANCE / 2.0f && !lineDistances && !popts.isRoutePath) {
+    if (distance > MAX_LINE_DISTANCE / 2.0f && !lineDistances) {
         distance = 0.0;
-        distanceInMeters = 0.0;
-        addCurrentVertex(currentCoordinate,
-                         distance,
-                         distanceInMeters,
-                         normal,
-                         endLeft,
-                         endRight,
-                         round,
-                         startVertex,
-                         triangleStore,
-                         lineDistances,
-                         popts);
+        addCurrentVertex(
+            currentCoordinate, distance, normal, endLeft, endRight, round, startVertex, triangleStore, lineDistances);
     }
 }
 
 template <class PLV, class PS>
 void PolylineGenerator<PLV, PS>::addPieSliceVertex(const GeometryCoordinate& currentVertex,
                                                    double distance,
-                                                   [[maybe_unused]] double distanceInMeters,
                                                    const Point<double>& extrude,
                                                    bool lineTurnsLeft,
                                                    std::size_t startVertex,
                                                    std::vector<TriangleElement>& triangleStore,
-                                                   std::optional<PolylineGeneratorDistances> lineDistances,
-                                                   const PolylineGeneratorOptions& popts) {
+                                                   std::optional<PolylineGeneratorDistances> lineDistances) {
     Point<double> flippedExtrude = extrude * (lineTurnsLeft ? -1.0 : 1.0);
 
     if (lineDistances) {
         distance = lineDistances->scaleToMaxLineDistance(distance);
     }
 
-    // double unscaledDistance = lineDistances ? lineDistances->unscaledDistance(distance) : distance/32767.0;
-    // float unscaledDistanceF = static_cast<float>(unscaledDistance);
-    double vertexAttribLineSoFar = popts.isRoutePath
-                                       ? lineDistances->routeDistance(distanceInMeters, popts.totalInMeters)
-                                       : 0.0;
-    float lineSoFar = popts.isRoutePath ? vertexAttribLineSoFar : distance * LINE_DISTANCE_SCALE;
-    vertices.emplace_back(layoutVertex(currentVertex, flippedExtrude, false, lineTurnsLeft, 0, lineSoFar));
+    vertices.emplace_back(layoutVertex(
+        currentVertex, flippedExtrude, false, lineTurnsLeft, 0, static_cast<int32_t>(distance * LINE_DISTANCE_SCALE)));
     e3 = vertices.elements() - 1 - startVertex;
     if (e1 >= 0 && e2 >= 0) {
         triangleStore.emplace_back(static_cast<uint16_t>(e1), static_cast<uint16_t>(e2), static_cast<uint16_t>(e3));

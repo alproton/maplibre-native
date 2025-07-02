@@ -354,6 +354,7 @@ GLFWView::GLFWView(bool fullscreen_,
 
     bool capFrameRate = !benchmark; // disable VSync in benchmark mode
     backend = GLFWBackend::Create(window, capFrameRate);
+    backend->assetPath = MLN_ASSETS_PATH;
 
 #if defined(__APPLE__) && !defined(MLN_RENDER_BACKEND_VULKAN)
     int fbW, fbH;
@@ -1065,7 +1066,7 @@ void GLFWView::addRoute() {
     routeOpts.useDynamicWidths = false;
     routeOpts.outerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
     routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
-    routeOpts.useMercatorProjection = true;
+    routeOpts.useMercatorProjection = false;
 
     auto routeID = rmptr_->routeCreate(geom, routeOpts);
     routeMap_[routeID] = route;
@@ -1493,15 +1494,14 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
         setPuckLocation(pt.y, pt.x, bearing);
 
         double totalRouteDistMeters = rmptr_->getTotalDistance(vanishingRouteID_);
-        bool useMercator = true;
-        if (useMercator) {
-            feet_percent_step_ = 0.000000076;
+        if (routeProgressPrecision_ == mbgl::route::Precision::Mercator) {
+            feet_percent_step_ = 0.000000076 * 20; // 20 is a speed multiplier, 7.6e-8 is one feet on equator
         } else {
             double totalRouteDistFeet = totalRouteDistMeters * 3.28084; // Convert meters to feet
             feet_percent_step_ = 1.0 / totalRouteDistFeet;
         }
 
-        std::cout << "feet_step_percent: " << std::to_string(feet_percent_step_) << std::endl;
+        std::cout << "feet_step_percent: " << feet_percent_step_ << std::endl;
     }
 }
 

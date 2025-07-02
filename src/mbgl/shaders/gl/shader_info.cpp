@@ -371,7 +371,6 @@ const std::vector<UniformBlockInfo> LineGradientShaderInfo::uniformBlocks = {
 const std::vector<AttributeInfo> LineGradientShaderInfo::attributes = {
     AttributeInfo{"a_pos_normal", idLinePosNormalVertexAttribute},
     AttributeInfo{"a_data", idLineDataVertexAttribute},
-    AttributeInfo{"a_line_so_far", idLineLineSofarAttribute},
     AttributeInfo{"a_blur", idLineBlurVertexAttribute},
     AttributeInfo{"a_opacity", idLineOpacityVertexAttribute},
     AttributeInfo{"a_gapwidth", idLineGapWidthVertexAttribute},

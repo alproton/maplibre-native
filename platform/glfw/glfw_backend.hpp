@@ -13,6 +13,7 @@ struct GLFWwindow;
 
 class GLFWBackend {
 public:
+    std::string assetPath;
     explicit GLFWBackend() = default;
     GLFWBackend(const GLFWBackend&) = delete;
     GLFWBackend& operator=(const GLFWBackend&) = delete;

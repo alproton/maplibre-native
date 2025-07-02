@@ -745,8 +745,7 @@ bool RouteManager::captureScrubRoute(double scrubValue,
             double bearing = 0.0;
             const auto& navstop = getPoint(vanishingRouteID_, scrubValue, Precision::Fine, &bearing);
             if (scrubOpts.fallbackPoint) {
-                std::cout << "merc mode- nav point: " << navstop.x << " " << navstop.y << std::endl;
-                routeSetProgressPoint(vanishingRouteID_, navstop, Precision::Mercator);
+                routeSetProgressPoint(vanishingRouteID_, navstop, Precision::Fine);
             } else {
                 routeSetProgressPercent(vanishingRouteID_, scrubValue);
             }

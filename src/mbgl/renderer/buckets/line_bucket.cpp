@@ -6,7 +6,6 @@
 #include <mbgl/gfx/polyline_generator.hpp>
 
 #include <cassert>
-#include <iostream>
 #include <utility>
 
 namespace mbgl {
@@ -52,17 +51,9 @@ void LineBucket::addFeature(const GeometryTileFeature& feature,
     }
 }
 
-#ifdef DEBUG_SINGLE_THREAD
-std::mutex g_debug_mutex;
-#endif
-
 void LineBucket::addGeometry(const GeometryCoordinates& coordinates,
                              const GeometryTileFeature& feature,
                              const CanonicalTileID& canonical) {
-#ifdef DEBUG_SINGLE_THREAD
-    std::lock_guard<std::mutex> lock(g_debug_mutex);
-#endif
-
     gfx::PolylineGeneratorOptions options;
 
     options.type = feature.getType();
@@ -112,19 +103,6 @@ void LineBucket::addGeometry(const GeometryCoordinates& coordinates,
 
         options.clipDistances = gfx::PolylineGeneratorDistances{
             *numericValue<double>(clip_start_it->second), *numericValue<double>(clip_end_it->second), total_length};
-    }
-
-    options.isRoutePath = isRouteBucket;
-    options.canonicalTileID = canonical;
-    if (isRouteBucket) {
-        double total_length_in_meters = 0.0;
-        for (std::size_t i = first; i < len - 1; ++i) {
-            Point<double> p0 = options.tileCoordinatesToLatLng(coordinates[i]);
-            Point<double> p1 = options.tileCoordinatesToLatLng(coordinates[i + 1]);
-
-            total_length_in_meters += util::haversineDist(p0, p1);
-        }
-        options.totalInMeters = total_length_in_meters;
     }
 
     options.joinType = layout.evaluate<LineJoin>(zoom, feature, canonical);
