@@ -11,7 +11,6 @@ MBGL_DEFINE_ATTRIBUTE(int16_t, 2, pos);
 MBGL_DEFINE_ATTRIBUTE(int16_t, 2, extrude);
 MBGL_DEFINE_ATTRIBUTE(int16_t, 4, pos_offset);
 MBGL_DEFINE_ATTRIBUTE(int16_t, 2, pos_normal);
-MBGL_DEFINE_ATTRIBUTE(float, 1, line_so_far);
 MBGL_DEFINE_ATTRIBUTE(float, 3, projected_pos);
 MBGL_DEFINE_ATTRIBUTE(int16_t, 4, pixeloffset);
 MBGL_DEFINE_ATTRIBUTE(int16_t, 2, label_pos);

@@ -636,10 +636,9 @@ void Route::addNavStopPoint(const mbgl::Point<double>& point) {
 
 double Route::getProgressPercent(const Point<double>& progressPoint, const Precision& precision, bool capture) {
     double percentage = -1.0;
-    // TODO: refactor to a better such that we can co
+    // TODO: refactor such that we have a coherent way of setting usage of mercator projection
     if (routeOptions_.useMercatorProjection || precision == Precision::Mercator) {
         percentage = getProgressProjectionMerc(progressPoint, capture);
-        std::cout << "merc percentage: " << percentage << std::endl;
     } else {
         switch (precision) {
             case Precision::Coarse: {

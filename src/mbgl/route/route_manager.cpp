@@ -876,7 +876,6 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
         {
             if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
                 percentage = routeMap_.at(routeID).getProgressPercent(progressPoint, precision, captureNavStops_);
-                std::cout << "Percentage: " << percentage << std::endl;
             }
         }
         auto endTime = std::chrono::high_resolution_clock::now();
