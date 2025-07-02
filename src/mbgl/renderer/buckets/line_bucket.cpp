@@ -52,17 +52,9 @@ void LineBucket::addFeature(const GeometryTileFeature& feature,
     }
 }
 
-#ifdef DEBUG_SINGLE_THREAD
-std::mutex g_debug_mutex;
-#endif
-
 void LineBucket::addGeometry(const GeometryCoordinates& coordinates,
                              const GeometryTileFeature& feature,
                              const CanonicalTileID& canonical) {
-#ifdef DEBUG_SINGLE_THREAD
-    std::lock_guard<std::mutex> lock(g_debug_mutex);
-#endif
-
     gfx::PolylineGeneratorOptions options;
 
     options.type = feature.getType();

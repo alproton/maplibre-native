@@ -203,13 +203,12 @@ private:
     std::unordered_map<RouteID, RouteData, IDHasher<RouteID>> routeMap_;
     std::unordered_map<RouteID, mbgl::LineString<double>, IDHasher<RouteID>> capturedNavStopMap_;
     std::unordered_map<RouteID, std::vector<double>, IDHasher<RouteID>> capturedNavPercentMap_;
-    mbgl::route::Precision routeProgressPrecision_ = mbgl::route::Precision::Fine;
+    mbgl::route::Precision routeProgressPrecision_ = mbgl::route::Precision::Mercator;
     RouteID vanishingRouteID_;
     bool loadedCapture_ = false;
     double routeProgress_ = 0.0;
     bool routePickMode_ = false;
     bool enableAutoVanishing = false; // Simulates route progress in app
-    mbgl::route::Precision routePrecision_ = mbgl::route::Precision::Fine;
     int scrubCounter_ = 0;
     bool enableDebugViz_ = true;
     double testPercent_ = 0.0; // Used for testing route progress

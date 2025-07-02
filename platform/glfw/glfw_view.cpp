@@ -1494,15 +1494,14 @@ void GLFWView::readAndLoadCapture(const std::string &capture_file_name) {
         setPuckLocation(pt.y, pt.x, bearing);
 
         double totalRouteDistMeters = rmptr_->getTotalDistance(vanishingRouteID_);
-        bool useMercator = false;
-        if (useMercator) {
-            feet_percent_step_ = 0.000000076;
+        if (routeProgressPrecision_ == mbgl::route::Precision::Mercator) {
+            feet_percent_step_ = 0.000000076 * 20; // 20 is a speed multiplier, 7.6e-8 is one feet on equator
         } else {
             double totalRouteDistFeet = totalRouteDistMeters * 3.28084; // Convert meters to feet
             feet_percent_step_ = 1.0 / totalRouteDistFeet;
         }
 
-        std::cout << "feet_step_percent: " << std::to_string(feet_percent_step_) << std::endl;
+        std::cout << "feet_step_percent: " << feet_percent_step_ << std::endl;
     }
 }
 

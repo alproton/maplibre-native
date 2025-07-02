@@ -83,6 +83,7 @@ private:
     std::vector<double> cumulativeIntervalDistances_;
     std::vector<RouteSegment> segments_;
     mbgl::LineString<double> geometry_;
+    mbgl::LineString<double> geometryMerc_;
     std::map<double, mbgl::Color> segGradient_;
     double totalLength_ = 0.0;
     std::vector<double> capturedNavPercent_;

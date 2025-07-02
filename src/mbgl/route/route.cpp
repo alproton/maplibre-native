@@ -166,7 +166,7 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
     intervalLengths_.reserve(geometry_.size() - 1);
     cumulativeIntervalDistances_.reserve(geometry_.size());
     cumulativeIntervalDistances_.push_back(0.0);
-
+    geometryMerc_.reserve(geometry.size());
     for (size_t i = 0; i < geometry_.size() - 1; ++i) {
         const mbgl::Point<double>& p1 = geometry_[i];
         const mbgl::Point<double>& p2 = geometry_[i + 1];
@@ -177,7 +177,7 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
             const mbgl::Point<double>& p1merc = toMercProject(p1);
             const mbgl::Point<double>& p2merc = toMercProject(p2);
             segLen = mbgl::util::dist<double>(p1merc, p2merc);
-
+            geometryMerc_.push_back(p1merc);
         } else {
             segLen = mbgl::util::haversineDist(p1, p2);
         }
@@ -185,6 +185,10 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
         intervalLengths_.push_back(segLen);
         totalLength_ += segLen;
         cumulativeIntervalDistances_.push_back(totalLength_);
+    }
+
+    if (ropts.useMercatorProjection) {
+        geometryMerc_.push_back(toMercProject(geometry_.back()));
     }
 
     if (ropts.useMercatorProjection) {
@@ -665,20 +669,21 @@ double Route::getProgressPercent(const Point<double>& progressPoint, const Preci
 }
 
 double Route::getProgressProjectionMerc(const Point<double>& queryPoint, bool capture) {
+    const double MERC_EPSILON = 1e-12;
     if (capture) {
         capturedNavStops_.push_back(queryPoint);
     }
 
-    if (geometry_.size() < 2) {
+    if (geometryMerc_.size() < 2) {
         return -1.0; // Cannot form segments
     }
     const Point<double>& queryPtProjected = toMercProject(queryPoint);
     // Handle zero-length route
-    if (totalLength_ <= EPSILON) {
+    if (totalLength_ <= MERC_EPSILON) {
         // If the route has no length, the closest point is the first point,
         // and percentage is arguably 0 or undefined. We'll return 0.
         // Check if query point *is* the single point location
-        if (mbgl::util::dist<double>(toMercProject(geometry_[0]), queryPtProjected) > EPSILON) {
+        if (mbgl::util::dist<double>(geometryMerc_[0], queryPtProjected) > MERC_EPSILON) {
             // If query point is different, maybe success should be false? Depends on requirements.
             // Let's keep it true but maybe add a warning/note.
             Log::Debug(Event::Route, "Warning: Route has zero total length. Closest point set to route start.");
@@ -693,8 +698,8 @@ double Route::getProgressProjectionMerc(const Point<double>& queryPoint, bool ca
         double minDistanceSq = std::numeric_limits<double>::max();
 
         for (size_t i = startIdx; i <= endIdx; ++i) {
-            const mbgl::Point<double>& p1 = toMercProject(geometry_[i]);     // Start point of the segment
-            const mbgl::Point<double>& p2 = toMercProject(geometry_[i + 1]); // End point of the segment
+            const mbgl::Point<double>& p1 = geometryMerc_[i];     // Start point of the segment
+            const mbgl::Point<double>& p2 = geometryMerc_[i + 1]; // End point of the segment
 
             // --- Project queryPoint onto the 2D line segment (p1, p2) ---
             // Treat Lat/Lon as simple 2D coordinates for projection (approximation)
@@ -706,7 +711,7 @@ double Route::getProgressProjectionMerc(const Point<double>& queryPoint, bool ca
             double t = 0.0; // Parameter along the line segment (0=p1, 1=p2)
             Point<double> closestPointOnSegment = p1;
 
-            if (segmentLenSq > EPSILON) {
+            if (segmentLenSq > MERC_EPSILON) {
                 // Project (queryPoint - p1) onto (p2 - p1)
                 double queryPointDX = queryPtProjected.x - p1.x;
                 double queryPointDY = queryPtProjected.y - p1.y;
@@ -738,7 +743,7 @@ double Route::getProgressProjectionMerc(const Point<double>& queryPoint, bool ca
     };
 
     // closestInterval.first is the interval index, closestInterval.second is the fraction along the interval
-    std::pair<uint32_t, double> closestInterval = getClosestInterval(0, geometry_.size() - 1);
+    std::pair<uint32_t, double> closestInterval = getClosestInterval(0, geometryMerc_.size() - 1);
 
     // --- Calculate final percentage ---
     uint32_t bestIntervalIndex = closestInterval.first;
