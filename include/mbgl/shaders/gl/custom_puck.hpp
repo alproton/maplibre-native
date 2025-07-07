@@ -8,8 +8,7 @@ namespace shaders {
 template <>
 struct ShaderSource<BuiltIn::CustomPuckProgram, gfx::Backend::Type::OpenGL> {
     static constexpr const char* name = "CustomPuckProgram";
-    static constexpr const char* vertex = R"(
-#version 310 es
+    static constexpr const char* vertex = R"(#version 310 es
 // Since this is a temporary workaround to issue #3135, we use
 // uniform vectors for the puck quad to simplify the GL side code
 layout(location = 0) uniform vec2 v0;
@@ -24,8 +23,7 @@ void main() {
   uv = vertex_uv[gl_VertexID];
 }
 )";
-    static constexpr const char* fragment = R"(
-#version 310 es
+    static constexpr const char* fragment = R"(#version 310 es
 in mediump vec2 uv;
 out mediump vec4 fragColor;
 uniform sampler2D tex;
