@@ -8,8 +8,7 @@ namespace shaders {
 template <>
 struct ShaderSource<BuiltIn::CustomDotsProgram, gfx::Backend::Type::OpenGL> {
     static constexpr const char* name = "CustomDotsProgram";
-    static constexpr const char* vertex = R"(
-#version 310 es
+    static constexpr const char* vertex = R"(#version 310 es
 layout (location = 0) in vec2 pos;
 layout(location = 1) uniform vec2 size;
 out mediump vec2 uv;
@@ -32,8 +31,7 @@ void main() {
   uv = triangleUv[gl_VertexID];
 }
 )";
-    static constexpr const char* fragment = R"(
-#version 310 es
+    static constexpr const char* fragment = R"(#version 310 es
 out mediump vec4 fragColor;
 in mediump vec2 uv;
 layout(location = 2) uniform mediump vec3 innerColor;
