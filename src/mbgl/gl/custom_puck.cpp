@@ -178,7 +178,7 @@ void CustomPuck::updateTextures(const gfx::CustomPuckIconMap& icons) {
     // Create new textures
     for (const auto& [name, path] : icons) {
         TextureID tex = 0;
-        auto image = mbgl::decodeImage(readFile("../../../" + path));
+        auto image = mbgl::decodeImage(readFile(path));
         if (!image.valid()) {
             Log::Error(Event::OpenGL, "Failed to load puck icon " + path);
             throw std::runtime_error("Failed to load puck icon " + path);

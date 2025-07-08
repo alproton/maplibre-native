@@ -163,6 +163,8 @@ std::string CustomPuck::readFile(const std::string& path) const {
     std::string result(reinterpret_cast<const char*>(data), size);
     AAsset_close(asset);
     return result;
+#elif defined(MLN_ASSETS_PATH)
+    return util::read_file(std::string(MLN_ASSETS_PATH) + path);
 #else
     return util::read_file(path);
 #endif
