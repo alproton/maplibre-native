@@ -128,6 +128,7 @@ void CustomPuck::setPuckVariant(std::string variant) {
 void CustomPuck::setPuckIconState(std::string state) {
     std::lock_guard<std::mutex> lock(styleMutex);
     iconStateName = std::move(state);
+    epochTime = std::chrono::steady_clock::now();
 }
 
 #ifdef __ANDROID__
