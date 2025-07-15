@@ -47,6 +47,7 @@ public:
     void setPuckStyle(const std::string& style_file_path);
     void setPuckVariant(std::string variant);
     void setPuckIconState(std::string state);
+    void setAssetPath(const std::string& path);
 
 #ifdef __ANDROID__
     void setAssetManager(AAssetManager* asset_manager);
@@ -69,6 +70,7 @@ private:
     CustomPuckStyle style{};
     std::string variantName;
     std::string iconStateName;
+    std::string assetPath;
     // The style is updated in the UI thread and is used in the rendering thread
     // This mutex ensures the puck is not modified by the UI thread while being rendered in the render thread
     std::mutex styleMutex;

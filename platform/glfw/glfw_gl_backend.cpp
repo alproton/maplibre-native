@@ -74,6 +74,7 @@ void GLFWGLBackend::enableCustomPuck(bool onOff) {
         customPuck->setPuckStyle(puckStylePath);
         customPuck->setPuckVariant("default");
         customPuck->setPuckIconState("default");
+        customPuck->setAssetPath(MLN_ASSETS_PATH);
     }
 };
 
