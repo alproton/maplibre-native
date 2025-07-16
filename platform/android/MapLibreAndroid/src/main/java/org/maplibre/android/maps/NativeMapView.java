@@ -1073,6 +1073,10 @@ final class NativeMapView implements NativeMap {
 
   @Override
   public void removeImage(String name) {
+    if (name == null) {
+      Logger.e(TAG, "removeImage called with null name. Skipping operation.");
+      return;
+    }
     if (checkState("removeImage")) {
       return;
     }
