@@ -745,7 +745,9 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 } break;
 
                 case GLFW_KEY_L: {
-                    std::string capture_file_name = std::string(MLN_ASSETS_PATH) +  "../../android/MapLibreAndroidTestApp/src/main/res/raw/yosemite_route_capture.json";
+                    std::string capture_file_name =
+                        std::string(MLN_ASSETS_PATH) +
+                        "../../android/MapLibreAndroidTestApp/src/main/res/raw/yosemite_route_capture.json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -767,6 +769,10 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
 
                 case GLFW_KEY_B:
                     view->incrementStep(false);
+                    break;
+
+                case GLFW_KEY_I:
+                    view->captureImageSnapshot();
                     break;
             }
         } else {
@@ -1644,6 +1650,17 @@ void GLFWView::toggleCustomDrawableStyle() {
     }
 
 #endif
+}
+
+void GLFWView::captureImageSnapshot() {
+    mbgl::gfx::BackendScope scope{backend->getRendererBackend()};
+    const mbgl::PremultipliedImage &image = backend->captureImage();
+    std::ostringstream oss;
+    oss << "Made snapshot './image_snapshot.png' with size w:" << image.size.width << "px h:" << image.size.height
+        << "px";
+    mbgl::Log::Info(mbgl::Event::General, oss.str());
+    std::ofstream file("./image_snapshot.png");
+    file << mbgl::encodePNG(image);
 }
 
 void GLFWView::makeSnapshot(bool withOverlay) {

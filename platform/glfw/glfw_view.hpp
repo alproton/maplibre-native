@@ -116,6 +116,7 @@ private:
     void toggleLocationIndicatorLayer();
     std::vector<RouteID> routeIDlist;
     std::unique_ptr<mbgl::route::RouteManager> rmptr_;
+    void captureImageSnapshot();
     void addRoute();
     void modifyRoute();
     void disposeRoute();

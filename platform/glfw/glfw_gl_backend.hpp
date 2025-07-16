@@ -26,6 +26,7 @@ public:
     // mbgl::gfx::RendererBackend implementation
 public:
     mbgl::gfx::Renderable& getDefaultRenderable() override { return *this; }
+    mbgl::PremultipliedImage captureImage() override;
 
 protected:
     void activate() override;

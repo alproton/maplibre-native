@@ -1,5 +1,7 @@
 #pragma once
 
+#include "mbgl/util/image.hpp"
+
 #include <mbgl/util/size.hpp>
 #include <mbgl/gfx/backend.hpp>
 
@@ -26,7 +28,7 @@ public:
     static std::unique_ptr<GLFWBackend> Create(GLFWwindow* window, bool capFrameRate) {
         return mbgl::gfx::Backend::Create<GLFWBackend, GLFWwindow*, bool>(window, capFrameRate);
     }
-
+    virtual mbgl::PremultipliedImage captureImage() = 0;
     virtual mbgl::gfx::RendererBackend& getRendererBackend() = 0;
     virtual mbgl::Size getSize() const = 0;
     virtual void setSize(mbgl::Size) = 0;
