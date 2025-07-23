@@ -38,16 +38,22 @@ void quit_handler(int) {
 int main(int argc, char* argv[]) {
     args::ArgumentParser argumentParser("MapLibre Native GLFW example");
     args::HelpFlag helpFlag(argumentParser, "help", "Display this help menu", {'h', "help"});
+    args::Flag testNameDisplayFlag(
+        argumentParser, "test-names-help", "Displays a list of runnable tests", {'l', "test-names-help"});
 
     args::Flag fullscreenFlag(argumentParser, "fullscreen", "Toggle fullscreen", {'f', "fullscreen"});
     args::Flag benchmarkFlag(argumentParser, "benchmark", "Toggle benchmark", {'b', "benchmark"});
     args::Flag offlineFlag(argumentParser, "offline", "Toggle offline", {'o', "offline"});
 
     args::ValueFlag<std::string> testDirValue(
-        argumentParser, "directory", "Root directory for test generation", {"testDir"});
+        argumentParser, "directory", "Root directory for test generation", {"test-dir"});
     args::ValueFlag<std::string> backendValue(argumentParser, "backend", "Rendering backend", {"backend"});
     args::ValueFlag<std::string> apikeyValue(argumentParser, "key", "API key", {'t', "apikey"});
     args::ValueFlag<std::string> styleValue(argumentParser, "URL", "Map stylesheet", {'s', "style"});
+    args::ValueFlag<std::string> testMode(
+        argumentParser, "TestMode", "Test mode (gen, compare, none)", {'m', "test-mode"});
+    args::ValueFlag<std::string> testName(
+        argumentParser, "TestName", "Test name for running specified test", {'n', "test-name"});
     args::ValueFlag<std::string> cacheDBValue(argumentParser, "file", "Cache database file name", {'c', "cache"});
     args::ValueFlag<double> lonValue(argumentParser, "degrees", "Longitude", {'x', "lon"});
     args::ValueFlag<double> latValue(argumentParser, "degrees", "Latitude", {'y', "lat"});
@@ -70,6 +76,15 @@ int main(int argc, char* argv[]) {
         exit(2);
     }
 
+    if (testNameDisplayFlag) {
+        if (args::get(testNameDisplayFlag)) {
+            std::cout << "Available tests:" << std::endl;
+            std::cout << "----------------" << std::endl;
+            std::cout << "route_add_test" << std::endl;
+            exit(0);
+        }
+    }
+
     // Load settings
     mbgl::Settings_JSON settings;
     settings.online = !offlineFlag;
@@ -83,6 +98,20 @@ int main(int argc, char* argv[]) {
     const bool benchmark = benchmarkFlag ? args::get(benchmarkFlag) : false;
     std::string style = styleValue ? args::get(styleValue) : "";
     const std::string cacheDB = cacheDBValue ? args::get(cacheDBValue) : "/tmp/mbgl-cache.db";
+
+    const std::string testModeStr = testMode ? args::get(testMode) : "none";
+    TestMode tm = TestMode::None;
+    if (testModeStr == "gen") {
+        tm = TestMode::Gen;
+    } else if (testModeStr == "compare") {
+        tm = TestMode::Compare;
+    } else if (testModeStr != "none") {
+        std::cerr << "Invalid test mode: " << testModeStr << std::endl;
+        exit(3);
+    }
+    std::string testDir = testDirValue ? args::get(testDirValue) : "";
+    std::string testNameValue = !testName->empty() ? args::get(testName) : "";
+    TestRunnerData trd{testNameValue, tm, testDir, !testNameValue.empty()};
 
     // sigint handling
 #ifdef WIN32
@@ -109,7 +138,7 @@ int main(int argc, char* argv[]) {
     mbgl::ClientOptions clientOptions;
     auto orderedStyles = mapTilerConfiguration.defaultStyles();
 
-    GLFWView backend(fullscreen, benchmark, resourceOptions, clientOptions);
+    GLFWView backend(fullscreen, benchmark, trd, resourceOptions, clientOptions);
     view = &backend;
 
     std::shared_ptr<mbgl::FileSource> onlineFileSource = mbgl::FileSourceManager::get()->getFileSource(

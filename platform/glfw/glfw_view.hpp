@@ -11,6 +11,7 @@
 #include <stack>
 #include <mbgl/route/id_types.hpp>
 #include <mbgl/route/route_manager.hpp>
+#include "tests/glfw_graphics_test.hpp"
 
 #if (defined(MLN_RENDER_BACKEND_OPENGL) || defined(MLN_RENDER_BACKEND_VULKAN)) && \
     !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL)
@@ -31,11 +32,24 @@ namespace gfx {
 class RendererBackend;
 } // namespace gfx
 } // namespace mbgl
+enum TestMode {
+    Gen,
+    Compare,
+    None
+};
+
+struct TestRunnerData {
+    std::string testName;
+    TestMode mode;
+    std::string testDir;
+    bool isNeeded = false;
+};
 
 class GLFWView : public mbgl::MapObserver {
 public:
     GLFWView(bool fullscreen,
              bool benchmark,
+             const TestRunnerData &testRunnerData,
              const mbgl::ResourceOptions &resourceOptions,
              const mbgl::ClientOptions &clientOptions);
     ~GLFWView() override;
@@ -116,7 +130,7 @@ private:
     void toggleLocationIndicatorLayer();
     std::vector<RouteID> routeIDlist;
     std::unique_ptr<mbgl::route::RouteManager> rmptr_;
-    void captureImageSnapshot();
+    void captureImageSnapshot(const std::string &filename);
     void addRoute();
     void modifyRoute();
     void disposeRoute();
@@ -215,6 +229,11 @@ private:
     double testPercent_ = 0.0; // Used for testing route progress
     double feet_percent_step_ = 0.0;
     double feet_percent_step_multiplier = 1.0;
+    TestRunnerData testRunnerData_;
+    std::unique_ptr<GLFWGraphicsTest> autoTest_;
+    bool autoTestReady_ = false;
+    uint32_t autoTestFrameCounter_ = 1;
+    uint32_t frameIDcounter = 0;
 
     // Frame timer
     int frames = 0;
