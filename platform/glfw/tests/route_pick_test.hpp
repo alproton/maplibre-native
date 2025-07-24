@@ -1,8 +1,14 @@
-//
-// Created by spalaniappan on 7/23/25.
-//
+#pragma once
+#include "route_test.hpp"
 
-#ifndef ROUTE_PICK_TEST_HPP
-#define ROUTE_PICK_TEST_HPP
+class RoutePickTest : public RouteTest {
+public:
+    RoutePickTest() = delete;
+    RoutePickTest(const std::string& testDir);
+    bool produceTestCommands(mbgl::Map* map, GLFWView* view) override;
+    ~RoutePickTest() override;
 
-#endif // ROUTE_PICK_TEST_HPP
+private:
+    RouteID pickedRouteID;
+    bool pickRoute(GLFWView* view, double x, double y);
+};

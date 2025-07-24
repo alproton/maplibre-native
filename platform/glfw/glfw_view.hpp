@@ -83,6 +83,8 @@ public:
     void invalidate();
 
     mbgl::Size getSize() const;
+    double getLastX() const { return lastX; }
+    double getLastY() const { return lastY; }
 
     bool getRoutePickMode() const;
     GLFWRendererFrontend *getRenderFrontend() const;
@@ -188,16 +190,6 @@ private:
         mbgl::Point<double> getPoint(double percent) const;
     };
 
-    struct TrafficBlock {
-        uint32_t firstIndex = INVALID_UINT;
-        float firstIndexFraction = 0.0f;
-        uint32_t lastIndex = INVALID_UINT;
-        float lastIndexFraction = 0.0f;
-        mbgl::LineString<double> block;
-        uint32_t priority = 0;
-        mbgl::Color color;
-    };
-
     void writeCapture(const std::string &capture, const std::string &capture_file_name) const;
     void readAndLoadCapture(const std::string &capture_file_name);
     void writeStats(bool oneline = false) const;
@@ -225,6 +217,9 @@ private:
     bool autoTestReady_ = false;
     uint32_t autoTestFrameCounter_ = 1;
     uint32_t frameIDcounter = 0;
+    const uint32_t CONSUME_OP = 0;
+    const uint32_t CAPTURE_OP = 1;
+    uint32_t currTestOperation = CONSUME_OP;
 
     // Frame timer
     int frames = 0;

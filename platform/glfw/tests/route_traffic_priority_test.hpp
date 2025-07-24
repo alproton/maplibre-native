@@ -6,7 +6,7 @@ class RouteTrafficPriorityTest : public RouteTest {
 public:
     RouteTrafficPriorityTest() = delete;
     RouteTrafficPriorityTest(const std::string& testDir);
-    bool produceTestCommands(mbgl::Map* map) override;
+    bool produceTestCommands(mbgl::Map* map, GLFWView* view) override;
     ~RouteTrafficPriorityTest() override;
 
 private:

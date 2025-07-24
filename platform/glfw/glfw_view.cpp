@@ -36,6 +36,7 @@
 #include "tests/route_add_test.hpp"
 #include "tests/route_add_traffic_test.hpp"
 #include "tests/route_traffic_priority_test.hpp"
+#include "tests/route_pick_test.hpp"
 
 #if !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL) && MLN_DRAWABLE_RENDERER
 #include "example_custom_drawable_style_layer.hpp"
@@ -366,6 +367,8 @@ GLFWView::GLFWView(bool fullscreen_,
         autoTest_ = std::make_unique<RouteAddTrafficTest>(testRunnerData.testDir);
     } else if (testRunnerData.testName == "route_traffic_priority_test") {
         autoTest_ = std::make_unique<RouteTrafficPriorityTest>(testRunnerData.testDir);
+    } else if (testRunnerData.testName == "route_pick_test") {
+        autoTest_ = std::make_unique<RoutePickTest>(testRunnerData.testDir);
     }
 
 #if defined(__APPLE__) && !defined(MLN_RENDER_BACKEND_VULKAN)
@@ -1056,8 +1059,8 @@ int GLFWView::getTopMost(const std::vector<RouteID> &routeList) const {
 void GLFWView::addRoute() {
     std::unique_ptr<RouteAddTest> addRoute = std::make_unique<RouteAddTest>("");
     addRoute->initTestFixtures(map);
-    addRoute->produceTestCommands(map);
-    addRoute->consumeTestCommand(map);
+    addRoute->produceTestCommands(map, this);
+    addRoute->consumeTestCommand(map, this);
 
     vanishingRouteID_ = addRoute->getVanishingRouteID();
     if (vanishingRouteID_.isValid()) {
@@ -1085,9 +1088,9 @@ void GLFWView::setPuckLocation(double lat, double lon, double bearing) {
 void GLFWView::addTrafficSegments() {
     std::unique_ptr<RouteAddTrafficTest> addTraffic = std::make_unique<RouteAddTrafficTest>("");
     addTraffic->initTestFixtures(map);
-    addTraffic->produceTestCommands(map);
-    addTraffic->consumeTestCommand(map);
-    addTraffic->consumeTestCommand(map);
+    addTraffic->produceTestCommands(map, this);
+    addTraffic->consumeTestCommand(map, this);
+    addTraffic->consumeTestCommand(map, this);
 }
 
 void GLFWView::modifyTrafficViz() {
@@ -1770,9 +1773,6 @@ void GLFWView::onWindowRefresh(GLFWwindow *window) {
 }
 #endif
 
-const int CONSUME_OP = 0;
-const int CAPTURE_OP = 1;
-int currTestOperation = CONSUME_OP;
 void GLFWView::render() {
     if (dirty && rendererFrontend) {
         MLN_TRACE_ZONE(ReRender);
@@ -1806,17 +1806,17 @@ void GLFWView::render() {
             // std::cout<<"autoTestFrameCounter_: "<<autoTestFrameCounter_<<std::endl;
             if (doOp) {
                 if (currTestOperation == CONSUME_OP) {
-                    std::cout << "consuming test command" << std::endl;
-                    autoTest_->consumeTestCommand(map);
+                    mbgl::Log::Info(mbgl::Event::Route, "consuming test command");
+                    autoTest_->consumeTestCommand(map, this);
                     currTestOperation = CAPTURE_OP;
                 } else if (currTestOperation == CAPTURE_OP) {
                     std::string captureImagePath = testRunnerData_.testDir + "/frame_" +
                                                    std::to_string(frameIDcounter++);
-                    std::cout << "Capturing to: " << captureImagePath << std::endl;
+                    mbgl::Log::Info(mbgl::Event::Route, "Capturing to: " + captureImagePath + ".png");
 
                     captureImageSnapshot(captureImagePath);
                     if (autoTest_->getCurrentTestCommandCount() == 0) {
-                        std::cout << "No more test commands to consume" << std::endl;
+                        mbgl::Log::Info(mbgl::Event::Route, "No more test commands to consume");
                         runLoop.stop();
                     } else {
                         currTestOperation = CONSUME_OP;
@@ -1929,7 +1929,7 @@ void GLFWView::onDidFinishLoadingStyle() {
     if (testRunnerData_.isNeeded) {
         autoTestReady_ = true;
         autoTest_->initTestFixtures(map);
-        autoTest_->produceTestCommands(map);
+        autoTest_->produceTestCommands(map, this);
     }
 
 #if defined(MLN_RENDER_BACKEND_OPENGL) && !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL)

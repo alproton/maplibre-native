@@ -46,11 +46,11 @@ mbgl::Point<double> RouteTest::getPoint(const RouteID& routeID, double percent) 
     return {};
 }
 
-int RouteTest::consumeTestCommand([[maybe_unused]] mbgl::Map* map) {
+int RouteTest::consumeTestCommand(mbgl::Map* map, GLFWView* view) {
     if (!testCommands_.empty()) {
         const auto& cmd = testCommands_.front();
         if (cmd) {
-            cmd(map);
+            cmd(map, view);
             testCommands_.pop();
         }
         return testCommands_.size();

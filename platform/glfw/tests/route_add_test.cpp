@@ -2,14 +2,15 @@
 
 #include <mbgl/style/style.hpp>
 #include "route_fixtures.hpp"
+#include "../glfw_view.hpp"
 
 RouteAddTest::RouteAddTest(const std::string& testDir)
     : RouteTest("route_add_test", testDir) {}
 
-bool RouteAddTest::produceTestCommands(mbgl::Map* map) {
+bool RouteAddTest::produceTestCommands(mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
     assert(map != nullptr && "invalid map!");
     if (map != nullptr) {
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
             using namespace mbgl::route;
             using namespace route_fixtures;
 

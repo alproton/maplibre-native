@@ -1,18 +1,19 @@
 #include "route_add_traffic_test.hpp"
 #include <mbgl/style/style.hpp>
 #include "route_fixtures.hpp"
+#include "../glfw_view.hpp"
 
 RouteAddTrafficTest::RouteAddTrafficTest(const std::string &testDir)
     : RouteTest("route_add_traffic_test", testDir) {}
 
-bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map) {
+bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map, [[maybe_unused]] GLFWView *view) {
     assert(map != nullptr && "invalid map!");
     bool success = false;
     if (map != nullptr) {
         using namespace mbgl::route;
         using namespace route_fixtures;
 
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map *map) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map *map, [[maybe_unused]] GLFWView *view) {
             mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
             mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
             std::vector<mbgl::Color> colors = {color0, color1};
@@ -48,7 +49,7 @@ bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map) {
             routeMap_[routeID] = rd;
         });
 
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map *mao) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map *map, [[maybe_unused]] GLFWView *view) {
             std::vector<TrafficBlock> trafficBlks;
             bool useIndexFractions = true;
             for (const auto &iter : routeMap_) {

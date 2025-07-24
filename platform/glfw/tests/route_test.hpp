@@ -12,7 +12,7 @@ public:
     RouteTest(const std::string& testDir, const std::string& testName);
     bool initTestFixtures(mbgl::Map* map) override;
     bool teardownTestFixtures(mbgl::Map* map) override;
-    int consumeTestCommand(mbgl::Map* map) override;
+    int consumeTestCommand(mbgl::Map* map, GLFWView* view) override;
     void setVanishingRouteID(const RouteID& id);
     RouteID getVanishingRouteID() const;
     mbgl::Point<double> getPoint(const RouteID& routeID, double percent) const;

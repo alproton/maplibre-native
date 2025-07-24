@@ -3,6 +3,8 @@
 #include <mbgl/map/map.hpp>
 #include <queue>
 
+class GLFWView;
+
 class GLFWGraphicsTest {
 public:
     GLFWGraphicsTest() = delete;
@@ -11,9 +13,9 @@ public:
           testDirectory_(testDirectory) {}
 
     virtual bool initTestFixtures(mbgl::Map* map) = 0;
-    virtual bool produceTestCommands(mbgl::Map* map) = 0;
+    virtual bool produceTestCommands(mbgl::Map* map, GLFWView* view) = 0;
     virtual bool teardownTestFixtures(mbgl::Map* map) = 0;
-    virtual int consumeTestCommand(mbgl::Map* map) = 0;
+    virtual int consumeTestCommand(mbgl::Map* map, GLFWView* view) = 0;
 
     const std::string& getTestName() const { return testName_; }
     const std::string& getTestDirectory() const { return testDirectory_; }
@@ -23,5 +25,5 @@ public:
 protected:
     std::string testName_;
     std::string testDirectory_;
-    std::queue<std::function<void(mbgl::Map*)>> testCommands_;
+    std::queue<std::function<void(mbgl::Map*, GLFWView* view)>> testCommands_;
 };
