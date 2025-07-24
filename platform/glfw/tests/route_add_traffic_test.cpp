@@ -49,27 +49,14 @@ bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map) {
         });
 
         testCommands_.push([&]([[maybe_unused]] mbgl::Map *mao) {
-            const auto &getActiveColors = []() -> std::vector<mbgl::Color> {
-                return {routeColorTable.at(RouteColorType::RouteMapLowTrafficColor),
-                        routeColorTable.at(RouteColorType::RouteMapModerateTrafficColor),
-                        routeColorTable.at(RouteColorType::RouteMapHeavyTrafficColor),
-                        routeColorTable.at(RouteColorType::RouteMapSevereTrafficColor)};
-            };
-
-            const auto &getAlternativeColors = []() -> std::vector<mbgl::Color> {
-                return {routeColorTable.at(RouteColorType::InactiveRouteLowTrafficColor),
-                        routeColorTable.at(RouteColorType::InactiveRouteModerateTrafficColor),
-                        routeColorTable.at(RouteColorType::InactiveRouteHeavyTrafficColor),
-                        routeColorTable.at(RouteColorType::InactiveRouteHeavyTrafficColor)};
-            };
-
             std::vector<TrafficBlock> trafficBlks;
             bool useIndexFractions = true;
             for (const auto &iter : routeMap_) {
                 const auto &routeID = iter.first;
                 const auto &route = iter.second;
-                std::vector<mbgl::Color> colors = routeID == routeMap_.begin()->first ? getActiveColors()
-                                                                                      : getAlternativeColors();
+                std::vector<mbgl::Color> colors = routeID == routeMap_.begin()->first
+                                                      ? route_fixtures::getActiveColors()
+                                                      : route_fixtures::getAlternativeColors();
 
                 // test case 1 - route segment extends wholly within the interval in first and last interval
                 // test case 2 - route segment is completely within the interval

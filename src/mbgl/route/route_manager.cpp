@@ -429,9 +429,10 @@ bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         // route segments must have atleast 2 points
-        if (routeSegOpts.firstIndex == INVALID_UINT || routeSegOpts.lastIndex == INVALID_UINT ||
-            routeSegOpts.firstIndexFraction < 0.0f || routeSegOpts.lastIndexFraction < 0.0f ||
-            routeSegOpts.firstIndexFraction > 1.0f || routeSegOpts.lastIndexFraction > 1.0f) {
+        if (useRouteSegmentIndexFractions_ &&
+            (routeSegOpts.firstIndex == INVALID_UINT || routeSegOpts.lastIndex == INVALID_UINT ||
+             routeSegOpts.firstIndexFraction < 0.0f || routeSegOpts.lastIndexFraction < 0.0f ||
+             routeSegOpts.firstIndexFraction > 1.0f || routeSegOpts.lastIndexFraction > 1.0f)) {
             return false;
         }
 

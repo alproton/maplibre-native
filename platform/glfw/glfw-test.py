@@ -14,7 +14,8 @@ MBGL_GLFW_EXECUTABLE = './mbgl-glfw'
 # TODO: Fill this array with the names of your tests.
 test_names = [
     "route_add_test",
-    "route_add_traffic_test"
+    "route_add_traffic_test",
+    "route_traffic_priority_test"
 ]
 # -------------------
 

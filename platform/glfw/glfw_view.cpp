@@ -35,6 +35,7 @@
 #include <random>
 #include "tests/route_add_test.hpp"
 #include "tests/route_add_traffic_test.hpp"
+#include "tests/route_traffic_priority_test.hpp"
 
 #if !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL) && MLN_DRAWABLE_RENDERER
 #include "example_custom_drawable_style_layer.hpp"
@@ -212,58 +213,58 @@ void addFillExtrusionLayer(mbgl::style::Style &style, bool visible) {
     style.addLayer(std::move(extrusionLayer));
 }
 
-mbgl::Color convert(std::string hexcolor) {
-    std::stringstream ss;
-    ss << std::hex << hexcolor;
-    int color;
-    ss >> color;
-    float r = (color >> 16) & 0xFF;
-    float g = (color >> 8) & 0xFF;
-    float b = (color) & 0xFF;
-    float a = 1.0f;
-    return {mbgl::Color(r / 255.0f, g / 255.0f, b / 255.0f, a)};
-}
-
-enum RouteColorType {
-    RouteMapAlternative,
-    RouteMapAlternativeCasing,
-    RouteMapAlternativeLowTrafficColor,
-    RouteMapAlternativeModerateTrafficColor,
-    RouteMapAlternativeHeavyTrafficColor,
-    RouteMapAlternativeSevereTrafficColor,
-    RouteMapColor,
-    RouteMapCasingColor,
-    RouteMapLowTrafficColor,
-    RouteMapModerateTrafficColor,
-    RouteMapHeavyTrafficColor,
-    RouteMapSevereTrafficColor,
-    InactiveLegRouteColor,
-    InactiveRouteLowTrafficColor,
-    InactiveRouteModerateTrafficColor,
-    InactiveRouteHeavyTrafficColor,
-    InactiveRouteSevereTrafficColor
-};
-
-const std::unordered_map<RouteColorType, mbgl::Color> routeColorTable = {
-    {RouteMapAlternative, convert("7A7A7A")},
-    {RouteMapAlternativeCasing, convert("FFFFFF")},
-    {RouteMapAlternativeLowTrafficColor, convert("FFCC5B")},
-    {RouteMapAlternativeModerateTrafficColor, convert("F0691D")},
-    {RouteMapAlternativeHeavyTrafficColor, convert("DB0000")},
-    {RouteMapAlternativeSevereTrafficColor, convert("9B0000")},
-    {RouteMapColor, convert("2F70A9")},
-    {RouteMapCasingColor, convert("FFFFFF")},
-    {RouteMapLowTrafficColor, convert("FFBC2D")},
-    {RouteMapModerateTrafficColor, convert("ED6D4A")},
-    {RouteMapHeavyTrafficColor, convert("DB0000")},
-    {RouteMapSevereTrafficColor, convert("9B0000")},
-    {InactiveLegRouteColor, convert("76A7D1")},
-    {InactiveRouteLowTrafficColor, convert("FFE5AD")},
-    {InactiveRouteModerateTrafficColor, convert("F39F7E")},
-    {InactiveRouteHeavyTrafficColor, convert("EE7676")},
-    {InactiveRouteSevereTrafficColor, convert("E64747")}
-
-};
+// mbgl::Color convert(std::string hexcolor) {
+//     std::stringstream ss;
+//     ss << std::hex << hexcolor;
+//     int color;
+//     ss >> color;
+//     float r = (color >> 16) & 0xFF;
+//     float g = (color >> 8) & 0xFF;
+//     float b = (color) & 0xFF;
+//     float a = 1.0f;
+//     return {mbgl::Color(r / 255.0f, g / 255.0f, b / 255.0f, a)};
+// }
+//
+// enum RouteColorType {
+//     RouteMapAlternative,
+//     RouteMapAlternativeCasing,
+//     RouteMapAlternativeLowTrafficColor,
+//     RouteMapAlternativeModerateTrafficColor,
+//     RouteMapAlternativeHeavyTrafficColor,
+//     RouteMapAlternativeSevereTrafficColor,
+//     RouteMapColor,
+//     RouteMapCasingColor,
+//     RouteMapLowTrafficColor,
+//     RouteMapModerateTrafficColor,
+//     RouteMapHeavyTrafficColor,
+//     RouteMapSevereTrafficColor,
+//     InactiveLegRouteColor,
+//     InactiveRouteLowTrafficColor,
+//     InactiveRouteModerateTrafficColor,
+//     InactiveRouteHeavyTrafficColor,
+//     InactiveRouteSevereTrafficColor
+// };
+//
+// const std::unordered_map<RouteColorType, mbgl::Color> routeColorTable = {
+//     {RouteMapAlternative, convert("7A7A7A")},
+//     {RouteMapAlternativeCasing, convert("FFFFFF")},
+//     {RouteMapAlternativeLowTrafficColor, convert("FFCC5B")},
+//     {RouteMapAlternativeModerateTrafficColor, convert("F0691D")},
+//     {RouteMapAlternativeHeavyTrafficColor, convert("DB0000")},
+//     {RouteMapAlternativeSevereTrafficColor, convert("9B0000")},
+//     {RouteMapColor, convert("2F70A9")},
+//     {RouteMapCasingColor, convert("FFFFFF")},
+//     {RouteMapLowTrafficColor, convert("FFBC2D")},
+//     {RouteMapModerateTrafficColor, convert("ED6D4A")},
+//     {RouteMapHeavyTrafficColor, convert("DB0000")},
+//     {RouteMapSevereTrafficColor, convert("9B0000")},
+//     {InactiveLegRouteColor, convert("76A7D1")},
+//     {InactiveRouteLowTrafficColor, convert("FFE5AD")},
+//     {InactiveRouteModerateTrafficColor, convert("F39F7E")},
+//     {InactiveRouteHeavyTrafficColor, convert("EE7676")},
+//     {InactiveRouteSevereTrafficColor, convert("E64747")}
+//
+// };
 } // namespace
 
 void glfwError(int error, const char *description) {
@@ -363,6 +364,8 @@ GLFWView::GLFWView(bool fullscreen_,
         autoTest_ = std::make_unique<RouteAddTest>(testRunnerData.testDir);
     } else if (testRunnerData.testName == "route_add_traffic_test") {
         autoTest_ = std::make_unique<RouteAddTrafficTest>(testRunnerData.testDir);
+    } else if (testRunnerData.testName == "route_traffic_priority_test") {
+        autoTest_ = std::make_unique<RouteTrafficPriorityTest>(testRunnerData.testDir);
     }
 
 #if defined(__APPLE__) && !defined(MLN_RENDER_BACKEND_VULKAN)
@@ -1077,65 +1080,6 @@ void GLFWView::setPuckLocation(double lat, double lon, double bearing) {
             vanishingRouteID_, progressPt, routeProgressPrecision_);
         // std::cout << "set puck location - percent: " << percent << std::endl;
     }
-}
-
-std::vector<GLFWView::TrafficBlock> GLFWView::testCases(const RouteSegmentTestCases &testcase,
-                                                        const GLFWView::RouteData &route) const {
-    TrafficBlock block1;
-    TrafficBlock block2;
-
-    std::vector<GLFWView::TrafficBlock> fixture;
-    switch (testcase) {
-        case RouteSegmentTestCases::Blk1LowPriorityIntersecting: {
-            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            block1.priority = 0;
-            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-            block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
-            block2.priority = 1;
-            block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
-        } break;
-
-        case RouteSegmentTestCases::Blk1HighPriorityIntersecting: {
-            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            block1.priority = 1;
-            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-            block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
-            block2.priority = 0;
-            block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
-        } break;
-
-        case RouteSegmentTestCases::Blk12SameColorIntersecting: {
-            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            block1.priority = 0;
-            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-            block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
-            block2.priority = 1;
-            block2.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-        } break;
-
-        case RouteSegmentTestCases::Blk12NonIntersecting: {
-            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            block1.priority = 0;
-            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-            block2.block = {route.getPoint(0.6), route.getPoint(0.7), route.getPoint(0.8)};
-            block2.priority = 0;
-            block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
-
-        } break;
-
-        default:
-            break;
-    }
-
-    fixture.push_back(block1);
-    fixture.push_back(block2);
-
-    return fixture;
 }
 
 void GLFWView::addTrafficSegments() {

@@ -198,15 +198,6 @@ private:
         mbgl::Color color;
     };
 
-    enum RouteSegmentTestCases {
-        Blk1LowPriorityIntersecting,
-        Blk1HighPriorityIntersecting,
-        Blk12SameColorIntersecting,
-        Blk12NonIntersecting,
-        Invalid
-    };
-
-    std::vector<TrafficBlock> testCases(const RouteSegmentTestCases &testcase, const GLFWView::RouteData &route) const;
     void writeCapture(const std::string &capture, const std::string &capture_file_name) const;
     void readAndLoadCapture(const std::string &capture_file_name);
     void writeStats(bool oneline = false) const;

@@ -3,15 +3,16 @@
 #include <string>
 #include <mbgl/util/color.hpp>
 #include <mbgl/util/geometry.hpp>
+#include <vector>
 
 namespace route_fixtures {
 
 struct TrafficBlock {
+    mbgl::LineString<double> block;
     uint32_t firstIndex = INVALID_UINT;
     float firstIndexFraction = 0.0f;
     uint32_t lastIndex = INVALID_UINT;
     float lastIndexFraction = 0.0f;
-    mbgl::LineString<double> block;
     uint32_t priority = 0;
     mbgl::Color color;
 };
@@ -25,6 +26,7 @@ struct RouteData {
     mbgl::LineString<double> points;
 
     mbgl::Point<double> getPoint(double percent) const;
+    std::pair<uint32_t, double> getIntervalFraction(double percent) const;
 };
 
 inline mbgl::Color convert(std::string hexcolor) {
@@ -76,7 +78,20 @@ const std::unordered_map<RouteColorType, mbgl::Color> routeColorTable = {
     {InactiveRouteLowTrafficColor, convert("FFE5AD")},
     {InactiveRouteModerateTrafficColor, convert("F39F7E")},
     {InactiveRouteHeavyTrafficColor, convert("EE7676")},
-    {InactiveRouteSevereTrafficColor, convert("E64747")}
+    {InactiveRouteSevereTrafficColor, convert("E64747")}};
 
+inline std::vector<mbgl::Color> getActiveColors() {
+    return {routeColorTable.at(RouteColorType::RouteMapLowTrafficColor),
+            routeColorTable.at(RouteColorType::RouteMapModerateTrafficColor),
+            routeColorTable.at(RouteColorType::RouteMapHeavyTrafficColor),
+            routeColorTable.at(RouteColorType::RouteMapSevereTrafficColor)};
 };
+
+inline std::vector<mbgl::Color> getAlternativeColors() {
+    return {routeColorTable.at(RouteColorType::InactiveRouteLowTrafficColor),
+            routeColorTable.at(RouteColorType::InactiveRouteModerateTrafficColor),
+            routeColorTable.at(RouteColorType::InactiveRouteHeavyTrafficColor),
+            routeColorTable.at(RouteColorType::InactiveRouteHeavyTrafficColor)};
+};
+
 } // namespace route_fixtures
