@@ -11,6 +11,8 @@ bool RouteTrafficPriorityTest::produceTestCommands([[maybe_unused]] mbgl::Map* m
         using namespace mbgl::route;
         using namespace route_fixtures;
         testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+            map->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(2).withBearing(0.0).withPitch(0.0));
+
             mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
             mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
             std::vector<mbgl::Color> colors = {color0, color1};

@@ -13,6 +13,7 @@ bool RouteAddTest::produceTestCommands(mbgl::Map* map, [[maybe_unused]] GLFWView
         testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
             using namespace mbgl::route;
             using namespace route_fixtures;
+            map->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(2).withBearing(0.0).withPitch(0.0));
 
             mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
             mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);

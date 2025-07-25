@@ -26,6 +26,7 @@ add_executable(
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_add_traffic_test.cpp
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_traffic_priority_test.cpp
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_pick_test.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_capture_test.cpp
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_fixtures.cpp
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_test.cpp
 )
@@ -37,6 +38,14 @@ add_custom_command(
         "${CMAKE_CURRENT_SOURCE_DIR}/glfw-test.py"
         "$<TARGET_FILE_DIR:mbgl-glfw>"
         COMMENT "Copying glfw-test.py to build directory..."
+)
+
+add_custom_command(
+        TARGET mbgl-glfw POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/captures"
+        "$<TARGET_FILE_DIR:mbgl-glfw>/captures"
+        COMMENT "Copying captures to build directory..."
 )
 
 include(${PROJECT_SOURCE_DIR}/vendor/tinyobjloader.cmake)
