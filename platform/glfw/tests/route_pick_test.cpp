@@ -88,7 +88,7 @@ bool RoutePickTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
             using namespace mbgl::route;
             using namespace route_fixtures;
             map->setDebug(mbgl::MapDebugOptions::NoDebug);
-            map->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(1).withBearing(0.0).withPitch(0.0));
+            map->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(0).withBearing(0.0).withPitch(0.0));
 
             mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
             mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
@@ -128,13 +128,13 @@ bool RoutePickTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
     }
 
     testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
-        double screenSpaceX = 747, screenSpaceY = 640;
+        double screenSpaceX = 416, screenSpaceY = 412;
         bool picked = pickRoute(view, screenSpaceX, screenSpaceY);
         std::string pickedStr = picked ? "true" : "false";
         mbgl::Log::Info(mbgl::Event::Route, "Route is " + pickedStr);
         using namespace route_fixtures;
         mbgl::route::RouteSegmentOptions rsegopts;
-        if (pickedRouteID.isValid()) {
+        if (picked && pickedRouteID.isValid()) {
             rsegopts.color = mbgl::Color(0.0f, 1.0f, 0.0f, 1.0f);
         } else {
             rsegopts.color = mbgl::Color(1.0f, 0.0f, 0.0f, 1.0f);

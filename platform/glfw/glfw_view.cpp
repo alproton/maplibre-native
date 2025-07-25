@@ -251,6 +251,11 @@ GLFWView::GLFWView(bool fullscreen_,
         height = videoMode->height;
     }
 
+    if (testRunnerData_.isNeeded) {
+        width = 1024;
+        height = 768;
+    }
+
 #if __APPLE__
     glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GL_TRUE);
 #endif
