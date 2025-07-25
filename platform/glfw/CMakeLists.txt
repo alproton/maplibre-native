@@ -27,6 +27,7 @@ add_executable(
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_traffic_priority_test.cpp
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_pick_test.cpp
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_capture_test.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_nav_circle_test.cpp
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_fixtures.cpp
     ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_test.cpp
 )

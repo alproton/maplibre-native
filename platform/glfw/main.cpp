@@ -78,9 +78,17 @@ int main(int argc, char* argv[]) {
 
     if (testNameDisplayFlag) {
         if (args::get(testNameDisplayFlag)) {
+            std::vector<std::string> testNames = {"route_add_test",
+                                                  "route_add_traffic_test",
+                                                  "route_traffic_priority_test",
+                                                  "route_pick_test",
+                                                  "route_capture_test",
+                                                  "route_nav_circle_test"};
             std::cout << "Available tests:" << std::endl;
             std::cout << "----------------" << std::endl;
-            std::cout << "route_add_test" << std::endl;
+            for (const auto& testNameStr : testNames) {
+                std::cout << testNameStr << std::endl;
+            }
             exit(0);
         }
     }

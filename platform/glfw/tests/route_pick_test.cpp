@@ -87,6 +87,7 @@ bool RoutePickTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
         testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
             using namespace mbgl::route;
             using namespace route_fixtures;
+            map->setDebug(mbgl::MapDebugOptions::NoDebug);
             map->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(1).withBearing(0.0).withPitch(0.0));
 
             mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);

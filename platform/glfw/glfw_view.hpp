@@ -93,6 +93,9 @@ public:
     void onDidFinishLoadingStyle() override;
     void onWillStartRenderingFrame() override;
 
+    void enablePuck(bool onOff);
+    void setPuckLocation(double lat, double lon, double bearing);
+
 protected:
     // mbgl::Backend implementation
 
@@ -139,8 +142,6 @@ private:
     void addTrafficSegments();
     void modifyTrafficViz();
     void removeTrafficViz();
-    void enablePuck(bool onOff);
-    void setPuckLocation(double lat, double lon, double bearing);
     void incrementRouteProgress();
     void decrementRouteProgress();
     void captureSnapshot();

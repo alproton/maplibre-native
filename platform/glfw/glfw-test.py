@@ -17,7 +17,8 @@ test_names = [
     "route_add_traffic_test",
     "route_traffic_priority_test",
     "route_pick_test",
-    "route_capture_test"
+    "route_capture_test",
+    "route_nav_circle_test"
 ]
 # -------------------
 

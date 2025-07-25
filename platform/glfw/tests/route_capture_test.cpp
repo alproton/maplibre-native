@@ -49,6 +49,7 @@ bool RouteCaptureTest::produceTestCommands(mbgl::Map* map, [[maybe_unused]] GLFW
                     .withZoom(6)
                     .withBearing(0.0)
                     .withPitch(0.0));
+    map->setDebug(mbgl::MapDebugOptions::TileBorders);
     return readAndLoadCapture("captures/yosemite_route_capture.json", map);
 }
 

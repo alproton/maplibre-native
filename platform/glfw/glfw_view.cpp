@@ -38,6 +38,7 @@
 #include "tests/route_traffic_priority_test.hpp"
 #include "tests/route_pick_test.hpp"
 #include "tests/route_capture_test.hpp"
+#include "tests/route_nav_circle_test.hpp"
 
 #if !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL) && MLN_DRAWABLE_RENDERER
 #include "example_custom_drawable_style_layer.hpp"
@@ -372,6 +373,8 @@ GLFWView::GLFWView(bool fullscreen_,
         autoTest_ = std::make_unique<RoutePickTest>(testRunnerData.testDir);
     } else if (testRunnerData.testName == "route_capture_test") {
         autoTest_ = std::make_unique<RouteCaptureTest>(testRunnerData.testDir);
+    } else if (testRunnerData.testName == "route_nav_circle_test") {
+        autoTest_ = std::make_unique<RouteNavCircleTest>(testRunnerData.testDir);
     }
 
 #if defined(__APPLE__) && !defined(MLN_RENDER_BACKEND_VULKAN)
