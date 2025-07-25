@@ -215,59 +215,6 @@ void addFillExtrusionLayer(mbgl::style::Style &style, bool visible) {
     extrusionLayer->setFillExtrusionBase(PropertyExpression<float>(get("min_height")));
     style.addLayer(std::move(extrusionLayer));
 }
-
-// mbgl::Color convert(std::string hexcolor) {
-//     std::stringstream ss;
-//     ss << std::hex << hexcolor;
-//     int color;
-//     ss >> color;
-//     float r = (color >> 16) & 0xFF;
-//     float g = (color >> 8) & 0xFF;
-//     float b = (color) & 0xFF;
-//     float a = 1.0f;
-//     return {mbgl::Color(r / 255.0f, g / 255.0f, b / 255.0f, a)};
-// }
-//
-// enum RouteColorType {
-//     RouteMapAlternative,
-//     RouteMapAlternativeCasing,
-//     RouteMapAlternativeLowTrafficColor,
-//     RouteMapAlternativeModerateTrafficColor,
-//     RouteMapAlternativeHeavyTrafficColor,
-//     RouteMapAlternativeSevereTrafficColor,
-//     RouteMapColor,
-//     RouteMapCasingColor,
-//     RouteMapLowTrafficColor,
-//     RouteMapModerateTrafficColor,
-//     RouteMapHeavyTrafficColor,
-//     RouteMapSevereTrafficColor,
-//     InactiveLegRouteColor,
-//     InactiveRouteLowTrafficColor,
-//     InactiveRouteModerateTrafficColor,
-//     InactiveRouteHeavyTrafficColor,
-//     InactiveRouteSevereTrafficColor
-// };
-//
-// const std::unordered_map<RouteColorType, mbgl::Color> routeColorTable = {
-//     {RouteMapAlternative, convert("7A7A7A")},
-//     {RouteMapAlternativeCasing, convert("FFFFFF")},
-//     {RouteMapAlternativeLowTrafficColor, convert("FFCC5B")},
-//     {RouteMapAlternativeModerateTrafficColor, convert("F0691D")},
-//     {RouteMapAlternativeHeavyTrafficColor, convert("DB0000")},
-//     {RouteMapAlternativeSevereTrafficColor, convert("9B0000")},
-//     {RouteMapColor, convert("2F70A9")},
-//     {RouteMapCasingColor, convert("FFFFFF")},
-//     {RouteMapLowTrafficColor, convert("FFBC2D")},
-//     {RouteMapModerateTrafficColor, convert("ED6D4A")},
-//     {RouteMapHeavyTrafficColor, convert("DB0000")},
-//     {RouteMapSevereTrafficColor, convert("9B0000")},
-//     {InactiveLegRouteColor, convert("76A7D1")},
-//     {InactiveRouteLowTrafficColor, convert("FFE5AD")},
-//     {InactiveRouteModerateTrafficColor, convert("F39F7E")},
-//     {InactiveRouteHeavyTrafficColor, convert("EE7676")},
-//     {InactiveRouteSevereTrafficColor, convert("E64747")}
-//
-// };
 } // namespace
 
 void glfwError(int error, const char *description) {
@@ -388,67 +335,68 @@ GLFWView::GLFWView(bool fullscreen_,
     //
 
     glfwMakeContextCurrent(nullptr);
-
-    printf("\n");
-    printf(
-        "======================================================================"
-        "==========\n");
-    printf("\n");
-    printf("- Press `S` to cycle through bundled styles\n");
-    printf("- Press `X` to reset the transform\n");
-    printf("- Press `N` to reset north\n");
-    printf("- Press `R` to enable the route demo\n");
-    printf("- Press `E` to insert an example building extrusion layer\n");
-    printf("- Press `O` to toggle online connectivity\n");
-    printf("- Press `Z` to cycle through north orientations\n");
-    printf("- Press `X` to cycle through the viewport modes\n");
-    printf("- Press `I` to delete existing database and re-initialize\n");
-    printf(
-        "- Press `A` to cycle through Mapbox offices in the world + dateline "
-        "monument\n");
-    printf("- Press `B` to cycle through the color, stencil, and depth buffer\n");
-    printf(
-        "- Press `D` to cycle through camera bounds: inside, crossing IDL at "
-        "left, crossing IDL at right, and "
-        "disabled\n");
-    printf("- Press `T` to add custom geometry source\n");
-    printf("- Press `F` to enable feature-state demo\n");
-    printf("- Press `U` to toggle pitch bounds\n");
-    printf("- Press `H` to take a snapshot of a current map.\n");
-    printf(
-        "- Press `J` to take a snapshot of a current map with an extrusions "
-        "overlay.\n");
-    printf("- Press `Y` to start a camera fly-by demo\n");
-    printf("\n");
-    printf(
-        "- Press `1` through `6` to add increasing numbers of point "
-        "annotations for testing\n");
-    printf(
-        "- Press `7` through `0` to add increasing numbers of shape "
-        "annotations for testing\n");
-    printf("\n");
-    printf("- Press `Q` to query annotations\n");
-    printf("- Press `C` to remove annotations\n");
-    printf("- Press `K` to add a random custom runtime imagery annotation\n");
-    printf("- Press `L` to add a random line annotation\n");
-    printf("- Press `W` to pop the last-added annotation off\n");
-    printf("- Press `P` to pause tile requests\n");
-    printf("\n");
-    printf("- Hold `Control` + mouse drag to rotate\n");
-    printf("- Hold `Shift` + mouse drag to tilt\n");
-    printf("\n");
-    printf("- Press `F1` to generate a render test for the current view\n");
-    printf("\n");
-    printf("- Press `Tab` to cycle through the map debug options\n");
-    printf("- Press `V` to cycle through Tile LOD modes\n");
-    printf("- Press `F7` to lower the zoom level without changing the camera\n");
-    printf("- Press `F8` to higher the zoom level without changing the camera\n");
-    printf("- Press `Esc` to quit\n");
-    printf("\n");
-    printf(
-        "======================================================================"
-        "==========\n");
-    printf("\n");
+    if (!testRunnerData.isNeeded) {
+        printf("\n");
+        printf(
+            "======================================================================"
+            "==========\n");
+        printf("\n");
+        printf("- Press `S` to cycle through bundled styles\n");
+        printf("- Press `X` to reset the transform\n");
+        printf("- Press `N` to reset north\n");
+        printf("- Press `R` to enable the route demo\n");
+        printf("- Press `E` to insert an example building extrusion layer\n");
+        printf("- Press `O` to toggle online connectivity\n");
+        printf("- Press `Z` to cycle through north orientations\n");
+        printf("- Press `X` to cycle through the viewport modes\n");
+        printf("- Press `I` to delete existing database and re-initialize\n");
+        printf(
+            "- Press `A` to cycle through Mapbox offices in the world + dateline "
+            "monument\n");
+        printf("- Press `B` to cycle through the color, stencil, and depth buffer\n");
+        printf(
+            "- Press `D` to cycle through camera bounds: inside, crossing IDL at "
+            "left, crossing IDL at right, and "
+            "disabled\n");
+        printf("- Press `T` to add custom geometry source\n");
+        printf("- Press `F` to enable feature-state demo\n");
+        printf("- Press `U` to toggle pitch bounds\n");
+        printf("- Press `H` to take a snapshot of a current map.\n");
+        printf(
+            "- Press `J` to take a snapshot of a current map with an extrusions "
+            "overlay.\n");
+        printf("- Press `Y` to start a camera fly-by demo\n");
+        printf("\n");
+        printf(
+            "- Press `1` through `6` to add increasing numbers of point "
+            "annotations for testing\n");
+        printf(
+            "- Press `7` through `0` to add increasing numbers of shape "
+            "annotations for testing\n");
+        printf("\n");
+        printf("- Press `Q` to query annotations\n");
+        printf("- Press `C` to remove annotations\n");
+        printf("- Press `K` to add a random custom runtime imagery annotation\n");
+        printf("- Press `L` to add a random line annotation\n");
+        printf("- Press `W` to pop the last-added annotation off\n");
+        printf("- Press `P` to pause tile requests\n");
+        printf("\n");
+        printf("- Hold `Control` + mouse drag to rotate\n");
+        printf("- Hold `Shift` + mouse drag to tilt\n");
+        printf("\n");
+        printf("- Press `F1` to generate a render test for the current view\n");
+        printf("\n");
+        printf("- Press `Tab` to cycle through the map debug options\n");
+        printf("- Press `V` to cycle through Tile LOD modes\n");
+        printf("- Press `F7` to lower the zoom level without changing the camera\n");
+        printf("- Press `F8` to higher the zoom level without changing the camera\n");
+        printf("- Press `Esc` to quit\n");
+        printf("\n");
+        printf(
+            "======================================================================"
+            "==========\n");
+        printf("\n");
+    }
 }
 
 GLFWView::~GLFWView() {
