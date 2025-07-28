@@ -3,7 +3,7 @@
         "default"
     ],
     "icons": [
-        {"default" : "platform/glfw/assets/puck.png"}
+        {"default" : "puck.png"}
     ],
     "states": {
         "default": [

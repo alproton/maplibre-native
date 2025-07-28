@@ -33,6 +33,12 @@
 #include <mbgl/route/route_manager.hpp>
 #include <mbgl/route/route_segment.hpp>
 #include <random>
+#include "tests/route_add_test.hpp"
+#include "tests/route_add_traffic_test.hpp"
+#include "tests/route_traffic_priority_test.hpp"
+#include "tests/route_pick_test.hpp"
+#include "tests/route_capture_test.hpp"
+#include "tests/route_nav_circle_test.hpp"
 
 #if !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL) && MLN_DRAWABLE_RENDERER
 #include "example_custom_drawable_style_layer.hpp"
@@ -209,59 +215,6 @@ void addFillExtrusionLayer(mbgl::style::Style &style, bool visible) {
     extrusionLayer->setFillExtrusionBase(PropertyExpression<float>(get("min_height")));
     style.addLayer(std::move(extrusionLayer));
 }
-
-mbgl::Color convert(std::string hexcolor) {
-    std::stringstream ss;
-    ss << std::hex << hexcolor;
-    int color;
-    ss >> color;
-    float r = (color >> 16) & 0xFF;
-    float g = (color >> 8) & 0xFF;
-    float b = (color) & 0xFF;
-    float a = 1.0f;
-    return {mbgl::Color(r / 255.0f, g / 255.0f, b / 255.0f, a)};
-}
-
-enum RouteColorType {
-    RouteMapAlternative,
-    RouteMapAlternativeCasing,
-    RouteMapAlternativeLowTrafficColor,
-    RouteMapAlternativeModerateTrafficColor,
-    RouteMapAlternativeHeavyTrafficColor,
-    RouteMapAlternativeSevereTrafficColor,
-    RouteMapColor,
-    RouteMapCasingColor,
-    RouteMapLowTrafficColor,
-    RouteMapModerateTrafficColor,
-    RouteMapHeavyTrafficColor,
-    RouteMapSevereTrafficColor,
-    InactiveLegRouteColor,
-    InactiveRouteLowTrafficColor,
-    InactiveRouteModerateTrafficColor,
-    InactiveRouteHeavyTrafficColor,
-    InactiveRouteSevereTrafficColor
-};
-
-const std::unordered_map<RouteColorType, mbgl::Color> routeColorTable = {
-    {RouteMapAlternative, convert("7A7A7A")},
-    {RouteMapAlternativeCasing, convert("FFFFFF")},
-    {RouteMapAlternativeLowTrafficColor, convert("FFCC5B")},
-    {RouteMapAlternativeModerateTrafficColor, convert("F0691D")},
-    {RouteMapAlternativeHeavyTrafficColor, convert("DB0000")},
-    {RouteMapAlternativeSevereTrafficColor, convert("9B0000")},
-    {RouteMapColor, convert("2F70A9")},
-    {RouteMapCasingColor, convert("FFFFFF")},
-    {RouteMapLowTrafficColor, convert("FFBC2D")},
-    {RouteMapModerateTrafficColor, convert("ED6D4A")},
-    {RouteMapHeavyTrafficColor, convert("DB0000")},
-    {RouteMapSevereTrafficColor, convert("9B0000")},
-    {InactiveLegRouteColor, convert("76A7D1")},
-    {InactiveRouteLowTrafficColor, convert("FFE5AD")},
-    {InactiveRouteModerateTrafficColor, convert("F39F7E")},
-    {InactiveRouteHeavyTrafficColor, convert("EE7676")},
-    {InactiveRouteSevereTrafficColor, convert("E64747")}
-
-};
 } // namespace
 
 void glfwError(int error, const char *description) {
@@ -270,10 +223,12 @@ void glfwError(int error, const char *description) {
 
 GLFWView::GLFWView(bool fullscreen_,
                    bool benchmark_,
+                   const TestRunnerData &testRunnerData,
                    const mbgl::ResourceOptions &resourceOptions,
                    const mbgl::ClientOptions &clientOptions)
     : fullscreen(fullscreen_),
       benchmark(benchmark_),
+      testRunnerData_(testRunnerData),
       snapshotterObserver(std::make_unique<SnapshotObserver>()),
       mapResourceOptions(resourceOptions.clone()),
       mapClientOptions(clientOptions.clone()) {
@@ -294,6 +249,11 @@ GLFWView::GLFWView(bool fullscreen_,
         auto videoMode = glfwGetVideoMode(monitor);
         width = videoMode->width;
         height = videoMode->height;
+    }
+
+    if (testRunnerData_.isNeeded) {
+        width = 1024;
+        height = 768;
     }
 
 #if __APPLE__
@@ -355,6 +315,19 @@ GLFWView::GLFWView(bool fullscreen_,
     bool capFrameRate = !benchmark; // disable VSync in benchmark mode
     backend = GLFWBackend::Create(window, capFrameRate);
     backend->assetPath = MLN_ASSETS_PATH;
+    if (testRunnerData.testName == "route_add_test") {
+        autoTest_ = std::make_unique<RouteAddTest>(testRunnerData.testDir);
+    } else if (testRunnerData.testName == "route_add_traffic_test") {
+        autoTest_ = std::make_unique<RouteAddTrafficTest>(testRunnerData.testDir);
+    } else if (testRunnerData.testName == "route_traffic_priority_test") {
+        autoTest_ = std::make_unique<RouteTrafficPriorityTest>(testRunnerData.testDir);
+    } else if (testRunnerData.testName == "route_pick_test") {
+        autoTest_ = std::make_unique<RoutePickTest>(testRunnerData.testDir);
+    } else if (testRunnerData.testName == "route_capture_test") {
+        autoTest_ = std::make_unique<RouteCaptureTest>(testRunnerData.testDir);
+    } else if (testRunnerData.testName == "route_nav_circle_test") {
+        autoTest_ = std::make_unique<RouteNavCircleTest>(testRunnerData.testDir);
+    }
 
 #if defined(__APPLE__) && !defined(MLN_RENDER_BACKEND_VULKAN)
     int fbW, fbH;
@@ -364,68 +337,71 @@ GLFWView::GLFWView(bool fullscreen_,
 
     pixelRatio = static_cast<float>(backend->getSize().width) / width;
 
-    glfwMakeContextCurrent(nullptr);
+    //
 
-    printf("\n");
-    printf(
-        "======================================================================"
-        "==========\n");
-    printf("\n");
-    printf("- Press `S` to cycle through bundled styles\n");
-    printf("- Press `X` to reset the transform\n");
-    printf("- Press `N` to reset north\n");
-    printf("- Press `R` to enable the route demo\n");
-    printf("- Press `E` to insert an example building extrusion layer\n");
-    printf("- Press `O` to toggle online connectivity\n");
-    printf("- Press `Z` to cycle through north orientations\n");
-    printf("- Press `X` to cycle through the viewport modes\n");
-    printf("- Press `I` to delete existing database and re-initialize\n");
-    printf(
-        "- Press `A` to cycle through Mapbox offices in the world + dateline "
-        "monument\n");
-    printf("- Press `B` to cycle through the color, stencil, and depth buffer\n");
-    printf(
-        "- Press `D` to cycle through camera bounds: inside, crossing IDL at "
-        "left, crossing IDL at right, and "
-        "disabled\n");
-    printf("- Press `T` to add custom geometry source\n");
-    printf("- Press `F` to enable feature-state demo\n");
-    printf("- Press `U` to toggle pitch bounds\n");
-    printf("- Press `H` to take a snapshot of a current map.\n");
-    printf(
-        "- Press `J` to take a snapshot of a current map with an extrusions "
-        "overlay.\n");
-    printf("- Press `Y` to start a camera fly-by demo\n");
-    printf("\n");
-    printf(
-        "- Press `1` through `6` to add increasing numbers of point "
-        "annotations for testing\n");
-    printf(
-        "- Press `7` through `0` to add increasing numbers of shape "
-        "annotations for testing\n");
-    printf("\n");
-    printf("- Press `Q` to query annotations\n");
-    printf("- Press `C` to remove annotations\n");
-    printf("- Press `K` to add a random custom runtime imagery annotation\n");
-    printf("- Press `L` to add a random line annotation\n");
-    printf("- Press `W` to pop the last-added annotation off\n");
-    printf("- Press `P` to pause tile requests\n");
-    printf("\n");
-    printf("- Hold `Control` + mouse drag to rotate\n");
-    printf("- Hold `Shift` + mouse drag to tilt\n");
-    printf("\n");
-    printf("- Press `F1` to generate a render test for the current view\n");
-    printf("\n");
-    printf("- Press `Tab` to cycle through the map debug options\n");
-    printf("- Press `V` to cycle through Tile LOD modes\n");
-    printf("- Press `F7` to lower the zoom level without changing the camera\n");
-    printf("- Press `F8` to higher the zoom level without changing the camera\n");
-    printf("- Press `Esc` to quit\n");
-    printf("\n");
-    printf(
-        "======================================================================"
-        "==========\n");
-    printf("\n");
+    glfwMakeContextCurrent(nullptr);
+    if (!testRunnerData.isNeeded) {
+        printf("\n");
+        printf(
+            "======================================================================"
+            "==========\n");
+        printf("\n");
+        printf("- Press `S` to cycle through bundled styles\n");
+        printf("- Press `X` to reset the transform\n");
+        printf("- Press `N` to reset north\n");
+        printf("- Press `R` to enable the route demo\n");
+        printf("- Press `E` to insert an example building extrusion layer\n");
+        printf("- Press `O` to toggle online connectivity\n");
+        printf("- Press `Z` to cycle through north orientations\n");
+        printf("- Press `X` to cycle through the viewport modes\n");
+        printf("- Press `I` to delete existing database and re-initialize\n");
+        printf(
+            "- Press `A` to cycle through Mapbox offices in the world + dateline "
+            "monument\n");
+        printf("- Press `B` to cycle through the color, stencil, and depth buffer\n");
+        printf(
+            "- Press `D` to cycle through camera bounds: inside, crossing IDL at "
+            "left, crossing IDL at right, and "
+            "disabled\n");
+        printf("- Press `T` to add custom geometry source\n");
+        printf("- Press `F` to enable feature-state demo\n");
+        printf("- Press `U` to toggle pitch bounds\n");
+        printf("- Press `H` to take a snapshot of a current map.\n");
+        printf(
+            "- Press `J` to take a snapshot of a current map with an extrusions "
+            "overlay.\n");
+        printf("- Press `Y` to start a camera fly-by demo\n");
+        printf("\n");
+        printf(
+            "- Press `1` through `6` to add increasing numbers of point "
+            "annotations for testing\n");
+        printf(
+            "- Press `7` through `0` to add increasing numbers of shape "
+            "annotations for testing\n");
+        printf("\n");
+        printf("- Press `Q` to query annotations\n");
+        printf("- Press `C` to remove annotations\n");
+        printf("- Press `K` to add a random custom runtime imagery annotation\n");
+        printf("- Press `L` to add a random line annotation\n");
+        printf("- Press `W` to pop the last-added annotation off\n");
+        printf("- Press `P` to pause tile requests\n");
+        printf("\n");
+        printf("- Hold `Control` + mouse drag to rotate\n");
+        printf("- Hold `Shift` + mouse drag to tilt\n");
+        printf("\n");
+        printf("- Press `F1` to generate a render test for the current view\n");
+        printf("\n");
+        printf("- Press `Tab` to cycle through the map debug options\n");
+        printf("- Press `V` to cycle through Tile LOD modes\n");
+        printf("- Press `F7` to lower the zoom level without changing the camera\n");
+        printf("- Press `F8` to higher the zoom level without changing the camera\n");
+        printf("- Press `Esc` to quit\n");
+        printf("\n");
+        printf(
+            "======================================================================"
+            "==========\n");
+        printf("\n");
+    }
 }
 
 GLFWView::~GLFWView() {
@@ -745,7 +721,9 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
                 } break;
 
                 case GLFW_KEY_L: {
-                    std::string capture_file_name = std::string(MLN_ASSETS_PATH) +  "../../android/MapLibreAndroidTestApp/src/main/res/raw/yosemite_route_capture.json";
+                    std::string capture_file_name =
+                        std::string(MLN_ASSETS_PATH) +
+                        "../../android/MapLibreAndroidTestApp/src/main/res/raw/yosemite_route_capture.json";
                     view->readAndLoadCapture(capture_file_name);
                 } break;
 
@@ -767,6 +745,10 @@ void GLFWView::onKey(GLFWwindow *window, int key, int /*scancode*/, int action, 
 
                 case GLFW_KEY_B:
                     view->incrementStep(false);
+                    break;
+
+                case GLFW_KEY_I:
+                    view->captureImageSnapshot("captured_frame");
                     break;
             }
         } else {
@@ -1034,49 +1016,16 @@ int GLFWView::getTopMost(const std::vector<RouteID> &routeList) const {
 }
 
 void GLFWView::addRoute() {
-    using namespace mbgl::route;
+    std::unique_ptr<RouteAddTest> addRoute = std::make_unique<RouteAddTest>("");
+    addRoute->initTestFixtures(map);
+    addRoute->produceTestCommands(map, this);
+    addRoute->consumeTestCommand(map, this);
 
-    mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
-    mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
-    std::vector<mbgl::Color> colors = {color0, color1};
-
-    auto getRouteGeom = [](const RouteData &route) -> mbgl::LineString<double> {
-        mbgl::LineString<double> linestring;
-        float radius = route.radius;
-        for (int i = 0; i < route.resolution; i++) {
-            float anglerad = (float(i) / float(route.resolution - 1)) * 2 * 3.14f;
-            mbgl::Point<double> pt{route.xlate + radius * sin(anglerad), radius * cos(anglerad)};
-            linestring.push_back(pt);
-        }
-
-        return linestring;
-    };
-
-    rmptr_->setStyle(map->getStyle());
-    RouteData route;
-    route.xlate = routeMap_.size() * route.radius * 2.0;
-    mbgl::LineString<double> geom = getRouteGeom(route);
-    route.points = geom;
-    assert(route.points.size() == route.resolution && "invalid number of points generated");
-    RouteOptions routeOpts;
-    int colorIdx = routeMap_.size() == 0 ? 0 : 1;
-    routeOpts.innerColor = colors[colorIdx];
-    routeOpts.outerColor = mbgl::Color(0.2, 0.2, 0.2, 1);
-    routeOpts.useDynamicWidths = false;
-    routeOpts.outerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
-    routeOpts.innerClipColor = mbgl::Color(0.5, 0.5, 0.5, 1.0);
-    routeOpts.useMercatorProjection = false;
-
-    auto routeID = rmptr_->routeCreate(geom, routeOpts);
-    routeMap_[routeID] = route;
-    rmptr_->finalize();
-
-    if (!vanishingRouteID_.isValid()) {
-        vanishingRouteID_ = routeID;
-        rmptr_->setVanishingRouteID(vanishingRouteID_);
+    vanishingRouteID_ = addRoute->getVanishingRouteID();
+    if (vanishingRouteID_.isValid()) {
         enablePuck(true);
 
-        const mbgl::Point<double> &pt = routeMap_[vanishingRouteID_].getPoint(0.0);
+        const mbgl::Point<double> &pt = addRoute->getPoint(vanishingRouteID_, 0.0);
         setPuckLocation(pt.y, pt.x, 90.0);
     }
 }
@@ -1095,195 +1044,12 @@ void GLFWView::setPuckLocation(double lat, double lon, double bearing) {
     }
 }
 
-std::vector<GLFWView::TrafficBlock> GLFWView::testCases(const RouteSegmentTestCases &testcase,
-                                                        const GLFWView::RouteData &route) const {
-    TrafficBlock block1;
-    TrafficBlock block2;
-
-    std::vector<GLFWView::TrafficBlock> fixture;
-    switch (testcase) {
-        case RouteSegmentTestCases::Blk1LowPriorityIntersecting: {
-            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            block1.priority = 0;
-            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-            block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
-            block2.priority = 1;
-            block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
-        } break;
-
-        case RouteSegmentTestCases::Blk1HighPriorityIntersecting: {
-            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            block1.priority = 1;
-            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-            block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
-            block2.priority = 0;
-            block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
-        } break;
-
-        case RouteSegmentTestCases::Blk12SameColorIntersecting: {
-            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            block1.priority = 0;
-            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-            block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
-            block2.priority = 1;
-            block2.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-        } break;
-
-        case RouteSegmentTestCases::Blk12NonIntersecting: {
-            block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            block1.priority = 0;
-            block1.color = routeColorTable.at(RouteMapLowTrafficColor);
-
-            block2.block = {route.getPoint(0.6), route.getPoint(0.7), route.getPoint(0.8)};
-            block2.priority = 0;
-            block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
-
-        } break;
-
-        default:
-            break;
-    }
-
-    fixture.push_back(block1);
-    fixture.push_back(block2);
-
-    return fixture;
-}
-
 void GLFWView::addTrafficSegments() {
-    const auto &getActiveColors = []() -> std::vector<mbgl::Color> {
-        return {routeColorTable.at(RouteColorType::RouteMapLowTrafficColor),
-                routeColorTable.at(RouteColorType::RouteMapModerateTrafficColor),
-                routeColorTable.at(RouteColorType::RouteMapHeavyTrafficColor),
-                routeColorTable.at(RouteColorType::RouteMapSevereTrafficColor)};
-    };
-
-    const auto &getAlternativeColors = []() -> std::vector<mbgl::Color> {
-        return {routeColorTable.at(RouteColorType::InactiveRouteLowTrafficColor),
-                routeColorTable.at(RouteColorType::InactiveRouteModerateTrafficColor),
-                routeColorTable.at(RouteColorType::InactiveRouteHeavyTrafficColor),
-                routeColorTable.at(RouteColorType::InactiveRouteHeavyTrafficColor)};
-    };
-
-    std::vector<TrafficBlock> trafficBlks;
-    bool useIndexFractions = true;
-    for (const auto &iter : routeMap_) {
-        const auto &routeID = iter.first;
-        const auto &route = iter.second;
-        std::vector<mbgl::Color> colors = routeID == routeMap_.begin()->first ? getActiveColors()
-                                                                              : getAlternativeColors();
-
-        // TODO: we have run out of hot keys :( . one of these days, need to create graphics tests for nav.
-        bool useTestCode = false;
-        if (useTestCode) {
-            trafficBlks = testCases(RouteSegmentTestCases::Blk12SameColorIntersecting, route);
-        } else if (!useIndexFractions) { // TODO: remove deprecated use geometry in route segments
-            if (route.numTrafficZones * 3 > route.resolution) {
-                float blockSize = 1.0f / float(route.numTrafficZones);
-                float innerBlockSize = blockSize / 2.0f;
-                for (int i = 0; i < route.numTrafficZones; i++) {
-                    TrafficBlock currTrafficBlk;
-                    float startPercent = float(i) * blockSize;
-                    float endPercent = startPercent + innerBlockSize;
-                    currTrafficBlk.block.push_back(route.getPoint(startPercent));
-                    currTrafficBlk.block.push_back(route.getPoint(endPercent));
-                    currTrafficBlk.color = mbgl::Color(float(i) / float(route.numTrafficZones - 1), 0.0, 0.0, 1.0);
-
-                    trafficBlks.push_back(currTrafficBlk);
-                }
-            } else {
-                size_t blockSize = floor(float(route.resolution) / float(route.numTrafficZones));
-                size_t innerBlockSize = ceil((float(blockSize) / 2.0f));
-
-                auto &routePts = route.points;
-                TrafficBlock currTrafficBlk;
-                for (size_t i = 0; i < routePts.size(); i++) {
-                    if (i % blockSize == 0 && !currTrafficBlk.block.empty()) {
-                        trafficBlks.push_back(currTrafficBlk);
-                        currTrafficBlk.block.clear();
-                    }
-
-                    if (i % blockSize < innerBlockSize) {
-                        currTrafficBlk.block.push_back(mbgl::Point<double>(routePts.at(i).x, routePts.at(i).y));
-                    }
-                }
-                if (!currTrafficBlk.block.empty()) {
-                    trafficBlks.push_back(currTrafficBlk);
-                }
-            }
-        } else {
-            // test case 1 - route segment extends wholly within the interval in first and last interval
-            // test case 2 - route segment is completely within the interval
-            // test case 3 - route segment is spans across into adjacent interval
-
-            // test case 1
-            TrafficBlock trafblk0;
-            trafblk0.firstIndex = 0;
-            trafblk0.firstIndexFraction = 0.0f;
-            trafblk0.lastIndex = 0;
-            trafblk0.lastIndexFraction = 1.0f;
-            trafblk0.color = mbgl::Color(1.0f, 0.0f, 0.0f, 1.0f);
-
-            TrafficBlock trafblk1;
-            trafblk1.firstIndex = route.points.size() - 2; // second last point
-            trafblk1.firstIndexFraction = 0.0f;
-            trafblk1.lastIndex = route.points.size() - 2;
-            trafblk1.lastIndexFraction = 1.0f;
-            trafblk0.color = mbgl::Color(1.0f, 1.0f, 1.0f, 1.0f);
-
-            // test case 2
-            TrafficBlock trafblk2;
-            trafblk2.firstIndex = 1;
-            trafblk2.firstIndexFraction = 0.2f;
-            trafblk2.lastIndex = 1;
-            trafblk2.lastIndexFraction = 0.8f;
-            trafblk2.color = mbgl::Color(0.0f, 1.0f, 0.0f, 1.0f);
-
-            // test case 3
-            TrafficBlock trafblk3;
-            trafblk3.firstIndex = 2;
-            trafblk3.firstIndexFraction = 0.5f;
-            trafblk3.lastIndex = 3;
-            trafblk3.lastIndexFraction = 0.5f;
-            trafblk3.color = mbgl::Color(0.0f, 1.0f, 1.0f, 1.0f);
-
-            trafficBlks.push_back(trafblk0);
-            trafficBlks.push_back(trafblk1);
-            trafficBlks.push_back(trafblk2);
-            trafficBlks.push_back(trafblk3);
-        }
-
-        // clear the route segments and create new ones from the traffic blocks
-        rmptr_->routeClearSegments(routeID);
-        rmptr_->setUseRouteSegmentIndexFractions(useIndexFractions);
-        for (size_t i = 0; i < trafficBlks.size(); i++) {
-            mbgl::route::RouteSegmentOptions rsegopts;
-            uint32_t coloridx = i % (trafficBlks.size() - 1);
-            rsegopts.color = colors[coloridx];
-            if (useIndexFractions) {
-                rsegopts.firstIndex = trafficBlks[i].firstIndex;
-                rsegopts.firstIndexFraction = trafficBlks[i].firstIndexFraction;
-                rsegopts.lastIndex = trafficBlks[i].lastIndex;
-                rsegopts.lastIndexFraction = trafficBlks[i].lastIndexFraction;
-            } else {
-                rsegopts.geometry = trafficBlks[i].block; // TODO: remove deprecated use of "geometry"
-            }
-
-            rsegopts.priority = trafficBlks[i].priority;
-            rsegopts.outerColor = mbgl::Color(float(i) / float(trafficBlks.size() - 1), 0.0, 0.0, 1.0);
-            const bool success = rmptr_->routeSegmentCreate(routeID, rsegopts);
-            assert(success && "failed to create route segment");
-            if (!success) {
-                std::cerr << "failed to create route segment" << std::endl;
-            }
-        }
-        trafficBlks.clear();
-    }
-    rmptr_->finalize();
+    std::unique_ptr<RouteAddTrafficTest> addTraffic = std::make_unique<RouteAddTrafficTest>("");
+    addTraffic->initTestFixtures(map);
+    addTraffic->produceTestCommands(map, this);
+    addTraffic->consumeTestCommand(map, this);
+    addTraffic->consumeTestCommand(map, this);
 }
 
 void GLFWView::modifyTrafficViz() {
@@ -1646,6 +1412,17 @@ void GLFWView::toggleCustomDrawableStyle() {
 #endif
 }
 
+void GLFWView::captureImageSnapshot(const std::string &filename) {
+    mbgl::gfx::BackendScope scope{backend->getRendererBackend()};
+    const mbgl::PremultipliedImage &image = backend->captureImage();
+    std::ostringstream oss;
+    oss << "Made snapshot './image_snapshot.png' with size w:" << image.size.width << "px h:" << image.size.height
+        << "px";
+    mbgl::Log::Info(mbgl::Event::General, oss.str());
+    std::ofstream file(filename + ".png");
+    file << mbgl::encodePNG(image);
+}
+
 void GLFWView::makeSnapshot(bool withOverlay) {
     MLN_TRACE_FUNC();
 
@@ -1982,6 +1759,34 @@ void GLFWView::render() {
         if (benchmark) {
             invalidate();
         }
+
+        if (testRunnerData_.isNeeded && autoTest_ && autoTestReady_) {
+            bool doOp = autoTestFrameCounter_ % 50 == 0;
+            // std::cout<<"autoTestFrameCounter_: "<<autoTestFrameCounter_<<std::endl;
+            if (doOp) {
+                if (currTestOperation == CONSUME_OP) {
+                    mbgl::Log::Info(mbgl::Event::Route, "consuming test command");
+                    autoTest_->consumeTestCommand(map, this);
+                    currTestOperation = CAPTURE_OP;
+                } else if (currTestOperation == CAPTURE_OP) {
+                    std::string captureImagePath = testRunnerData_.testDir + "/frame_" +
+                                                   std::to_string(frameIDcounter++);
+                    mbgl::Log::Info(mbgl::Event::Route, "Capturing to: " + captureImagePath + ".png");
+
+                    captureImageSnapshot(captureImagePath);
+                    if (autoTest_->getCurrentTestCommandCount() == 0) {
+                        mbgl::Log::Info(mbgl::Event::Route, "No more test commands to consume");
+                        runLoop.stop();
+                    } else {
+                        currTestOperation = CONSUME_OP;
+                        autoTestFrameCounter_ = -1;
+                    }
+                }
+            }
+
+            ++autoTestFrameCounter_;
+            invalidate();
+        }
     }
 }
 
@@ -2080,6 +1885,11 @@ void GLFWView::setWindowTitle(const std::string &title) {
 
 void GLFWView::onDidFinishLoadingStyle() {
     MLN_TRACE_FUNC();
+    if (testRunnerData_.isNeeded) {
+        autoTestReady_ = true;
+        autoTest_->initTestFixtures(map);
+        autoTest_->produceTestCommands(map, this);
+    }
 
 #if defined(MLN_RENDER_BACKEND_OPENGL) && !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL)
     puck = nullptr;

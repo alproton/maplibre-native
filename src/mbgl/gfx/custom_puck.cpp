@@ -113,6 +113,10 @@ void CustomPuck::draw(const TransformState& transform) {
     drawImpl(sampledStyle);
 }
 
+void CustomPuck::setAssetPath(const std::string& path) {
+    assetPath = path;
+}
+
 void CustomPuck::setPuckStyle(const std::string& style_file_path) {
     auto json = readFile(style_file_path);
 
@@ -164,10 +168,8 @@ std::string CustomPuck::readFile(const std::string& path) const {
     std::string result(reinterpret_cast<const char*>(data), size);
     AAsset_close(asset);
     return result;
-#elif defined(MLN_ASSETS_PATH)
-    return util::read_file(std::string(MLN_ASSETS_PATH) + path);
 #else
-    return util::read_file(path);
+    return util::read_file(assetPath + path);
 #endif
 }
 

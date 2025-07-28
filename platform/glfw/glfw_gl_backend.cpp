@@ -74,6 +74,7 @@ void GLFWGLBackend::enableCustomPuck(bool onOff) {
         customPuck->setPuckStyle(puckStylePath);
         customPuck->setPuckVariant("default");
         customPuck->setPuckIconState("default");
+        customPuck->setAssetPath(MLN_ASSETS_PATH);
     }
 };
 
@@ -102,6 +103,15 @@ void GLFWGLBackend::updateAssumedState() {
 
 mbgl::Size GLFWGLBackend::getSize() const {
     return size;
+}
+
+mbgl::PremultipliedImage GLFWGLBackend::captureImage() {
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    mbgl::Size size(width, height);
+
+    mbgl::PremultipliedImage image = readFramebuffer(size);
+    return image;
 }
 
 void GLFWGLBackend::setSize(const mbgl::Size newSize) {

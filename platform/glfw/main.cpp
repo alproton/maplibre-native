@@ -38,16 +38,22 @@ void quit_handler(int) {
 int main(int argc, char* argv[]) {
     args::ArgumentParser argumentParser("MapLibre Native GLFW example");
     args::HelpFlag helpFlag(argumentParser, "help", "Display this help menu", {'h', "help"});
+    args::Flag testNameDisplayFlag(
+        argumentParser, "test-names-help", "Displays a list of runnable tests", {'l', "test-names-help"});
 
     args::Flag fullscreenFlag(argumentParser, "fullscreen", "Toggle fullscreen", {'f', "fullscreen"});
     args::Flag benchmarkFlag(argumentParser, "benchmark", "Toggle benchmark", {'b', "benchmark"});
     args::Flag offlineFlag(argumentParser, "offline", "Toggle offline", {'o', "offline"});
 
     args::ValueFlag<std::string> testDirValue(
-        argumentParser, "directory", "Root directory for test generation", {"testDir"});
+        argumentParser, "directory", "Root directory for test generation", {"test-dir"});
     args::ValueFlag<std::string> backendValue(argumentParser, "backend", "Rendering backend", {"backend"});
     args::ValueFlag<std::string> apikeyValue(argumentParser, "key", "API key", {'t', "apikey"});
     args::ValueFlag<std::string> styleValue(argumentParser, "URL", "Map stylesheet", {'s', "style"});
+    args::ValueFlag<std::string> testMode(
+        argumentParser, "TestMode", "Test mode (gen, compare, none)", {'m', "test-mode"});
+    args::ValueFlag<std::string> testName(
+        argumentParser, "TestName", "Test name for running specified test", {'n', "test-name"});
     args::ValueFlag<std::string> cacheDBValue(argumentParser, "file", "Cache database file name", {'c', "cache"});
     args::ValueFlag<double> lonValue(argumentParser, "degrees", "Longitude", {'x', "lon"});
     args::ValueFlag<double> latValue(argumentParser, "degrees", "Latitude", {'y', "lat"});
@@ -70,14 +76,47 @@ int main(int argc, char* argv[]) {
         exit(2);
     }
 
+    if (testNameDisplayFlag) {
+        if (args::get(testNameDisplayFlag)) {
+            std::vector<std::string> testNames = {"route_add_test",
+                                                  "route_add_traffic_test",
+                                                  "route_traffic_priority_test",
+                                                  "route_pick_test",
+                                                  "route_capture_test",
+                                                  "route_nav_circle_test"};
+            std::cout << "Available tests:" << std::endl;
+            std::cout << "----------------" << std::endl;
+            for (const auto& testNameStr : testNames) {
+                std::cout << testNameStr << std::endl;
+            }
+            exit(0);
+        }
+    }
+
+    const std::string testModeStr = testMode ? args::get(testMode) : "none";
+    TestMode tm = TestMode::None;
+    if (testModeStr == "gen") {
+        tm = TestMode::Gen;
+    } else if (testModeStr == "compare") {
+        tm = TestMode::Compare;
+    } else if (testModeStr != "none") {
+        std::cerr << "Invalid test mode: " << testModeStr << std::endl;
+        exit(3);
+    }
+    std::string testDir = testDirValue ? args::get(testDirValue) : "";
+    std::string testNameValue = !testName->empty() ? args::get(testName) : "";
+    TestRunnerData trd{testNameValue, tm, testDir, !testNameValue.empty()};
+
     // Load settings
     mbgl::Settings_JSON settings;
-    settings.online = !offlineFlag;
-    if (lonValue) settings.longitude = args::get(lonValue);
-    if (latValue) settings.latitude = args::get(latValue);
-    if (zoomValue) settings.zoom = args::get(zoomValue);
-    if (bearingValue) settings.bearing = args::get(bearingValue);
-    if (pitchValue) settings.pitch = args::get(pitchValue);
+    if (!trd.isNeeded) {
+        settings.online = !offlineFlag;
+        if (lonValue) settings.longitude = args::get(lonValue);
+        if (latValue) settings.latitude = args::get(latValue);
+        if (zoomValue) settings.zoom = args::get(zoomValue);
+        if (bearingValue) settings.bearing = args::get(bearingValue);
+        if (pitchValue) settings.pitch = args::get(pitchValue);
+    }
 
     const bool fullscreen = fullscreenFlag ? args::get(fullscreenFlag) : false;
     const bool benchmark = benchmarkFlag ? args::get(benchmarkFlag) : false;
@@ -109,7 +148,7 @@ int main(int argc, char* argv[]) {
     mbgl::ClientOptions clientOptions;
     auto orderedStyles = mapTilerConfiguration.defaultStyles();
 
-    GLFWView backend(fullscreen, benchmark, resourceOptions, clientOptions);
+    GLFWView backend(fullscreen, benchmark, trd, resourceOptions, clientOptions);
     view = &backend;
 
     std::shared_ptr<mbgl::FileSource> onlineFileSource = mbgl::FileSourceManager::get()->getFileSource(
@@ -140,12 +179,14 @@ int main(int argc, char* argv[]) {
         style = std::string("file://") + style;
     }
 
-    map.jumpTo(mbgl::CameraOptions()
-                   .withCenter(mbgl::LatLng{settings.latitude, settings.longitude})
-                   .withZoom(settings.zoom)
-                   .withBearing(settings.bearing)
-                   .withPitch(settings.pitch));
-    map.setDebug(mbgl::MapDebugOptions(settings.debug));
+    if (!trd.isNeeded) {
+        map.jumpTo(mbgl::CameraOptions()
+                       .withCenter(mbgl::LatLng{settings.latitude, settings.longitude})
+                       .withZoom(settings.zoom)
+                       .withBearing(settings.bearing)
+                       .withPitch(settings.pitch));
+        map.setDebug(mbgl::MapDebugOptions(settings.debug));
+    }
 
     if (testDirValue) view->setTestDirectory(args::get(testDirValue));
 
@@ -222,18 +263,20 @@ int main(int argc, char* argv[]) {
     view->run();
 
     // Save settings
-    mbgl::CameraOptions camera = map.getCameraOptions();
-    settings.latitude = camera.center->latitude();
-    settings.longitude = camera.center->longitude();
-    settings.zoom = *camera.zoom;
-    settings.bearing = *camera.bearing;
-    settings.pitch = *camera.pitch;
-    settings.debug = mbgl::EnumType(map.getDebug());
-    settings.save();
-    mbgl::Log::Info(mbgl::Event::General,
-                    "Exit location: --lat=\"" + std::to_string(settings.latitude) + "\" --lon=\"" +
-                        std::to_string(settings.longitude) + "\" --zoom=\"" + std::to_string(settings.zoom) +
-                        "\" --bearing=\"" + std::to_string(settings.bearing) + "\"");
+    if (!trd.isNeeded) {
+        mbgl::CameraOptions camera = map.getCameraOptions();
+        settings.latitude = camera.center->latitude();
+        settings.longitude = camera.center->longitude();
+        settings.zoom = *camera.zoom;
+        settings.bearing = *camera.bearing;
+        settings.pitch = *camera.pitch;
+        settings.debug = mbgl::EnumType(map.getDebug());
+        settings.save();
+        mbgl::Log::Info(mbgl::Event::General,
+                        "Exit location: --lat=\"" + std::to_string(settings.latitude) + "\" --lon=\"" +
+                            std::to_string(settings.longitude) + "\" --zoom=\"" + std::to_string(settings.zoom) +
+                            "\" --bearing=\"" + std::to_string(settings.bearing) + "\"");
+    }
 
     view = nullptr;
 

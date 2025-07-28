@@ -11,6 +11,7 @@
 #include <stack>
 #include <mbgl/route/id_types.hpp>
 #include <mbgl/route/route_manager.hpp>
+#include "tests/glfw_graphics_test.hpp"
 
 #if (defined(MLN_RENDER_BACKEND_OPENGL) || defined(MLN_RENDER_BACKEND_VULKAN)) && \
     !defined(MBGL_LAYER_CUSTOM_DISABLE_ALL)
@@ -31,11 +32,24 @@ namespace gfx {
 class RendererBackend;
 } // namespace gfx
 } // namespace mbgl
+enum TestMode {
+    Gen,
+    Compare,
+    None
+};
+
+struct TestRunnerData {
+    std::string testName;
+    TestMode mode;
+    std::string testDir;
+    bool isNeeded = false;
+};
 
 class GLFWView : public mbgl::MapObserver {
 public:
     GLFWView(bool fullscreen,
              bool benchmark,
+             const TestRunnerData &testRunnerData,
              const mbgl::ResourceOptions &resourceOptions,
              const mbgl::ClientOptions &clientOptions);
     ~GLFWView() override;
@@ -69,6 +83,8 @@ public:
     void invalidate();
 
     mbgl::Size getSize() const;
+    double getLastX() const { return lastX; }
+    double getLastY() const { return lastY; }
 
     bool getRoutePickMode() const;
     GLFWRendererFrontend *getRenderFrontend() const;
@@ -76,6 +92,9 @@ public:
     // mbgl::MapObserver implementation
     void onDidFinishLoadingStyle() override;
     void onWillStartRenderingFrame() override;
+
+    void enablePuck(bool onOff);
+    void setPuckLocation(double lat, double lon, double bearing);
 
 protected:
     // mbgl::Backend implementation
@@ -116,14 +135,13 @@ private:
     void toggleLocationIndicatorLayer();
     std::vector<RouteID> routeIDlist;
     std::unique_ptr<mbgl::route::RouteManager> rmptr_;
+    void captureImageSnapshot(const std::string &filename);
     void addRoute();
     void modifyRoute();
     void disposeRoute();
     void addTrafficSegments();
     void modifyTrafficViz();
     void removeTrafficViz();
-    void enablePuck(bool onOff);
-    void setPuckLocation(double lat, double lon, double bearing);
     void incrementRouteProgress();
     void decrementRouteProgress();
     void captureSnapshot();
@@ -173,25 +191,6 @@ private:
         mbgl::Point<double> getPoint(double percent) const;
     };
 
-    struct TrafficBlock {
-        uint32_t firstIndex = INVALID_UINT;
-        float firstIndexFraction = 0.0f;
-        uint32_t lastIndex = INVALID_UINT;
-        float lastIndexFraction = 0.0f;
-        mbgl::LineString<double> block;
-        uint32_t priority = 0;
-        mbgl::Color color;
-    };
-
-    enum RouteSegmentTestCases {
-        Blk1LowPriorityIntersecting,
-        Blk1HighPriorityIntersecting,
-        Blk12SameColorIntersecting,
-        Blk12NonIntersecting,
-        Invalid
-    };
-
-    std::vector<TrafficBlock> testCases(const RouteSegmentTestCases &testcase, const GLFWView::RouteData &route) const;
     void writeCapture(const std::string &capture, const std::string &capture_file_name) const;
     void readAndLoadCapture(const std::string &capture_file_name);
     void writeStats(bool oneline = false) const;
@@ -214,6 +213,14 @@ private:
     double testPercent_ = 0.0; // Used for testing route progress
     double feet_percent_step_ = 0.0;
     double feet_percent_step_multiplier = 1.0;
+    TestRunnerData testRunnerData_;
+    std::unique_ptr<GLFWGraphicsTest> autoTest_;
+    bool autoTestReady_ = false;
+    uint32_t autoTestFrameCounter_ = 1;
+    uint32_t frameIDcounter = 0;
+    const uint32_t CONSUME_OP = 0;
+    const uint32_t CAPTURE_OP = 1;
+    uint32_t currTestOperation = CONSUME_OP;
 
     // Frame timer
     int frames = 0;

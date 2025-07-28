@@ -21,8 +21,33 @@ add_executable(
     ${PROJECT_SOURCE_DIR}/platform/glfw/test_writer.cpp
     ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/map/map_snapshotter.cpp
     ${PROJECT_SOURCE_DIR}/platform/glfw/example_custom_drawable_style_layer.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/glfw_graphics_test.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_add_test.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_add_traffic_test.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_traffic_priority_test.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_pick_test.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_capture_test.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_nav_circle_test.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_fixtures.cpp
+    ${PROJECT_SOURCE_DIR}/platform/glfw/tests/route_test.cpp
 )
 
+# Add a command that runs after mbgl-glfw is built
+add_custom_command(
+        TARGET mbgl-glfw POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/glfw-test.py"
+        "$<TARGET_FILE_DIR:mbgl-glfw>"
+        COMMENT "Copying glfw-test.py to build directory..."
+)
+
+add_custom_command(
+        TARGET mbgl-glfw POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/captures"
+        "$<TARGET_FILE_DIR:mbgl-glfw>/captures"
+        COMMENT "Copying captures to build directory..."
+)
 
 include(${PROJECT_SOURCE_DIR}/vendor/tinyobjloader.cmake)
 
@@ -35,6 +60,8 @@ set_property(
     SOURCE ${PROJECT_SOURCE_DIR}/platform/glfw/glfw_view.cpp
     PROPERTY COMPILE_DEFINITIONS MLN_ASSETS_PATH=\"${PROJECT_SOURCE_DIR}/platform/glfw/assets/\"
 )
+
+add_compile_definitions(MLN_ASSETS_PATH="${PROJECT_SOURCE_DIR}/platform/glfw/assets/")
 
 if(MLN_WITH_OPENGL)
     find_package(OpenGL REQUIRED)
