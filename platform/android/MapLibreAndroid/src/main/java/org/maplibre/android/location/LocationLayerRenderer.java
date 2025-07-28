@@ -50,4 +50,6 @@ interface LocationLayerRenderer {
   void addBitmaps(@RenderMode.Mode int renderMode, @Nullable Bitmap shadowBitmap, Bitmap backgroundBitmap,
                   Bitmap backgroundStaleBitmap, Bitmap bearingBitmap,
                   Bitmap foregroundBitmap, Bitmap foregroundStaleBitmap);
+
+  void disableLayers();
 }

@@ -274,6 +274,10 @@ public final class LocationComponent {
     initialize(activationOptions.context(), activationOptions.style(),
       activationOptions.useSpecializedLocationLayer(), options);
 
+    if (customPuckAnimationOptions.customPuckAnimationEnabled) {
+      locationLayerController.disableLayers();
+    }
+
     // Apply the LocationComponent styling
     // TODO avoid doubling style initialization
     applyStyle(options);

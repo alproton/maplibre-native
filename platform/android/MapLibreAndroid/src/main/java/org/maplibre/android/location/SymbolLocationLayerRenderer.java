@@ -66,6 +66,7 @@ final class SymbolLocationLayerRenderer implements LocationLayerRenderer {
   private final Set<String> layerSet;
   private Feature locationFeature;
   private GeoJsonSource locationSource;
+  private boolean isDisabled = false;
 
   SymbolLocationLayerRenderer(LayerSourceProvider layerSourceProvider,
                               LayerFeatureProvider featureProvider,
@@ -323,6 +324,10 @@ final class SymbolLocationLayerRenderer implements LocationLayerRenderer {
   }
 
   private void refreshSource() {
+    if (isDisabled) {
+      return;
+    }
+
     // prevents exception when other style has been set with an update in flight
     // https://github.com/maplibre/maplibre-native/issues/3348
     if (!style.isFullyLoaded()) {
@@ -350,5 +355,10 @@ final class SymbolLocationLayerRenderer implements LocationLayerRenderer {
   private void updateAccuracyRadius(float accuracy) {
     locationFeature.addNumberProperty(PROPERTY_ACCURACY_RADIUS, accuracy);
     refreshSource();
+  }
+
+  @Override
+  public void disableLayers() {
+    isDisabled = true;
   }
 }

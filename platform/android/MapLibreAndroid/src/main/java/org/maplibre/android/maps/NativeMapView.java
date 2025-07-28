@@ -1072,7 +1072,7 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
-  public void removeImage(String name) {
+  public void removeImage(@NonNull String name) {
     if (checkState("removeImage")) {
       return;
     }
