@@ -41,7 +41,7 @@ class Route {
 public:
     Route() = default;
     Route(const LineString<double>& geometry, const RouteOptions& ropts);
-    bool routeSegmentCreate(const RouteSegmentOptions&, bool useFractionalIndices = false);
+    bool routeSegmentCreate(const RouteSegmentOptions&);
     std::map<double, mbgl::Color> getRouteSegmentColorStops(const RouteType& routeType, const mbgl::Color& routeColor);
     std::map<double, mbgl::Color> getRouteColorStops(const mbgl::Color& routeColor) const;
     std::vector<double> getRouteSegmentDistances() const;

@@ -441,30 +441,18 @@ bool Route::hasRouteSegments() const {
     return !segments_.empty();
 }
 
-bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts, bool useFractionalIndices) {
+bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
     std::vector<double> normalizedPositions;
-    if (useFractionalIndices) {
-        const auto& getNormalizedPosition = [&](uint32_t index, float indexFraction) {
-            double indexDistanceAlongRoute = cumulativeIntervalDistances_[index] +
-                                             (indexFraction * intervalLengths_[index]);
+    const auto& getNormalizedPosition = [&](uint32_t index, float indexFraction) {
+        double indexDistanceAlongRoute = cumulativeIntervalDistances_[index] +
+                                         (indexFraction * intervalLengths_[index]);
 
-            double normalizedDistance = indexDistanceAlongRoute / totalLength_;
-            return normalizedDistance;
-        };
+        double normalizedDistance = indexDistanceAlongRoute / totalLength_;
+        return normalizedDistance;
+    };
 
-        normalizedPositions = {getNormalizedPosition(rsegopts.firstIndex, rsegopts.firstIndexFraction),
-                               getNormalizedPosition(rsegopts.lastIndex, rsegopts.lastIndexFraction)};
-    } else {
-        normalizedPositions.reserve(rsegopts.geometry.size());
-        for (const auto& segpt : rsegopts.geometry) {
-            if (std::isnan(segpt.x) || std::isnan(segpt.y)) {
-                Log::Error(Event::Route, "Route segment geometry contains NaN point");
-                return false;
-            }
-            double normalized = getProgressPercent(segpt, Precision::Fine, false);
-            normalizedPositions.push_back(normalized);
-        }
-    }
+    normalizedPositions = {getNormalizedPosition(rsegopts.firstIndex, rsegopts.firstIndexFraction),
+                           getNormalizedPosition(rsegopts.lastIndex, rsegopts.lastIndexFraction)};
 
     RouteSegment routeSeg(rsegopts, normalizedPositions);
 

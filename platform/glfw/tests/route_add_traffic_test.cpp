@@ -53,7 +53,6 @@ bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map, [
 
         testCommands_.push([&]([[maybe_unused]] mbgl::Map *map, [[maybe_unused]] GLFWView *view) {
             std::vector<TrafficBlock> trafficBlks;
-            bool useIndexFractions = true;
             for (const auto &iter : routeMap_) {
                 const auto &routeID = iter.first;
                 const auto &route = iter.second;
@@ -103,7 +102,6 @@ bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map, [
 
                 // clear the route segments and create new ones from the traffic blocks
                 rmptr_->routeClearSegments(routeID);
-                rmptr_->setUseRouteSegmentIndexFractions(useIndexFractions);
                 for (size_t i = 0; i < trafficBlks.size(); i++) {
                     mbgl::route::RouteSegmentOptions rsegopts;
                     uint32_t coloridx = i % (trafficBlks.size() - 1);
