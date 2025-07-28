@@ -206,6 +206,11 @@ class IndicatorLocationLayerRenderer implements LocationLayerRenderer {
     // not supported at this time
   }
 
+  @Override
+  public void disableLayers() {
+    // not supported at this time
+  }
+
   private void setImages(@RenderMode.Mode int renderMode, boolean isStale) {
     String topImage = "";
     String bearingImage = "";

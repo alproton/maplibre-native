@@ -90,6 +90,10 @@ final class LocationLayerController {
     }
   }
 
+  public void disableLayers() {
+    locationLayerRenderer.disableLayers();
+  }
+
   void applyStyle(@NonNull LocationComponentOptions options) {
     if (positionManager.update(options.layerAbove(), options.layerBelow())) {
       locationLayerRenderer.removeLayers();
