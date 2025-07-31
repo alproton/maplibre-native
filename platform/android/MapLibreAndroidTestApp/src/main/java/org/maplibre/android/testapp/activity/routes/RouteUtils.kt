@@ -227,7 +227,7 @@ class RouteUtils {
                 rsopts.firstIndexFraction = trafficBlk.firstIndexFractional
                 rsopts.lastIndex = trafficBlk.lastIndex
                 rsopts.lastIndexFraction = trafficBlk.lastIndexFractional
-                mapView.createRouteSegmentFractional(routeID, rsopts)
+                mapView.createRouteSegment(routeID, rsopts)
             }
             mapView.finalizeRoutes()
         }
