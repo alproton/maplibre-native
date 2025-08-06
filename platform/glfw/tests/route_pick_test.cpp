@@ -121,7 +121,6 @@ bool RoutePickTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
             const RouteID routeID = rmptr_->routeCreate(rd.points, routeOpts);
             assert(routeID.isValid() && "invalid route ID created");
             rmptr_->finalize();
-            rmptr_->setUseRouteSegmentIndexFractions(true);
             setVanishingRouteID(routeID);
             routeMap_[routeID] = rd;
         });

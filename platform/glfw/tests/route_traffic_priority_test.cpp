@@ -76,7 +76,6 @@ void RouteTrafficPriorityTest::setTrafficCase(const RouteSegmentTestCases& testc
     TrafficBlock block2;
     const RouteID& routeID = routeMap_.begin()->first;
     const RouteData& route = routeMap_.at(routeID);
-    bool useFractionalRouteSegments = true;
     const auto& routeTrafficUpdate = [&](TrafficBlock& block,
                                          std::pair<uint32_t, double> firstIndexFraction,
                                          std::pair<uint32_t, double> lastIndexFraction) {
@@ -88,92 +87,58 @@ void RouteTrafficPriorityTest::setTrafficCase(const RouteSegmentTestCases& testc
 
     switch (testcase) {
         case RouteSegmentTestCases::Blk1LowPriorityIntersecting: {
-            if (!useFractionalRouteSegments) {
-                block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            } else {
-                std::pair<uint32_t, double> firstIndexFraction1 = route.getIntervalFraction(0.0);
-                std::pair<uint32_t, double> lastIndexFraction1 = route.getIntervalFraction(0.5);
-                routeTrafficUpdate(block1, firstIndexFraction1, lastIndexFraction1);
-            }
-
+            std::pair<uint32_t, double> firstIndexFraction1 = route.getIntervalFraction(0.0);
+            std::pair<uint32_t, double> lastIndexFraction1 = route.getIntervalFraction(0.5);
+            routeTrafficUpdate(block1, firstIndexFraction1, lastIndexFraction1);
             block1.priority = 0;
             block1.color = routeColorTable.at(RouteMapLowTrafficColor);
 
-            if (!useFractionalRouteSegments) {
-                block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
-            } else {
-                std::pair<uint32_t, double> firstIndexFraction2 = route.getIntervalFraction(0.2);
-                std::pair<uint32_t, double> lastIndexFraction2 = route.getIntervalFraction(0.8);
-                routeTrafficUpdate(block2, firstIndexFraction2, lastIndexFraction2);
-            }
-
+            std::pair<uint32_t, double> firstIndexFraction2 = route.getIntervalFraction(0.2);
+            std::pair<uint32_t, double> lastIndexFraction2 = route.getIntervalFraction(0.8);
+            routeTrafficUpdate(block2, firstIndexFraction2, lastIndexFraction2);
             block2.priority = 1;
             block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
         } break;
 
         case RouteSegmentTestCases::Blk1HighPriorityIntersecting: {
-            if (!useFractionalRouteSegments) {
-                block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            } else {
-                std::pair<uint32_t, double> firstIndexFraction1 = route.getIntervalFraction(0.0);
-                std::pair<uint32_t, double> lastIndexFraction1 = route.getIntervalFraction(0.5);
-                routeTrafficUpdate(block1, firstIndexFraction1, lastIndexFraction1);
-            }
+            std::pair<uint32_t, double> firstIndexFraction1 = route.getIntervalFraction(0.0);
+            std::pair<uint32_t, double> lastIndexFraction1 = route.getIntervalFraction(0.5);
+            routeTrafficUpdate(block1, firstIndexFraction1, lastIndexFraction1);
             block1.priority = 1;
             block1.color = routeColorTable.at(RouteMapLowTrafficColor);
 
-            if (!useFractionalRouteSegments) {
-                block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
-            } else {
-                std::pair<uint32_t, double> firstIndexFraction2 = route.getIntervalFraction(0.2);
-                std::pair<uint32_t, double> lastIndexFraction2 = route.getIntervalFraction(0.8);
-                routeTrafficUpdate(block2, firstIndexFraction2, lastIndexFraction2);
-            }
+            std::pair<uint32_t, double> firstIndexFraction2 = route.getIntervalFraction(0.2);
+            std::pair<uint32_t, double> lastIndexFraction2 = route.getIntervalFraction(0.8);
+            routeTrafficUpdate(block2, firstIndexFraction2, lastIndexFraction2);
             block2.priority = 0;
             block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
         } break;
 
         case RouteSegmentTestCases::Blk12SameColorIntersecting: {
-            if (!useFractionalRouteSegments) {
-                block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            } else {
-                std::pair<uint32_t, double> firstIndexFraction1 = route.getIntervalFraction(0.0);
-                std::pair<uint32_t, double> lastIndexFraction1 = route.getIntervalFraction(0.5);
-                routeTrafficUpdate(block1, firstIndexFraction1, lastIndexFraction1);
-            }
+            std::pair<uint32_t, double> firstIndexFraction1 = route.getIntervalFraction(0.0);
+            std::pair<uint32_t, double> lastIndexFraction1 = route.getIntervalFraction(0.5);
+            routeTrafficUpdate(block1, firstIndexFraction1, lastIndexFraction1);
             block1.priority = 0;
             block1.color = routeColorTable.at(RouteMapLowTrafficColor);
 
-            if (!useFractionalRouteSegments) {
-                block2.block = {route.getPoint(0.2), route.getPoint(0.7), route.getPoint(0.8)};
-            } else {
-                std::pair<uint32_t, double> firstIndexFraction2 = route.getIntervalFraction(0.2);
-                std::pair<uint32_t, double> lastIndexFraction2 = route.getIntervalFraction(0.8);
-                routeTrafficUpdate(block2, firstIndexFraction2, lastIndexFraction2);
-            }
+            std::pair<uint32_t, double> firstIndexFraction2 = route.getIntervalFraction(0.2);
+            std::pair<uint32_t, double> lastIndexFraction2 = route.getIntervalFraction(0.8);
+            routeTrafficUpdate(block2, firstIndexFraction2, lastIndexFraction2);
             block2.priority = 1;
             block2.color = routeColorTable.at(RouteMapLowTrafficColor);
 
         } break;
 
         case RouteSegmentTestCases::Blk12NonIntersecting: {
-            if (!useFractionalRouteSegments) {
-                block1.block = {route.getPoint(0.0), route.getPoint(0.25), route.getPoint(0.5)};
-            } else {
-                std::pair<uint32_t, double> firstIndexFraction1 = route.getIntervalFraction(0.0);
-                std::pair<uint32_t, double> lastIndexFraction1 = route.getIntervalFraction(0.5);
-                routeTrafficUpdate(block1, firstIndexFraction1, lastIndexFraction1);
-            }
+            std::pair<uint32_t, double> firstIndexFraction1 = route.getIntervalFraction(0.0);
+            std::pair<uint32_t, double> lastIndexFraction1 = route.getIntervalFraction(0.5);
+            routeTrafficUpdate(block1, firstIndexFraction1, lastIndexFraction1);
             block1.priority = 0;
             block1.color = routeColorTable.at(RouteMapLowTrafficColor);
 
-            if (!useFractionalRouteSegments) {
-                block2.block = {route.getPoint(0.6), route.getPoint(0.7), route.getPoint(0.8)};
-            } else {
-                std::pair<uint32_t, double> firstIndexFraction2 = route.getIntervalFraction(0.6);
-                std::pair<uint32_t, double> lastIndexFraction2 = route.getIntervalFraction(0.8);
-                routeTrafficUpdate(block2, firstIndexFraction2, lastIndexFraction2);
-            }
+            std::pair<uint32_t, double> firstIndexFraction2 = route.getIntervalFraction(0.6);
+            std::pair<uint32_t, double> lastIndexFraction2 = route.getIntervalFraction(0.8);
+            routeTrafficUpdate(block2, firstIndexFraction2, lastIndexFraction2);
             block2.priority = 0;
             block2.color = routeColorTable.at(RouteMapModerateTrafficColor);
 
@@ -185,7 +150,6 @@ void RouteTrafficPriorityTest::setTrafficCase(const RouteSegmentTestCases& testc
 
     std::vector<TrafficBlock> fixture{block1, block2};
     rmptr_->routeClearSegments(routeID);
-    rmptr_->setUseRouteSegmentIndexFractions(useFractionalRouteSegments);
     for (size_t i = 0; i < fixture.size(); i++) {
         mbgl::route::RouteSegmentOptions rsegopts;
         rsegopts.color = fixture[i].color;
