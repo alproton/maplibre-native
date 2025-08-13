@@ -1,6 +1,7 @@
 
 #include <mbgl/gfx/custom_puck.hpp>
 #include <mbgl/util/io.hpp>
+#include <mbgl/util/logging.hpp>
 #include <numbers>
 #include <mutex>
 
@@ -54,6 +55,12 @@ void CustomPuck::draw(const TransformState& transform) {
     const auto& state = getState();
     if (!state.enabled) {
         return;
+    }
+
+    if (state.cameraTracking != isCameraTracking) {
+        isCameraTracking = state.cameraTracking;
+        Log::Warning(Event::General,
+                     std::string("Puck displayed with camera tracking ") + (isCameraTracking ? "enabled" : "disabled"));
     }
 
     float bearing = static_cast<float>(-state.bearing * std::numbers::pi / 180.0 - transform.getBearing());

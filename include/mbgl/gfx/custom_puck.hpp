@@ -74,6 +74,8 @@ private:
     // The style is updated in the UI thread and is used in the rendering thread
     // This mutex ensures the puck is not modified by the UI thread while being rendered in the render thread
     std::mutex styleMutex;
+    // Used to check if camera tracking has changed
+    bool isCameraTracking = false;
 };
 
 } // namespace gfx

@@ -14,6 +14,7 @@ import org.maplibre.android.gestures.AndroidGesturesManager;
 import org.maplibre.android.gestures.MoveGestureDetector;
 import org.maplibre.android.gestures.RotateGestureDetector;
 import org.maplibre.android.location.modes.CameraMode;
+import org.maplibre.android.log.Logger;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.Transform;
 
@@ -28,6 +29,8 @@ import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
 
 final class LocationCameraController {
+
+  private static final String TAG = "Mbgl-LocationCameraController";
 
   @CameraMode.Mode
   private int cameraMode;
@@ -107,6 +110,7 @@ final class LocationCameraController {
                      long transitionDuration,
                      @Nullable Double zoom, @Nullable Double bearing, @Nullable Double tilt,
                      @Nullable OnLocationCameraTransitionListener internalTransitionListener) {
+    Logger.w(TAG, "Setting camera mode to " + cameraMode);
     if (this.cameraMode == cameraMode) {
       if (internalTransitionListener != null) {
         internalTransitionListener.onLocationCameraTransitionFinished(cameraMode);

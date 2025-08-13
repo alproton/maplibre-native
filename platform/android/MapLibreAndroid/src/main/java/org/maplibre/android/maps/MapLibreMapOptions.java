@@ -36,6 +36,20 @@ import java.util.Arrays;
  */
 public class MapLibreMapOptions implements Parcelable {
 
+  public enum ThreadPriorityOverride {
+      NONE(0), FORCE_LOW(1), FORCE_HIGH(2);
+
+      private final int code;
+
+      ThreadPriorityOverride(int code) {
+            this.code = code;
+      }
+
+      public int getCode() {
+          return code;
+      }
+  }
+
   private static final int LIGHT_GRAY = 0xFFF0E9E1; // RGB(240, 233, 225))
   private static final float FOUR_DP = 4f;
   private static final float NINETY_TWO_DP = 92f;
@@ -94,6 +108,9 @@ public class MapLibreMapOptions implements Parcelable {
 
   private boolean crossSourceCollisions = true;
 
+  private int threadPriorityOverride = 0;
+
+
   /**
    * Creates a new MapLibreMapOptions object.
    *
@@ -151,6 +168,7 @@ public class MapLibreMapOptions implements Parcelable {
     pixelRatio = in.readFloat();
     foregroundLoadColor = in.readInt();
     crossSourceCollisions = in.readByte() != 0;
+    threadPriorityOverride = in.readInt();
   }
 
   /**
@@ -731,6 +749,18 @@ public class MapLibreMapOptions implements Parcelable {
   }
 
   /**
+   * Override thread priorities
+   *
+   * @param threadPriorityOverride override thread priority
+   * @return This
+   */
+  @NonNull
+  public MapLibreMapOptions threadPriorityOverride(ThreadPriorityOverride threadPriorityOverride) {
+    this.threadPriorityOverride = threadPriorityOverride.getCode();
+    return this;
+  }
+
+  /**
    * Enable local ideograph font family, defaults to true.
    *
    * @param enabled true to enable, false to disable
@@ -819,6 +849,15 @@ public class MapLibreMapOptions implements Parcelable {
    */
   public boolean getCrossSourceCollisions() {
     return crossSourceCollisions;
+  }
+
+  /**
+   * Return thread priority override
+   *
+   * @return thread priority override
+   */
+  public int getThreadPriorityOverride() {
+    return threadPriorityOverride;
   }
 
   /**
@@ -1205,6 +1244,7 @@ public class MapLibreMapOptions implements Parcelable {
     dest.writeFloat(pixelRatio);
     dest.writeInt(foregroundLoadColor);
     dest.writeByte((byte) (crossSourceCollisions ? 1 : 0));
+    dest.writeInt(threadPriorityOverride);
   }
 
   @Override
@@ -1325,6 +1365,10 @@ public class MapLibreMapOptions implements Parcelable {
       return false;
     }
 
+    if (threadPriorityOverride != options.threadPriorityOverride) {
+      return false;
+    }
+
     return false;
   }
 
@@ -1372,6 +1416,7 @@ public class MapLibreMapOptions implements Parcelable {
     result = 31 * result + Arrays.hashCode(localIdeographFontFamilies);
     result = 31 * result + (int) pixelRatio;
     result = 31 * result + (crossSourceCollisions ? 1 : 0);
+    result = 31 * result + threadPriorityOverride;
     return result;
   }
 }
