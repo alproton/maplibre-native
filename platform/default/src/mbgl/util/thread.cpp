@@ -1,6 +1,7 @@
 #include <mbgl/util/platform.hpp>
 #include <mbgl/platform/thread.hpp>
 #include <mbgl/util/logging.hpp>
+#include <mbgl/util/thread.hpp>
 
 #include <string>
 
@@ -31,6 +32,12 @@ void setCurrentThreadName(const std::string& name) {
 }
 
 void makeThreadLowPriority() {
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_HIGH) {
+        makeThreadHighPriority();
+        return;
+    }
+
 #ifdef SCHED_IDLE
     struct sched_param param;
     param.sched_priority = 0;
@@ -42,6 +49,12 @@ void makeThreadLowPriority() {
 }
 
 void makeThreadHighPriority() {
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_LOW) {
+        makeThreadLowPriority();
+        return;
+    }
+
     setCurrentThreadPriority(-20);
 }
 
@@ -50,6 +63,17 @@ double getCurrentThreadPriority() {
 }
 
 void setCurrentThreadPriority(double priority) {
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_HIGH) {
+        makeThreadHighPriority();
+        return;
+    }
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_LOW) {
+        makeThreadLowPriority();
+        return;
+    }
+
     if (setpriority(PRIO_PROCESS, 0, int(priority)) < 0) {
         Log::Warning(Event::General, "Couldn't set thread priority");
     }

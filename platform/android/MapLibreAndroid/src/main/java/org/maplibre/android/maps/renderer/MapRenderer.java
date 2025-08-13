@@ -56,26 +56,27 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
     MapRenderer renderer = null;
     String localFontFamily = options.getLocalIdeographFontFamily();
+    int threadPriorityOverride = options.getThreadPriorityOverride();
 
     if (options.getTextureMode()) {
       TextureView textureView = new TextureView(context);
       boolean translucentSurface = options.getTranslucentTextureSurface();
       renderer = MapRendererFactory.newTextureViewMapRenderer(context, textureView, localFontFamily,
-              translucentSurface, initCallback);
+              translucentSurface, initCallback, threadPriorityOverride);
     } else {
       boolean renderSurfaceOnTop = options.getRenderSurfaceOnTop();
       renderer = MapRendererFactory.newSurfaceViewMapRenderer(context, localFontFamily,
-              renderSurfaceOnTop, initCallback);
+              renderSurfaceOnTop, initCallback, threadPriorityOverride);
     }
 
     return renderer;
   }
 
-  public MapRenderer(@NonNull Context context, String localIdeographFontFamily) {
+  public MapRenderer(@NonNull Context context, String localIdeographFontFamily, int threadPriorityOverride) {
     float pixelRatio = context.getResources().getDisplayMetrics().density;
 
     // Initialize native peer
-    nativeInitialize(this, pixelRatio, localIdeographFontFamily);
+    nativeInitialize(this, pixelRatio, localIdeographFontFamily, threadPriorityOverride);
   }
 
   public abstract View getView();
@@ -164,7 +165,8 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
   private native void nativeInitialize(MapRenderer self,
                                        float pixelRatio,
-                                       String localIdeographFontFamily);
+                                       String localIdeographFontFamily,
+                                       int threadPriorityOverride);
 
   @CallSuper
   @Override

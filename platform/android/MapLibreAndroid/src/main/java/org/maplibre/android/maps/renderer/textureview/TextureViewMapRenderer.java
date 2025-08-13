@@ -31,8 +31,9 @@ public class TextureViewMapRenderer extends MapRenderer {
   public TextureViewMapRenderer(@NonNull Context context,
                                 @NonNull TextureView textureView,
                                 String localIdeographFontFamily,
-                                boolean translucentSurface) {
-    super(context, localIdeographFontFamily);
+                                boolean translucentSurface,
+                                int threadPriorityOverride) {
+    super(context, localIdeographFontFamily, threadPriorityOverride);
     this.textureView = textureView;
     this.translucentSurface = translucentSurface;
 
