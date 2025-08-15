@@ -102,6 +102,12 @@ final class LocationAnimatorCoordinator {
     customPuck = null;
   }
 
+  public void cameraModeChange() {
+    if (customPuck != null) {
+      customPuck.cameraModeChange();
+    }
+  }
+
   void updateAnimatorListenerHolders(@NonNull Set<AnimatorListenerHolder> listenerHolders) {
     listeners.clear();
     for (AnimatorListenerHolder holder : listenerHolders) {

@@ -21,7 +21,11 @@ final class LocationAnimatorCustomPuck {
   private StampedLatLon currentPuckLocation;
   private StampedLatLon previousPuckLocation;
   private StampedLatLon targetPuckLocation;
+  private StampedLatLon lastValidLocation = null;
   private long puckInterpolationStartTime = 0;
+  private MapView mapview = null;
+  private LocationCameraController cameraController = null;
+  private LocationAnimatorCustomPuckOptions puckAnimationOptions = null;
 
   class StampedLatLon {
     public double lat;
@@ -62,6 +66,35 @@ final class LocationAnimatorCustomPuck {
 
   void updateLocation(double lat, double lon, double bearing, long time) {
     currentPuckLocation = new StampedLatLon(lat, lon, bearing, time);
+    lastValidLocation = new StampedLatLon(currentPuckLocation);
+  }
+
+  public void cameraModeChange() {
+   if (mapview == null
+       || mapview.getMapLibreMap() == null
+       || mapview.getMapLibreMap().getStyle() == null
+       || lastValidLocation == null
+       || cameraController == null
+       || puckAnimationOptions == null) {
+      return;
+    }
+    if (cameraController.isLocationTracking()) {
+      cameraController.setLatLng(new LatLng(lastValidLocation.lat, lastValidLocation.lon));
+    }
+    if (cameraController.isLocationBearingTracking()) {
+      float bearing = (float)(lastValidLocation.bearing);
+      if (cameraController.getCameraMode() == CameraMode.TRACKING_GPS_NORTH) {
+        bearing = 0.0f;
+      }
+      cameraController.setBearing(bearing);
+    }
+    boolean tracking = cameraController.isLocationTracking() && !cameraController.isTransitioning();
+    mapview.setCustomPuckState(
+      lastValidLocation.lat,
+      lastValidLocation.lon,
+      lastValidLocation.bearing,
+      puckAnimationOptions.iconScale,
+      tracking);
   }
 
   LocationAnimatorCustomPuck(@NonNull Context context,
@@ -69,6 +102,10 @@ final class LocationAnimatorCustomPuck {
                              @NonNull LocationLayerRenderer locationLayerRenderer,
                              @NonNull LocationCameraController locationCameraController,
                              @NonNull LocationAnimatorCustomPuckOptions customPuckAnimationOptions) {
+    mapview = mapView;
+    cameraController = locationCameraController;
+    puckAnimationOptions = customPuckAnimationOptions;
+
     puckUpdateTimer = new Timer();
     puckUpdateTimer.schedule(new TimerTask() {
       @Override
