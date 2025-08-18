@@ -412,6 +412,7 @@ public final class LocationComponent {
       cameraMode, lastLocation, transitionDuration, zoom, bearing, tilt,
       new CameraTransitionListener(transitionListener));
     updateCompassListenerState(true);
+    locationAnimatorCoordinator.cameraModeChange();
   }
 
   /**
