@@ -136,6 +136,7 @@ public class LocationComponentOptions implements Parcelable {
   private float trackingAnimationDurationMultiplier;
   private boolean compassAnimationEnabled;
   private boolean accuracyAnimationEnabled;
+  private boolean accuracyEnabled;
   private Boolean pulseEnabled;
   private Boolean pulseFadeEnabled;
   private Integer pulseColor;
@@ -180,6 +181,7 @@ public class LocationComponentOptions implements Parcelable {
     float trackingAnimationDurationMultiplier,
     boolean compassAnimationEnabled,
     boolean accuracyAnimationEnabled,
+    boolean accuracyEnabled,
     Boolean pulseEnabled,
     Boolean pulseFadeEnabled,
     Integer pulseColor,
@@ -224,6 +226,7 @@ public class LocationComponentOptions implements Parcelable {
     this.trackingAnimationDurationMultiplier = trackingAnimationDurationMultiplier;
     this.compassAnimationEnabled = compassAnimationEnabled;
     this.accuracyAnimationEnabled = accuracyAnimationEnabled;
+    this.accuracyEnabled = accuracyEnabled;
     this.pulseEnabled = pulseEnabled;
     this.pulseFadeEnabled = pulseFadeEnabled;
     this.pulseColor = pulseColor;
@@ -346,6 +349,10 @@ public class LocationComponentOptions implements Parcelable {
 
     builder.accuracyAnimationEnabled = typedArray.getBoolean(
       R.styleable.maplibre_LocationComponent_maplibre_accuracyAnimationEnabled, true
+    );
+
+    builder.accuracyEnabled = typedArray.getBoolean(
+      R.styleable.maplibre_LocationComponent_maplibre_accuracyEnabled, false
     );
 
     builder.pulseEnabled = typedArray.getBoolean(
@@ -827,6 +834,15 @@ public class LocationComponentOptions implements Parcelable {
   }
 
   /**
+   * Accuracy circle around the user's position.
+   *
+   * @return whether the accuracy circle is enabled
+   */
+  public boolean accuracyEnabled() {
+    return accuracyEnabled;
+  }
+
+  /**
    * Enable or disable the LocationComponent's pulsing circle.
    *
    * @return whether the LocationComponent's pulsing circle is enabled
@@ -1010,6 +1026,9 @@ public class LocationComponentOptions implements Parcelable {
     if (accuracyAnimationEnabled != options.accuracyAnimationEnabled) {
       return false;
     }
+    if (accuracyEnabled != options.accuracyEnabled) {
+      return false;
+    }
     if (backgroundStaleName != null ? !backgroundStaleName.equals(options.backgroundStaleName) :
       options.backgroundStaleName != null) {
       return false;
@@ -1124,6 +1143,7 @@ public class LocationComponentOptions implements Parcelable {
       ? Float.floatToIntBits(trackingAnimationDurationMultiplier) : 0);
     result = 31 * result + (compassAnimationEnabled ? 1 : 0);
     result = 31 * result + (accuracyAnimationEnabled ? 1 : 0);
+    result = 31 * result + (accuracyEnabled ? 1 : 0);
     result = 31 * result + (pulseEnabled ? 1 : 0);
     result = 31 * result + (pulseFadeEnabled ? 1 : 0);
     result = 31 * result + (pulseColor != null ? pulseColor.hashCode() : 0);
@@ -1174,6 +1194,7 @@ public class LocationComponentOptions implements Parcelable {
     dest.writeFloat(this.trackingAnimationDurationMultiplier);
     dest.writeByte(this.compassAnimationEnabled ? (byte) 1 : (byte) 0);
     dest.writeByte(this.accuracyAnimationEnabled ? (byte) 1 : (byte) 0);
+    dest.writeByte(this.accuracyEnabled ? (byte) 1 : (byte) 0);
     dest.writeValue(this.pulseEnabled);
     dest.writeValue(this.pulseFadeEnabled);
     dest.writeValue(this.pulseColor);
@@ -1217,6 +1238,7 @@ public class LocationComponentOptions implements Parcelable {
     this.trackingAnimationDurationMultiplier = in.readFloat();
     this.compassAnimationEnabled = in.readByte() != 0;
     this.accuracyAnimationEnabled = in.readByte() != 0;
+    this.accuracyEnabled = in.readByte() != 0;
     this.pulseEnabled = (Boolean) in.readValue(Boolean.class.getClassLoader());
     this.pulseFadeEnabled = (Boolean) in.readValue(Boolean.class.getClassLoader());
     this.pulseColor = (Integer) in.readValue(Integer.class.getClassLoader());
@@ -1341,6 +1363,7 @@ public class LocationComponentOptions implements Parcelable {
     private Float trackingAnimationDurationMultiplier;
     private Boolean compassAnimationEnabled;
     private Boolean accuracyAnimationEnabled;
+    private Boolean accuracyEnabled;
     private Boolean pulseEnabled;
     private Boolean pulseFadeEnabled;
     private int pulseColor;
@@ -1388,6 +1411,7 @@ public class LocationComponentOptions implements Parcelable {
       this.trackingAnimationDurationMultiplier = source.trackingAnimationDurationMultiplier();
       this.compassAnimationEnabled = source.compassAnimationEnabled();
       this.accuracyAnimationEnabled = source.accuracyAnimationEnabled();
+      this.accuracyEnabled = source.accuracyEnabled();
       this.pulseEnabled = source.pulseEnabled;
       this.pulseFadeEnabled = source.pulseFadeEnabled;
       this.pulseColor = source.pulseColor;
@@ -1900,6 +1924,17 @@ public class LocationComponentOptions implements Parcelable {
     }
 
     /**
+     * Enable or disable the accuracy circle around the user's position.
+     *
+     * @return whether the accuracy circle is enabled
+     */
+    public LocationComponentOptions.Builder accuracyEnabled(boolean accuracyEnabled) {
+      this.accuracyEnabled = accuracyEnabled;
+      return this;
+    }
+
+
+    /**
      * Enable or disable the LocationComponent's pulsing circle.
      *
      * @return whether the LocationComponent's pulsing circle is enabled
@@ -2068,6 +2103,7 @@ public class LocationComponentOptions implements Parcelable {
         this.trackingAnimationDurationMultiplier,
         this.compassAnimationEnabled,
         this.accuracyAnimationEnabled,
+        this.accuracyEnabled,
         this.pulseEnabled,
         this.pulseFadeEnabled,
         this.pulseColor,

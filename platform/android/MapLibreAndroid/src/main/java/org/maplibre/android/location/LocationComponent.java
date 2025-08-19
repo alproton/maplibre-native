@@ -1400,6 +1400,9 @@ public final class LocationComponent {
   }
 
   private void updateAccuracyRadius(Location location, boolean noAnimation) {
+    if (!options.accuracyEnabled()) {
+      return; // No need to update accuracy radius if accuracy is disabled
+    }
     float radius;
     if (location == null) {
       radius = 0;
