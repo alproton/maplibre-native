@@ -70,7 +70,7 @@ final class LocationAnimatorCustomPuck {
     lastValidLocation = new StampedLatLon(currentPuckLocation);
   }
 
-  public void cameraModeChange() {
+  public void cameraChange() {
    if (mapview == null
        || mapview.getMapLibreMap() == null
        || mapview.getMapLibreMap().getStyle() == null
