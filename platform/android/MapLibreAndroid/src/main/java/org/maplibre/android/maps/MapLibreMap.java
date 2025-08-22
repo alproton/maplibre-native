@@ -2662,6 +2662,9 @@ public final class MapLibreMap {
   }
 
   private void notifyDeveloperAnimationListeners() {
+    if (locationComponent != null) {
+      locationComponent.cameraChange();
+    }
     for (OnDeveloperAnimationListener listener : developerAnimationStartedListeners) {
       listener.onDeveloperAnimationStarted();
     }

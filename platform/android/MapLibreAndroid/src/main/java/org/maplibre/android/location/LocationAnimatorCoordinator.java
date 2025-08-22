@@ -102,9 +102,9 @@ final class LocationAnimatorCoordinator {
     customPuck = null;
   }
 
-  public void cameraModeChange() {
+  public void cameraChange() {
     if (customPuck != null) {
-      customPuck.cameraModeChange();
+      customPuck.cameraChange();
     }
   }
 
