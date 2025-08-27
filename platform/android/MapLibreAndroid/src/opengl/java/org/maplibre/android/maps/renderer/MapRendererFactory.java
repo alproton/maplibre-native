@@ -7,8 +7,8 @@ import android.view.TextureView;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
-import org.maplibre.android.maps.renderer.surfaceview.GLSurfaceViewMapRenderer;
-import org.maplibre.android.maps.renderer.surfaceview.MapLibreGLSurfaceView;
+import org.maplibre.android.maps.renderer.modern.surfaceview.GLSurfaceViewMapRenderer;
+import org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView;
 import org.maplibre.android.maps.renderer.surfaceview.SurfaceViewMapRenderer;
 import org.maplibre.android.maps.renderer.textureview.GLTextureViewRenderThread;
 import org.maplibre.android.maps.renderer.textureview.TextureViewMapRenderer;
@@ -22,7 +22,7 @@ public class MapRendererFactory {
     TextureViewMapRenderer mapRenderer = new TextureViewMapRenderer(context, textureView,
             localFontFamily, translucentSurface) {
       @Override
-      protected void onSurfaceCreated(Surface surface) {
+      public void onSurfaceCreated(Surface surface) {
         initCallback.run();
         super.onSurfaceCreated(surface);
       }
