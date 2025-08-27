@@ -54,7 +54,7 @@ public class TextureViewMapRenderer extends MapRenderer {
    * Overridden to provide package access
    */
   @Override
-  protected void onSurfaceCreated(Surface surface) {
+  public void onSurfaceCreated(Surface surface) {
     super.onSurfaceCreated(surface);
   }
 
@@ -62,7 +62,7 @@ public class TextureViewMapRenderer extends MapRenderer {
    * Overridden to provide package access
    */
   @Override
-  protected void onSurfaceChanged(int width, int height) {
+  public void onSurfaceChanged(int width, int height) {
     super.onSurfaceChanged(width, height);
   }
 

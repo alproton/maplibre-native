@@ -21,7 +21,7 @@ import java.lang.ref.WeakReference;
 
 public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
 
-  protected final WeakReference<MapLibreGLSurfaceView> viewWeakReference = new WeakReference<>(this);
+  protected final WeakReference<org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView> viewWeakReference = new WeakReference<>(this);
 
   private EGLConfigChooser eglConfigChooser;
   private EGLContextFactory eglContextFactory;
@@ -212,7 +212,7 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
                 EGL14.EGL_NONE
         };
 
-        mEglSurface = view.eglWindowSurfaceFactory.createWindowSurface(mEglDisplay, mEglConfig, view.getHolder(), surfaceAttributes, );
+        mEglSurface = view.eglWindowSurfaceFactory.createWindowSurface(mEglDisplay, mEglConfig, view.getHolder(), surfaceAttributes, 0);
       } else {
         mEglSurface = null;
       }
@@ -279,7 +279,7 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
         mEglContext = null;
       }
       if (mEglDisplay != null) {
-        mEgl.eglTerminate(mEglDisplay);
+        EGL14.eglTerminate(mEglDisplay);
         mEglDisplay = null;
       }
     }
@@ -347,10 +347,8 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
       wantRenderNotification = false;
 
       try {
-        GL10 gl = null;
         boolean createEglContext = false;
         boolean createEglSurface = false;
-        boolean createGlInterface = false;
         boolean lostEglContext = false;
         boolean sizeChanged = false;
         boolean wantRenderNotification = false;
@@ -462,7 +460,6 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
                 if (haveEglContext && !haveEglSurface) {
                   haveEglSurface = true;
                   createEglSurface = true;
-                  createGlInterface = true;
                   sizeChanged = true;
                 }
 
@@ -488,7 +485,7 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
               } else {
                 if (finishDrawingRunnable != null) {
                   Log.w(TAG, "Warning, !readyToDraw() but waiting for "
-                    + "draw finished! Early reporting draw finished.");
+                          + "draw finished! Early reporting draw finished.");
                   finishDrawingRunnable.run();
                   finishDrawingRunnable = null;
                 }
@@ -521,11 +518,8 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
             createEglSurface = false;
           }
 
-            createGlInterface = false;
-          }
-
           if (createEglContext) {
-            MapLibreSurfaceView view = mSurfaceViewWeakRef.get();
+            MapLibreGLSurfaceView view = mSurfaceViewWeakRef.get();
             if (view != null) {
               view.renderer.onSurfaceCreated(null);
             }
@@ -533,14 +527,14 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
           }
 
           if (sizeChanged) {
-            MapLibreSurfaceView view = mSurfaceViewWeakRef.get();
+            MapLibreGLSurfaceView view = mSurfaceViewWeakRef.get();
             if (view != null) {
               view.renderer.onSurfaceChanged(w, h);
             }
             sizeChanged = false;
           }
 
-          MapLibreSurfaceView view = mSurfaceViewWeakRef.get();
+          MapLibreGLSurfaceView view = mSurfaceViewWeakRef.get();
           if (view != null) {
             view.renderer.onDrawFrame();
             if (finishDrawingRunnable != null) {
@@ -550,9 +544,9 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
           }
           int swapError = eglHelper.swap();
           switch (swapError) {
-            case EGL10.EGL_SUCCESS:
+            case EGL14.EGL_SUCCESS:
               break;
-            case EGL11.EGL_CONTEXT_LOST:
+            case EGL14.EGL_CONTEXT_LOST:
               lostEglContext = true;
               break;
             default:
@@ -574,8 +568,8 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
             wantRenderNotification = false;
           }
         }
-
-      } finally {
+      }
+         finally {
         /*
          * clean-up everything...
          */
@@ -631,6 +625,6 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
      * called. This weak reference allows the SurfaceView to be garbage collected while
      * the RenderThread is still alive.
      */
-    protected WeakReference<MapLibreGLSurfaceView> mSurfaceViewWeakRef;
+    protected WeakReference<org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView> mSurfaceViewWeakRef;
   }
 }
