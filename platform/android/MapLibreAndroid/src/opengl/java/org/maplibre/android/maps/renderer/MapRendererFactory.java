@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 import org.maplibre.android.maps.renderer.modern.surfaceview.GLSurfaceViewMapRenderer;
 import org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView;
 import org.maplibre.android.maps.renderer.surfaceview.SurfaceViewMapRenderer;
-import org.maplibre.android.maps.renderer.textureview.GLTextureViewRenderThread;
+import org.maplibre.android.maps.renderer.modern.textureview.GLTextureViewRenderThread;
 import org.maplibre.android.maps.renderer.textureview.TextureViewMapRenderer;
 
 @Keep
