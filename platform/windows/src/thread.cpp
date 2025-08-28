@@ -3,6 +3,7 @@
 #include <mbgl/util/platform.hpp>
 #include <mbgl/platform/thread.hpp>
 #include <mbgl/util/logging.hpp>
+#include <mbgl/util/thread.hpp>
 
 #include <string>
 
@@ -69,12 +70,24 @@ void setCurrentThreadName(const std::string& name) {
 }
 
 void makeThreadLowPriority() {
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_HIGH) {
+        makeThreadHighPriority();
+        return;
+    }
+
     if (!SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_BEGIN)) {
         Log::Warning(Event::General, "Couldn't set thread scheduling policy");
     }
 }
 
 void makeThreadHighPriority() {
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_LOW) {
+        makeThreadLowPriority();
+        return;
+    }
+
     if (!SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL)) {
         Log::Warning(Event::General, "Couldn't set thread scheduling policy");
     }
@@ -85,6 +98,17 @@ double getCurrentThreadPriority() {
 }
 
 void setCurrentThreadPriority(double priority) {
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_HIGH) {
+        makeThreadHighPriority();
+        return;
+    }
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_LOW) {
+        makeThreadLowPriority();
+        return;
+    }
+
     if (!SetThreadPriority(GetCurrentThread(), int(priority))) {
         Log::Warning(Event::General, "Couldn't set thread priority");
     }

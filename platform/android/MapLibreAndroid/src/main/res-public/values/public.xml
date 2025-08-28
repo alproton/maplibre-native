@@ -154,6 +154,7 @@
 
     <!-- Accuracy animation-->
     <public name="maplibre_accuracyAnimationEnabled" format="boolean" type="attr" />
+    <public name="maplibre_accuracyEnabled" format="boolean" type="attr" />
 
     <!--LocationComponent position-->
     <public name="maplibre_layer_above" format="string" type="attr" />

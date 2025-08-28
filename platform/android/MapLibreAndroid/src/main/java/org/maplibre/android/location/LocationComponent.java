@@ -412,6 +412,14 @@ public final class LocationComponent {
       cameraMode, lastLocation, transitionDuration, zoom, bearing, tilt,
       new CameraTransitionListener(transitionListener));
     updateCompassListenerState(true);
+    cameraChange();
+  }
+
+  /**
+   * Signal the location component that the camera is changing.
+   */
+  public void cameraChange() {
+    locationAnimatorCoordinator.cameraChange();
   }
 
   /**
@@ -1399,6 +1407,9 @@ public final class LocationComponent {
   }
 
   private void updateAccuracyRadius(Location location, boolean noAnimation) {
+    if (!options.accuracyEnabled()) {
+      return; // No need to update accuracy radius if accuracy is disabled
+    }
     float radius;
     if (location == null) {
       radius = 0;

@@ -1,6 +1,7 @@
 #include <mbgl/util/logging.hpp>
 #include <mbgl/util/platform.hpp>
 #include <mbgl/platform/thread.hpp>
+#include <mbgl/util/thread.hpp>
 
 #include <sys/prctl.h>
 #include <sys/resource.h>
@@ -33,6 +34,12 @@ void setCurrentThreadName(const std::string& name) {
 }
 
 void makeThreadLowPriority() {
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_HIGH) {
+        makeThreadHighPriority();
+        return;
+    }
+
     // ANDROID_PRIORITY_LOWEST = 19
     //
     // Supposedly would set the priority for the whole process, but
@@ -41,6 +48,12 @@ void makeThreadLowPriority() {
 }
 
 void makeThreadHighPriority() {
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_LOW) {
+        makeThreadLowPriority();
+        return;
+    }
+
     // ANDROID_PRIORITY_HIGHEST = -20
     //
     // Supposedly would set the priority for the whole process, but
@@ -53,6 +66,17 @@ double getCurrentThreadPriority() {
 }
 
 void setCurrentThreadPriority(double priority) {
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_HIGH) {
+        makeThreadHighPriority();
+        return;
+    }
+    if (util::ThreadPriorityOverrider::getPriority() ==
+        util::ThreadPriorityOverrider::ThreadPriorityOverride::FORCE_LOW) {
+        makeThreadLowPriority();
+        return;
+    }
+
     if (priority < -20 || priority > 19) {
         Log::Warning(Event::General, "Couldn't set thread priority");
         return;

@@ -4,6 +4,7 @@
 #include <mbgl/actor/scheduler.hpp>
 #include <mbgl/util/image.hpp>
 #include <mbgl/gfx/rendering_stats.hpp>
+#include <mbgl/util/thread.hpp>
 
 #include <memory>
 #include <mutex>
@@ -50,7 +51,8 @@ public:
     MapRenderer(jni::JNIEnv& _env,
                 const jni::Object<MapRenderer>&,
                 jni::jfloat pixelRatio,
-                const jni::String& localIdeographFontFamily);
+                const jni::String& localIdeographFontFamily,
+                int threadPriorityOverride);
 
     ~MapRenderer() override;
 
@@ -134,6 +136,8 @@ private:
 
 private:
     jni::WeakReference<jni::Object<MapRenderer>, jni::EnvAttachingDeleter> javaPeer;
+
+    util::ThreadPriorityOverrider threadPriorityOverrider;
 
     float pixelRatio;
     std::optional<std::string> localIdeographFontFamily;

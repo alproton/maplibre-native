@@ -163,5 +163,22 @@ private:
 /// Settings' platform::EXPERIMENTAL_THREAD_PRIORITY_* value.
 std::function<void()> makeThreadPrioritySetter(std::string threadType);
 
+// Override threads priority
+struct ThreadPriorityOverrider {
+    // This enum mirrors the Java enum ThreadPriorityOverride in the class MapLibreMapOptions
+    enum class ThreadPriorityOverride {
+        NONE = 0,
+        FORCE_LOW = 1,
+        FORCE_HIGH = 2,
+    };
+
+    ThreadPriorityOverrider(int threadPriorityOverride);
+
+    static ThreadPriorityOverride getPriority() { return threadPriorityOverride; }
+
+private:
+    static ThreadPriorityOverride threadPriorityOverride;
+};
+
 } // namespace util
 } // namespace mbgl

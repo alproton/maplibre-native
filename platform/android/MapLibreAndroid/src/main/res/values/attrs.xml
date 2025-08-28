@@ -187,6 +187,7 @@
 
         <!-- Accuracy animation-->
         <attr name="maplibre_accuracyAnimationEnabled" format="boolean" />
+        <attr name="maplibre_accuracyEnabled" format="boolean" />
 
         <!-- Pulsing circle -->
         <attr name="maplibre_pulsingLocationCircleEnabled" format="boolean" />
