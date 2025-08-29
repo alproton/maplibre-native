@@ -1,6 +1,7 @@
 #include "android_renderer_backend.hpp"
 #include <mbgl/util/logging.hpp>
 #include <cassert>
+#include <EGL/egl.h>
 
 namespace mbgl {
 namespace android {
@@ -17,6 +18,12 @@ void AndroidRendererBackend::markContextLost() {}
 
 void AndroidRendererBackend::setSwapBehavior(gfx::Renderable::SwapBehaviour swapBehaviour_) {
     swapBehaviour = swapBehaviour_;
+}
+
+void AndroidRendererBackend::setSwapInterval(int interval) {
+    // Actual setting of swap interval is done in AndroidGLRendererBackend as you have different API calls for vulkan
+    // backend.
+    swapInterval = interval;
 }
 
 void AndroidRendererBackend::setPuckStyle(const std::string& style_file_path) {

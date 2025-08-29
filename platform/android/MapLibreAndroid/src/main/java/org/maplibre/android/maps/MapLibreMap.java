@@ -107,6 +107,9 @@ public final class MapLibreMap {
     nativeMapView.setSwapBehaviorFlush(flush);
   }
 
+  public void setSwapInterval(int interval) {
+    nativeMapView.setSwapInterval(interval);
+  }
   void initialise(@NonNull Context context, @NonNull MapLibreMapOptions options) {
     transform.initialise(this, options);
     uiSettings.initialise(context, options);

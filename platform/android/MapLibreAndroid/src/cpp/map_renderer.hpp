@@ -132,6 +132,8 @@ private:
 
     void setSwapBehaviorFlush(JNIEnv&, jboolean flush);
 
+    void setSwapInterval(JNIEnv&, jint interval);
+
     void setCustomPuckState(
         JNIEnv&, jdouble lat, jdouble lon, jdouble bearing, jfloat iconScale, jboolean cameraTracking);
 
@@ -164,6 +166,7 @@ private:
 
     bool framebufferSizeChanged = false;
     bool swapBehaviorFlush = false;
+    int swapInterval = 0;
 
     mapbox::base::WeakPtrFactory<Scheduler> weakFactory{this};
     // Do not add members here, see `WeakPtrFactory`

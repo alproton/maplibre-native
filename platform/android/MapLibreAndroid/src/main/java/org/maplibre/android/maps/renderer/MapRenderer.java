@@ -150,6 +150,10 @@ public abstract class MapRenderer implements MapRendererScheduler {
     nativeSetSwapBehaviorFlush(flush);
   }
 
+  public void setSwapInterval(int interval) {
+      nativeSetSwapInterval(interval);
+  }
+
   /**
    * May be called from any thread.
    * <p>
@@ -184,6 +188,8 @@ public abstract class MapRenderer implements MapRendererScheduler {
   private native void nativeRender();
 
   private native void nativeSetSwapBehaviorFlush(boolean flush);
+
+  private native void nativeSetSwapInterval(int interval);
 
   public native void nativeSetCustomPuckState(double lat,
                                               double lon,

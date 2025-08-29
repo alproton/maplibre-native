@@ -269,6 +269,8 @@ interface NativeMap {
 
   void setSwapBehaviorFlush(boolean flush);
 
+  void setSwapInterval(int interval);
+
   int getLastRenderedTileCount();
 
   //
