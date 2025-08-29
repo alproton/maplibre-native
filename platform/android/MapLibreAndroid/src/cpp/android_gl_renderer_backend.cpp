@@ -5,7 +5,7 @@
 #include <mbgl/gl/renderable_resource.hpp>
 #include <mbgl/util/logging.hpp>
 #include "android_egl_helper.hpp"
-
+#include <EGL/egl.h>
 #include <cassert>
 
 namespace mbgl {
