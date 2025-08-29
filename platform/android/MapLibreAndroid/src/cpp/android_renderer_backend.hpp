@@ -34,6 +34,10 @@ public:
     gfx::Renderable::SwapBehaviour getSwapBehavior() const { return swapBehaviour; }
     virtual void setSwapBehavior(gfx::Renderable::SwapBehaviour swapBehaviour);
 
+    virtual void setSwapInterval(int interval);
+
+    int getSwapInterval() const { return swapInterval; }
+
     void setPuckStyle(const std::string& style_file_path);
 
     void setPuckAssetManager(AAssetManager* asset_manager);
@@ -60,6 +64,7 @@ public:
 
 protected:
     gfx::Renderable::SwapBehaviour swapBehaviour = gfx::Renderable::SwapBehaviour::NoFlush;
+    int swapInterval = -1;
     gfx::CustomPuckState customPuckState;
 };
 

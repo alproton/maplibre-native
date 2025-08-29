@@ -3,6 +3,7 @@
 #include <mbgl/gfx/backend_scope.hpp>
 #include <mbgl/gl/context.hpp>
 #include <mbgl/gl/renderable_resource.hpp>
+#include <mbgl/util/logging.hpp>
 
 #include <EGL/egl.h>
 
@@ -66,6 +67,18 @@ void AndroidGLRendererBackend::updateAssumedState() {
 void AndroidGLRendererBackend::markContextLost() {
     if (context) {
         getContext<gl::Context>().setCleanupOnDestruction(false);
+    }
+}
+
+void AndroidGLRendererBackend::setSwapInterval(int interval) {
+    if (swapInterval != interval) {
+        swapInterval = interval;
+        bool success = eglSwapInterval(eglGetCurrentDisplay(), swapInterval);
+        if (!success) {
+            Log::Info(Event::OpenGL, "Failure in setting swap interval");
+        } else {
+            Log::Info(Event::OpenGL, "Setting swap interval to " + std::to_string(swapInterval));
+        }
     }
 }
 

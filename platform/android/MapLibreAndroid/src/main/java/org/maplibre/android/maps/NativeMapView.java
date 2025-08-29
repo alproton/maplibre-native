@@ -1151,6 +1151,11 @@ final class NativeMapView implements NativeMap {
     mapRenderer.setSwapBehaviorFlush(flush);
   }
 
+  @Override
+  public void setSwapInterval(int interval) {
+    mapRenderer.setSwapInterval(interval);
+  }
+
   private static double[] getDoubleArrayKeys(TreeMap<Double, Double> map) {
     List<Double> keyList = new ArrayList<>(map.keySet());
     double[] keys = new double[keyList.size()];
