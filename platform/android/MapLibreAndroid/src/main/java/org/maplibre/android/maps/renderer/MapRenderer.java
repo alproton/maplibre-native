@@ -126,20 +126,20 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
   @CallSuper
   protected void onDrawFrame() {
-//    long startTime = System.nanoTime();
+    long startTime = System.nanoTime();
     try {
       nativeRender();
     } catch (java.lang.Error error) {
       Logger.e(TAG, error.getMessage());
     }
-//    long renderTime = System.nanoTime() - startTime;
-//    if (renderTime < expectedRenderTime) {
-//      try {
-//        Thread.sleep((long) ((expectedRenderTime - renderTime) / 1E6));
-//      } catch (InterruptedException ex) {
-//        Logger.e(TAG, ex.getMessage());
-//      }
-//    }
+    long renderTime = System.nanoTime() - startTime;
+    if (renderTime < expectedRenderTime) {
+      try {
+        Thread.sleep((long) ((expectedRenderTime - renderTime) / 1E6));
+      } catch (InterruptedException ex) {
+        Logger.e(TAG, ex.getMessage());
+      }
+    }
     if (onFpsChangedListener != null) {
       updateFps();
     }
