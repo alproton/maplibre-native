@@ -110,7 +110,7 @@ public class MapLibreMapOptions implements Parcelable {
 
   private int threadPriorityOverride = 0;
 
-  private boolean useModernEGL = true;
+  private boolean useModernEGL = false;
 
 
   /**
