@@ -32,11 +32,9 @@ public class MapRendererFactory {
 
   public static SurfaceViewMapRenderer newSurfaceViewMapRenderer(@NonNull Context context, String localFontFamily,
                                                                  boolean renderSurfaceOnTop, Runnable initCallback,
-                                                                 int threadPriorityOverride) {
+                                                                 int threadPriorityOverride, boolean useModernEGL) {
 
-    String useModernEGL = System.getProperty("org.maplibre.android.gl.use_modern_opengl");
-    boolean useModern = useModernEGL != null && useModernEGL.equals("true");
-    if(useModern) {
+    if(useModernEGL) {
       org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView surfaceView = new org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView(context);
       surfaceView.setZOrderMediaOverlay(renderSurfaceOnTop);
 
