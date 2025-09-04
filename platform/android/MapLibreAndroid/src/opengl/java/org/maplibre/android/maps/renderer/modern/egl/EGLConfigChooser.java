@@ -58,9 +58,38 @@ public class EGLConfigChooser {
     EGLConfig config = chooseBestMatchConfig(display, possibleConfigurations);
     if (config == null) {
       Logger.e(TAG, "No config chosen");
+    } else {
+        logBestConfig(config, display);
     }
 
     return config;
+  }
+
+  private void logBestConfig(EGLConfig config, EGLDisplay display) {
+    int caveat = getConfigAttr(display, config, EGL14.EGL_CONFIG_CAVEAT);
+    int bits = getConfigAttr(display, config, EGL14.EGL_BUFFER_SIZE);
+    int red = getConfigAttr(display, config, EGL14.EGL_RED_SIZE);
+    int green = getConfigAttr(display, config, EGL14.EGL_GREEN_SIZE);
+    int blue = getConfigAttr(display, config, EGL14.EGL_BLUE_SIZE);
+    int alpha = getConfigAttr(display, config, EGL14.EGL_ALPHA_SIZE);
+    int alphaMask = getConfigAttr(display, config, EGL14.EGL_ALPHA_MASK_SIZE);
+    int depth = getConfigAttr(display, config, EGL14.EGL_DEPTH_SIZE);
+    int stencil = getConfigAttr(display, config, EGL14.EGL_STENCIL_SIZE);
+    int sampleBuffers = getConfigAttr(display, config, EGL14.EGL_SAMPLE_BUFFERS);
+    int samples = getConfigAttr(display, config, EGL14.EGL_SAMPLES);
+    StringBuilder sb = new StringBuilder();
+    sb.append("EGL_CONFIG_CAVEAT: ").append(caveat);
+    sb.append("EGL_BUFFER_SIZE: ").append(bits);
+    sb.append(" EGL_RED_SIZE: ").append(red);
+    sb.append(" EGL_GREEN_SIZE: ").append(green);
+    sb.append(" EGL_BLUE_SIZE: ").append(blue);
+    sb.append(" EGL_ALPHA_SIZE: ").append(alpha);
+    sb.append(" EGL_ALPHA_MASK_SIZE: ").append(alphaMask);
+    sb.append(" EGL_DEPTH_SIZE: ").append(depth);
+    sb.append(" EGL_STENCIL_SIZE: ").append(stencil);
+    sb.append(" EGL_SAMPLE_BUFFERS: ").append(sampleBuffers);
+    sb.append(" EGL_SAMPLES: ").append(samples);
+    Logger.e(TAG, sb.toString());
   }
 
   @NonNull

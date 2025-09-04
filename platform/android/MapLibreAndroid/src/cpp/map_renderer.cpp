@@ -230,7 +230,8 @@ void MapRenderer::scheduleSnapshot(std::unique_ptr<SnapshotCallback> callback) {
 
 void MapRenderer::render(JNIEnv&) {
     assert(renderer);
-    if (backend) {
+    // Set the swap interval if it has been changed
+    if (backend && swapInterval != -1) {
         backend->setSwapInterval(swapInterval);
     }
 
