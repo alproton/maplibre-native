@@ -164,7 +164,7 @@ private:
 
     bool framebufferSizeChanged = false;
     bool swapBehaviorFlush = false;
-    int swapInterval = 0;
+    int swapInterval = -1;
 
     mapbox::base::WeakPtrFactory<Scheduler> weakFactory{this};
     // Do not add members here, see `WeakPtrFactory`

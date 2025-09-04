@@ -7,10 +7,6 @@ import android.view.TextureView;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
-import org.maplibre.android.maps.renderer.modern.surfaceview.GLSurfaceViewMapRenderer;
-import org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView;
-//import org.maplibre.android.maps.renderer.surfaceview.GLSurfaceViewMapRenderer;
-//import org.maplibre.android.maps.renderer.surfaceview.MapLibreGLSurfaceView;
 import org.maplibre.android.maps.renderer.surfaceview.SurfaceViewMapRenderer;
 import org.maplibre.android.maps.renderer.textureview.GLTextureViewRenderThread;
 import org.maplibre.android.maps.renderer.textureview.TextureViewMapRenderer;
@@ -38,10 +34,24 @@ public class MapRendererFactory {
                                                                  boolean renderSurfaceOnTop, Runnable initCallback,
                                                                  int threadPriorityOverride) {
 
-    MapLibreGLSurfaceView surfaceView = new MapLibreGLSurfaceView(context);
+    String useModernEGL = System.getProperty("org.maplibre.android.gl.use_modern_opengl");
+    boolean useModern = useModernEGL != null && useModernEGL.equals("true");
+    if(useModern) {
+      org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView surfaceView = new org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView(context);
+      surfaceView.setZOrderMediaOverlay(renderSurfaceOnTop);
+
+      return new org.maplibre.android.maps.renderer.modern.surfaceview.GLSurfaceViewMapRenderer(context, surfaceView, localFontFamily, threadPriorityOverride) {
+        @Override
+        public void onSurfaceCreated(Surface surface) {
+          initCallback.run();
+          super.onSurfaceCreated(surface);
+        }
+      };
+    }
+    org.maplibre.android.maps.renderer.surfaceview.MapLibreGLSurfaceView surfaceView = new org.maplibre.android.maps.renderer.surfaceview.MapLibreGLSurfaceView(context);
     surfaceView.setZOrderMediaOverlay(renderSurfaceOnTop);
 
-    return new GLSurfaceViewMapRenderer(context, surfaceView, localFontFamily, threadPriorityOverride) {
+    return new org.maplibre.android.maps.renderer.surfaceview.GLSurfaceViewMapRenderer(context, surfaceView, localFontFamily, threadPriorityOverride) {
       @Override
       public void onSurfaceCreated(Surface surface) {
         initCallback.run();
