@@ -66,8 +66,9 @@ public abstract class MapRenderer implements MapRendererScheduler {
               translucentSurface, initCallback, threadPriorityOverride);
     } else {
       boolean renderSurfaceOnTop = options.getRenderSurfaceOnTop();
+      boolean useModernEGL = options.getUseModernEGL();
       renderer = MapRendererFactory.newSurfaceViewMapRenderer(context, localFontFamily,
-              renderSurfaceOnTop, initCallback, threadPriorityOverride);
+              renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL);
     }
 
     return renderer;

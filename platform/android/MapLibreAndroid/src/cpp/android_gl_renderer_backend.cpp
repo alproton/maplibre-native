@@ -4,8 +4,7 @@
 #include <mbgl/gl/context.hpp>
 #include <mbgl/gl/renderable_resource.hpp>
 #include <mbgl/util/logging.hpp>
-
-#include <EGL/egl.h>
+#include "android_egl_helper.hpp"
 
 #include <cassert>
 
@@ -48,6 +47,10 @@ gl::ProcAddress AndroidGLRendererBackend::getExtensionFunctionPointer(const char
 void AndroidGLRendererBackend::updateViewPort() {
     assert(gfx::BackendScope::exists());
     setViewport(0, 0, size);
+    if (logEGLconfigAttribs) {
+        Log::Info(Event::OpenGL, "EGL Config Attributes:\n" + android::egl::query_current_config_attributes());
+        logEGLconfigAttribs = false;
+    }
 }
 
 void AndroidGLRendererBackend::resizeFramebuffer(int width, int height) {

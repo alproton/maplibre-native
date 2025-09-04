@@ -44,6 +44,9 @@ protected:
 protected:
     mbgl::gl::ProcAddress getExtensionFunctionPointer(const char*) override;
     void updateAssumedState() override;
+
+private:
+    bool logEGLconfigAttribs = true;
 };
 
 } // namespace android
