@@ -810,6 +810,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
                                  float iconScale,
                                  boolean cameraTracking) {
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
+    nativeMapView.triggerRepaint();
     if(isAutoRouteVanishing) {
       RouteID vanishingRouteID = getVanishingRouteID();
       if(vanishingRouteID.isValid() && nativeMapView != null) {
