@@ -10,6 +10,7 @@
 #include <mutex>
 #include <utility>
 #include <optional>
+#include <condition_variable>
 
 #include <jni/jni.hpp>
 #include <android/native_window.h>
@@ -146,6 +147,7 @@ private:
     const MailboxData mailboxData;
 
     mutable std::mutex initialisationMutex;
+    mutable std::condition_variable initialisationConditionVar;
     std::shared_ptr<RendererObserver> rendererObserver;
 
     std::unique_ptr<AndroidRendererBackend> backend;

@@ -85,11 +85,13 @@ void MapRenderer::reset() {
 
 ActorRef<Renderer> MapRenderer::actor() const {
     // Make sure we don't return a reference in the middle of a onSurfaceCreated call
-    // No need to lock this before any invoke call to also protect "renderer" and
-    // "backend" objects because the variables are only used after onSurfaceCreated while
-    // rendererRef is used to pass settings from the frontend to the backend
-    std::lock_guard<std::mutex> lock(initialisationMutex);
+    // Wait until rendererRef is initialized
+    std::unique_lock<std::mutex> lock(initialisationMutex);
+    initialisationConditionVar.wait(lock, [this] { return rendererRef != nullptr; });
 
+    if (rendererRef == nullptr) {
+        Log::Error(Event::Android, "MapRenderer::actor called before renderer is initialized");
+    }
     assert(rendererRef != nullptr);
     return *rendererRef;
 }
@@ -255,49 +257,52 @@ gfx::RenderingStats MapRenderer::getRenderingStats() {
 
 void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface>& surface) {
     // Lock as the initialization can come from the main thread or the GL thread first
-    std::lock_guard<std::mutex> lock(initialisationMutex);
+    {
+        std::lock_guard<std::mutex> lock(initialisationMutex);
 
-    platform::makeThreadHighPriority();
-    Log::Debug(Event::Android,
-               "Setting render thread priority to " + std::to_string(platform::getCurrentThreadPriority()));
+        platform::makeThreadHighPriority();
+        Log::Debug(Event::Android,
+                   "Setting render thread priority to " + std::to_string(platform::getCurrentThreadPriority()));
 
-    // The android system will have already destroyed the underlying
-    // GL resources if this is not the first initialization and an
-    // attempt to clean them up will fail
-    if (backend) backend->markContextLost();
-    if (renderer) renderer->markContextLost();
+        // The android system will have already destroyed the underlying
+        // GL resources if this is not the first initialization and an
+        // attempt to clean them up will fail
+        if (backend) backend->markContextLost();
+        if (renderer) renderer->markContextLost();
 
-    // Reset in opposite order
-    renderer.reset();
-    backend.reset();
-    window.reset();
+        // Reset in opposite order
+        renderer.reset();
+        backend.reset();
+        window.reset();
 
-    if (surface) {
-        window = std::unique_ptr<ANativeWindow, std::function<void(ANativeWindow*)>>(
-            ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get())),
-            [](ANativeWindow* window_) { ANativeWindow_release(window_); });
-    }
+        if (surface) {
+            window = std::unique_ptr<ANativeWindow, std::function<void(ANativeWindow*)>>(
+                ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get())),
+                [](ANativeWindow* window_) { ANativeWindow_release(window_); });
+        }
 
-    // Create the new backend and renderer
-    backend = AndroidRendererBackend::Create(window.get());
-    renderer = std::make_unique<Renderer>(backend->getImpl(), pixelRatio, localIdeographFontFamily);
-    rendererRef = std::make_unique<ActorRef<Renderer>>(*renderer, mailboxData.getMailbox());
+        // Create the new backend and renderer
+        backend = AndroidRendererBackend::Create(window.get());
+        renderer = std::make_unique<Renderer>(backend->getImpl(), pixelRatio, localIdeographFontFamily);
+        rendererRef = std::make_unique<ActorRef<Renderer>>(*renderer, mailboxData.getMailbox());
 
 #if MLN_RENDER_BACKEND_OPENGL
-    // If we're running the emulator with the OpenGL backend, we're going to crash eventually,
-    // unless we enable this mitigation.
-    if (inEmulator()) {
-        renderer->enableAndroidEmulatorGoldfishMitigation(true);
-    }
+        // If we're running the emulator with the OpenGL backend, we're going to crash eventually,
+        // unless we enable this mitigation.
+        if (inEmulator()) {
+            renderer->enableAndroidEmulatorGoldfishMitigation(true);
+        }
 #endif
 
-    backend->setSwapBehavior(swapBehaviorFlush ? gfx::Renderable::SwapBehaviour::Flush
-                                               : gfx::Renderable::SwapBehaviour::NoFlush);
+        backend->setSwapBehavior(swapBehaviorFlush ? gfx::Renderable::SwapBehaviour::Flush
+                                                   : gfx::Renderable::SwapBehaviour::NoFlush);
 
-    // Set the observer on the new Renderer implementation
-    if (rendererObserver) {
-        renderer->setObserver(rendererObserver.get());
+        // Set the observer on the new Renderer implementation
+        if (rendererObserver) {
+            renderer->setObserver(rendererObserver.get());
+        }
     }
+    initialisationConditionVar.notify_all();
 }
 
 void MapRenderer::onSurfaceChanged(JNIEnv& env, jint width, jint height) {
