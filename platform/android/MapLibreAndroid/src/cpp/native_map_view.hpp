@@ -370,6 +370,7 @@ public:
                               jni::jint,
                               jni::jint,
                               jni::jdouble,
+                              jni::jdouble,
                               jni::jboolean,
                               jni::jboolean);
 

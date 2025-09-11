@@ -1354,6 +1354,7 @@ void NativeMapView::addTileCacheSettings(JNIEnv& env,
                                          jni::jint minZoom,
                                          jni::jint maxZoom,
                                          jni::jdouble cachedTileMaxAge,
+                                         jni::jdouble renderTileMaxAge,
                                          jni::jboolean aggressiveCache,
                                          jni::jboolean skipRelayoutClear) {
     mbgl::TileCacheSettings settings{};
@@ -1363,6 +1364,7 @@ void NativeMapView::addTileCacheSettings(JNIEnv& env,
     settings.minZoom = minZoom;
     settings.maxZoom = maxZoom;
     settings.cachedTileMaxAge = cachedTileMaxAge;
+    settings.renderTileMaxAge = renderTileMaxAge;
     settings.aggressiveCache = aggressiveCache == jni::jni_true;
     settings.skipRelayoutClear = skipRelayoutClear == jni::jni_true;
     rendererFrontend->addTileCacheSettings(settings);
