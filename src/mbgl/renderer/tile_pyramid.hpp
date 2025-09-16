@@ -92,6 +92,12 @@ private:
 
     float prevLng = 0;
 
+    // Data used to invalidate render tiles
+    using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
+    double renderTileMaxAge = 0;
+    std::vector<OverscaledTileID> previousIdealTiles;
+    TimePoint lastIdealTilesChange{};
+
     bool fadingTiles = false;
     bool cacheEnabled = true;
     bool aggressiveTileCache = false;

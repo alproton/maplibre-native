@@ -33,6 +33,15 @@ final public class TileCacheSettings {
     public double cachedTileMaxAge;
 
     /***
+     * The maximum age of tiles being rendered in seconds.
+     * If 0, no render tiles are removed based on age.
+     * The same render tiles are reused when the camera is not moving.
+     * Setting a maximum age ensures short lived tiles such as rendered
+     * traffic tiles are invalidated which forces a cache request.
+     */
+    public double renderTileMaxAge;
+
+    /***
      * If true, tiles that are not ideal are also cached
      * Check update_renderables.hpp for details about ideal tiles
      */
