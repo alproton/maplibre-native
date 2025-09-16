@@ -24,6 +24,9 @@ dependencies {
     implementation(libs.okhttp3)
     implementation(libs.timber)
     implementation(libs.interpolator)
+    implementation(libs.gamesFramePacing)
+//    implementation("androidx.games:games-frame-pacing:2.1.0")
+    //implementation("com.google.android.games:frame-pacing:1.10.0")
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito)
@@ -73,7 +76,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments("-DMLN_LEGACY_RENDERER=ON", "-DMLN_DRAWABLE_RENDERER=OFF")
+                arguments("-DMLN_LEGACY_RENDERER=ON", "-DMLN_DRAWABLE_RENDERER=OFF", "-DANDROID_STL=c++_shared")
             }
         }
     }
@@ -84,7 +87,7 @@ android {
             dimension = "renderer"
             externalNativeBuild {
                 cmake {
-                    arguments("-DMLN_LEGACY_RENDERER=ON", "-DMLN_DRAWABLE_RENDERER=OFF")
+                    arguments("-DMLN_LEGACY_RENDERER=ON", "-DMLN_DRAWABLE_RENDERER=OFF", "-DANDROID_STL=c++_shared")
                 }
             }
         }
@@ -92,7 +95,7 @@ android {
             dimension = "renderer"
             externalNativeBuild {
                 cmake {
-                    arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON")
+                    arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON", "-DANDROID_STL=c++_shared")
                 }
             }
         }
@@ -100,7 +103,7 @@ android {
             dimension = "renderer"
             externalNativeBuild {
                 cmake {
-                    arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON")
+                    arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON", "-DANDROID_STL=c++_shared")
                     arguments("-DMLN_WITH_OPENGL=OFF", "-DMLN_WITH_VULKAN=ON")
                 }
             }
@@ -168,6 +171,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        prefab = true
     }
 
     compileOptions {
