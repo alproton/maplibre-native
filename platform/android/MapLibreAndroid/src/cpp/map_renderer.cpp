@@ -13,6 +13,7 @@
 #include "attach_env.hpp"
 #include "android_renderer_backend.hpp"
 #include "map_renderer_runnable.hpp"
+#include "swappy_frame_pacing.hpp"
 
 #if MLN_RENDER_BACKEND_OPENGL
 #include <sys/system_properties.h>
@@ -63,7 +64,10 @@ std::shared_ptr<Mailbox> MapRenderer::MailboxData::getMailbox() const noexcept {
     return mailbox;
 }
 
-MapRenderer::~MapRenderer() = default;
+MapRenderer::~MapRenderer() {
+    // Clean up Swappy resources when the renderer is destroyed
+    SwappyFramePacing::destroy();
+}
 
 void MapRenderer::reset() {
     try {
@@ -230,6 +234,7 @@ void MapRenderer::scheduleSnapshot(std::unique_ptr<SnapshotCallback> callback) {
 
 void MapRenderer::render(JNIEnv&) {
     assert(renderer);
+
     // Set the swap interval if it has been changed
     if (backend && swapInterval != -1) {
         backend->setSwapInterval(swapInterval);
@@ -291,11 +296,20 @@ void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface
         backend.reset();
         window.reset();
 
-        if (surface) {
-            window = std::unique_ptr<ANativeWindow, std::function<void(ANativeWindow*)>>(
-                ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get())),
-                [](ANativeWindow* window_) { ANativeWindow_release(window_); });
+    if (surface) {
+        window = std::unique_ptr<ANativeWindow, std::function<void(ANativeWindow*)>>(
+            ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get())),
+            [](ANativeWindow* window_) { ANativeWindow_release(window_); });
+
+        // Set the current window to Swappy if enabled
+        if (SwappyFramePacing::isEnabled()) {
+            ANativeWindow* swappyWindow = ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get()));
+            if (swappyWindow) {
+                SwappyFramePacing::setWindow(swappyWindow);
+                ANativeWindow_release(swappyWindow);
+            }
         }
+    }
 
         // Create the new backend and renderer
         backend = AndroidRendererBackend::Create(window.get());

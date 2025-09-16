@@ -112,6 +112,8 @@ public class MapLibreMapOptions implements Parcelable {
 
   private boolean useModernEGL = false;
 
+  private boolean useSwappy = false;
+
 
   /**
    * Creates a new MapLibreMapOptions object.
@@ -172,6 +174,7 @@ public class MapLibreMapOptions implements Parcelable {
     crossSourceCollisions = in.readByte() != 0;
     threadPriorityOverride = in.readInt();
     useModernEGL = in.readByte() != 0;
+    useSwappy = in.readByte() != 0;
   }
 
   /**
@@ -769,6 +772,12 @@ public class MapLibreMapOptions implements Parcelable {
     return this;
   }
 
+  @NonNull
+  public MapLibreMapOptions enableUseSwappy(boolean enable) {
+    this.useSwappy = enable;
+    return this;
+  }
+
   /**
    * Enable local ideograph font family, defaults to true.
    *
@@ -871,6 +880,10 @@ public class MapLibreMapOptions implements Parcelable {
 
   public boolean getUseModernEGL() {
     return useModernEGL;
+  }
+
+  public boolean getUseSwappy() {
+    return useSwappy;
   }
 
   /**
@@ -1259,6 +1272,7 @@ public class MapLibreMapOptions implements Parcelable {
     dest.writeByte((byte) (crossSourceCollisions ? 1 : 0));
     dest.writeInt(threadPriorityOverride);
     dest.writeByte((byte) (useModernEGL ? 1 : 0));
+    dest.writeByte((byte) (useSwappy ? 1 : 0));
   }
 
   @Override
@@ -1387,6 +1401,10 @@ public class MapLibreMapOptions implements Parcelable {
       return false;
     }
 
+    if( useSwappy != options.useSwappy) {
+      return false;
+    }
+
     return false;
   }
 
@@ -1436,6 +1454,7 @@ public class MapLibreMapOptions implements Parcelable {
     result = 31 * result + (crossSourceCollisions ? 1 : 0);
     result = 31 * result + threadPriorityOverride;
     result = 31 * result + (useModernEGL ? 1 : 0);
+    result = 31 * result + (useSwappy ? 1 : 0);
     return result;
   }
 }

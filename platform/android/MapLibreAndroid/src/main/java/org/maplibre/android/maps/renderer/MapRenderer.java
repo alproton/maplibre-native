@@ -1,6 +1,8 @@
 package org.maplibre.android.maps.renderer;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -8,6 +10,7 @@ import android.view.View;
 import androidx.annotation.CallSuper;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.maplibre.android.LibraryLoader;
 import org.maplibre.android.log.Logger;
@@ -67,8 +70,13 @@ public abstract class MapRenderer implements MapRendererScheduler {
     } else {
       boolean renderSurfaceOnTop = options.getRenderSurfaceOnTop();
       boolean useModernEGL = options.getUseModernEGL();
+      boolean useSwappy = options.getUseSwappy();
+      if(useSwappy) {
+        //initialization of swappy is done here, but destruction happens in the destructor of map_renderer.cpp
+        initializeSwappy(context);
+      }
       renderer = MapRendererFactory.newSurfaceViewMapRenderer(context, localFontFamily,
-              renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL);
+              renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL, useSwappy);
     }
 
     return renderer;
@@ -80,6 +88,48 @@ public abstract class MapRenderer implements MapRendererScheduler {
     // Initialize native peer
     nativeInitialize(this, pixelRatio, localIdeographFontFamily, threadPriorityOverride);
   }
+
+  /**
+   * Initialize Swappy Frame Pacing if possible.
+   * Attempts to find the Activity context and initialize Swappy.
+   */
+  private static void initializeSwappy(@NonNull Context context) {
+    try {
+      Activity activity = getActivityFromContext(context);
+      if (activity != null) {
+        boolean initialized = SwappyRenderer.initialize(activity);
+        if (initialized) {
+          Logger.i(TAG, "Swappy Frame Pacing initialized successfully");
+
+          // Set default configuration for optimal performance
+          SwappyRenderer.setTargetFrameRate(60);
+          SwappyRenderer.enableStats(true);
+          SwappyRenderer.setAutoSwapInterval(true);
+          SwappyRenderer.setAutoPipelineMode(true);
+        } else {
+          Logger.w(TAG, "Swappy Frame Pacing initialization failed or not supported on this device");
+        }
+      } else {
+        Logger.w(TAG, "Could not find Activity context for Swappy initialization");
+      }
+    } catch (Exception e) {
+      Logger.w(TAG, "Exception during Swappy initialization: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Extract Activity from Context, handling ContextWrapper cases.
+   */
+  @Nullable
+  private static Activity getActivityFromContext(@NonNull Context context) {
+    if (context instanceof Activity) {
+      return (Activity) context;
+    } else if (context instanceof ContextWrapper) {
+      return getActivityFromContext(((ContextWrapper) context).getBaseContext());
+    }
+    return null;
+  }
+
 
   public abstract View getView();
 
@@ -134,14 +184,14 @@ public abstract class MapRenderer implements MapRendererScheduler {
     } catch (java.lang.Error error) {
       Logger.e(TAG, error.getMessage());
     }
-    long renderTime = System.nanoTime() - startTime;
-    if (renderTime < expectedRenderTime) {
-      try {
-        Thread.sleep((long) ((expectedRenderTime - renderTime) / 1E6));
-      } catch (InterruptedException ex) {
-        Logger.e(TAG, ex.getMessage());
-      }
-    }
+//    long renderTime = System.nanoTime() - startTime;
+//    if (renderTime < expectedRenderTime) {
+//      try {
+//        Thread.sleep((long) ((expectedRenderTime - renderTime) / 1E6));
+//      } catch (InterruptedException ex) {
+//        Logger.e(TAG, ex.getMessage());
+//      }
+//    }
     if (onFpsChangedListener != null) {
       updateFps(isWaitingFrame && skipWaitingFrames);
     }
@@ -168,6 +218,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
   void queueEvent(MapRendererRunnable runnable) {
     this.queueEvent((Runnable) runnable);
   }
+
 
   private native void nativeInitialize(MapRenderer self,
                                        float pixelRatio,
