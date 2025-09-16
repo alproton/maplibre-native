@@ -10,6 +10,7 @@ import android.opengl.EGLDisplay;
 import android.util.AttributeSet;
 import android.util.Log;
 
+import org.maplibre.android.maps.renderer.SwappyRenderer;
 import org.maplibre.android.maps.renderer.egl.EGLLogWrapper;
 import org.maplibre.android.maps.renderer.modern.egl.EGLConfigChooser;
 import org.maplibre.android.maps.renderer.modern.egl.EGLContextFactory;
@@ -28,9 +29,11 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
   private EGLWindowSurfaceFactory eglWindowSurfaceFactory;
 
   private boolean preserveEGLContextOnPause;
+  private boolean useSwappy;
 
-  public MapLibreGLSurfaceView(Context context) {
+  public MapLibreGLSurfaceView(Context context, boolean useSwappy) {
     super(context);
+    this.useSwappy = useSwappy;
   }
 
   public MapLibreGLSurfaceView(Context context, AttributeSet attrs) {
@@ -247,6 +250,13 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
      * @return the EGL error code from eglSwapBuffers.
      */
     public int swap() {
+      MapLibreGLSurfaceView view = mGLSurfaceViewWeakRef.get();
+      if(view.useSwappy) {
+        boolean success = SwappyRenderer.swap(mEglDisplay.getNativeHandle(), mEglSurface.getNativeHandle());
+
+        return success ? EGL14.EGL_SUCCESS : EGL14.eglGetError();
+      }
+
       if (!EGL14.eglSwapBuffers(mEglDisplay, mEglSurface)) {
         return EGL14.eglGetError();
       }

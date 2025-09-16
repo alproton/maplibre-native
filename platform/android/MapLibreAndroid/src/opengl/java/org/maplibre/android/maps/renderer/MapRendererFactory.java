@@ -36,10 +36,11 @@ public class MapRendererFactory {
 
   public static SurfaceViewMapRenderer newSurfaceViewMapRenderer(@NonNull Context context, String localFontFamily,
                                                                  boolean renderSurfaceOnTop, Runnable initCallback,
-                                                                 int threadPriorityOverride, boolean useModernEGL) {
+                                                                 int threadPriorityOverride, boolean useModernEGL, boolean useSwappy) {
 
     if(useModernEGL) {
-      org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView surfaceView = new org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView(context);
+      //TODO: add support for swappy for MapLibreGLSurfaceView based on modern EGL
+      org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView surfaceView = new org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView(context, useSwappy);
       surfaceView.setZOrderMediaOverlay(renderSurfaceOnTop);
 
       return new org.maplibre.android.maps.renderer.modern.surfaceview.GLSurfaceViewMapRenderer(context, surfaceView, localFontFamily, threadPriorityOverride) {
@@ -50,6 +51,7 @@ public class MapRendererFactory {
         }
       };
     }
+    //Swappy is not supported for the legacy EGL path since it requires a modern EGLDisplay and EGLSurface
     org.maplibre.android.maps.renderer.surfaceview.MapLibreGLSurfaceView surfaceView = new org.maplibre.android.maps.renderer.surfaceview.MapLibreGLSurfaceView(context);
     surfaceView.setZOrderMediaOverlay(renderSurfaceOnTop);
 

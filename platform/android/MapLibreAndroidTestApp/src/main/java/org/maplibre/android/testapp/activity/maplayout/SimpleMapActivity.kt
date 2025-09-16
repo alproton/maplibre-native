@@ -2,18 +2,26 @@ package org.maplibre.android.testapp.activity.maplayout
 
 import android.os.Bundle
 import android.view.MenuItem
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import org.maplibre.android.maps.*
+import org.maplibre.android.maps.MapLibreMap.OnFpsChangedListener
+import org.maplibre.android.maps.renderer.MapRenderer
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ApiKeyUtils
 import org.maplibre.android.testapp.utils.NavUtils
+import java.util.Locale
 
 /**
  * Test activity showcasing a simple MapView without any MapLibreMap interaction.
  */
-class SimpleMapActivity : AppCompatActivity() {
+class SimpleMapActivity : AppCompatActivity(), OnFpsChangedListener {
+    private var fpsView: TextView? = null
     private lateinit var mapView: MapView
+    private var fpsSum: Double = 0.0
+    private var fpsCount = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
@@ -26,6 +34,8 @@ class SimpleMapActivity : AppCompatActivity() {
         setContentView(R.layout.activity_map_simple)
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
+        mapView.setRenderingRefreshMode(MapRenderer.RenderingRefreshMode.CONTINUOUS)
+
         mapView.getMapAsync {
             val key = ApiKeyUtils.getApiKey(applicationContext)
             if (key == null || key == "YOUR_API_KEY_GOES_HERE") {
@@ -39,7 +49,20 @@ class SimpleMapActivity : AppCompatActivity() {
                     it.setStyle(Style.Builder().fromUri(styleUrl))
                 }
             }
+            setFpsView()
         }
+    }
+
+    private fun setFpsView() {
+        fpsView = findViewById(R.id.fpsView)
+        mapView.mapLibreMap?.setOnFpsChangedListener(this)
+    }
+
+    override fun onFpsChanged(fps: Double) {
+        fpsCount++
+        fpsSum += fps
+        var averageFps = fpsSum / fpsCount
+        fpsView!!.text = String.format(Locale.US, "FPS: %4.2f", averageFps)
     }
 
     override fun onStart() {

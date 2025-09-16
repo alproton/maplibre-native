@@ -76,6 +76,7 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        prefab = true
     }
 
     namespace = "org.maplibre.android.testapp"
@@ -109,6 +110,7 @@ dependencies {
     implementation(libs.kotlinxCoroutinesAndroid)
     implementation(libs.appcompat)
     implementation(libs.activity)
+    implementation(libs.gamesFramePacing)
 
     debugImplementation(libs.leakCanary)
 
