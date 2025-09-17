@@ -102,6 +102,8 @@ public:
      */
     static void enableStats(bool enabled);
 
+    static bool getStatsEnabled() { return sEnabled; }
+
     /**
      * Record the start of a frame for statistics collection.
      * Should be called at the beginning of each frame when stats are enabled.

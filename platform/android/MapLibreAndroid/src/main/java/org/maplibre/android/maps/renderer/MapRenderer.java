@@ -16,6 +16,7 @@ import org.maplibre.android.LibraryLoader;
 import org.maplibre.android.log.Logger;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapLibreMapOptions;
+import org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView;
 
 /**
  * The {@link MapRenderer} encapsulates the render thread.
@@ -26,6 +27,9 @@ import org.maplibre.android.maps.MapLibreMapOptions;
  */
 @Keep
 public abstract class MapRenderer implements MapRendererScheduler {
+  private static int frameCount = 0;
+  private static long lastAnalysisTime = 0;
+  private static final long ANALYSIS_INTERVAL_MS = 5000; // Every 5 seconds
 
   static {
     LibraryLoader.load();
@@ -70,12 +74,13 @@ public abstract class MapRenderer implements MapRendererScheduler {
       boolean renderSurfaceOnTop = options.getRenderSurfaceOnTop();
       boolean useModernEGL = options.getUseModernEGL();
       boolean useSwappy = options.getUseSwappy();
+      boolean enableSwappyLogs = options.getEnableSwappyLogs();
       if(useSwappy) {
         //initialization of swappy is done here, but destruction happens in the destructor of map_renderer.cpp
-        initializeSwappy(context);
+        initializeSwappy(context, enableSwappyLogs);
       }
       renderer = MapRendererFactory.newSurfaceViewMapRenderer(context, localFontFamily,
-              renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL, useSwappy);
+              renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL, useSwappy, enableSwappyLogs);
     }
 
     return renderer;
@@ -92,7 +97,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
    * Initialize Swappy Frame Pacing if possible.
    * Attempts to find the Activity context and initialize Swappy.
    */
-  private static void initializeSwappy(@NonNull Context context) {
+  private static void initializeSwappy(@NonNull Context context, boolean enableLogs) {
     try {
       Activity activity = getActivityFromContext(context);
       if (activity != null) {
@@ -102,8 +107,8 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
           // Set default configuration for optimal performance
           SwappyRenderer.setTargetFrameRate(60);
-          SwappyRenderer.enableStats(true);
-          SwappyRenderer.setAutoSwapInterval(true);
+          SwappyRenderer.enableStats(enableLogs);
+          SwappyRenderer.setAutoSwapInterval(false);
           SwappyRenderer.setAutoPipelineMode(true);
         } else {
           Logger.w(TAG, "Swappy Frame Pacing initialization failed or not supported on this device");
@@ -175,22 +180,61 @@ public abstract class MapRenderer implements MapRendererScheduler {
     nativeOnSurfaceDestroyed();
   }
 
+//  private static void analyzePerformance() {
+//    SwappyFrameStats stats = SwappyRenderer.getStats();
+//    if (stats == null) return;
+//
+////    // Quick performance check
+////    double onTime = stats.getOnTimeFramePercentage();
+//    double compositorDelay = stats.getCompositorDelayPercentage();
+////    Logger.i("OpenGL", String.format(
+////            "Frames: %d, On-time: %.1f%%, Compositor delays: %.1f%%",
+////            stats.getTotalFrames(), onTime, compositorDelay
+////    ));
+//    Logger.i("OpenGL", String.format(stats.toString()));
+//    // Apply optimizations based on Adreno-specific thresholds
+//    if (compositorDelay > 5.0) {
+//      // Adreno GPUs typically handle buffer stuffing well
+//      SwappyRenderer.setBufferStuffingFixWait(1);
+//      Logger.i("OpenGL", "Applied buffer stuffing fix for Adreno GPU");
+//    }
+//  }
+
+
   @CallSuper
   protected void onDrawFrame() {
+    if(SwappyRenderer.isEnabled()) {
+      View view = getView();
+      if(view instanceof MapLibreGLSurfaceView) {
+        ((MapLibreGLSurfaceView) view).recordFrameStart();
+//        frameCount++;
+//
+//        // Periodic analysis
+//        long currentTime = System.currentTimeMillis();
+//        if (currentTime - lastAnalysisTime >= ANALYSIS_INTERVAL_MS) {
+////          analyzePerformance();
+//          lastAnalysisTime = currentTime;
+//        }
+      }
+    }
+
     long startTime = System.nanoTime();
     try {
       nativeRender();
     } catch (java.lang.Error error) {
       Logger.e(TAG, error.getMessage());
     }
-//    long renderTime = System.nanoTime() - startTime;
-//    if (renderTime < expectedRenderTime) {
-//      try {
-//        Thread.sleep((long) ((expectedRenderTime - renderTime) / 1E6));
-//      } catch (InterruptedException ex) {
-//        Logger.e(TAG, ex.getMessage());
-//      }
-//    }
+    //do the old sleep based frame limiting if swappy is not enabled
+    if(!SwappyRenderer.isEnabled()) {
+      long renderTime = System.nanoTime() - startTime;
+      if (renderTime < expectedRenderTime) {
+        try {
+          Thread.sleep((long) ((expectedRenderTime - renderTime) / 1E6));
+        } catch (InterruptedException ex) {
+          Logger.e(TAG, ex.getMessage());
+        }
+      }
+    }
     if (onFpsChangedListener != null) {
       updateFps();
     }

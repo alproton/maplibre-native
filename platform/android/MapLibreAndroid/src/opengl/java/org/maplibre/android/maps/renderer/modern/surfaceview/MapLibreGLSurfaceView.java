@@ -10,6 +10,8 @@ import android.opengl.EGLDisplay;
 import android.util.AttributeSet;
 import android.util.Log;
 
+import org.maplibre.android.log.Logger;
+import org.maplibre.android.maps.renderer.SwappyPerformanceMonitor;
 import org.maplibre.android.maps.renderer.SwappyRenderer;
 import org.maplibre.android.maps.renderer.egl.EGLLogWrapper;
 import org.maplibre.android.maps.renderer.modern.egl.EGLConfigChooser;
@@ -27,13 +29,16 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
   private EGLConfigChooser eglConfigChooser;
   private EGLContextFactory eglContextFactory;
   private EGLWindowSurfaceFactory eglWindowSurfaceFactory;
+  private WeakReference<EGLSurface> eglSurfaceWeakReference;
 
   private boolean preserveEGLContextOnPause;
   private boolean useSwappy;
+  private boolean enableSwappyLogging;
 
-  public MapLibreGLSurfaceView(Context context, boolean useSwappy) {
+  public MapLibreGLSurfaceView(Context context, boolean useSwappy, boolean enableSwappyLogging) {
     super(context);
     this.useSwappy = useSwappy;
+    this.enableSwappyLogging = enableSwappyLogging;
   }
 
   public MapLibreGLSurfaceView(Context context, AttributeSet attrs) {
@@ -121,6 +126,27 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
   @Override
   protected void createRenderThread() {
     renderThread = new GLThread(viewWeakReference);
+  }
+
+  public boolean recordFrameStart() {
+    boolean success = false;
+    if(SwappyRenderer.isEnabled() && eglSurfaceWeakReference != null && eglSurfaceWeakReference.get() != null) {
+      EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+      EGLSurface surface = eglSurfaceWeakReference.get();
+      if(display != null && display != EGL14.EGL_NO_DISPLAY && surface != null && surface != EGL14.EGL_NO_SURFACE) {
+        long displayHandle = display.getNativeHandle();
+        long surfaceHandle = surface.getNativeHandle();
+        SwappyPerformanceMonitor.recordFrameStart(displayHandle, surfaceHandle);
+
+        String statsinfo = SwappyPerformanceMonitor.getPerformanceSummary();
+
+        Logger.i("OpenGL", statsinfo);
+      }
+
+      success = true;
+    }
+
+    return success;
   }
 
   /**
@@ -216,6 +242,7 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
         };
 
         mEglSurface = view.eglWindowSurfaceFactory.createWindowSurface(mEglDisplay, mEglConfig, view.getHolder(), surfaceAttributes, 0);
+        view.eglSurfaceWeakReference = new WeakReference<>(mEglSurface);
       } else {
         mEglSurface = null;
       }
@@ -250,8 +277,7 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
      * @return the EGL error code from eglSwapBuffers.
      */
     public int swap() {
-      MapLibreGLSurfaceView view = mGLSurfaceViewWeakRef.get();
-      if(view.useSwappy) {
+      if(SwappyRenderer.isEnabled()) {
         boolean success = SwappyRenderer.swap(mEglDisplay.getNativeHandle(), mEglSurface.getNativeHandle());
 
         return success ? EGL14.EGL_SUCCESS : EGL14.eglGetError();
@@ -355,6 +381,11 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
       haveEglContext = false;
       haveEglSurface = false;
       wantRenderNotification = false;
+//      if(SwappyRenderer.isEnabled() && mSurfaceViewWeakRef.get().enableSwappyLogging) {
+//        EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+//        EGLSurface  surface =
+//        SwappyRenderer.recordFrameStart();
+//      }
 
       try {
         boolean createEglContext = false;
