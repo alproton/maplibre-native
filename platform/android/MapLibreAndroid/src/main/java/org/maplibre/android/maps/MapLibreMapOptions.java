@@ -114,6 +114,8 @@ public class MapLibreMapOptions implements Parcelable {
 
   private boolean useSwappy = false;
 
+  private boolean enableSwappyLogs = false;
+
 
   /**
    * Creates a new MapLibreMapOptions object.
@@ -175,6 +177,7 @@ public class MapLibreMapOptions implements Parcelable {
     threadPriorityOverride = in.readInt();
     useModernEGL = in.readByte() != 0;
     useSwappy = in.readByte() != 0;
+    enableSwappyLogs = in.readByte() != 0;
   }
 
   /**
@@ -208,6 +211,9 @@ public class MapLibreMapOptions implements Parcelable {
     float pxlRatio = context.getResources().getDisplayMetrics().density;
     try {
       maplibreMapOptions.camera(new CameraPosition.Builder(typedArray).build());
+      maplibreMapOptions.useModernEGL = true;
+      maplibreMapOptions.useSwappy = true;
+      maplibreMapOptions.enableSwappyLogs = true;
 
       // deprecated
       maplibreMapOptions.apiBaseUrl(typedArray.getString(R.styleable.maplibre_MapView_maplibre_apiBaseUrl));
@@ -778,6 +784,11 @@ public class MapLibreMapOptions implements Parcelable {
     return this;
   }
 
+  public MapLibreMapOptions enableSwappyLogs(boolean enable) {
+    this.enableSwappyLogs = enable;
+    return this;
+  }
+
   /**
    * Enable local ideograph font family, defaults to true.
    *
@@ -884,6 +895,10 @@ public class MapLibreMapOptions implements Parcelable {
 
   public boolean getUseSwappy() {
     return useSwappy;
+  }
+
+  public boolean getEnableSwappyLogs() {
+    return enableSwappyLogs;
   }
 
   /**
@@ -1273,6 +1288,7 @@ public class MapLibreMapOptions implements Parcelable {
     dest.writeInt(threadPriorityOverride);
     dest.writeByte((byte) (useModernEGL ? 1 : 0));
     dest.writeByte((byte) (useSwappy ? 1 : 0));
+    dest.writeByte((byte)(enableSwappyLogs ? 1 : 0));
   }
 
   @Override
@@ -1405,6 +1421,10 @@ public class MapLibreMapOptions implements Parcelable {
       return false;
     }
 
+    if( enableSwappyLogs != options.enableSwappyLogs) {
+      return false;
+    }
+
     return false;
   }
 
@@ -1455,6 +1475,7 @@ public class MapLibreMapOptions implements Parcelable {
     result = 31 * result + threadPriorityOverride;
     result = 31 * result + (useModernEGL ? 1 : 0);
     result = 31 * result + (useSwappy ? 1 : 0);
+    result = 31 * result + (enableSwappyLogs ? 1 : 0);
     return result;
   }
 }
