@@ -880,6 +880,19 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   }
 
   /**
+   * Skip frames containing a sleep call when reporting FPS.
+   *
+   * @param skipFramesWithSleep Can be set to true or false.
+   */
+  public void setSkipFramesWithSleep(boolean skipFramesWithSleep) {
+    if (mapRenderer != null) {
+      mapRenderer.setSkipFramesWithSleep(skipFramesWithSleep);
+    } else {
+      throw new IllegalStateException("Calling MapView#setSkipFramesWithSleep before mapRenderer is created.");
+    }
+  }
+
+  /**
    * Set the rendering refresh mode and wake up the render thread if it is sleeping.
    *
    * @param mode can be:

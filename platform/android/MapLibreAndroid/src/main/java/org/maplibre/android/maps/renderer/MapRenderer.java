@@ -50,6 +50,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
   // Holds the pointer to the native peer after initialization
   private long nativePtr = 0;
   private double expectedRenderTime = 0;
+  private boolean skipFramesWithSleep = false;
   private MapLibreMap.OnFpsChangedListener onFpsChangedListener;
 
   public static MapRenderer create(MapLibreMapOptions options, @NonNull Context context, Runnable initCallback) {
@@ -126,6 +127,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
   @CallSuper
   protected void onDrawFrame() {
+    boolean hasSlept = false;
     long startTime = System.nanoTime();
     try {
       nativeRender();
@@ -136,12 +138,13 @@ public abstract class MapRenderer implements MapRendererScheduler {
     if (renderTime < expectedRenderTime) {
       try {
         Thread.sleep((long) ((expectedRenderTime - renderTime) / 1E6));
+        hasSlept = true;
       } catch (InterruptedException ex) {
         Logger.e(TAG, ex.getMessage());
       }
     }
     if (onFpsChangedListener != null) {
-      updateFps();
+      updateFps(hasSlept && skipFramesWithSleep);
     }
   }
 
@@ -192,11 +195,13 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
   private long timeElapsed;
 
-  private void updateFps() {
+  private void updateFps(boolean skipFrame) {
     long currentTime = System.nanoTime();
     if (timeElapsed > 0) {
       double fps = 1E9 / ((currentTime - timeElapsed));
-      onFpsChangedListener.onFpsChanged(fps);
+      if (!skipFrame) {
+        onFpsChangedListener.onFpsChanged(fps);
+      }
     }
     timeElapsed = currentTime;
   }
@@ -213,5 +218,14 @@ public abstract class MapRenderer implements MapRendererScheduler {
       return;
     }
     expectedRenderTime = 1E9 / maximumFps;
+  }
+
+  /**
+   * Skip frames containing a sleep call when reporting FPS.
+   *
+   * @param skipSleepFrames Can be set to true or false.
+   */
+  public void setSkipFramesWithSleep(boolean skipSleepFrames) {
+    skipFramesWithSleep = skipSleepFrames;
   }
 }
