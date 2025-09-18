@@ -880,6 +880,19 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   }
 
   /**
+   * Skip frames waiting for repaint
+   *
+   * @param skipWaitingFrames Can be set to true or false.
+   */
+  public void setSkipWaitingFrames(boolean skipWaitingFrames) {
+    if (mapRenderer != null) {
+      mapRenderer.setSkipWaitingFrames(skipWaitingFrames);
+    } else {
+      throw new IllegalStateException("Calling MapView#setSkipWaitingFrames before mapRenderer is created.");
+    }
+  }
+
+  /**
    * Set the rendering refresh mode and wake up the render thread if it is sleeping.
    *
    * @param mode can be:
