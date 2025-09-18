@@ -38,6 +38,7 @@ public class MapLibreVulkanSurfaceView extends MapLibreSurfaceView {
       boolean destroySurface = false;
       boolean wantRenderNotification = false;
       boolean doRenderNotification = false;
+      boolean isWaitingFrame = false;
       int w = 0;
       int h = 0;
       Runnable event = null;
@@ -128,6 +129,7 @@ public class MapLibreVulkanSurfaceView extends MapLibreSurfaceView {
               }
             }
             // By design, this is the only place in a RenderThread thread where we wait().
+            isWaitingFrame = true;
             renderThreadManager.wait();
           }
         } // end of synchronized(sRenderThreadManager)
@@ -162,7 +164,8 @@ public class MapLibreVulkanSurfaceView extends MapLibreSurfaceView {
         }
 
         if (view != null) {
-          view.renderer.onDrawFrame();
+          view.renderer.onDrawFrame(isWaitingFrame);
+          isWaitingFrame = false;
           if (finishDrawingRunnable != null) {
             finishDrawingRunnable.run();
             finishDrawingRunnable = null;
