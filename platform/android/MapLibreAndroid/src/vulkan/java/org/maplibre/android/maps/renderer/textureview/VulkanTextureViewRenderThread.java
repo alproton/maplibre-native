@@ -133,7 +133,7 @@ public class VulkanTextureViewRenderThread extends TextureViewRenderThread {
         }
 
         // Time to render a frame
-        mapRenderer.onDrawFrame();
+        mapRenderer.onDrawFrame(false);
       }
 
     } catch (InterruptedException err) {

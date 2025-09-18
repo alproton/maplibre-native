@@ -80,8 +80,8 @@ public class SurfaceViewMapRenderer extends MapRenderer {
     super.onSurfaceChanged(width, height);
   }
 
-  public void onDrawFrame() {
-    super.onDrawFrame();
+  public void onDrawFrame(boolean isWaitingFrame) {
+    super.onDrawFrame(isWaitingFrame);
   }
 
   /**
