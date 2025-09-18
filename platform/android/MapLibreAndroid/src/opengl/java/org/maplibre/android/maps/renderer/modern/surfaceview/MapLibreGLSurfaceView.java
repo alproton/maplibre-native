@@ -35,6 +35,10 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
   private boolean useSwappy;
   private boolean enableSwappyLogging;
 
+  // Timer for diagnostics - only call every 5 seconds
+  private long lastDiagnosticsTime = 0;
+  private static final long DIAGNOSTICS_INTERVAL_MS = 5000; // 5 seconds
+
   public MapLibreGLSurfaceView(Context context, boolean useSwappy, boolean enableSwappyLogging) {
     super(context);
     this.useSwappy = useSwappy;
@@ -138,9 +142,12 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
         long surfaceHandle = surface.getNativeHandle();
         SwappyPerformanceMonitor.recordFrameStart(displayHandle, surfaceHandle);
 
-        String statsinfo = SwappyPerformanceMonitor.getPerformanceSummary();
-
-        Logger.i("OpenGL", statsinfo);
+        // Only call emergency diagnostics every 5 seconds instead of every frame
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastDiagnosticsTime >= DIAGNOSTICS_INTERVAL_MS) {
+          SwappyPerformanceMonitor.emergencyDiagnostics();
+          lastDiagnosticsTime = currentTime;
+        }
       }
 
       success = true;

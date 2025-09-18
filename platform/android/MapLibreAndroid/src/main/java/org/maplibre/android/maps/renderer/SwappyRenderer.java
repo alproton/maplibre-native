@@ -334,6 +334,25 @@ public class SwappyRenderer {
         }
     }
 
+    /**
+     * Enable or disable CPU affinity for Swappy's timing thread.
+     * When enabled, pins Swappy's timing thread to specific CPU cores
+     * to reduce timing jitter and improve presentation time accuracy.
+     *
+     * @param enabled Whether to enable CPU affinity
+     */
+    public static void setUseAffinity(boolean enabled) {
+        if (!sInitialized || !sEnabled) {
+            return;
+        }
+
+        try {
+            nativeSetUseAffinity(enabled);
+        } catch (UnsatisfiedLinkError e) {
+            // Ignore
+        }
+    }
+
     // Native method declarations
     @Keep
     private static native boolean nativeInitialize(@NonNull Activity activity);
@@ -389,4 +408,7 @@ public class SwappyRenderer {
 
     @Keep
     private static native void nativeSetAutoPipelineMode(boolean enabled);
+
+    @Keep
+    private static native void nativeSetUseAffinity(boolean enabled);
 }

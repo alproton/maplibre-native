@@ -189,4 +189,13 @@ JNIEXPORT void JNICALL Java_org_maplibre_android_maps_renderer_SwappyRenderer_na
     SwappyFramePacing::setAutoPipelineMode(enabled == JNI_TRUE);
 }
 
+/**
+ * Set CPU affinity from Java
+ */
+JNIEXPORT void JNICALL Java_org_maplibre_android_maps_renderer_SwappyRenderer_nativeSetUseAffinity(JNIEnv* env,
+                                                                                                   jclass clazz,
+                                                                                                   jboolean enabled) {
+    SwappyFramePacing::setUseAffinity(enabled == JNI_TRUE);
+}
+
 } // extern "C"

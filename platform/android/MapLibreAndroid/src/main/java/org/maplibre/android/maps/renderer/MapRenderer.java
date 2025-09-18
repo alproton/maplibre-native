@@ -107,9 +107,12 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
           // Set default configuration for optimal performance
           SwappyRenderer.setTargetFrameRate(60);
+          SwappyRenderer.setUseAffinity(true);
           SwappyRenderer.enableStats(enableLogs);
           SwappyRenderer.setAutoSwapInterval(false);
-          SwappyRenderer.setAutoPipelineMode(true);
+          SwappyRenderer.setAutoPipelineMode(false);
+          SwappyRenderer.resetFramePacing();
+          SwappyRenderer.clearStats();
         } else {
           Logger.w(TAG, "Swappy Frame Pacing initialization failed or not supported on this device");
         }
@@ -180,26 +183,6 @@ public abstract class MapRenderer implements MapRendererScheduler {
     nativeOnSurfaceDestroyed();
   }
 
-//  private static void analyzePerformance() {
-//    SwappyFrameStats stats = SwappyRenderer.getStats();
-//    if (stats == null) return;
-//
-////    // Quick performance check
-////    double onTime = stats.getOnTimeFramePercentage();
-//    double compositorDelay = stats.getCompositorDelayPercentage();
-////    Logger.i("OpenGL", String.format(
-////            "Frames: %d, On-time: %.1f%%, Compositor delays: %.1f%%",
-////            stats.getTotalFrames(), onTime, compositorDelay
-////    ));
-//    Logger.i("OpenGL", String.format(stats.toString()));
-//    // Apply optimizations based on Adreno-specific thresholds
-//    if (compositorDelay > 5.0) {
-//      // Adreno GPUs typically handle buffer stuffing well
-//      SwappyRenderer.setBufferStuffingFixWait(1);
-//      Logger.i("OpenGL", "Applied buffer stuffing fix for Adreno GPU");
-//    }
-//  }
-
 
   @CallSuper
   protected void onDrawFrame() {
@@ -207,14 +190,6 @@ public abstract class MapRenderer implements MapRendererScheduler {
       View view = getView();
       if(view instanceof MapLibreGLSurfaceView) {
         ((MapLibreGLSurfaceView) view).recordFrameStart();
-//        frameCount++;
-//
-//        // Periodic analysis
-//        long currentTime = System.currentTimeMillis();
-//        if (currentTime - lastAnalysisTime >= ANALYSIS_INTERVAL_MS) {
-////          analyzePerformance();
-//          lastAnalysisTime = currentTime;
-//        }
       }
     }
 
