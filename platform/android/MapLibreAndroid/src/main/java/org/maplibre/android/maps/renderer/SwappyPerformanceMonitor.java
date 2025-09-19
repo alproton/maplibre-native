@@ -16,7 +16,7 @@ import org.maplibre.android.log.Logger;
  */
 public class SwappyPerformanceMonitor {
 
-    private static final String TAG = "OpenGL";
+    private static final String TAG = "Swappy";
 
     // Performance thresholds
     private static final double GOOD_ON_TIME_PERCENTAGE = 95.0;
