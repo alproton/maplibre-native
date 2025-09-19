@@ -2,11 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 
 project(MapLibreAndroid)
 
-# Only find Swappy package for OpenGL builds, not Vulkan
-if(MLN_WITH_OPENGL)
-    find_package(games-frame-pacing REQUIRED CONFIG)
-endif()
-
 add_subdirectory(../../../../../
                  ../../../../../${ANDROID_ABI})
 
@@ -215,6 +210,10 @@ if(MLN_WITH_OPENGL)
         maplibre
             PRIVATE MLN_RENDER_BACKEND_OPENGL=1
     )
+
+    # Only find and link Swappy package for OpenGL builds
+    find_package(games-frame-pacing REQUIRED CONFIG)
+    target_link_libraries(maplibre PRIVATE games-frame-pacing::swappy_static)
 endif()
 
 if(MLN_WITH_VULKAN)
@@ -252,10 +251,5 @@ target_link_libraries(maplibre
                               Mapbox::Base::jni.hpp
                               mbgl-core
                               mbgl-vendor-unique_resource)
-
-# Only link Swappy for OpenGL builds
-if(MLN_WITH_OPENGL)
-    target_link_libraries(maplibre PRIVATE games-frame-pacing::swappy_static)
-endif()
 
 install(TARGETS maplibre LIBRARY DESTINATION lib)

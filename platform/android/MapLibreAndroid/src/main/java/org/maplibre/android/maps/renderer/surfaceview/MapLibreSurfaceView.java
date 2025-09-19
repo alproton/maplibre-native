@@ -222,6 +222,18 @@ public abstract class MapLibreSurfaceView extends SurfaceView implements Surface
     renderThread.waitForEmpty();
   }
 
+  /**
+   * Record frame start for frame pacing.
+   * Default implementation is a no-op. OpenGL implementations can override this
+   * to integrate with Swappy frame pacing.
+   *
+   * @return true if frame start was recorded successfully, false otherwise
+   */
+  public boolean recordFrameStart() {
+    // Default no-op implementation for non-OpenGL variants (e.g., Vulkan)
+    return false;
+  }
+
 
   /**
    * This method is used as part of the View class and is not normally
