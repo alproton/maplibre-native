@@ -13,7 +13,10 @@
 #include "attach_env.hpp"
 #include "android_renderer_backend.hpp"
 #include "map_renderer_runnable.hpp"
+
+#if MLN_RENDER_BACKEND_OPENGL
 #include "swappy_frame_pacing.hpp"
+#endif
 
 #if MLN_RENDER_BACKEND_OPENGL
 #include <sys/system_properties.h>
@@ -65,8 +68,10 @@ std::shared_ptr<Mailbox> MapRenderer::MailboxData::getMailbox() const noexcept {
 }
 
 MapRenderer::~MapRenderer() {
+#if MLN_RENDER_BACKEND_OPENGL
     // Clean up Swappy resources when the renderer is destroyed
     SwappyFramePacing::destroy();
+#endif
 }
 
 void MapRenderer::reset() {
@@ -301,6 +306,7 @@ void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface
             ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get())),
             [](ANativeWindow* window_) { ANativeWindow_release(window_); });
 
+#if MLN_RENDER_BACKEND_OPENGL
         // Set the current window to Swappy if enabled
         if (SwappyFramePacing::isEnabled()) {
             ANativeWindow* swappyWindow = ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get()));
@@ -309,6 +315,7 @@ void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface
                 ANativeWindow_release(swappyWindow);
             }
         }
+#endif
     }
 
         // Create the new backend and renderer

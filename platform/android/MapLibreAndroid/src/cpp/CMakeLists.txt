@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(MapLibreAndroid)
-find_package(games-frame-pacing REQUIRED CONFIG)
+
+# Only find Swappy package for OpenGL builds, not Vulkan
+if(MLN_WITH_OPENGL)
+    find_package(games-frame-pacing REQUIRED CONFIG)
+endif()
 
 add_subdirectory(../../../../../
                  ../../../../../${ANDROID_ABI})
@@ -18,9 +22,6 @@ add_library(maplibre SHARED
             ${PROJECT_SOURCE_DIR}/file_source.cpp
             ${PROJECT_SOURCE_DIR}/file_source.hpp
             ${PROJECT_SOURCE_DIR}/http_file_source.cpp
-            ${PROJECT_SOURCE_DIR}/swappy_frame_pacing.cpp
-            ${PROJECT_SOURCE_DIR}/swappy_frame_pacing.hpp
-            ${PROJECT_SOURCE_DIR}/swappy_jni.cpp
             ${PROJECT_SOURCE_DIR}/i18n/collator.cpp
             ${PROJECT_SOURCE_DIR}/i18n/collator_jni.hpp
             ${PROJECT_SOURCE_DIR}/i18n/number_format.cpp
@@ -206,6 +207,9 @@ if(MLN_WITH_OPENGL)
             ${PROJECT_SOURCE_DIR}/android_gl_renderer_backend.hpp
             ${PROJECT_SOURCE_DIR}/android_egl_helper.cpp
             ${PROJECT_SOURCE_DIR}/android_egl_helper.hpp
+            ${PROJECT_SOURCE_DIR}/swappy_frame_pacing.cpp
+            ${PROJECT_SOURCE_DIR}/swappy_frame_pacing.hpp
+            ${PROJECT_SOURCE_DIR}/swappy_jni.cpp
     )
     target_compile_definitions(
         maplibre
@@ -246,8 +250,12 @@ target_link_libraries(maplibre
                               $<$<CONFIG:Release>:-flto>
                               $<$<CONFIG:Release>:-fuse-ld=gold>
                               Mapbox::Base::jni.hpp
-                              games-frame-pacing::swappy_static
                               mbgl-core
                               mbgl-vendor-unique_resource)
+
+# Only link Swappy for OpenGL builds
+if(MLN_WITH_OPENGL)
+    target_link_libraries(maplibre PRIVATE games-frame-pacing::swappy_static)
+endif()
 
 install(TARGETS maplibre LIBRARY DESTINATION lib)
