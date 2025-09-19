@@ -186,21 +186,13 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
 
   @CallSuper
-  protected void onDrawFrame(boolean isWaitingFrame) {
-      if(SwappyRenderer.isEnabled()) {
-        View view = getView();
-        if(view instanceof MapLibreGLSurfaceView) {
-          ((MapLibreGLSurfaceView) view).recordFrameStart();
-  //        frameCount++;
-  //
-  //        // Periodic analysis
-  //        long currentTime = System.currentTimeMillis();
-  //        if (currentTime - lastAnalysisTime >= ANALYSIS_INTERVAL_MS) {
-  ////          analyzePerformance();
-  //          lastAnalysisTime = currentTime;
-  //        }
-        }
+  protected void onDrawFrame() {
+    if(SwappyRenderer.isEnabled()) {
+      View view = getView();
+      if(view instanceof MapLibreSurfaceView) {
+        ((MapLibreSurfaceView) view).recordFrameStart();
       }
+    }
 
     long startTime = System.nanoTime();
     try {
