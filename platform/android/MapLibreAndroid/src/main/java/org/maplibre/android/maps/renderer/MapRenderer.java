@@ -79,6 +79,8 @@ public abstract class MapRenderer implements MapRendererScheduler {
       if(useSwappy) {
         //initialization of swappy is done here, but destruction happens in the destructor of map_renderer.cpp
         initializeSwappy(context, enableSwappyLogs);
+      } else {
+        Logger.i("Swappy", "Swappy Frame Pacing Not Initialized");
       }
       renderer = MapRendererFactory.newSurfaceViewMapRenderer(context, localFontFamily,
               renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL, useSwappy, enableSwappyLogs);
@@ -104,7 +106,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
       if (activity != null) {
         boolean initialized = SwappyRenderer.initialize(activity);
         if (initialized) {
-          Logger.i(TAG, "Swappy Frame Pacing initialized successfully");
+          Logger.i("Swappy", "Swappy Frame Pacing initialized successfully");
 
           // Set default configuration for optimal performance
           SwappyRenderer.setTargetFrameRate(60);

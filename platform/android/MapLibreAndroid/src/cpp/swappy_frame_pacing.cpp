@@ -21,7 +21,7 @@ bool SwappyFramePacing::sEnabled = false;
 
 bool SwappyFramePacing::initialize(JNIEnv* env, jobject jactivity) {
     if (sInitialized) {
-        Log::Warning(Event::OpenGL, "SwappyFramePacing already initialized");
+        Log::Warning(Event::Swappy, "SwappyFramePacing already initialized");
         return sEnabled;
     }
 
@@ -34,7 +34,7 @@ bool SwappyFramePacing::initialize(JNIEnv* env, jobject jactivity) {
         sInitialized = true;
 
         if (sEnabled) {
-            Log::Info(Event::OpenGL, "SwappyFramePacing initialized successfully");
+            Log::Info(Event::Swappy, "SwappyFramePacing initialized successfully");
 
             // Set default configuration for optimal performance
             // Default to 60 FPS
@@ -43,7 +43,7 @@ bool SwappyFramePacing::initialize(JNIEnv* env, jobject jactivity) {
             // Enable statistics collection for monitoring
             enableStats(true);
         } else {
-            Log::Warning(Event::OpenGL, "SwappyFramePacing initialized but not enabled on this device");
+            Log::Warning(Event::Swappy, "SwappyFramePacing initialized but not enabled on this device");
         }
 
         return sEnabled;
@@ -62,9 +62,9 @@ void SwappyFramePacing::destroy() {
 
     try {
         SwappyGL_destroy();
-        Log::Info(Event::OpenGL, "SwappyFramePacing destroyed");
+        Log::Info(Event::Swappy, "SwappyFramePacing destroyed");
     } catch (...) {
-        Log::Error(Event::OpenGL, "Error during SwappyFramePacing destruction");
+        Log::Error(Event::Swappy, "Error during SwappyFramePacing destruction");
     }
 
     sInitialized = false;
@@ -80,12 +80,12 @@ bool SwappyFramePacing::isEnabled() {
 
 void SwappyFramePacing::setSwapInterval(uint64_t swapIntervalNs) {
     if (!sInitialized || !sEnabled) {
-        Log::Debug(Event::OpenGL, "SwappyFramePacing not available, skipping setSwapInterval");
+        Log::Debug(Event::Swappy, "SwappyFramePacing not available, skipping setSwapInterval");
         return;
     }
 
     SwappyGL_setSwapIntervalNS(swapIntervalNs);
-    Log::Debug(Event::OpenGL, "SwappyFramePacing swap interval set to " + std::to_string(swapIntervalNs) + " ns");
+    Log::Debug(Event::Swappy, "SwappyFramePacing swap interval set to " + std::to_string(swapIntervalNs) + " ns");
 }
 
 void SwappyFramePacing::setTargetFrameRate(int targetFps) {
@@ -108,7 +108,7 @@ void SwappyFramePacing::setTargetFrameRate(int targetFps) {
     }
 
     setSwapInterval(swapIntervalNs);
-    Log::Info(Event::OpenGL, "SwappyFramePacing target frame rate set to " + std::to_string(targetFps) + " FPS");
+    Log::Info(Event::Swappy, "SwappyFramePacing target frame rate set to " + std::to_string(targetFps) + " FPS");
 }
 
 void SwappyFramePacing::setFenceTimeout(uint64_t fenceTimeoutNs) {
@@ -117,7 +117,7 @@ void SwappyFramePacing::setFenceTimeout(uint64_t fenceTimeoutNs) {
     }
 
     SwappyGL_setFenceTimeoutNS(fenceTimeoutNs);
-    Log::Debug(Event::OpenGL, "SwappyFramePacing fence timeout set to " + std::to_string(fenceTimeoutNs) + " ns");
+    Log::Debug(Event::Swappy, "SwappyFramePacing fence timeout set to " + std::to_string(fenceTimeoutNs) + " ns");
 }
 
 void SwappyFramePacing::setUseAffinity(bool useAffinity) {
@@ -126,7 +126,7 @@ void SwappyFramePacing::setUseAffinity(bool useAffinity) {
     }
 
     SwappyGL_setUseAffinity(useAffinity);
-    Log::Debug(Event::OpenGL,
+    Log::Debug(Event::Swappy,
                std::string("SwappyFramePacing CPU affinity set to ") + (useAffinity ? "enabled" : "disabled"));
 }
 
@@ -136,7 +136,7 @@ void SwappyFramePacing::setWindow(ANativeWindow* window) {
     }
 
     SwappyGL_setWindow(window);
-    Log::Debug(Event::OpenGL, "SwappyFramePacing native window updated");
+    Log::Debug(Event::Swappy, "SwappyFramePacing native window updated");
 }
 
 bool SwappyFramePacing::swap(EGLDisplay display, EGLSurface surface) {
@@ -153,12 +153,12 @@ bool SwappyFramePacing::swap(EGLDisplay display, EGLSurface surface) {
 
 void SwappyFramePacing::enableStats(bool enabled) {
     if (!sInitialized) {
-        Log::Warning(Event::OpenGL, "SwappyFramePacing not initialized, cannot enable stats");
+        Log::Warning(Event::Swappy, "SwappyFramePacing not initialized, cannot enable stats");
         return;
     }
 
     SwappyGL_enableStats(enabled);
-    Log::Info(Event::OpenGL, std::string("SwappyFramePacing statistics ") + (enabled ? "enabled" : "disabled"));
+    Log::Info(Event::Swappy, std::string("SwappyFramePacing statistics ") + (enabled ? "enabled" : "disabled"));
 }
 
 void SwappyFramePacing::recordFrameStart(EGLDisplay display, EGLSurface surface) {
@@ -178,7 +178,7 @@ bool SwappyFramePacing::getStats(SwappyStats* stats) {
         SwappyGL_getStats(stats);
         return true;
     } catch (...) {
-        Log::Error(Event::OpenGL, "Failed to retrieve SwappyFramePacing statistics");
+        Log::Error(Event::Swappy, "Failed to retrieve SwappyFramePacing statistics");
         return false;
     }
 }
@@ -189,7 +189,7 @@ void SwappyFramePacing::clearStats() {
     }
 
     SwappyGL_clearStats();
-    Log::Debug(Event::OpenGL, "SwappyFramePacing statistics cleared");
+    Log::Debug(Event::Swappy, "SwappyFramePacing statistics cleared");
 }
 
 // === ADVANCED CONFIGURATION ===
@@ -200,7 +200,7 @@ void SwappyFramePacing::setBufferStuffingFixWait(int32_t nFrames) {
     }
 
     SwappyGL_setBufferStuffingFixWait(nFrames);
-    Log::Info(Event::OpenGL, "SwappyFramePacing buffer stuffing fix set to " + std::to_string(nFrames) + " frames");
+    Log::Info(Event::Swappy, "SwappyFramePacing buffer stuffing fix set to " + std::to_string(nFrames) + " frames");
 }
 
 void SwappyFramePacing::enableFramePacing(bool enabled) {
@@ -209,7 +209,7 @@ void SwappyFramePacing::enableFramePacing(bool enabled) {
     }
 
     SwappyGL_enableFramePacing(enabled);
-    Log::Info(Event::OpenGL, std::string("SwappyFramePacing frame pacing ") + (enabled ? "enabled" : "disabled"));
+    Log::Info(Event::Swappy, std::string("SwappyFramePacing frame pacing ") + (enabled ? "enabled" : "disabled"));
 }
 
 void SwappyFramePacing::resetFramePacing() {
@@ -218,7 +218,7 @@ void SwappyFramePacing::resetFramePacing() {
     }
 
     SwappyGL_resetFramePacing();
-    Log::Info(Event::OpenGL, "SwappyFramePacing frame timing history reset");
+    Log::Info(Event::Swappy, "SwappyFramePacing frame timing history reset");
 }
 
 void SwappyFramePacing::setMaxAutoSwapInterval(uint64_t maxSwapIntervalNs) {
@@ -227,7 +227,7 @@ void SwappyFramePacing::setMaxAutoSwapInterval(uint64_t maxSwapIntervalNs) {
     }
 
     SwappyGL_setMaxAutoSwapIntervalNS(maxSwapIntervalNs);
-    Log::Debug(Event::OpenGL,
+    Log::Debug(Event::Swappy,
                "SwappyFramePacing max auto swap interval set to " + std::to_string(maxSwapIntervalNs) + " ns");
 }
 
@@ -237,7 +237,7 @@ void SwappyFramePacing::setAutoSwapInterval(bool enabled) {
     }
 
     SwappyGL_setAutoSwapInterval(enabled);
-    Log::Debug(Event::OpenGL,
+    Log::Debug(Event::Swappy,
                std::string("SwappyFramePacing auto swap interval ") + (enabled ? "enabled" : "disabled"));
 }
 
@@ -247,24 +247,24 @@ void SwappyFramePacing::setAutoPipelineMode(bool enabled) {
     }
 
     SwappyGL_setAutoPipelineMode(enabled);
-    Log::Debug(Event::OpenGL,
+    Log::Debug(Event::Swappy,
                std::string("SwappyFramePacing auto pipeline mode ") + (enabled ? "enabled" : "disabled"));
 }
 
 void SwappyFramePacing::logFrameStats() {
     if (!sInitialized || !sEnabled) {
-        Log::Warning(Event::OpenGL, "SwappyFramePacing not available for statistics");
+        Log::Warning(Event::Swappy, "SwappyFramePacing not available for statistics");
         return;
     }
 
     SwappyStats stats;
     if (!getStats(&stats)) {
-        Log::Error(Event::OpenGL, "Failed to retrieve SwappyFramePacing statistics");
+        Log::Error(Event::Swappy, "Failed to retrieve SwappyFramePacing statistics");
         return;
     }
 
-    Log::Info(Event::OpenGL, "=== SwappyFramePacing Statistics ===");
-    Log::Info(Event::OpenGL, "Total Frames: " + std::to_string(stats.totalFrames));
+    Log::Info(Event::Swappy, "=== SwappyFramePacing Statistics ===");
+    Log::Info(Event::Swappy, "Total Frames: " + std::to_string(stats.totalFrames));
 
     // Analyze idle frames (frames waiting in compositor queue - indicates SurfaceFlinger delays)
     uint64_t totalIdleFrames = 0;
@@ -272,7 +272,7 @@ void SwappyFramePacing::logFrameStats() {
         totalIdleFrames += stats.idleFrames[i];
         if (stats.idleFrames[i] > 0) {
             Log::Info(
-                Event::OpenGL,
+                Event::Swappy,
                 "Frames idle for " + std::to_string(i) + " refresh periods: " + std::to_string(stats.idleFrames[i]));
         }
     }
@@ -282,7 +282,7 @@ void SwappyFramePacing::logFrameStats() {
     for (int i = 0; i < MAX_FRAME_BUCKETS; i++) {
         totalLateFrames += stats.lateFrames[i];
         if (stats.lateFrames[i] > 0) {
-            Log::Info(Event::OpenGL,
+            Log::Info(Event::Swappy,
                       "Frames " + std::to_string(i) + " refresh periods late: " + std::to_string(stats.lateFrames[i]));
         }
     }
@@ -292,11 +292,11 @@ void SwappyFramePacing::logFrameStats() {
         double onTimePercentage = ((double)(stats.totalFrames - totalLateFrames) / stats.totalFrames) * 100.0;
         double compositorDelayPercentage = ((double)totalIdleFrames / stats.totalFrames) * 100.0;
 
-        Log::Info(Event::OpenGL, "On-time frame delivery: " + std::to_string(onTimePercentage) + "%");
-        Log::Info(Event::OpenGL, "Compositor delay impact: " + std::to_string(compositorDelayPercentage) + "%");
+        Log::Info(Event::Swappy, "On-time frame delivery: " + std::to_string(onTimePercentage) + "%");
+        Log::Info(Event::Swappy, "Compositor delay impact: " + std::to_string(compositorDelayPercentage) + "%");
     }
 
-    Log::Info(Event::OpenGL, "=== End Statistics ===");
+    Log::Info(Event::Swappy, "=== End Statistics ===");
 }
 
 } // namespace android
