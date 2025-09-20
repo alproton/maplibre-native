@@ -146,6 +146,20 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
         }
     }
 
+    if (renderTileMaxAge > 0) {
+        bool idealTilesChanged = idealTiles != previousIdealTiles;
+        auto now = std::chrono::steady_clock::now();
+        if (idealTilesChanged) {
+            lastIdealTilesChange = now;
+        } else {
+            auto maxAge = std::chrono::duration<double>(renderTileMaxAge);
+            if (now - lastIdealTilesChange >= maxAge) {
+                clearAll();
+                lastIdealTilesChange = now;
+            }
+        }
+    }
+
     // Stores a list of all the tiles that we're definitely going to retain.
     // There are two kinds of tiles we need: the ideal tiles determined by the
     // tile cover. They may not yet be in use because they're still loading. In
@@ -307,6 +321,10 @@ void TilePyramid::update(const std::vector<Immutable<style::LayerProperties>>& l
     }
 
     cache.deferPendingReleases();
+
+    if (renderTileMaxAge > 0) {
+        previousIdealTiles = std::move(idealTiles);
+    }
 }
 
 void TilePyramid::handleWrapJump(float lng) {
@@ -438,6 +456,7 @@ void TilePyramid::updateTileCacheSettings(const TileCacheSettingsMap& settings) 
     cache.updateSizeRange(it->second.minTiles, it->second.maxTiles);
     cache.updateZoomRange(it->second.minZoom, it->second.maxZoom);
     cache.updateCachedTileMaxAge(it->second.cachedTileMaxAge);
+    renderTileMaxAge = it->second.renderTileMaxAge;
     aggressiveTileCache = it->second.aggressiveCache;
     skipRelayoutClear = it->second.skipRelayoutClear;
 }
