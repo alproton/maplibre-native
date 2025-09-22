@@ -800,6 +800,7 @@ public final class LocationComponent {
    * @param location where the location icon is placed on the map
    */
   public void forceLocationUpdate(@Nullable Location location) {
+    Logger.e(TAG, "##@@ New location received: " + location.toString());
     checkActivationState();
     updateLocation(location, false);
   }

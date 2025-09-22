@@ -42,6 +42,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.maplibre.android.log.Logger;
+
 import static org.maplibre.android.maps.widgets.CompassView.TIME_MAP_NORTH_ANIMATION;
 import static org.maplibre.android.maps.widgets.CompassView.TIME_WAIT_IDLE;
 
@@ -809,6 +811,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
                                  double bearing,
                                  float iconScale,
                                  boolean cameraTracking) {
+    Logger.e("PuckDebug", "##@@ setCustomPuckState: " + lat + " , " + lon + " , " + bearing + " , " + iconScale + " , " + cameraTracking);
     mapRenderer.nativeSetCustomPuckState(lat, lon, bearing, iconScale, cameraTracking);
     nativeMapView.triggerRepaint();
     if(isAutoRouteVanishing) {

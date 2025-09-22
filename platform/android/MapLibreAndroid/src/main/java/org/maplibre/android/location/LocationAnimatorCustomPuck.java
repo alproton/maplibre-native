@@ -15,6 +15,8 @@ import java.util.TimerTask;
 import static org.maplibre.android.location.Utils.normalize;
 import static org.maplibre.android.location.Utils.shortestRotation;
 
+import org.maplibre.android.log.Logger;
+
 final class LocationAnimatorCustomPuck {
 
   private Timer puckUpdateTimer;
@@ -66,6 +68,7 @@ final class LocationAnimatorCustomPuck {
   }
 
   void updateLocation(double lat, double lon, double bearing, long time) {
+    Logger.e("PuckDebug", "##@@ New puck location received: " + lat + ", " + lon + ", " + bearing + ", " + time);
     currentPuckLocation = new StampedLatLon(lat, lon, bearing, time);
     lastValidLocation = new StampedLatLon(currentPuckLocation);
   }
@@ -77,6 +80,7 @@ final class LocationAnimatorCustomPuck {
        || lastValidLocation == null
        || cameraController == null
        || puckAnimationOptions == null) {
+      Logger.e("PuckDebug", "##@@ Ignore camera change");
       return;
     }
     if (cameraController.isLocationTracking()) {
@@ -116,6 +120,7 @@ final class LocationAnimatorCustomPuck {
       @Override
       public void run() {
         if (currentPuckLocation == null) {
+          Logger.e("PuckDebug", "##@@ Skip puck iteration: no current puck location");
           return;
         }
         if (previousPuckLocation == null) {
@@ -129,6 +134,7 @@ final class LocationAnimatorCustomPuck {
 
         long elapsed = SystemClock.elapsedRealtime() - puckInterpolationStartTime;
         if (elapsed > customPuckAnimationOptions.lagMS) {
+          Logger.e("PuckDebug", "##@@ Stale puck. Wait for next location update");
           // Stale data. Wait for next location update
           currentPuckLocation = null;
           previousPuckLocation = null;
@@ -161,6 +167,8 @@ final class LocationAnimatorCustomPuck {
                 locationLayerRenderer.hide();
                 styleChanged = false;
               }
+            } else {
+              Logger.e("PuckDebug", "##@@ skip Puck locationLayerRenderer updates");
             }
 
             if (locationCameraController.isLocationTracking()) {
@@ -182,6 +190,8 @@ final class LocationAnimatorCustomPuck {
                 location.bearing,
                 customPuckAnimationOptions.iconScale,
                 tracking);
+              } else {
+                Logger.e("PuckDebug", "##@@ mapView is null");
               }
             }
         };
