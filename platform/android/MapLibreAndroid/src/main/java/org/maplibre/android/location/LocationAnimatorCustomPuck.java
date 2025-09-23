@@ -18,15 +18,28 @@ import static org.maplibre.android.location.Utils.shortestRotation;
 final class LocationAnimatorCustomPuck {
 
   private Timer puckUpdateTimer;
-  private StampedLatLon currentPuckLocation;
-  private StampedLatLon previousPuckLocation;
-  private StampedLatLon targetPuckLocation;
+  private Handler mainHandler;
+  private Runnable updateRunnable;
+  private TimerTask puckUpdateTask;
+  private StampedLatLon currentPuckLocation = null;
+  private StampedLatLon previousPuckLocation = null;
+  private StampedLatLon targetPuckLocation = null;
   private StampedLatLon lastValidLocation = null;
+  private StampedLatLon lerpResult = null;
   private long puckInterpolationStartTime = 0;
   private MapView mapview = null;
   private LocationCameraController cameraController = null;
   private LocationAnimatorCustomPuckOptions puckAnimationOptions = null;
   private boolean styleChanged = true;
+
+  // Fields to store current location data for the reusable Runnable
+  private volatile double currentLat;
+  private volatile double currentLon;
+  private volatile double currentBearing;
+
+  // Reusable LatLng objects to avoid allocations
+  private LatLng reusableLatLng1;
+  private LatLng reusableLatLng2;
 
   class StampedLatLon {
     public double lat;
@@ -51,23 +64,49 @@ final class LocationAnimatorCustomPuck {
       this.time = other.time;
     }
 
-    boolean equals(StampedLatLon other) {
+    public boolean equals(StampedLatLon other) {
       return other.lat == lat && other.lon == lon && other.bearing == bearing && other.time == time;
+    }
+
+    public void copyFrom(StampedLatLon other) {
+      this.lat = other.lat;
+      this.lon = other.lon;
+      this.bearing = other.bearing;
+      this.time = other.time;
     }
   }
 
   private StampedLatLon lerp(StampedLatLon a, StampedLatLon b, double t) {
     double bearingA = (double)(normalize((float)(a.bearing)));
     double bearingB = (double)(shortestRotation((float)(b.bearing), (float)(bearingA)));
-    return new StampedLatLon(a.lat * (1.0 - t) + b.lat * t,
-                             a.lon * (1.0 - t) + b.lon * t,
-                             bearingA * (1.0 - t) + bearingB * t,
-                             (long)((double)(a.time) * (1.0 - t) + (double)(b.time) * t));
+
+    if (lerpResult == null) {
+      lerpResult = new StampedLatLon(0, 0, 0, 0);
+    }
+
+    lerpResult.lat = a.lat * (1.0 - t) + b.lat * t;
+    lerpResult.lon = a.lon * (1.0 - t) + b.lon * t;
+    lerpResult.bearing = bearingA * (1.0 - t) + bearingB * t;
+    lerpResult.time = (long)((double)(a.time) * (1.0 - t) + (double)(b.time) * t);
+
+    return lerpResult;
   }
 
   void updateLocation(double lat, double lon, double bearing, long time) {
-    currentPuckLocation = new StampedLatLon(lat, lon, bearing, time);
-    lastValidLocation = new StampedLatLon(currentPuckLocation);
+    if (currentPuckLocation == null) {
+      currentPuckLocation = new StampedLatLon(lat, lon, bearing, time);
+    } else {
+      currentPuckLocation.lat = lat;
+      currentPuckLocation.lon = lon;
+      currentPuckLocation.bearing = bearing;
+      currentPuckLocation.time = time;
+    }
+
+    if (previousPuckLocation == null) {
+      previousPuckLocation = new StampedLatLon(currentPuckLocation);
+    } else {
+      previousPuckLocation.copyFrom(currentPuckLocation);
+    }
   }
 
   public void cameraChange() {
@@ -80,7 +119,9 @@ final class LocationAnimatorCustomPuck {
       return;
     }
     if (cameraController.isLocationTracking()) {
-      cameraController.setLatLng(new LatLng(lastValidLocation.lat, lastValidLocation.lon));
+      reusableLatLng1.setLatitude(lastValidLocation.lat);
+      reusableLatLng1.setLongitude(lastValidLocation.lon);
+      cameraController.setLatLng(reusableLatLng1);
     }
     if (cameraController.isLocationBearingTracking()) {
       float bearing = (float)(lastValidLocation.bearing);
@@ -110,9 +151,58 @@ final class LocationAnimatorCustomPuck {
     mapview = mapView;
     cameraController = locationCameraController;
     puckAnimationOptions = customPuckAnimationOptions;
+    mainHandler = new Handler(context.getMainLooper());
 
-    puckUpdateTimer = new Timer();
-    puckUpdateTimer.schedule(new TimerTask() {
+    // Initialize reusable LatLng objects
+    reusableLatLng1 = new LatLng(0, 0);
+    reusableLatLng2 = new LatLng(0, 0);
+
+    // Create reusable Runnable
+    updateRunnable = new Runnable() {
+      @Override
+      public void run() {
+        // Make sure the style is loaded before using locationLayerRenderer
+        if (mapView != null
+            && mapView.getMapLibreMap() != null
+            && mapView.getMapLibreMap().getStyle() != null
+            && mapView.getMapLibreMap().getStyle().isFullyLoaded()) {
+          reusableLatLng1.setLatitude(currentLat);
+          reusableLatLng1.setLongitude(currentLon);
+          locationLayerRenderer.setLatLng(reusableLatLng1);
+          locationLayerRenderer.setGpsBearing((float)(currentBearing));
+          if (styleChanged) {
+            locationLayerRenderer.hide();
+            styleChanged = false;
+          }
+        }
+
+        if (locationCameraController.isLocationTracking()) {
+          reusableLatLng2.setLatitude(currentLat);
+          reusableLatLng2.setLongitude(currentLon);
+          locationCameraController.setLatLng(reusableLatLng2);
+        }
+        if (locationCameraController.isLocationBearingTracking()) {
+          float bearing = (float)(currentBearing);
+          if (locationCameraController.getCameraMode() == CameraMode.TRACKING_GPS_NORTH) {
+            bearing = 0.0f;
+          }
+          locationCameraController.setBearing(bearing);
+        }
+
+        boolean tracking = locationCameraController.isLocationTracking() && !locationCameraController.isTransitioning();
+        if (mapView != null) {
+            mapView.setCustomPuckState(
+            currentLat,
+            currentLon,
+            currentBearing,
+            customPuckAnimationOptions.iconScale,
+            tracking);
+          }
+        }
+    };
+
+    // Create reusable TimerTask
+    puckUpdateTask = new TimerTask() {
       @Override
       public void run() {
         if (currentPuckLocation == null) {
@@ -140,59 +230,28 @@ final class LocationAnimatorCustomPuck {
 
         if (!targetPuckLocation.equals(currentPuckLocation)) {
           puckInterpolationStartTime = SystemClock.elapsedRealtime();
-          previousPuckLocation = new StampedLatLon(location);
-          targetPuckLocation = new StampedLatLon(currentPuckLocation);
+          previousPuckLocation.copyFrom(location);
+          targetPuckLocation.copyFrom(currentPuckLocation);
         }
 
-        // Get a handler that can be used to post to the main thread
-        Handler mainHandler = new Handler(context.getMainLooper());
+        // Update the current location data for the reusable Runnable
+        currentLat = location.lat;
+        currentLon = location.lon;
+        currentBearing = location.bearing;
 
-        Runnable myRunnable = new Runnable() {
-          @Override
-          public void run() {
-            // Make sure the style is loaded before using locationLayerRenderer
-            if (mapView != null
-                && mapView.getMapLibreMap() != null
-                && mapView.getMapLibreMap().getStyle() != null
-                && mapView.getMapLibreMap().getStyle().isFullyLoaded()) {
-              locationLayerRenderer.setLatLng(new LatLng(location.lat, location.lon));
-              locationLayerRenderer.setGpsBearing((float)(location.bearing));
-              if (styleChanged) {
-                locationLayerRenderer.hide();
-                styleChanged = false;
-              }
-            }
-
-            if (locationCameraController.isLocationTracking()) {
-              locationCameraController.setLatLng(new LatLng(location.lat, location.lon));
-            }
-            if (locationCameraController.isLocationBearingTracking()) {
-              float bearing = (float)(location.bearing);
-              if (locationCameraController.getCameraMode() == CameraMode.TRACKING_GPS_NORTH) {
-                bearing = 0.0f;
-              }
-              locationCameraController.setBearing(bearing);
-            }
-
-            boolean tracking = locationCameraController.isLocationTracking() && !locationCameraController.isTransitioning();
-            if (mapView != null) {
-                mapView.setCustomPuckState(
-                location.lat,
-                location.lon,
-                location.bearing,
-                customPuckAnimationOptions.iconScale,
-                tracking);
-              }
-            }
-        };
-        mainHandler.post(myRunnable);
+        mainHandler.post(updateRunnable);
       }
-    }, 0, customPuckAnimationOptions.animationIntervalMS);
+    };
+
+    puckUpdateTimer = new Timer();
+    puckUpdateTimer.scheduleAtFixedRate(puckUpdateTask, 0, customPuckAnimationOptions.animationIntervalMS);
   }
 
   public void onDestroy() {
     puckUpdateTimer.cancel();
     puckUpdateTimer.purge();
     puckUpdateTimer = null;
+    mainHandler.removeCallbacksAndMessages(null);
+    mainHandler = null;
   }
 }
