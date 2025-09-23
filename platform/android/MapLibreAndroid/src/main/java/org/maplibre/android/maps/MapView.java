@@ -880,6 +880,23 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   }
 
   /**
+   * Skip frames waiting for repaint
+   * When the rendering refresh mode is {@link MapRenderer.RenderingRefreshMode#WHEN_DIRTY} the renderer blocks until
+   * a repaint request is generated (camera change, scene change...). In this case the frame time passed to
+   * FpsChangedListener can be very long. Benchmarks that use FpsChangedListener cannot differentiate between long
+   * frames waiting for a repaint event from long frames representing actual hitches.
+   *
+   * @param skipWaitingFrames Can be set to true or false. Setting it to true filters out frames waiting for a repaint
+   */
+  public void setSkipWaitingFrames(boolean skipWaitingFrames) {
+    if (mapRenderer != null) {
+      mapRenderer.setSkipWaitingFrames(skipWaitingFrames);
+    } else {
+      throw new IllegalStateException("Calling MapView#setSkipWaitingFrames before mapRenderer is created.");
+    }
+  }
+
+  /**
    * Set the rendering refresh mode and wake up the render thread if it is sleeping.
    *
    * @param mode can be:
