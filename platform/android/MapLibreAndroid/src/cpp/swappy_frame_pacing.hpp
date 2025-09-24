@@ -180,6 +180,14 @@ public:
      */
     static void logFrameStats();
 
+    /**
+     * Enable or disable frame timing callbacks.
+     * When enabled, Swappy will call callbacks with CPU and GPU timing data.
+     *
+     * @param enabled Whether to enable frame timing callbacks
+     */
+    static void enableFrameTimingCallbacks(bool enabled);
+
     // Common frame rate constants (in nanoseconds)
     static constexpr uint64_t FRAME_RATE_60FPS = 16666666ULL; // ~16.67ms
     static constexpr uint64_t FRAME_RATE_30FPS = 33333333ULL; // ~33.33ms

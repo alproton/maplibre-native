@@ -198,4 +198,12 @@ JNIEXPORT void JNICALL Java_org_maplibre_android_maps_renderer_SwappyRenderer_na
     SwappyFramePacing::setUseAffinity(enabled == JNI_TRUE);
 }
 
+/**
+ * Enable frame timing callbacks from Java
+ */
+JNIEXPORT void JNICALL Java_org_maplibre_android_maps_renderer_SwappyRenderer_nativeEnableFrameTimingCallbacks(
+    JNIEnv* env, jclass clazz, jboolean enabled) {
+    SwappyFramePacing::enableFrameTimingCallbacks(enabled == JNI_TRUE);
+}
+
 } // extern "C"

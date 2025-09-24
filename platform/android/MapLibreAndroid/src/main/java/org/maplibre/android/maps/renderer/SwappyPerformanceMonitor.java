@@ -1,7 +1,5 @@
 package org.maplibre.android.maps.renderer;
 
-import android.annotation.SuppressLint;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import org.maplibre.android.log.Logger;
@@ -29,7 +27,17 @@ public class SwappyPerformanceMonitor {
     private static long lastStatsLogTime = 0;
     private static final long STATS_LOG_INTERVAL_MS = 10000; // Log every 10 seconds
 
+    // Emergency fixes tracking
     private static boolean emergencyFixesApplied = false;
+
+    // Frame timing collection
+    private static final int MAX_TIMING_SAMPLES = 1000; // Rolling window size
+    private static final Object timingLock = new Object();
+    private static long[] cpuTimeSamples = new long[MAX_TIMING_SAMPLES];
+    private static long[] gpuTimeSamples = new long[MAX_TIMING_SAMPLES];
+    private static int timingSampleIndex = 0;
+    private static int timingSampleCount = 0;
+    private static boolean timingCollectionEnabled = false;
 
     /**
      * Call this at the beginning of each frame to record frame start for statistics.
@@ -48,10 +56,6 @@ public class SwappyPerformanceMonitor {
             logPerformanceAnalysis();
             lastStatsLogTime = currentTime;
         }
-    }
-
-    public static void clearEmergencyFixes() {
-        emergencyFixesApplied = false;
     }
 
     /**
@@ -173,7 +177,6 @@ public class SwappyPerformanceMonitor {
      *
      * @return Performance summary string
      */
-    @SuppressLint("DefaultLocale")
     @NonNull
     public static String getPerformanceSummary() {
         SwappyFrameStats stats = getCurrentStats();
@@ -196,14 +199,214 @@ public class SwappyPerformanceMonitor {
         SwappyRenderer.clearStats();
         frameCount = 0;
         lastStatsLogTime = 0;
+        emergencyFixesApplied = false;
+
+        // Clear timing samples
+        synchronized (timingLock) {
+            timingSampleIndex = 0;
+            timingSampleCount = 0;
+        }
+
         Logger.i(TAG, "Performance monitoring reset");
+    }
+
+    // === FRAME TIMING STATISTICS ===
+
+    /**
+     * Frame timing statistics containing CPU, GPU, and total pipeline timing data.
+     */
+    public static class FrameTimingStats {
+        public final long avgCpuTimeNs;
+        public final long minCpuTimeNs;
+        public final long maxCpuTimeNs;
+        public final long medianCpuTimeNs;
+
+        public final long avgGpuTimeNs;
+        public final long minGpuTimeNs;
+        public final long maxGpuTimeNs;
+        public final long medianGpuTimeNs;
+
+        public final long avgTotalTimeNs;
+        public final long minTotalTimeNs;
+        public final long maxTotalTimeNs;
+        public final long medianTotalTimeNs;
+
+        public final int sampleCount;
+        public final long collectionDurationMs;
+
+        FrameTimingStats(long[] cpuTimes, long[] gpuTimes, int count, long durationMs) {
+            this.sampleCount = count;
+            this.collectionDurationMs = durationMs;
+
+            if (count == 0) {
+                // No samples available
+                avgCpuTimeNs = minCpuTimeNs = maxCpuTimeNs = medianCpuTimeNs = 0;
+                avgGpuTimeNs = minGpuTimeNs = maxGpuTimeNs = medianGpuTimeNs = 0;
+                avgTotalTimeNs = minTotalTimeNs = maxTotalTimeNs = medianTotalTimeNs = 0;
+                return;
+            }
+
+            // Calculate CPU statistics
+            long[] sortedCpu = new long[count];
+            System.arraycopy(cpuTimes, 0, sortedCpu, 0, count);
+            java.util.Arrays.sort(sortedCpu);
+
+            long cpuSum = 0;
+            for (int i = 0; i < count; i++) {
+                cpuSum += sortedCpu[i];
+            }
+            avgCpuTimeNs = cpuSum / count;
+            minCpuTimeNs = sortedCpu[0];
+            maxCpuTimeNs = sortedCpu[count - 1];
+            medianCpuTimeNs = count % 2 == 0 ?
+                (sortedCpu[count/2 - 1] + sortedCpu[count/2]) / 2 :
+                sortedCpu[count/2];
+
+            // Calculate GPU statistics
+            long[] sortedGpu = new long[count];
+            System.arraycopy(gpuTimes, 0, sortedGpu, 0, count);
+            java.util.Arrays.sort(sortedGpu);
+
+            long gpuSum = 0;
+            for (int i = 0; i < count; i++) {
+                gpuSum += sortedGpu[i];
+            }
+            avgGpuTimeNs = gpuSum / count;
+            minGpuTimeNs = sortedGpu[0];
+            maxGpuTimeNs = sortedGpu[count - 1];
+            medianGpuTimeNs = count % 2 == 0 ?
+                (sortedGpu[count/2 - 1] + sortedGpu[count/2]) / 2 :
+                sortedGpu[count/2];
+
+            // Calculate total pipeline statistics
+            long[] totalTimes = new long[count];
+            for (int i = 0; i < count; i++) {
+                totalTimes[i] = cpuTimes[i] + gpuTimes[i];
+            }
+            java.util.Arrays.sort(totalTimes);
+
+            long totalSum = 0;
+            for (int i = 0; i < count; i++) {
+                totalSum += totalTimes[i];
+            }
+            avgTotalTimeNs = totalSum / count;
+            minTotalTimeNs = totalTimes[0];
+            maxTotalTimeNs = totalTimes[count - 1];
+            medianTotalTimeNs = count % 2 == 0 ?
+                (totalTimes[count/2 - 1] + totalTimes[count/2]) / 2 :
+                totalTimes[count/2];
+        }
+
+        @Override
+        public String toString() {
+            if (sampleCount == 0) {
+                return "FrameTimingStats{no samples collected}";
+            }
+
+            return String.format(
+                "FrameTimingStats{samples=%d, duration=%dms, " +
+                "CPU(avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms), " +
+                "GPU(avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms), " +
+                "Total(avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms)}",
+                sampleCount, collectionDurationMs,
+                avgCpuTimeNs / 1_000_000.0, minCpuTimeNs / 1_000_000.0,
+                maxCpuTimeNs / 1_000_000.0, medianCpuTimeNs / 1_000_000.0,
+                avgGpuTimeNs / 1_000_000.0, minGpuTimeNs / 1_000_000.0,
+                maxGpuTimeNs / 1_000_000.0, medianGpuTimeNs / 1_000_000.0,
+                avgTotalTimeNs / 1_000_000.0, minTotalTimeNs / 1_000_000.0,
+                maxTotalTimeNs / 1_000_000.0, medianTotalTimeNs / 1_000_000.0
+            );
+        }
+    }
+
+    /**
+     * Enable or disable frame timing collection.
+     * When enabled, Swappy will collect CPU and GPU timing data for statistical analysis.
+     *
+     * @param enabled Whether to enable frame timing collection
+     */
+    public static void enableFrameTimingCollection(boolean enabled) {
+        synchronized (timingLock) {
+            timingCollectionEnabled = enabled;
+            if (enabled) {
+                Logger.i(TAG, "Frame timing collection enabled");
+                SwappyRenderer.enableFrameTimingCallbacks(true);
+            } else {
+                Logger.i(TAG, "Frame timing collection disabled");
+                SwappyRenderer.enableFrameTimingCallbacks(false);
+                // Clear existing samples
+                timingSampleIndex = 0;
+                timingSampleCount = 0;
+            }
+        }
+    }
+
+    /**
+     * Get current frame timing statistics.
+     * Returns statistical analysis of CPU, GPU, and total pipeline timing.
+     *
+     * @return FrameTimingStats containing timing analysis, or null if no samples collected
+     */
+    @Nullable
+    public static FrameTimingStats getFrameTimingStats() {
+        synchronized (timingLock) {
+            if (timingSampleCount == 0) {
+                return null;
+            }
+
+            // Create arrays with just the valid samples
+            long[] cpuSamples = new long[timingSampleCount];
+            long[] gpuSamples = new long[timingSampleCount];
+
+            if (timingSampleCount < MAX_TIMING_SAMPLES) {
+                // Haven't wrapped around yet, samples are at beginning of arrays
+                System.arraycopy(cpuTimeSamples, 0, cpuSamples, 0, timingSampleCount);
+                System.arraycopy(gpuTimeSamples, 0, gpuSamples, 0, timingSampleCount);
+            } else {
+                // Have wrapped around, need to reconstruct in correct order
+                int firstPart = MAX_TIMING_SAMPLES - timingSampleIndex;
+                int secondPart = timingSampleIndex;
+
+                System.arraycopy(cpuTimeSamples, timingSampleIndex, cpuSamples, 0, firstPart);
+                System.arraycopy(cpuTimeSamples, 0, cpuSamples, firstPart, secondPart);
+
+                System.arraycopy(gpuTimeSamples, timingSampleIndex, gpuSamples, 0, firstPart);
+                System.arraycopy(gpuTimeSamples, 0, gpuSamples, firstPart, secondPart);
+            }
+
+            // Calculate collection duration (approximate)
+            long durationMs = Math.min(timingSampleCount * 16, System.currentTimeMillis() - lastStatsLogTime);
+
+            return new FrameTimingStats(cpuSamples, gpuSamples, timingSampleCount, durationMs);
+        }
+    }
+
+    /**
+     * Add a frame timing sample. Called internally by native callback.
+     *
+     * @param cpuTimeNs CPU processing time in nanoseconds
+     * @param gpuTimeNs GPU processing time in nanoseconds (previous frame)
+     */
+    public static void addFrameTimingSample(long cpuTimeNs, long gpuTimeNs) {
+        if (!timingCollectionEnabled || cpuTimeNs < 0 || gpuTimeNs < 0) {
+            return;
+        }
+
+        synchronized (timingLock) {
+            cpuTimeSamples[timingSampleIndex] = cpuTimeNs;
+            gpuTimeSamples[timingSampleIndex] = gpuTimeNs;
+
+            timingSampleIndex = (timingSampleIndex + 1) % MAX_TIMING_SAMPLES;
+            if (timingSampleCount < MAX_TIMING_SAMPLES) {
+                timingSampleCount++;
+            }
+        }
     }
 
     /**
      * Emergency diagnostics for severe performance issues.
      * Logs detailed breakdown of frame timing issues to help identify root causes.
      */
-    @SuppressLint("DefaultLocale")
     public static void emergencyDiagnostics() {
         SwappyFrameStats stats = SwappyRenderer.getStats();
         if (stats == null) {
@@ -307,33 +510,35 @@ public class SwappyPerformanceMonitor {
      * Call this when diagnostics show critical problems.
      */
     public static void applyEmergencyFixes() {
+        if (emergencyFixesApplied) {
+            Logger.w(TAG, "Emergency fixes already applied, skipping to avoid repeated application");
+            return;
+        }
+
         SwappyFrameStats stats = SwappyRenderer.getStats();
         if (stats == null) {
             Logger.e(TAG, "Cannot apply emergency fixes - no stats available");
             return;
         }
 
-        //fixes are only applied per change in swap interval settings which is done in MapRenderer.java
-        if(!emergencyFixesApplied) {
-            Logger.w(TAG, "=== APPLYING EMERGENCY FIXES ===");
+        Logger.w(TAG, "=== APPLYING EMERGENCY FIXES ===");
 
-            double compositorDelay = stats.getCompositorDelayPercentage();
+        double compositorDelay = stats.getCompositorDelayPercentage();
 
-            // Emergency fix for severe compositor delays (like your 100%)
-            if (compositorDelay > 80.0) {
-                Logger.w(TAG, "Applying aggressive buffer stuffing fix for severe delays");
-                SwappyRenderer.setBufferStuffingFixWait(3);
-
-                // Reset frame pacing to clear bad timing history
-                Logger.w(TAG, "Resetting frame pacing to clear problematic timing history");
-                SwappyRenderer.resetFramePacing();
-
-                // Clear stats to get fresh data after fixes
-                SwappyRenderer.clearStats();
-
-                Logger.w(TAG, "=== EMERGENCY FIXES APPLIED - MONITOR FOR IMPROVEMENT ===");
-                emergencyFixesApplied = true;
-            }
+        // Emergency fix for severe compositor delays (like your 100%)
+        if (compositorDelay > 80.0) {
+            Logger.w(TAG, "Applying aggressive buffer stuffing fix for severe delays");
+            SwappyRenderer.setBufferStuffingFixWait(3);
         }
+
+        // Reset frame pacing to clear bad timing history
+        Logger.w(TAG, "Resetting frame pacing to clear problematic timing history");
+        SwappyRenderer.resetFramePacing();
+
+        // Clear stats to get fresh data after fixes
+        SwappyRenderer.clearStats();
+
+        emergencyFixesApplied = true;
+        Logger.w(TAG, "=== EMERGENCY FIXES APPLIED - MONITOR FOR IMPROVEMENT ===");
     }
 }

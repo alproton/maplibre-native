@@ -353,6 +353,25 @@ public class SwappyRenderer {
         }
     }
 
+    /**
+     * Enable or disable frame timing callbacks.
+     * When enabled, Swappy will call native callbacks with CPU and GPU timing data
+     * that can be used for statistical analysis.
+     *
+     * @param enabled Whether to enable frame timing callbacks
+     */
+    public static void enableFrameTimingCallbacks(boolean enabled) {
+        if (!sInitialized || !sEnabled) {
+            return;
+        }
+
+        try {
+            nativeEnableFrameTimingCallbacks(enabled);
+        } catch (UnsatisfiedLinkError e) {
+            // Ignore
+        }
+    }
+
     // Native method declarations
     @Keep
     private static native boolean nativeInitialize(@NonNull Activity activity);
@@ -411,4 +430,7 @@ public class SwappyRenderer {
 
     @Keep
     private static native void nativeSetUseAffinity(boolean enabled);
+
+    @Keep
+    private static native void nativeEnableFrameTimingCallbacks(boolean enabled);
 }
