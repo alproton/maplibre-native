@@ -3,6 +3,7 @@ package org.maplibre.android.maps.renderer;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import org.maplibre.android.log.Logger;
+import androidx.annotation.Keep;
 
 /**
  * SwappyPerformanceMonitor provides high-level utilities for monitoring
@@ -14,6 +15,7 @@ import org.maplibre.android.log.Logger;
  * - Analyze rendering performance
  * - Apply performance optimizations
  */
+@Keep
 public class SwappyPerformanceMonitor {
 
     private static final String TAG = "Swappy";
