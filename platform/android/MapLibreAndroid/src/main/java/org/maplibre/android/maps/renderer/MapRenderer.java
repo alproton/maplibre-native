@@ -222,6 +222,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
   }
 
   public void setSwapInterval(int interval) {
+      SwappyPerformanceMonitor.clearEmergencyFixes();
       nativeSetSwapInterval(interval);
   }
 
