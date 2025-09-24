@@ -1,5 +1,7 @@
 package org.maplibre.android.maps.renderer;
 
+import android.annotation.SuppressLint;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import org.maplibre.android.log.Logger;
@@ -27,6 +29,8 @@ public class SwappyPerformanceMonitor {
     private static long lastStatsLogTime = 0;
     private static final long STATS_LOG_INTERVAL_MS = 10000; // Log every 10 seconds
 
+    private static boolean emergencyFixesApplied = false;
+
     /**
      * Call this at the beginning of each frame to record frame start for statistics.
      *
@@ -44,6 +48,10 @@ public class SwappyPerformanceMonitor {
             logPerformanceAnalysis();
             lastStatsLogTime = currentTime;
         }
+    }
+
+    public static void clearEmergencyFixes() {
+        emergencyFixesApplied = false;
     }
 
     /**
@@ -165,6 +173,7 @@ public class SwappyPerformanceMonitor {
      *
      * @return Performance summary string
      */
+    @SuppressLint("DefaultLocale")
     @NonNull
     public static String getPerformanceSummary() {
         SwappyFrameStats stats = getCurrentStats();
@@ -194,6 +203,7 @@ public class SwappyPerformanceMonitor {
      * Emergency diagnostics for severe performance issues.
      * Logs detailed breakdown of frame timing issues to help identify root causes.
      */
+    @SuppressLint("DefaultLocale")
     public static void emergencyDiagnostics() {
         SwappyFrameStats stats = SwappyRenderer.getStats();
         if (stats == null) {
@@ -303,30 +313,27 @@ public class SwappyPerformanceMonitor {
             return;
         }
 
-        Logger.w(TAG, "=== APPLYING EMERGENCY FIXES ===");
+        //fixes are only applied per change in swap interval settings which is done in MapRenderer.java
+        if(!emergencyFixesApplied) {
+            Logger.w(TAG, "=== APPLYING EMERGENCY FIXES ===");
 
-        double compositorDelay = stats.getCompositorDelayPercentage();
-        double onTime = stats.getOnTimeFramePercentage();
+            double compositorDelay = stats.getCompositorDelayPercentage();
 
-        // Emergency fix for severe compositor delays (like your 100%)
-        if (compositorDelay > 80.0) {
-            Logger.w(TAG, "Applying aggressive buffer stuffing fix for severe delays");
-            SwappyRenderer.setBufferStuffingFixWait(3);
+            // Emergency fix for severe compositor delays (like your 100%)
+            if (compositorDelay > 80.0) {
+                Logger.w(TAG, "Applying aggressive buffer stuffing fix for severe delays");
+                SwappyRenderer.setBufferStuffingFixWait(3);
+
+                // Reset frame pacing to clear bad timing history
+                Logger.w(TAG, "Resetting frame pacing to clear problematic timing history");
+                SwappyRenderer.resetFramePacing();
+
+                // Clear stats to get fresh data after fixes
+                SwappyRenderer.clearStats();
+
+                Logger.w(TAG, "=== EMERGENCY FIXES APPLIED - MONITOR FOR IMPROVEMENT ===");
+                emergencyFixesApplied = true;
+            }
         }
-
-        // Emergency fix for poor frame delivery (like your 0%)
-        if (onTime < 10.0) {
-            Logger.w(TAG, "Reducing target frame rate due to severe deadline misses");
-            SwappyRenderer.setTargetFrameRate(30);
-        }
-
-        // Reset frame pacing to clear bad timing history
-        Logger.w(TAG, "Resetting frame pacing to clear problematic timing history");
-        SwappyRenderer.resetFramePacing();
-
-        // Clear stats to get fresh data after fixes
-        SwappyRenderer.clearStats();
-
-        Logger.w(TAG, "=== EMERGENCY FIXES APPLIED - MONITOR FOR IMPROVEMENT ===");
     }
 }
