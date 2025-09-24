@@ -1,6 +1,7 @@
 #include "swappy_frame_pacing.hpp"
 #include <mbgl/util/logging.hpp>
 #include <android/native_window_jni.h>
+#include "../../../src/attach_env.hpp"
 
 // Include Swappy headers
 #include <swappy/swappyGL.h>
@@ -297,6 +298,66 @@ void SwappyFramePacing::logFrameStats() {
     }
 
     Log::Info(Event::Swappy, "=== End Statistics ===");
+}
+
+// === FRAME TIMING CALLBACKS ===
+
+namespace {
+// Callback functions for frame timing collection
+void swappyPostWaitCallback(void* userData, int64_t cpuTimeNs, int64_t gpuTimeNs) {
+    // Forward timing data to Java layer for statistical analysis
+    if (cpuTimeNs >= 0 && gpuTimeNs >= 0) {
+        // Get JNI environment
+        android::UniqueEnv _env = android::AttachEnv();
+        if (!_env) {
+            return;
+        }
+
+        // Find the SwappyPerformanceMonitor class
+        jclass monitorClass = _env->FindClass("org/maplibre/android/maps/renderer/SwappyPerformanceMonitor");
+        if (!monitorClass) {
+            return;
+        }
+
+        // Find the addFrameTimingSample method
+        jmethodID addSampleMethod = _env->GetStaticMethodID(monitorClass, "addFrameTimingSample", "(JJ)V");
+        if (!addSampleMethod) {
+            _env->DeleteLocalRef(monitorClass);
+            return;
+        }
+
+        // Call the Java method with timing data
+        _env->CallStaticVoidMethod(
+            monitorClass, addSampleMethod, static_cast<jlong>(cpuTimeNs), static_cast<jlong>(gpuTimeNs));
+
+        // Clean up local references
+        _env->DeleteLocalRef(monitorClass);
+    }
+}
+} // namespace
+
+void SwappyFramePacing::enableFrameTimingCallbacks(bool enabled) {
+    if (!sInitialized || !sEnabled) {
+        return;
+    }
+
+    if (enabled) {
+        // Set up tracer with our callback
+        SwappyTracer tracer = {};
+        tracer.postWait = swappyPostWaitCallback;
+        tracer.userData = nullptr;
+
+        SwappyGL_injectTracer(&tracer);
+        Log::Info(Event::OpenGL, "SwappyFramePacing timing callbacks enabled");
+    } else {
+        // Remove tracer callbacks
+        SwappyTracer tracer = {};
+        tracer.postWait = swappyPostWaitCallback;
+        tracer.userData = nullptr;
+
+        SwappyGL_uninjectTracer(&tracer);
+        Log::Info(Event::OpenGL, "SwappyFramePacing timing callbacks disabled");
+    }
 }
 
 } // namespace android
