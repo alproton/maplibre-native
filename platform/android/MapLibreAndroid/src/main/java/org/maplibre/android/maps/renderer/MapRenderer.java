@@ -111,6 +111,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
           SwappyRenderer.setTargetFrameRate(60);
           SwappyRenderer.setUseAffinity(true);
           SwappyRenderer.enableStats(enableLogs);
+          SwappyPerformanceMonitor.enableFrameTimingCollection(enableLogs);
           SwappyRenderer.setAutoSwapInterval(false);
           SwappyRenderer.setAutoPipelineMode(false);
           SwappyRenderer.resetFramePacing();
@@ -222,7 +223,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
   }
 
   public void setSwapInterval(int interval) {
-      SwappyPerformanceMonitor.clearEmergencyFixes();
+      SwappyPerformanceMonitor.reset();
       nativeSetSwapInterval(interval);
   }
 
