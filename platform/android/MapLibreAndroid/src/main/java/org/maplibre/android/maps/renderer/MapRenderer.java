@@ -95,6 +95,20 @@ public abstract class MapRenderer implements MapRendererScheduler {
     nativeInitialize(this, pixelRatio, localIdeographFontFamily, threadPriorityOverride);
   }
 
+  public void enableFrameTimingCollection(boolean enable) {
+    SwappyRenderer.enableNativeFrameTimingCollection(enable);
+  }
+
+  /**
+   * Get current frame timing statistics.
+   *
+   * @return FrameTimingStats object with timing analysis, or null if no samples collected
+   */
+  @Nullable
+  public SwappyPerformanceMonitor.FrameTimingStats getFrameTimingStats() {
+    return SwappyPerformanceMonitor.getNativeFrameTimingStats();
+  }
+
   /**
    * Initialize Swappy Frame Pacing if possible.
    * Attempts to find the Activity context and initialize Swappy.
@@ -111,7 +125,6 @@ public abstract class MapRenderer implements MapRendererScheduler {
           SwappyRenderer.setTargetFrameRate(60);
           SwappyRenderer.setUseAffinity(true);
           SwappyRenderer.enableStats(enableLogs);
-          SwappyPerformanceMonitor.enableFrameTimingCollection(enableLogs);
           SwappyRenderer.setAutoSwapInterval(false);
           SwappyRenderer.setAutoPipelineMode(false);
           SwappyRenderer.resetFramePacing();

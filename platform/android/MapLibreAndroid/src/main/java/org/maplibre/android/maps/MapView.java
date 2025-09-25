@@ -29,6 +29,7 @@ import org.maplibre.android.constants.MapLibreConstants;
 import org.maplibre.android.exceptions.MapLibreConfigurationException;
 import org.maplibre.android.location.LocationComponent;
 import org.maplibre.android.maps.renderer.MapRenderer;
+import org.maplibre.android.maps.renderer.SwappyPerformanceMonitor;
 import org.maplibre.android.maps.widgets.CompassView;
 import org.maplibre.android.net.ConnectivityReceiver;
 import org.maplibre.android.storage.FileSource;
@@ -290,6 +291,20 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
         }
       }
     };
+  }
+
+  public void enableFrameTimingCollection(boolean enable) {
+    mapRenderer.enableFrameTimingCollection(enable);
+  }
+
+  /**
+   * Get current frame timing statistics.
+   *
+   * @return FrameTimingStats object with timing analysis, or null if no samples collected
+   */
+  @Nullable
+  public SwappyPerformanceMonitor.FrameTimingStats getFrameTimingStats() {
+    return mapRenderer.getFrameTimingStats();
   }
 
   //

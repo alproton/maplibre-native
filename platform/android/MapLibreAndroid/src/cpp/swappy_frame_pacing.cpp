@@ -1,6 +1,7 @@
 #include "swappy_frame_pacing.hpp"
 #include <mbgl/util/logging.hpp>
 #include <android/native_window_jni.h>
+#include <chrono>
 #include "../../../src/attach_env.hpp"
 
 // Include Swappy headers
@@ -19,6 +20,13 @@ namespace android {
 // Static member initialization
 bool SwappyFramePacing::sInitialized = false;
 bool SwappyFramePacing::sEnabled = false;
+
+// Native frame timing collection static members
+bool SwappyFramePacing::sNativeTimingEnabled = false;
+std::mutex SwappyFramePacing::sTimingMutex;
+std::vector<int64_t> SwappyFramePacing::sCpuTimeSamples;
+std::vector<int64_t> SwappyFramePacing::sGpuTimeSamples;
+int64_t SwappyFramePacing::sCollectionStartTime = 0;
 
 bool SwappyFramePacing::initialize(JNIEnv* env, jobject jactivity) {
     if (sInitialized) {
@@ -300,38 +308,14 @@ void SwappyFramePacing::logFrameStats() {
     Log::Info(Event::Swappy, "=== End Statistics ===");
 }
 
-// === FRAME TIMING CALLBACKS ===
+// === NATIVE FRAME TIMING COLLECTION ===
 
 namespace {
-// Callback functions for frame timing collection
+// Native callback function for frame timing collection
 void swappyPostWaitCallback(void* userData, int64_t cpuTimeNs, int64_t gpuTimeNs) {
-    // Forward timing data to Java layer for statistical analysis
+    // Store timing data directly in native C++ - no JNI calls needed
     if (cpuTimeNs >= 0 && gpuTimeNs >= 0) {
-        // Get JNI environment
-        android::UniqueEnv _env = android::AttachEnv();
-        if (!_env) {
-            return;
-        }
-
-        // Find the SwappyPerformanceMonitor class
-        jclass monitorClass = _env->FindClass("org/maplibre/android/maps/renderer/SwappyPerformanceMonitor");
-        if (!monitorClass) {
-            return;
-        }
-
-        // Find the addFrameTimingSample method
-        jmethodID addSampleMethod = _env->GetStaticMethodID(monitorClass, "addFrameTimingSample", "(JJ)V");
-        if (!addSampleMethod) {
-            _env->DeleteLocalRef(monitorClass);
-            return;
-        }
-
-        // Call the Java method with timing data
-        _env->CallStaticVoidMethod(
-            monitorClass, addSampleMethod, static_cast<jlong>(cpuTimeNs), static_cast<jlong>(gpuTimeNs));
-
-        // Clean up local references
-        _env->DeleteLocalRef(monitorClass);
+        SwappyFramePacing::addNativeFrameTimingSample(cpuTimeNs, gpuTimeNs);
     }
 }
 } // namespace
@@ -352,11 +336,140 @@ void SwappyFramePacing::enableFrameTimingCallbacks(bool enabled) {
     } else {
         // Remove tracer callbacks
         SwappyTracer tracer = {};
-        tracer.postWait = swappyPostWaitCallback;
+        tracer.postWait = nullptr; // Clear the callback
         tracer.userData = nullptr;
 
         SwappyGL_uninjectTracer(&tracer);
         Log::Info(Event::OpenGL, "SwappyFramePacing timing callbacks disabled");
+    }
+}
+
+// === NATIVE FRAME TIMING IMPLEMENTATION ===
+
+void SwappyFramePacing::enableNativeFrameTimingCollection(bool enabled) {
+    std::lock_guard<std::mutex> lock(sTimingMutex);
+
+    if (enabled && !sNativeTimingEnabled) {
+        // Enable native timing collection
+        sNativeTimingEnabled = true;
+        sCpuTimeSamples.clear();
+        sGpuTimeSamples.clear();
+        sCpuTimeSamples.reserve(MAX_TIMING_SAMPLES);
+        sGpuTimeSamples.reserve(MAX_TIMING_SAMPLES);
+        sCollectionStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now().time_since_epoch())
+                                   .count();
+
+        // Enable the Swappy callbacks
+        enableFrameTimingCallbacks(true);
+
+        Log::Info(Event::Swappy, "Native frame timing collection enabled");
+    } else if (!enabled && sNativeTimingEnabled) {
+        // Disable native timing collection
+        sNativeTimingEnabled = false;
+
+        // Disable the Swappy callbacks
+        enableFrameTimingCallbacks(false);
+
+        Log::Info(Event::Swappy, "Native frame timing collection disabled");
+    }
+}
+
+void SwappyFramePacing::addNativeFrameTimingSample(int64_t cpuTimeNs, int64_t gpuTimeNs) {
+    if (!sNativeTimingEnabled) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(sTimingMutex);
+
+    // Add samples to rolling buffer
+    if (sCpuTimeSamples.size() >= MAX_TIMING_SAMPLES) {
+        // Remove oldest sample
+        sCpuTimeSamples.erase(sCpuTimeSamples.begin());
+        sGpuTimeSamples.erase(sGpuTimeSamples.begin());
+    }
+
+    sCpuTimeSamples.push_back(cpuTimeNs);
+    sGpuTimeSamples.push_back(gpuTimeNs);
+}
+
+bool SwappyFramePacing::getNativeFrameTimingStats(FrameTimingStats* stats) {
+    if (!stats || !sNativeTimingEnabled) {
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lock(sTimingMutex);
+
+    if (sCpuTimeSamples.empty()) {
+        return false;
+    }
+
+    // Calculate CPU timing statistics
+    calculateTimingStats(
+        sCpuTimeSamples, stats->avgCpuTimeNs, stats->minCpuTimeNs, stats->maxCpuTimeNs, stats->medianCpuTimeNs);
+
+    // Calculate GPU timing statistics
+    calculateTimingStats(
+        sGpuTimeSamples, stats->avgGpuTimeNs, stats->minGpuTimeNs, stats->maxGpuTimeNs, stats->medianGpuTimeNs);
+
+    // Calculate total pipeline timing statistics
+    std::vector<int64_t> totalTimes;
+    totalTimes.reserve(sCpuTimeSamples.size());
+    for (size_t i = 0; i < sCpuTimeSamples.size(); ++i) {
+        totalTimes.push_back(sCpuTimeSamples[i] + sGpuTimeSamples[i]);
+    }
+    calculateTimingStats(
+        totalTimes, stats->avgTotalTimeNs, stats->minTotalTimeNs, stats->maxTotalTimeNs, stats->medianTotalTimeNs);
+
+    // Set collection metadata
+    stats->sampleCount = static_cast<int>(sCpuTimeSamples.size());
+    int64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::steady_clock::now().time_since_epoch())
+                              .count();
+    stats->collectionDurationMs = currentTime - sCollectionStartTime;
+
+    return true;
+}
+
+void SwappyFramePacing::clearNativeFrameTimingStats() {
+    std::lock_guard<std::mutex> lock(sTimingMutex);
+
+    sCpuTimeSamples.clear();
+    sGpuTimeSamples.clear();
+    sCollectionStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                               std::chrono::steady_clock::now().time_since_epoch())
+                               .count();
+
+    Log::Info(Event::Swappy, "Native frame timing statistics cleared");
+}
+
+void SwappyFramePacing::calculateTimingStats(
+    const std::vector<int64_t>& samples, int64_t& avg, int64_t& min, int64_t& max, int64_t& median) {
+    if (samples.empty()) {
+        avg = min = max = median = 0;
+        return;
+    }
+
+    // Calculate average
+    int64_t sum = 0;
+    for (int64_t sample : samples) {
+        sum += sample;
+    }
+    avg = sum / static_cast<int64_t>(samples.size());
+
+    // Find min and max
+    auto minmax = std::minmax_element(samples.begin(), samples.end());
+    min = *minmax.first;
+    max = *minmax.second;
+
+    // Calculate median
+    std::vector<int64_t> sortedSamples = samples;
+    std::sort(sortedSamples.begin(), sortedSamples.end());
+    size_t size = sortedSamples.size();
+    if (size % 2 == 0) {
+        median = (sortedSamples[size / 2 - 1] + sortedSamples[size / 2]) / 2;
+    } else {
+        median = sortedSamples[size / 2];
     }
 }
 
