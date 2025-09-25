@@ -4,12 +4,59 @@
 #include <jni.h>
 #include <EGL/egl.h>
 #include <android/native_window.h>
+#include <vector>
+#include <mutex>
+#include <algorithm>
 
 // Forward declaration for SwappyStats
 struct SwappyStats;
 
 namespace mbgl {
 namespace android {
+
+/**
+ * Frame timing statistics structure for native storage
+ */
+struct FrameTimingStats {
+    // CPU timing statistics (nanoseconds)
+    int64_t avgCpuTimeNs;
+    int64_t minCpuTimeNs;
+    int64_t maxCpuTimeNs;
+    int64_t medianCpuTimeNs;
+
+    // GPU timing statistics (nanoseconds)
+    int64_t avgGpuTimeNs;
+    int64_t minGpuTimeNs;
+    int64_t maxGpuTimeNs;
+    int64_t medianGpuTimeNs;
+
+    // Total pipeline timing statistics (nanoseconds)
+    int64_t avgTotalTimeNs;
+    int64_t minTotalTimeNs;
+    int64_t maxTotalTimeNs;
+    int64_t medianTotalTimeNs;
+
+    // Collection metadata
+    int sampleCount;
+    int64_t collectionDurationMs;
+
+    // Constructor
+    FrameTimingStats()
+        : avgCpuTimeNs(0),
+          minCpuTimeNs(0),
+          maxCpuTimeNs(0),
+          medianCpuTimeNs(0),
+          avgGpuTimeNs(0),
+          minGpuTimeNs(0),
+          maxGpuTimeNs(0),
+          medianGpuTimeNs(0),
+          avgTotalTimeNs(0),
+          minTotalTimeNs(0),
+          maxTotalTimeNs(0),
+          medianTotalTimeNs(0),
+          sampleCount(0),
+          collectionDurationMs(0) {}
+};
 
 /**
  * Wrapper class for Android Frame Pacing (Swappy) API.
@@ -188,6 +235,39 @@ public:
      */
     static void enableFrameTimingCallbacks(bool enabled);
 
+    // === NATIVE FRAME TIMING STATISTICS ===
+
+    /**
+     * Enable or disable frame timing collection in native C++.
+     * This replaces the Java callback mechanism with native storage.
+     *
+     * @param enabled Whether to enable native frame timing collection
+     */
+    static void enableNativeFrameTimingCollection(bool enabled);
+
+    /**
+     * Get current frame timing statistics computed in native C++.
+     * Returns statistical analysis of CPU, GPU, and total pipeline timing.
+     *
+     * @param stats Pointer to FrameTimingStats structure to be filled
+     * @return true if stats were retrieved successfully, false if no samples collected
+     */
+    static bool getNativeFrameTimingStats(FrameTimingStats* stats);
+
+    /**
+     * Clear native frame timing samples and reset collection.
+     */
+    static void clearNativeFrameTimingStats();
+
+    /**
+     * Add a native frame timing sample. Called internally by native callback.
+     * This method is public to allow access from the global callback function.
+     *
+     * @param cpuTimeNs CPU processing time in nanoseconds
+     * @param gpuTimeNs GPU processing time in nanoseconds (previous frame)
+     */
+    static void addNativeFrameTimingSample(int64_t cpuTimeNs, int64_t gpuTimeNs);
+
     // Common frame rate constants (in nanoseconds)
     static constexpr uint64_t FRAME_RATE_60FPS = 16666666ULL; // ~16.67ms
     static constexpr uint64_t FRAME_RATE_30FPS = 33333333ULL; // ~33.33ms
@@ -196,6 +276,18 @@ public:
 private:
     static bool sInitialized;
     static bool sEnabled;
+
+    // Native frame timing collection
+    static constexpr int MAX_TIMING_SAMPLES = 1000;
+    static bool sNativeTimingEnabled;
+    static std::mutex sTimingMutex;
+    static std::vector<int64_t> sCpuTimeSamples;
+    static std::vector<int64_t> sGpuTimeSamples;
+    static int64_t sCollectionStartTime;
+
+    // Private helper methods
+    static void calculateTimingStats(
+        const std::vector<int64_t>& samples, int64_t& avg, int64_t& min, int64_t& max, int64_t& median);
 
     // Private constructor - this is a utility class with only static methods
     SwappyFramePacing() = delete;
