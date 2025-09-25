@@ -35,6 +35,7 @@ class SimpleMapActivity : AppCompatActivity(), OnFpsChangedListener {
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.setRenderingRefreshMode(MapRenderer.RenderingRefreshMode.CONTINUOUS)
+        mapView.enableFrameTimingCollection(true)
 
         mapView.getMapAsync {
             val key = ApiKeyUtils.getApiKey(applicationContext)

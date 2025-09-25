@@ -32,14 +32,8 @@ public class SwappyPerformanceMonitor {
     // Emergency fixes tracking
     private static boolean emergencyFixesApplied = false;
 
-    // Frame timing collection
-    private static final int MAX_TIMING_SAMPLES = 1000; // Rolling window size
-    private static final Object timingLock = new Object();
-    private static long[] cpuTimeSamples = new long[MAX_TIMING_SAMPLES];
-    private static long[] gpuTimeSamples = new long[MAX_TIMING_SAMPLES];
-    private static int timingSampleIndex = 0;
-    private static int timingSampleCount = 0;
-    private static boolean timingCollectionEnabled = false;
+    // Note: Frame timing collection has been moved to native C++
+    // Use SwappyRenderer.enableNativeFrameTimingCollection() instead
 
     /**
      * Call this at the beginning of each frame to record frame start for statistics.
@@ -56,6 +50,12 @@ public class SwappyPerformanceMonitor {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastStatsLogTime >= STATS_LOG_INTERVAL_MS) {
             logPerformanceAnalysis();
+            if(SwappyRenderer.isNativeFrameTimingEnabled()) {
+                FrameTimingStats timingStats = getNativeFrameTimingStats();
+                if (timingStats != null) {
+                    Logger.i(TAG, "Native Frame Timing Stats: " + timingStats.toCompactString());
+                }
+            }
             lastStatsLogTime = currentTime;
         }
     }
@@ -203,100 +203,74 @@ public class SwappyPerformanceMonitor {
         lastStatsLogTime = 0;
         emergencyFixesApplied = false;
 
-        // Clear timing samples
-        synchronized (timingLock) {
-            timingSampleIndex = 0;
-            timingSampleCount = 0;
-        }
+        // Clear native frame timing samples
+        SwappyRenderer.clearNativeFrameTimingStats();
 
         Logger.i(TAG, "Performance monitoring reset");
     }
 
-    // === FRAME TIMING STATISTICS ===
+    // === NATIVE FRAME TIMING ===
 
     /**
      * Frame timing statistics containing CPU, GPU, and total pipeline timing data.
+     * This Java class mirrors the native C++ FrameTimingStats structure.
      */
     public static class FrameTimingStats {
+        // CPU timing statistics (nanoseconds)
         public final long avgCpuTimeNs;
         public final long minCpuTimeNs;
         public final long maxCpuTimeNs;
         public final long medianCpuTimeNs;
 
+        // GPU timing statistics (nanoseconds)
         public final long avgGpuTimeNs;
         public final long minGpuTimeNs;
         public final long maxGpuTimeNs;
         public final long medianGpuTimeNs;
 
+        // Total pipeline timing statistics (nanoseconds)
         public final long avgTotalTimeNs;
         public final long minTotalTimeNs;
         public final long maxTotalTimeNs;
         public final long medianTotalTimeNs;
 
+        // Collection metadata
         public final int sampleCount;
         public final long collectionDurationMs;
 
-        FrameTimingStats(long[] cpuTimes, long[] gpuTimes, int count, long durationMs) {
-            this.sampleCount = count;
-            this.collectionDurationMs = durationMs;
-
-            if (count == 0) {
-                // No samples available
-                avgCpuTimeNs = minCpuTimeNs = maxCpuTimeNs = medianCpuTimeNs = 0;
-                avgGpuTimeNs = minGpuTimeNs = maxGpuTimeNs = medianGpuTimeNs = 0;
-                avgTotalTimeNs = minTotalTimeNs = maxTotalTimeNs = medianTotalTimeNs = 0;
-                return;
+        /**
+         * Constructor that takes the native timing data array.
+         * Array format: [avgCpuTimeNs, minCpuTimeNs, maxCpuTimeNs, medianCpuTimeNs,
+         *                avgGpuTimeNs, minGpuTimeNs, maxGpuTimeNs, medianGpuTimeNs,
+         *                avgTotalTimeNs, minTotalTimeNs, maxTotalTimeNs, medianTotalTimeNs,
+         *                sampleCount, collectionDurationMs]
+         */
+        FrameTimingStats(long[] nativeStats) {
+            if (nativeStats == null || nativeStats.length != 14) {
+                throw new IllegalArgumentException("Invalid native stats array");
             }
 
-            // Calculate CPU statistics
-            long[] sortedCpu = new long[count];
-            System.arraycopy(cpuTimes, 0, sortedCpu, 0, count);
-            java.util.Arrays.sort(sortedCpu);
+            // CPU timing statistics
+            this.avgCpuTimeNs = nativeStats[0];
+            this.minCpuTimeNs = nativeStats[1];
+            this.maxCpuTimeNs = nativeStats[2];
+            this.medianCpuTimeNs = nativeStats[3];
 
-            long cpuSum = 0;
-            for (int i = 0; i < count; i++) {
-                cpuSum += sortedCpu[i];
-            }
-            avgCpuTimeNs = cpuSum / count;
-            minCpuTimeNs = sortedCpu[0];
-            maxCpuTimeNs = sortedCpu[count - 1];
-            medianCpuTimeNs = count % 2 == 0 ?
-                (sortedCpu[count/2 - 1] + sortedCpu[count/2]) / 2 :
-                sortedCpu[count/2];
+            // GPU timing statistics
+            this.avgGpuTimeNs = nativeStats[4];
+            this.minGpuTimeNs = nativeStats[5];
+            this.maxGpuTimeNs = nativeStats[6];
+            this.medianGpuTimeNs = nativeStats[7];
 
-            // Calculate GPU statistics
-            long[] sortedGpu = new long[count];
-            System.arraycopy(gpuTimes, 0, sortedGpu, 0, count);
-            java.util.Arrays.sort(sortedGpu);
+            // Total pipeline timing statistics
+            this.avgTotalTimeNs = nativeStats[8];
+            this.minTotalTimeNs = nativeStats[9];
+            this.maxTotalTimeNs = nativeStats[10];
+            this.medianTotalTimeNs = nativeStats[11];
 
-            long gpuSum = 0;
-            for (int i = 0; i < count; i++) {
-                gpuSum += sortedGpu[i];
-            }
-            avgGpuTimeNs = gpuSum / count;
-            minGpuTimeNs = sortedGpu[0];
-            maxGpuTimeNs = sortedGpu[count - 1];
-            medianGpuTimeNs = count % 2 == 0 ?
-                (sortedGpu[count/2 - 1] + sortedGpu[count/2]) / 2 :
-                sortedGpu[count/2];
-
-            // Calculate total pipeline statistics
-            long[] totalTimes = new long[count];
-            for (int i = 0; i < count; i++) {
-                totalTimes[i] = cpuTimes[i] + gpuTimes[i];
-            }
-            java.util.Arrays.sort(totalTimes);
-
-            long totalSum = 0;
-            for (int i = 0; i < count; i++) {
-                totalSum += totalTimes[i];
-            }
-            avgTotalTimeNs = totalSum / count;
-            minTotalTimeNs = totalTimes[0];
-            maxTotalTimeNs = totalTimes[count - 1];
-            medianTotalTimeNs = count % 2 == 0 ?
-                (totalTimes[count/2 - 1] + totalTimes[count/2]) / 2 :
-                totalTimes[count/2];
+            // Collection metadata
+            this.sampleCount = (int) nativeStats[12];
+            this.collectionDurationMs = nativeStats[13];
         }
 
         @Override
@@ -306,10 +280,12 @@ public class SwappyPerformanceMonitor {
             }
 
             return String.format(
-                "FrameTimingStats{samples=%d, duration=%dms, " +
-                "CPU(avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms), " +
-                "GPU(avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms), " +
-                "Total(avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms)}",
+                "FrameTimingStats{\n" +
+                "  samples=%d, duration=%dms\n" +
+                "  CPU: avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms\n" +
+                "  GPU: avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms\n" +
+                "  Total: avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms\n" +
+                "}",
                 sampleCount, collectionDurationMs,
                 avgCpuTimeNs / 1_000_000.0, minCpuTimeNs / 1_000_000.0,
                 maxCpuTimeNs / 1_000_000.0, medianCpuTimeNs / 1_000_000.0,
@@ -319,90 +295,69 @@ public class SwappyPerformanceMonitor {
                 maxTotalTimeNs / 1_000_000.0, medianTotalTimeNs / 1_000_000.0
             );
         }
-    }
 
-    /**
-     * Enable or disable frame timing collection.
-     * When enabled, Swappy will collect CPU and GPU timing data for statistical analysis.
-     *
-     * @param enabled Whether to enable frame timing collection
-     */
-    public static void enableFrameTimingCollection(boolean enabled) {
-        synchronized (timingLock) {
-            timingCollectionEnabled = enabled;
-            if (enabled) {
-                Logger.i(TAG, "Frame timing collection enabled");
-                SwappyRenderer.enableFrameTimingCallbacks(true);
-            } else {
-                Logger.i(TAG, "Frame timing collection disabled");
-                SwappyRenderer.enableFrameTimingCallbacks(false);
-                // Clear existing samples
-                timingSampleIndex = 0;
-                timingSampleCount = 0;
+        /**
+         * Get a compact single-line summary of the timing statistics.
+         *
+         * @return Compact timing summary string
+         */
+        public String toCompactString() {
+            if (sampleCount == 0) {
+                return "FrameTimingStats{no samples}";
             }
+
+            return String.format(
+                "FrameTimingStats{samples=%d, CPU=%.2fms, GPU=%.2fms, Total=%.2fms}",
+                sampleCount,
+                avgCpuTimeNs / 1_000_000.0,
+                avgGpuTimeNs / 1_000_000.0,
+                avgTotalTimeNs / 1_000_000.0
+            );
         }
     }
 
     /**
-     * Get current frame timing statistics.
+     * Get current frame timing statistics from native C++ implementation.
      * Returns statistical analysis of CPU, GPU, and total pipeline timing.
      *
      * @return FrameTimingStats containing timing analysis, or null if no samples collected
      */
     @Nullable
-    public static FrameTimingStats getFrameTimingStats() {
-        synchronized (timingLock) {
-            if (timingSampleCount == 0) {
-                return null;
-            }
+    public static FrameTimingStats getNativeFrameTimingStats() {
+        long[] nativeStats = SwappyRenderer.getNativeFrameTimingStats();
+        if (nativeStats == null) {
+            return null;
+        }
 
-            // Create arrays with just the valid samples
-            long[] cpuSamples = new long[timingSampleCount];
-            long[] gpuSamples = new long[timingSampleCount];
-
-            if (timingSampleCount < MAX_TIMING_SAMPLES) {
-                // Haven't wrapped around yet, samples are at beginning of arrays
-                System.arraycopy(cpuTimeSamples, 0, cpuSamples, 0, timingSampleCount);
-                System.arraycopy(gpuTimeSamples, 0, gpuSamples, 0, timingSampleCount);
-            } else {
-                // Have wrapped around, need to reconstruct in correct order
-                int firstPart = MAX_TIMING_SAMPLES - timingSampleIndex;
-                int secondPart = timingSampleIndex;
-
-                System.arraycopy(cpuTimeSamples, timingSampleIndex, cpuSamples, 0, firstPart);
-                System.arraycopy(cpuTimeSamples, 0, cpuSamples, firstPart, secondPart);
-
-                System.arraycopy(gpuTimeSamples, timingSampleIndex, gpuSamples, 0, firstPart);
-                System.arraycopy(gpuTimeSamples, 0, gpuSamples, firstPart, secondPart);
-            }
-
-            // Calculate collection duration (approximate)
-            long durationMs = Math.min(timingSampleCount * 16, System.currentTimeMillis() - lastStatsLogTime);
-
-            return new FrameTimingStats(cpuSamples, gpuSamples, timingSampleCount, durationMs);
+        try {
+            return new FrameTimingStats(nativeStats);
+        } catch (IllegalArgumentException e) {
+            Logger.w(TAG, "Failed to parse native frame timing stats: " + e.getMessage());
+            return null;
         }
     }
 
     /**
-     * Add a frame timing sample. Called internally by native callback.
+     * Enable or disable native frame timing collection.
+     * This replaces the old Java-based timing collection with native C++ implementation.
      *
-     * @param cpuTimeNs CPU processing time in nanoseconds
-     * @param gpuTimeNs GPU processing time in nanoseconds (previous frame)
+     * @param enabled Whether to enable native frame timing collection
      */
-    public static void addFrameTimingSample(long cpuTimeNs, long gpuTimeNs) {
-        if (!timingCollectionEnabled || cpuTimeNs < 0 || gpuTimeNs < 0) {
-            return;
+    public static void enableNativeFrameTimingCollection(boolean enabled) {
+        SwappyRenderer.enableNativeFrameTimingCollection(enabled);
+        if (enabled) {
+            Logger.i(TAG, "Native frame timing collection enabled");
+        } else {
+            Logger.i(TAG, "Native frame timing collection disabled");
         }
+    }
 
-        synchronized (timingLock) {
-            cpuTimeSamples[timingSampleIndex] = cpuTimeNs;
-            gpuTimeSamples[timingSampleIndex] = gpuTimeNs;
-
-            timingSampleIndex = (timingSampleIndex + 1) % MAX_TIMING_SAMPLES;
-            if (timingSampleCount < MAX_TIMING_SAMPLES) {
-                timingSampleCount++;
-            }
-        }
+    /**
+     * Clear native frame timing statistics and reset collection.
+     */
+    public static void clearNativeFrameTimingStats() {
+        SwappyRenderer.clearNativeFrameTimingStats();
+        Logger.i(TAG, "Native frame timing statistics cleared");
     }
 
     /**

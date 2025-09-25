@@ -18,6 +18,7 @@ public class SwappyRenderer {
 
     private static boolean sInitialized = false;
     private static boolean sEnabled = false;
+    private static boolean sEnabledNativeFrameTiming = false;
 
     /**
      * Initialize Swappy Frame Pacing.
@@ -372,6 +373,74 @@ public class SwappyRenderer {
         }
     }
 
+    // === NATIVE FRAME TIMING PUBLIC METHODS ===
+
+    /**
+     * Enable or disable native frame timing collection.
+     * This replaces the Java callback mechanism with native C++ storage.
+     *
+     * @param enabled Whether to enable native frame timing collection
+     */
+    public static void enableNativeFrameTimingCollection(boolean enabled) {
+        if (!sInitialized || !sEnabled) {
+            return;
+        }
+
+        sEnabledNativeFrameTiming = enabled;
+        try {
+            nativeEnableNativeFrameTimingCollection(enabled);
+        } catch (UnsatisfiedLinkError e) {
+            // Ignore
+        }
+    }
+
+    /**
+     * Check if native frame timing collection is enabled.
+     *
+     * @return true if native frame timing is enabled, false otherwise
+     */
+    public static boolean isNativeFrameTimingEnabled() {
+        return sEnabledNativeFrameTiming;
+    }
+
+    /**
+     * Get native frame timing statistics.
+     * Returns an array with timing statistics computed in native C++.
+     *
+     * @return long array with timing stats or null if no data available
+     * Array format: [avgCpuTimeNs, minCpuTimeNs, maxCpuTimeNs, medianCpuTimeNs,
+     *                avgGpuTimeNs, minGpuTimeNs, maxGpuTimeNs, medianGpuTimeNs,
+     *                avgTotalTimeNs, minTotalTimeNs, maxTotalTimeNs, medianTotalTimeNs,
+     *                sampleCount, collectionDurationMs]
+     */
+    @Nullable
+    public static long[] getNativeFrameTimingStats() {
+        if (!sInitialized || !sEnabled) {
+            return null;
+        }
+
+        try {
+            return nativeGetNativeFrameTimingStats();
+        } catch (UnsatisfiedLinkError e) {
+            return null;
+        }
+    }
+
+    /**
+     * Clear native frame timing statistics and reset collection.
+     */
+    public static void clearNativeFrameTimingStats() {
+        if (!sInitialized || !sEnabled) {
+            return;
+        }
+
+        try {
+            nativeClearNativeFrameTimingStats();
+        } catch (UnsatisfiedLinkError e) {
+            // Ignore
+        }
+    }
+
     // Native method declarations
     @Keep
     private static native boolean nativeInitialize(@NonNull Activity activity);
@@ -433,4 +502,15 @@ public class SwappyRenderer {
 
     @Keep
     private static native void nativeEnableFrameTimingCallbacks(boolean enabled);
+
+    // === NATIVE FRAME TIMING METHODS ===
+
+    @Keep
+    private static native void nativeEnableNativeFrameTimingCollection(boolean enabled);
+
+    @Keep
+    private static native long[] nativeGetNativeFrameTimingStats();
+
+    @Keep
+    private static native void nativeClearNativeFrameTimingStats();
 }

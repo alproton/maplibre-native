@@ -206,4 +206,62 @@ JNIEXPORT void JNICALL Java_org_maplibre_android_maps_renderer_SwappyRenderer_na
     SwappyFramePacing::enableFrameTimingCallbacks(enabled == JNI_TRUE);
 }
 
+// === NATIVE FRAME TIMING JNI METHODS ===
+
+/**
+ * Enable or disable native frame timing collection from Java
+ */
+JNIEXPORT void JNICALL Java_org_maplibre_android_maps_renderer_SwappyRenderer_nativeEnableNativeFrameTimingCollection(
+    JNIEnv* env, jclass clazz, jboolean enabled) {
+    SwappyFramePacing::enableNativeFrameTimingCollection(enabled == JNI_TRUE);
+}
+
+/**
+ * Get native frame timing statistics from Java
+ * Returns a long array with timing statistics:
+ * [0] = avgCpuTimeNs, [1] = minCpuTimeNs, [2] = maxCpuTimeNs, [3] = medianCpuTimeNs,
+ * [4] = avgGpuTimeNs, [5] = minGpuTimeNs, [6] = maxGpuTimeNs, [7] = medianGpuTimeNs,
+ * [8] = avgTotalTimeNs, [9] = minTotalTimeNs, [10] = maxTotalTimeNs, [11] = medianTotalTimeNs,
+ * [12] = sampleCount, [13] = collectionDurationMs
+ */
+JNIEXPORT jlongArray JNICALL
+Java_org_maplibre_android_maps_renderer_SwappyRenderer_nativeGetNativeFrameTimingStats(JNIEnv* env, jclass clazz) {
+    mbgl::android::FrameTimingStats stats;
+    if (!SwappyFramePacing::getNativeFrameTimingStats(&stats)) {
+        return nullptr; // No stats available
+    }
+
+    // Create Java long array with 14 elements
+    jlongArray result = env->NewLongArray(14);
+    if (!result) {
+        return nullptr;
+    }
+
+    jlong values[14] = {stats.avgCpuTimeNs,
+                        stats.minCpuTimeNs,
+                        stats.maxCpuTimeNs,
+                        stats.medianCpuTimeNs,
+                        stats.avgGpuTimeNs,
+                        stats.minGpuTimeNs,
+                        stats.maxGpuTimeNs,
+                        stats.medianGpuTimeNs,
+                        stats.avgTotalTimeNs,
+                        stats.minTotalTimeNs,
+                        stats.maxTotalTimeNs,
+                        stats.medianTotalTimeNs,
+                        static_cast<jlong>(stats.sampleCount),
+                        stats.collectionDurationMs};
+
+    env->SetLongArrayRegion(result, 0, 14, values);
+    return result;
+}
+
+/**
+ * Clear native frame timing statistics from Java
+ */
+JNIEXPORT void JNICALL
+Java_org_maplibre_android_maps_renderer_SwappyRenderer_nativeClearNativeFrameTimingStats(JNIEnv* env, jclass clazz) {
+    SwappyFramePacing::clearNativeFrameTimingStats();
+}
+
 } // extern "C"
