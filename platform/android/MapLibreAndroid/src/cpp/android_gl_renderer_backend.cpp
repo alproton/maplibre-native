@@ -3,9 +3,9 @@
 #include <mbgl/gfx/backend_scope.hpp>
 #include <mbgl/gl/context.hpp>
 #include <mbgl/gl/renderable_resource.hpp>
-
-#include <EGL/egl.h>
-
+#include <mbgl/util/logging.hpp>
+#include "android_egl_helper.hpp"
+#include "swappy_frame_pacing.hpp"
 #include <cassert>
 
 namespace mbgl {
@@ -47,6 +47,10 @@ gl::ProcAddress AndroidGLRendererBackend::getExtensionFunctionPointer(const char
 void AndroidGLRendererBackend::updateViewPort() {
     assert(gfx::BackendScope::exists());
     setViewport(0, 0, size);
+    if (logEGLconfigAttribs) {
+        Log::Info(Event::OpenGL, "EGL Config Attributes:\n" + android::egl::query_current_config_attributes());
+        logEGLconfigAttribs = false;
+    }
 }
 
 void AndroidGLRendererBackend::resizeFramebuffer(int width, int height) {
@@ -66,6 +70,31 @@ void AndroidGLRendererBackend::updateAssumedState() {
 void AndroidGLRendererBackend::markContextLost() {
     if (context) {
         getContext<gl::Context>().setCleanupOnDestruction(false);
+    }
+}
+
+void AndroidGLRendererBackend::setSwapInterval(int interval) {
+    if (swapInterval != interval) {
+        swapInterval = interval;
+
+        // Try to use Swappy frame pacing if available
+        if (SwappyFramePacing::isEnabled()) {
+            // Convert interval to target frame rate for Swappy
+            // interval = 1 means 60fps, interval = 2 means 30fps, etc.
+            int targetFps = (interval > 0) ? (60 / interval) : 60;
+            SwappyFramePacing::setTargetFrameRate(targetFps);
+            Log::Info(Event::Swappy,
+                      "Setting Swappy frame rate to " + std::to_string(targetFps) +
+                          " FPS (interval: " + std::to_string(swapInterval) + ")");
+        } else {
+            // Fall back to standard EGL swap interval
+            bool success = eglSwapInterval(eglGetCurrentDisplay(), swapInterval);
+            if (!success) {
+                Log::Info(Event::OpenGL, "Failure in setting EGL swap interval");
+            } else {
+                Log::Info(Event::OpenGL, "Setting EGL swap interval to " + std::to_string(swapInterval));
+            }
+        }
     }
 }
 

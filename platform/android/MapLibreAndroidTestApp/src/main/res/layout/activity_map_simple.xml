@@ -9,6 +9,13 @@
     <org.maplibre.android.maps.MapView
         android:id="@id/mapView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/fpsView"
+            android:layout_width="202dp"
+            android:layout_height="wrap_content"
+            android:text="" />
+    </org.maplibre.android.maps.MapView>
 
 </RelativeLayout>

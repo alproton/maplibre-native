@@ -22,7 +22,7 @@ public class MapRendererFactory {
     TextureViewMapRenderer mapRenderer = new TextureViewMapRenderer(context, textureView,
             localFontFamily, translucentSurface, threadPriorityOverride) {
       @Override
-      protected void onSurfaceCreated(Surface surface) {
+      public void onSurfaceCreated(Surface surface) {
         initCallback.run();
         super.onSurfaceCreated(surface);
       }
@@ -34,7 +34,9 @@ public class MapRendererFactory {
 
   public static SurfaceViewMapRenderer newSurfaceViewMapRenderer(@NonNull Context context, String localFontFamily,
                                                                  boolean renderSurfaceOnTop, Runnable initCallback,
-                                                                 int threadPriorityOverride) {
+                                                                 int threadPriorityOverride, boolean useModernEGL,
+                                                                 boolean useSwappy, boolean enableSwappyLogging) {
+    // Note: Vulkan doesn't use the EGL/Swappy parameters, but we accept them for API compatibility
 
     MapLibreVulkanSurfaceView surfaceView = new MapLibreVulkanSurfaceView(context);
     surfaceView.setZOrderMediaOverlay(renderSurfaceOnTop);

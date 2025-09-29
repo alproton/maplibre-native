@@ -13,7 +13,7 @@ import java.util.ArrayList;
  * The render thread is responsible for managing the communication between the
  * ui thread and the render thread it creates
  */
-abstract class TextureViewRenderThread extends Thread implements TextureView.SurfaceTextureListener {
+public abstract class TextureViewRenderThread extends Thread implements TextureView.SurfaceTextureListener {
 
   protected static final String TAG = "Mbgl-TextureViewRenderThread";
 
@@ -44,7 +44,7 @@ abstract class TextureViewRenderThread extends Thread implements TextureView.Sur
    * @param mapRenderer the MapRenderer
    */
   @UiThread
-  TextureViewRenderThread(@NonNull TextureView textureView, @NonNull TextureViewMapRenderer mapRenderer) {
+  protected TextureViewRenderThread(@NonNull TextureView textureView, @NonNull TextureViewMapRenderer mapRenderer) {
     textureView.setOpaque(!mapRenderer.isTranslucentSurface());
     textureView.setSurfaceTextureListener(this);
     this.mapRenderer = mapRenderer;

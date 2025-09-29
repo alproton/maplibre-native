@@ -15,6 +15,10 @@
 #include "map_renderer_runnable.hpp"
 
 #if MLN_RENDER_BACKEND_OPENGL
+#include "swappy_frame_pacing.hpp"
+#endif
+
+#if MLN_RENDER_BACKEND_OPENGL
 #include <sys/system_properties.h>
 
 namespace {
@@ -63,7 +67,12 @@ std::shared_ptr<Mailbox> MapRenderer::MailboxData::getMailbox() const noexcept {
     return mailbox;
 }
 
-MapRenderer::~MapRenderer() = default;
+MapRenderer::~MapRenderer() {
+#if MLN_RENDER_BACKEND_OPENGL
+    // Clean up Swappy resources when the renderer is destroyed
+    SwappyFramePacing::destroy();
+#endif
+}
 
 void MapRenderer::reset() {
     try {
@@ -231,6 +240,11 @@ void MapRenderer::scheduleSnapshot(std::unique_ptr<SnapshotCallback> callback) {
 void MapRenderer::render(JNIEnv&) {
     assert(renderer);
 
+    // Set the swap interval if it has been changed
+    if (backend && swapInterval != -1) {
+        backend->setSwapInterval(swapInterval);
+    }
+
     std::shared_ptr<UpdateParameters> params;
     {
         // Lock on the parameters
@@ -287,11 +301,22 @@ void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface
         backend.reset();
         window.reset();
 
-        if (surface) {
-            window = std::unique_ptr<ANativeWindow, std::function<void(ANativeWindow*)>>(
-                ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get())),
-                [](ANativeWindow* window_) { ANativeWindow_release(window_); });
+    if (surface) {
+        window = std::unique_ptr<ANativeWindow, std::function<void(ANativeWindow*)>>(
+            ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get())),
+            [](ANativeWindow* window_) { ANativeWindow_release(window_); });
+
+#if MLN_RENDER_BACKEND_OPENGL
+        // Set the current window to Swappy if enabled
+        if (SwappyFramePacing::isEnabled()) {
+            ANativeWindow* swappyWindow = ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get()));
+            if (swappyWindow) {
+                SwappyFramePacing::setWindow(swappyWindow);
+                ANativeWindow_release(swappyWindow);
+            }
         }
+#endif
+    }
 
         // Create the new backend and renderer
         backend = AndroidRendererBackend::Create(window.get());
@@ -350,6 +375,10 @@ void MapRenderer::setSwapBehaviorFlush(JNIEnv&, jboolean flush) {
     }
 }
 
+void MapRenderer::setSwapInterval(JNIEnv&, jint interval) {
+    swapInterval = interval;
+}
+
 void MapRenderer::setCustomPuckState(
     JNIEnv&, jdouble lat, jdouble lon, jdouble bearing, jfloat iconScale, jboolean cameraTracking) {
     if (backend) {
@@ -379,6 +408,7 @@ void MapRenderer::registerNative(jni::JNIEnv& env) {
         METHOD(&MapRenderer::onSurfaceChanged, "nativeOnSurfaceChanged"),
         METHOD(&MapRenderer::onSurfaceDestroyed, "nativeOnSurfaceDestroyed"),
         METHOD(&MapRenderer::setSwapBehaviorFlush, "nativeSetSwapBehaviorFlush"),
+        METHOD(&MapRenderer::setSwapInterval, "nativeSetSwapInterval"),
         METHOD(&MapRenderer::setCustomPuckState, "nativeSetCustomPuckState"));
 }
 

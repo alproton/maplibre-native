@@ -25,6 +25,7 @@ enum class Event : uint8_t {
     Sprite,
     Image,
     OpenGL,
+    Swappy,
     JNI,
     Android,
     Crash,
