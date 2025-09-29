@@ -26,6 +26,8 @@ public:
 
     gfx::CustomPuckState getCurrentCustomPuckState() const override { return getCustomPuckState(); }
 
+    void setSwapInterval(int interval) override;
+
     // mbgl::gfx::RendererBackend implementation
 public:
     mbgl::gfx::Renderable& getDefaultRenderable() override { return *this; }
@@ -42,6 +44,9 @@ protected:
 protected:
     mbgl::gl::ProcAddress getExtensionFunctionPointer(const char*) override;
     void updateAssumedState() override;
+
+private:
+    bool logEGLconfigAttribs = true;
 };
 
 } // namespace android

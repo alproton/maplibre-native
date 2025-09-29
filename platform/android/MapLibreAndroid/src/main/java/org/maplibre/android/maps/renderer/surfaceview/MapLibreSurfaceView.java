@@ -265,8 +265,8 @@ public abstract class MapLibreSurfaceView extends SurfaceView implements Surface
    * All potentially blocking synchronization is done through the
    * sRenderThreadManager object. This avoids multiple-lock ordering issues.
    */
-  abstract static class RenderThread extends Thread {
-    RenderThread(RenderThreadManager aRenderThreadManager) {
+  public abstract static class RenderThread extends Thread {
+    public RenderThread(RenderThreadManager aRenderThreadManager) {
       super();
       width = 0;
       height = 0;

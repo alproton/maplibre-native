@@ -3,8 +3,8 @@
 #include <mbgl/gfx/backend_scope.hpp>
 #include <mbgl/gl/context.hpp>
 #include <mbgl/gl/renderable_resource.hpp>
-
-#include <EGL/egl.h>
+#include <mbgl/util/logging.hpp>
+#include "android_egl_helper.hpp"
 
 #include <cassert>
 
@@ -47,6 +47,10 @@ gl::ProcAddress AndroidGLRendererBackend::getExtensionFunctionPointer(const char
 void AndroidGLRendererBackend::updateViewPort() {
     assert(gfx::BackendScope::exists());
     setViewport(0, 0, size);
+    if (logEGLconfigAttribs) {
+        Log::Info(Event::OpenGL, "EGL Config Attributes:\n" + android::egl::query_current_config_attributes());
+        logEGLconfigAttribs = false;
+    }
 }
 
 void AndroidGLRendererBackend::resizeFramebuffer(int width, int height) {
@@ -66,6 +70,18 @@ void AndroidGLRendererBackend::updateAssumedState() {
 void AndroidGLRendererBackend::markContextLost() {
     if (context) {
         getContext<gl::Context>().setCleanupOnDestruction(false);
+    }
+}
+
+void AndroidGLRendererBackend::setSwapInterval(int interval) {
+    if (swapInterval != interval) {
+        swapInterval = interval;
+        bool success = eglSwapInterval(eglGetCurrentDisplay(), swapInterval);
+        if (!success) {
+            Log::Info(Event::OpenGL, "Failure in setting swap interval");
+        } else {
+            Log::Info(Event::OpenGL, "Setting swap interval to " + std::to_string(swapInterval));
+        }
     }
 }
 

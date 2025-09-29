@@ -110,6 +110,8 @@ public class MapLibreMapOptions implements Parcelable {
 
   private int threadPriorityOverride = 0;
 
+  private boolean useModernEGL = false;
+
 
   /**
    * Creates a new MapLibreMapOptions object.
@@ -169,6 +171,7 @@ public class MapLibreMapOptions implements Parcelable {
     foregroundLoadColor = in.readInt();
     crossSourceCollisions = in.readByte() != 0;
     threadPriorityOverride = in.readInt();
+    useModernEGL = in.readByte() != 0;
   }
 
   /**
@@ -760,6 +763,12 @@ public class MapLibreMapOptions implements Parcelable {
     return this;
   }
 
+  @NonNull
+  public MapLibreMapOptions enableModernEGL(boolean enable) {
+    this.useModernEGL = enable;
+    return this;
+  }
+
   /**
    * Enable local ideograph font family, defaults to true.
    *
@@ -858,6 +867,10 @@ public class MapLibreMapOptions implements Parcelable {
    */
   public int getThreadPriorityOverride() {
     return threadPriorityOverride;
+  }
+
+  public boolean getUseModernEGL() {
+    return useModernEGL;
   }
 
   /**
@@ -1245,6 +1258,7 @@ public class MapLibreMapOptions implements Parcelable {
     dest.writeInt(foregroundLoadColor);
     dest.writeByte((byte) (crossSourceCollisions ? 1 : 0));
     dest.writeInt(threadPriorityOverride);
+    dest.writeByte((byte) (useModernEGL ? 1 : 0));
   }
 
   @Override
@@ -1369,6 +1383,10 @@ public class MapLibreMapOptions implements Parcelable {
       return false;
     }
 
+    if( useModernEGL != options.useModernEGL) {
+      return false;
+    }
+
     return false;
   }
 
@@ -1417,6 +1435,7 @@ public class MapLibreMapOptions implements Parcelable {
     result = 31 * result + (int) pixelRatio;
     result = 31 * result + (crossSourceCollisions ? 1 : 0);
     result = 31 * result + threadPriorityOverride;
+    result = 31 * result + (useModernEGL ? 1 : 0);
     return result;
   }
 }

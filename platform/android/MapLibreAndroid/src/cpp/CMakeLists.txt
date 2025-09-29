@@ -200,6 +200,8 @@ if(MLN_WITH_OPENGL)
         maplibre PRIVATE
             ${PROJECT_SOURCE_DIR}/android_gl_renderer_backend.cpp
             ${PROJECT_SOURCE_DIR}/android_gl_renderer_backend.hpp
+            ${PROJECT_SOURCE_DIR}/android_egl_helper.cpp
+            ${PROJECT_SOURCE_DIR}/android_egl_helper.hpp
     )
     target_compile_definitions(
         maplibre

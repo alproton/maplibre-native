@@ -66,8 +66,9 @@ public abstract class MapRenderer implements MapRendererScheduler {
               translucentSurface, initCallback, threadPriorityOverride);
     } else {
       boolean renderSurfaceOnTop = options.getRenderSurfaceOnTop();
+      boolean useModernEGL = options.getUseModernEGL();
       renderer = MapRendererFactory.newSurfaceViewMapRenderer(context, localFontFamily,
-              renderSurfaceOnTop, initCallback, threadPriorityOverride);
+              renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL);
     }
 
     return renderer;
@@ -150,6 +151,10 @@ public abstract class MapRenderer implements MapRendererScheduler {
     nativeSetSwapBehaviorFlush(flush);
   }
 
+  public void setSwapInterval(int interval) {
+      nativeSetSwapInterval(interval);
+  }
+
   /**
    * May be called from any thread.
    * <p>
@@ -184,6 +189,8 @@ public abstract class MapRenderer implements MapRendererScheduler {
   private native void nativeRender();
 
   private native void nativeSetSwapBehaviorFlush(boolean flush);
+
+  private native void nativeSetSwapInterval(int interval);
 
   public native void nativeSetCustomPuckState(double lat,
                                               double lon,

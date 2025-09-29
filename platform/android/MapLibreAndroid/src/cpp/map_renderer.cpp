@@ -230,6 +230,10 @@ void MapRenderer::scheduleSnapshot(std::unique_ptr<SnapshotCallback> callback) {
 
 void MapRenderer::render(JNIEnv&) {
     assert(renderer);
+    // Set the swap interval if it has been changed
+    if (backend && swapInterval != -1) {
+        backend->setSwapInterval(swapInterval);
+    }
 
     std::shared_ptr<UpdateParameters> params;
     {
@@ -350,6 +354,10 @@ void MapRenderer::setSwapBehaviorFlush(JNIEnv&, jboolean flush) {
     }
 }
 
+void MapRenderer::setSwapInterval(JNIEnv&, jint interval) {
+    swapInterval = interval;
+}
+
 void MapRenderer::setCustomPuckState(
     JNIEnv&, jdouble lat, jdouble lon, jdouble bearing, jfloat iconScale, jboolean cameraTracking) {
     if (backend) {
@@ -379,6 +387,7 @@ void MapRenderer::registerNative(jni::JNIEnv& env) {
         METHOD(&MapRenderer::onSurfaceChanged, "nativeOnSurfaceChanged"),
         METHOD(&MapRenderer::onSurfaceDestroyed, "nativeOnSurfaceDestroyed"),
         METHOD(&MapRenderer::setSwapBehaviorFlush, "nativeSetSwapBehaviorFlush"),
+        METHOD(&MapRenderer::setSwapInterval, "nativeSetSwapInterval"),
         METHOD(&MapRenderer::setCustomPuckState, "nativeSetCustomPuckState"));
 }
 
