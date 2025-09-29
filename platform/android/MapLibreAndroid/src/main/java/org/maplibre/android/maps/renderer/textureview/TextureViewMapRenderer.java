@@ -78,7 +78,7 @@ public class TextureViewMapRenderer extends MapRenderer {
    * Overridden to provide package access
    */
   @Override
-  protected void onDrawFrame(boolean isWaitingFrame) {
+  public void onDrawFrame(boolean isWaitingFrame) {
     super.onDrawFrame(isWaitingFrame);
   }
 

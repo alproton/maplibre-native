@@ -161,7 +161,7 @@ public class GLTextureViewRenderThread extends TextureViewRenderThread {
         }
 
         // Time to render a frame
-        mapRenderer.onDrawFrame();
+        mapRenderer.onDrawFrame(false);
 
         // Swap and check the result
         int swapError = eglHolder.swap();

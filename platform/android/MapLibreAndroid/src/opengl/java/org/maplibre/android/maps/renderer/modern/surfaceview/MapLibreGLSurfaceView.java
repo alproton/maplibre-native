@@ -354,6 +354,7 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
         boolean wantRenderNotification = false;
         boolean doRenderNotification = false;
         boolean askedToReleaseEglContext = false;
+        boolean isWaitingFrame = false;
         int w = 0;
         int h = 0;
         Runnable event = null;
@@ -491,6 +492,7 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
                 }
               }
               // By design, this is the only place in a GLThread thread where we wait().
+              isWaitingFrame = true;
               renderThreadManager.wait();
             }
           } // end of synchronized(sGLThreadManager)
@@ -536,7 +538,8 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
 
           MapLibreGLSurfaceView view = mSurfaceViewWeakRef.get();
           if (view != null) {
-            view.renderer.onDrawFrame();
+            view.renderer.onDrawFrame(isWaitingFrame);
+            isWaitingFrame = false;
             if (finishDrawingRunnable != null) {
               finishDrawingRunnable.run();
               finishDrawingRunnable = null;
