@@ -101,21 +101,21 @@ public class SwappyPerformanceMonitor {
         if (onTimePercentage >= GOOD_ON_TIME_PERCENTAGE) {
             Logger.i(TAG, "✅ Excellent frame delivery performance");
         } else if (onTimePercentage >= ACCEPTABLE_ON_TIME_PERCENTAGE) {
-            Logger.w(TAG, "⚠️ Acceptable frame delivery, room for improvement");
+            Logger.w(TAG, "Acceptable frame delivery, room for improvement");
         } else {
-            Logger.e(TAG, "❌ Poor frame delivery performance - optimization needed");
+            Logger.e(TAG, "Poor frame delivery performance - optimization needed");
         }
 
         // SurfaceFlinger/Compositor analysis
         if (compositorDelayPercentage > HIGH_COMPOSITOR_DELAY_THRESHOLD) {
-            Logger.w(TAG, "🐌 High SurfaceFlinger delays detected (" + String.format("%.1f", compositorDelayPercentage) + "%)");
-            Logger.i(TAG, "💡 Consider: Reduce rendering complexity or enable buffer stuffing fix");
+            Logger.w(TAG, "High SurfaceFlinger delays detected (" + String.format("%.1f", compositorDelayPercentage) + "%)");
+            Logger.i(TAG, "Consider: Reduce rendering complexity or enable buffer stuffing fix");
         }
 
         // Frame consistency analysis
         if (consistencyScore < 80.0) {
-            Logger.w(TAG, "📊 Inconsistent frame timing detected");
-            Logger.i(TAG, "💡 Consider: Reset frame pacing after scene changes");
+            Logger.w(TAG, "Inconsistent frame timing detected");
+            Logger.i(TAG, "Consider: Reset frame pacing after scene changes");
         }
 
         // Specific recommendations
@@ -123,9 +123,9 @@ public class SwappyPerformanceMonitor {
         long totalIdleFrames = stats.getTotalIdleFrames();
 
         if (totalLateFrames > totalIdleFrames * 2) {
-            Logger.i(TAG, "💡 Recommendation: Rendering bottleneck - optimize GPU/CPU work");
+            Logger.i(TAG, "Recommendation: Rendering bottleneck - optimize GPU/CPU work");
         } else if (totalIdleFrames > totalLateFrames * 2) {
-            Logger.i(TAG, "💡 Recommendation: Compositor bottleneck - try buffer stuffing fix");
+            Logger.i(TAG, "Recommendation: Compositor bottleneck - try buffer stuffing fix");
         }
     }
 
