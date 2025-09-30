@@ -6,7 +6,6 @@
 #include <mbgl/util/logging.hpp>
 #include "android_egl_helper.hpp"
 #include "swappy_frame_pacing.hpp"
-#include <EGL/egl.h>
 #include <cassert>
 
 namespace mbgl {
