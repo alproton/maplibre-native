@@ -388,11 +388,6 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
       haveEglContext = false;
       haveEglSurface = false;
       wantRenderNotification = false;
-//      if(SwappyRenderer.isEnabled() && mSurfaceViewWeakRef.get().enableSwappyLogging) {
-//        EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
-//        EGLSurface  surface =
-//        SwappyRenderer.recordFrameStart();
-//      }
 
       try {
         boolean createEglContext = false;
