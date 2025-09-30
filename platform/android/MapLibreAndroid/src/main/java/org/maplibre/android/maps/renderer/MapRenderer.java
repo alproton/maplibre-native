@@ -106,7 +106,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
    * @return FrameTimingStats object with timing analysis, or null if no samples collected
    */
   @Nullable
-  public SwappyPerformanceMonitor.FrameTimingStats getFrameTimingStats() {
+  public FrameTimingStats getFrameTimingStats() {
     return SwappyPerformanceMonitor.getNativeFrameTimingStats();
   }
 

@@ -84,7 +84,7 @@ void AndroidGLRendererBackend::setSwapInterval(int interval) {
             // interval = 1 means 60fps, interval = 2 means 30fps, etc.
             int targetFps = (interval > 0) ? (60 / interval) : 60;
             SwappyFramePacing::setTargetFrameRate(targetFps);
-            Log::Info(Event::OpenGL,
+            Log::Info(Event::Swappy,
                       "Setting Swappy frame rate to " + std::to_string(targetFps) +
                           " FPS (interval: " + std::to_string(swapInterval) + ")");
         } else {
