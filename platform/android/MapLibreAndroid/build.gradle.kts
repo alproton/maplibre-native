@@ -25,8 +25,6 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.interpolator)
     implementation(libs.gamesFramePacing)
-//    implementation("androidx.games:games-frame-pacing:2.1.0")
-    //implementation("com.google.android.games:frame-pacing:1.10.0")
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito)

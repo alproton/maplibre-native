@@ -28,6 +28,7 @@ import org.maplibre.android.annotations.Annotation;
 import org.maplibre.android.constants.MapLibreConstants;
 import org.maplibre.android.exceptions.MapLibreConfigurationException;
 import org.maplibre.android.location.LocationComponent;
+import org.maplibre.android.maps.renderer.FrameTimingStats;
 import org.maplibre.android.maps.renderer.MapRenderer;
 import org.maplibre.android.maps.renderer.SwappyPerformanceMonitor;
 import org.maplibre.android.maps.widgets.CompassView;
@@ -303,7 +304,7 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
    * @return FrameTimingStats object with timing analysis, or null if no samples collected
    */
   @Nullable
-  public SwappyPerformanceMonitor.FrameTimingStats getFrameTimingStats() {
+  public FrameTimingStats getFrameTimingStats() {
     return mapRenderer.getFrameTimingStats();
   }
 
