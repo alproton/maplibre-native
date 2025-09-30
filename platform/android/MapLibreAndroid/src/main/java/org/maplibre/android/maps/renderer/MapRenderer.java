@@ -16,7 +16,7 @@ import org.maplibre.android.LibraryLoader;
 import org.maplibre.android.log.Logger;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapLibreMapOptions;
-import org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView;
+import org.maplibre.android.maps.renderer.surfaceview.MapLibreSurfaceView;
 
 /**
  * The {@link MapRenderer} encapsulates the render thread.
@@ -202,7 +202,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
 
   @CallSuper
-  protected void onDrawFrame() {
+  protected void onDrawFrame(boolean isWaitingFrame) {
     if(SwappyRenderer.isEnabled()) {
       View view = getView();
       if(view instanceof MapLibreSurfaceView) {
