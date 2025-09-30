@@ -1,5 +1,7 @@
 package org.maplibre.android.maps.renderer;
 
+import android.annotation.SuppressLint;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import org.maplibre.android.log.Logger;
@@ -258,6 +260,7 @@ public class SwappyPerformanceMonitor {
      * Emergency diagnostics for severe performance issues.
      * Logs detailed breakdown of frame timing issues to help identify root causes.
      */
+    @SuppressLint("DefaultLocale")
     public static void emergencyDiagnostics() {
         SwappyFrameStats stats = SwappyRenderer.getStats();
         if (stats == null) {
@@ -353,6 +356,8 @@ public class SwappyPerformanceMonitor {
             Logger.e(TAG, "💡 This is classic buffer stuffing - apply fix immediately");
         }
 
+        applyEmergencyFixes();
+
         Logger.e(TAG, "=== END EMERGENCY DIAGNOSTICS ===");
     }
 
@@ -379,7 +384,7 @@ public class SwappyPerformanceMonitor {
         // Emergency fix for severe compositor delays (like your 100%)
         if (compositorDelay > 80.0) {
             Logger.w(TAG, "Applying aggressive buffer stuffing fix for severe delays");
-            SwappyRenderer.setBufferStuffingFixWait(3);
+            SwappyRenderer.setBufferStuffingFixWait(4);
         }
 
         // Reset frame pacing to clear bad timing history
