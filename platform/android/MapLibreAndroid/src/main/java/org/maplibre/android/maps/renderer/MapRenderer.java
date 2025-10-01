@@ -6,6 +6,7 @@ import android.content.ContextWrapper;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import java.lang.ref.WeakReference;
 
 import androidx.annotation.CallSuper;
 import androidx.annotation.Keep;
@@ -27,9 +28,6 @@ import org.maplibre.android.maps.renderer.surfaceview.MapLibreSurfaceView;
  */
 @Keep
 public abstract class MapRenderer implements MapRendererScheduler {
-  private static int frameCount = 0;
-  private static long lastAnalysisTime = 0;
-  private static final long ANALYSIS_INTERVAL_MS = 5000; // Every 5 seconds
 
   static {
     LibraryLoader.load();
@@ -60,6 +58,13 @@ public abstract class MapRenderer implements MapRendererScheduler {
   private boolean skipWaitingFrames = false;
   private MapLibreMap.OnFpsChangedListener onFpsChangedListener;
 
+  // Swappy initialization in render thread
+  private WeakReference<Context> contextRef;
+  private boolean shouldEnableSwappy = false;
+  private boolean enableSwappyLogs = false;
+  private boolean swappyInitialized = false;
+  private boolean shouldEnableSwappyFrameMetrics = false;
+
   public static MapRenderer create(MapLibreMapOptions options, @NonNull Context context, Runnable initCallback) {
 
     MapRenderer renderer = null;
@@ -76,14 +81,14 @@ public abstract class MapRenderer implements MapRendererScheduler {
       boolean useModernEGL = options.getUseModernEGL();
       boolean useSwappy = options.getUseSwappy();
       boolean enableSwappyLogs = options.getEnableSwappyLogs();
-      if(useSwappy) {
-        //initialization of swappy is done here, but destruction happens in the destructor of map_renderer.cpp
-        initializeSwappy(context, enableSwappyLogs);
-      } else {
-        Logger.i("Swappy", "Swappy Frame Pacing Not Initialized");
-      }
+      boolean enableSwappyFrameMetrics = options.getUseSwappyFrameMetrics();
       renderer = MapRendererFactory.newSurfaceViewMapRenderer(context, localFontFamily,
-              renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL, useSwappy, enableSwappyLogs);
+              renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL);
+
+      // Configure Swappy settings for render thread initialization
+      if (renderer != null) {
+        renderer.configureSwappyInitialization(context, useSwappy, enableSwappyLogs, enableSwappyFrameMetrics);
+      }
     }
 
     return renderer;
@@ -111,8 +116,49 @@ public abstract class MapRenderer implements MapRendererScheduler {
   }
 
   /**
+   * Configure Swappy settings for render thread initialization.
+   * This method stores the context and settings to be used later in the render thread.
+   *
+   * @param context The context to use for Swappy initialization
+   * @param useSwappy Whether Swappy should be enabled
+   * @param enableLogs Whether Swappy logging should be enabled
+   */
+  public void configureSwappyInitialization(@NonNull Context context, boolean useSwappy, boolean enableLogs, boolean enableFrameMetrics) {
+    this.contextRef = new WeakReference<Context>(context);
+    this.shouldEnableSwappy = useSwappy;
+    this.enableSwappyLogs = enableLogs;
+    this.swappyInitialized = false;
+    this.shouldEnableSwappyFrameMetrics = enableFrameMetrics;
+  }
+
+  /**
+   * Initialize Swappy in the render thread if needed.contextRef
+   * This method is called from onDrawFrame and ensures Swappy is initialized only once.
+   */
+  private void lazyInitializeSwappy() {
+    if (!shouldEnableSwappy || swappyInitialized) {
+      return; // Either Swappy not needed or already initialized
+    }
+
+    Context context = contextRef != null ? contextRef.get() : null;
+    if (context == null) {
+      Logger.w(TAG, "Context reference is null, cannot initialize Swappy in render thread");
+      swappyInitialized = true; // Mark as initialized to avoid repeated attempts
+      return;
+    }
+
+    Logger.i(TAG, "Initializing Swappy Frame Pacing in render thread");
+    initializeSwappy(context, enableSwappyLogs);
+    if(shouldEnableSwappyFrameMetrics) {
+      enableFrameTimingCollection(true);
+    }
+    swappyInitialized = true;
+  }
+
+  /**
    * Initialize Swappy Frame Pacing if possible.
    * Attempts to find the Activity context and initialize Swappy.
+   * This method is now called from the render thread.
    */
   private static void initializeSwappy(@NonNull Context context, boolean enableLogs) {
     try {
@@ -203,6 +249,9 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
   @CallSuper
   protected void onDrawFrame(boolean isWaitingFrame) {
+    // Initialize Swappy once in the render thread if needed
+    lazyInitializeSwappy();
+
     if(SwappyRenderer.isEnabled()) {
       View view = getView();
       if(view instanceof MapLibreSurfaceView) {

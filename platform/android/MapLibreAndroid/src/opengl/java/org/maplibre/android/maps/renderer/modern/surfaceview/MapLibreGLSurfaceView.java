@@ -32,17 +32,13 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
   private WeakReference<EGLSurface> eglSurfaceWeakReference;
 
   private boolean preserveEGLContextOnPause;
-  private boolean useSwappy;
-  private boolean enableSwappyLogging;
 
   // Timer for diagnostics - only call every 5 seconds
   private long lastDiagnosticsTime = 0;
   private static final long DIAGNOSTICS_INTERVAL_MS = 5000; // 5 seconds
 
-  public MapLibreGLSurfaceView(Context context, boolean useSwappy, boolean enableSwappyLogging) {
+  public MapLibreGLSurfaceView(Context context) {
     super(context);
-    this.useSwappy = useSwappy;
-    this.enableSwappyLogging = enableSwappyLogging;
   }
 
   public MapLibreGLSurfaceView(Context context, AttributeSet attrs) {

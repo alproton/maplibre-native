@@ -116,6 +116,8 @@ public class MapLibreMapOptions implements Parcelable {
 
   private boolean enableSwappyLogs = false;
 
+  private boolean useSwappyFrameMetrics = false;
+
 
   /**
    * Creates a new MapLibreMapOptions object.
@@ -178,6 +180,7 @@ public class MapLibreMapOptions implements Parcelable {
     useModernEGL = in.readByte() != 0;
     useSwappy = in.readByte() != 0;
     enableSwappyLogs = in.readByte() != 0;
+    useSwappyFrameMetrics = in.readByte() != 0;
   }
 
   /**
@@ -214,6 +217,7 @@ public class MapLibreMapOptions implements Parcelable {
       maplibreMapOptions.useModernEGL = true;
       maplibreMapOptions.useSwappy = true;
       maplibreMapOptions.enableSwappyLogs = true;
+      maplibreMapOptions.useSwappyFrameMetrics = true;
 
       // deprecated
       maplibreMapOptions.apiBaseUrl(typedArray.getString(R.styleable.maplibre_MapView_maplibre_apiBaseUrl));
@@ -784,8 +788,15 @@ public class MapLibreMapOptions implements Parcelable {
     return this;
   }
 
+  @NonNull
   public MapLibreMapOptions enableSwappyLogs(boolean enable) {
     this.enableSwappyLogs = enable;
+    return this;
+  }
+
+  @NonNull
+  public MapLibreMapOptions enableSwappyFrameMetrics(boolean enable) {
+    this.useSwappyFrameMetrics = enable;
     return this;
   }
 
@@ -889,16 +900,40 @@ public class MapLibreMapOptions implements Parcelable {
     return threadPriorityOverride;
   }
 
+  /**
+   * Returns if modern EGL context is used currently
+   *
+   * @return true if enabled
+   */
   public boolean getUseModernEGL() {
     return useModernEGL;
   }
 
+  /**
+   * Returns if Swappy is used currently
+   *
+   * @return true if enabled
+   */
   public boolean getUseSwappy() {
     return useSwappy;
   }
 
+    /**
+     * Returns if Swappy logs are enabled
+     *
+     * @return true if enabled
+     */
   public boolean getEnableSwappyLogs() {
     return enableSwappyLogs;
+  }
+
+  /**
+   * Returns if Swappy FrameMetrics are enabled
+   *
+   * @return true if enabled
+   */
+  public boolean getUseSwappyFrameMetrics() {
+    return useSwappyFrameMetrics;
   }
 
   /**
@@ -1288,7 +1323,8 @@ public class MapLibreMapOptions implements Parcelable {
     dest.writeInt(threadPriorityOverride);
     dest.writeByte((byte) (useModernEGL ? 1 : 0));
     dest.writeByte((byte) (useSwappy ? 1 : 0));
-    dest.writeByte((byte)(enableSwappyLogs ? 1 : 0));
+    dest.writeByte((byte) (enableSwappyLogs ? 1 : 0));
+    dest.writeByte((byte) (useSwappyFrameMetrics ? 1 : 0));
   }
 
   @Override
@@ -1425,6 +1461,10 @@ public class MapLibreMapOptions implements Parcelable {
       return false;
     }
 
+    if( useSwappyFrameMetrics != options.useSwappyFrameMetrics) {
+      return false;
+    }
+
     return false;
   }
 
@@ -1476,6 +1516,7 @@ public class MapLibreMapOptions implements Parcelable {
     result = 31 * result + (useModernEGL ? 1 : 0);
     result = 31 * result + (useSwappy ? 1 : 0);
     result = 31 * result + (enableSwappyLogs ? 1 : 0);
+    result = 31 * result + (useSwappyFrameMetrics ? 1 : 0);
     return result;
   }
 }
