@@ -7,10 +7,6 @@ import android.view.TextureView;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
-import org.maplibre.android.maps.renderer.modern.surfaceview.GLSurfaceViewMapRenderer;
-import org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView;
-//import org.maplibre.android.maps.renderer.surfaceview.GLSurfaceViewMapRenderer;
-//import org.maplibre.android.maps.renderer.surfaceview.MapLibreGLSurfaceView;
 import org.maplibre.android.maps.renderer.surfaceview.SurfaceViewMapRenderer;
 import org.maplibre.android.maps.renderer.textureview.GLTextureViewRenderThread;
 import org.maplibre.android.maps.renderer.textureview.TextureViewMapRenderer;
@@ -39,7 +35,6 @@ public class MapRendererFactory {
                                                                  int threadPriorityOverride, boolean useModernEGL) {
 
     if(useModernEGL) {
-      //TODO: add support for swappy for MapLibreGLSurfaceView based on modern EGL
       org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView surfaceView = new org.maplibre.android.maps.renderer.modern.surfaceview.MapLibreGLSurfaceView(context);
       surfaceView.setZOrderMediaOverlay(renderSurfaceOnTop);
 
