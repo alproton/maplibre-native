@@ -358,7 +358,13 @@ public abstract class MapRenderer implements MapRendererScheduler {
       // Not valid, just return
       return;
     }
-    expectedRenderTime = 1E9 / maximumFps;
+
+    if(SwappyRenderer.isEnabled()) {
+      SwappyPerformanceMonitor.reset();
+      SwappyRenderer.setTargetFrameRate(maximumFps);
+    } else {
+      expectedRenderTime = 1E9 / maximumFps;
+    }
   }
 
   /**
