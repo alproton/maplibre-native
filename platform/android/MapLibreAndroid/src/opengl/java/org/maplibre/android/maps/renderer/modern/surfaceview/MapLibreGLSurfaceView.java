@@ -10,6 +10,9 @@ import android.opengl.EGLDisplay;
 import android.util.AttributeSet;
 import android.util.Log;
 
+import org.maplibre.android.log.Logger;
+import org.maplibre.android.maps.renderer.SwappyPerformanceMonitor;
+import org.maplibre.android.maps.renderer.SwappyRenderer;
 import org.maplibre.android.maps.renderer.egl.EGLLogWrapper;
 import org.maplibre.android.maps.renderer.modern.egl.EGLConfigChooser;
 import org.maplibre.android.maps.renderer.modern.egl.EGLContextFactory;
@@ -26,8 +29,13 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
   private EGLConfigChooser eglConfigChooser;
   private EGLContextFactory eglContextFactory;
   private EGLWindowSurfaceFactory eglWindowSurfaceFactory;
+  private WeakReference<EGLSurface> eglSurfaceWeakReference;
 
   private boolean preserveEGLContextOnPause;
+
+  // Timer for diagnostics - only call every 5 seconds
+  private long lastDiagnosticsTime = 0;
+  private static final long DIAGNOSTICS_INTERVAL_MS = 5000; // 5 seconds
 
   public MapLibreGLSurfaceView(Context context) {
     super(context);
@@ -118,6 +126,30 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
   @Override
   protected void createRenderThread() {
     renderThread = new GLThread(viewWeakReference);
+  }
+
+  public boolean recordFrameStart() {
+    boolean success = false;
+    if(SwappyRenderer.isEnabled() && eglSurfaceWeakReference != null && eglSurfaceWeakReference.get() != null) {
+      EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+      EGLSurface surface = eglSurfaceWeakReference.get();
+      if(display != null && display != EGL14.EGL_NO_DISPLAY && surface != null && surface != EGL14.EGL_NO_SURFACE) {
+        long displayHandle = display.getNativeHandle();
+        long surfaceHandle = surface.getNativeHandle();
+        SwappyPerformanceMonitor.recordFrameStart(displayHandle, surfaceHandle);
+
+        // Only call emergency diagnostics every 5 seconds instead of every frame
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastDiagnosticsTime >= DIAGNOSTICS_INTERVAL_MS) {
+          SwappyPerformanceMonitor.emergencyDiagnostics();
+          lastDiagnosticsTime = currentTime;
+        }
+      }
+
+      success = true;
+    }
+
+    return success;
   }
 
   /**
@@ -213,6 +245,7 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
         };
 
         mEglSurface = view.eglWindowSurfaceFactory.createWindowSurface(mEglDisplay, mEglConfig, view.getHolder(), surfaceAttributes, 0);
+        view.eglSurfaceWeakReference = new WeakReference<>(mEglSurface);
       } else {
         mEglSurface = null;
       }
@@ -247,6 +280,12 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
      * @return the EGL error code from eglSwapBuffers.
      */
     public int swap() {
+      if(SwappyRenderer.isEnabled()) {
+        boolean success = SwappyRenderer.swap(mEglDisplay.getNativeHandle(), mEglSurface.getNativeHandle());
+
+        return success ? EGL14.EGL_SUCCESS : EGL14.eglGetError();
+      }
+
       if (!EGL14.eglSwapBuffers(mEglDisplay, mEglSurface)) {
         return EGL14.eglGetError();
       }

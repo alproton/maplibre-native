@@ -202,11 +202,18 @@ if(MLN_WITH_OPENGL)
             ${PROJECT_SOURCE_DIR}/android_gl_renderer_backend.hpp
             ${PROJECT_SOURCE_DIR}/android_egl_helper.cpp
             ${PROJECT_SOURCE_DIR}/android_egl_helper.hpp
+            ${PROJECT_SOURCE_DIR}/swappy_frame_pacing.cpp
+            ${PROJECT_SOURCE_DIR}/swappy_frame_pacing.hpp
+            ${PROJECT_SOURCE_DIR}/swappy_jni.cpp
     )
     target_compile_definitions(
         maplibre
             PRIVATE MLN_RENDER_BACKEND_OPENGL=1
     )
+
+    # Only find and link Swappy package for OpenGL builds
+    find_package(games-frame-pacing REQUIRED CONFIG)
+    target_link_libraries(maplibre PRIVATE games-frame-pacing::swappy_static)
 endif()
 
 if(MLN_WITH_VULKAN)

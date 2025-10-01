@@ -46,6 +46,7 @@ public class MapRendererFactory {
         }
       };
     }
+    //Swappy is not supported for the legacy EGL path since it requires a modern EGLDisplay and EGLSurface
     org.maplibre.android.maps.renderer.surfaceview.MapLibreGLSurfaceView surfaceView = new org.maplibre.android.maps.renderer.surfaceview.MapLibreGLSurfaceView(context);
     surfaceView.setZOrderMediaOverlay(renderSurfaceOnTop);
 
