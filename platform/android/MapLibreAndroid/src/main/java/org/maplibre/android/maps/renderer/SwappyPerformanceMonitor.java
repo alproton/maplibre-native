@@ -55,7 +55,7 @@ public class SwappyPerformanceMonitor {
             if(SwappyRenderer.isNativeFrameTimingEnabled()) {
                 FrameTimingStats timingStats = getNativeFrameTimingStats();
                 if (timingStats != null) {
-                    Logger.i(TAG, "Native Frame Timing Stats: " + timingStats.toCompactString());
+                    Logger.i(TAG, "Native Frame Timing Stats: " + timingStats.toString());
                 }
             }
             lastStatsLogTime = currentTime;
@@ -331,29 +331,23 @@ public class SwappyPerformanceMonitor {
         Logger.e(TAG, "--- DIAGNOSTIC RECOMMENDATIONS ---");
 
         if (totalIdle > stats.getTotalFrames() * 0.8) {
-            Logger.e(TAG, "🚨 SEVERE: >80% frames waiting in compositor queue");
-            Logger.e(TAG, "💡 SOLUTION: Apply buffer stuffing fix immediately");
-            Logger.e(TAG, "   SwappyRenderer.setBufferStuffingFixWait(3);");
-        }
-
-        if (totalLate > stats.getTotalFrames() * 0.9) {
-            Logger.e(TAG, "🚨 SEVERE: >90% frames missing deadlines");
-            Logger.e(TAG, "💡 SOLUTION: Reduce target frame rate");
-            Logger.e(TAG, "   SwappyRenderer.setTargetFrameRate(30);");
+            Logger.e(TAG, "SEVERE: >80% frames waiting in compositor queue");
+            Logger.e(TAG, "SOLUTION: Apply buffer stuffing fix immediately");
+            Logger.e(TAG, "SwappyRenderer.setBufferStuffingFixWait(4);");
         }
 
         if (totalIdle > totalLate) {
-            Logger.e(TAG, "🔍 ANALYSIS: Compositor bottleneck (not rendering bottleneck)");
-            Logger.e(TAG, "💡 PRIMARY: Buffer stuffing fix should resolve this");
+            Logger.e(TAG, "ANALYSIS: Compositor bottleneck (not rendering bottleneck)");
+            Logger.e(TAG, "PRIMARY: Buffer stuffing fix should resolve this");
         } else {
-            Logger.e(TAG, "🔍 ANALYSIS: Rendering bottleneck (CPU/GPU performance)");
-            Logger.e(TAG, "💡 PRIMARY: Optimize rendering or reduce frame rate");
+            Logger.e(TAG, "ANALYSIS: Rendering bottleneck (CPU/GPU performance)");
+            Logger.e(TAG, "PRIMARY: Optimize rendering or reduce frame rate");
         }
 
         // Check for specific patterns
         if (idleFrames.length > 3 && idleFrames[3] > stats.getTotalFrames() * 0.3) {
-            Logger.e(TAG, "🚨 PATTERN: Frames waiting 3+ refresh periods");
-            Logger.e(TAG, "💡 This is classic buffer stuffing - apply fix immediately");
+            Logger.e(TAG, "PATTERN: Frames waiting 3+ refresh periods");
+            Logger.e(TAG, "This is classic buffer stuffing - apply fix immediately");
         }
 
         applyEmergencyFixes();
