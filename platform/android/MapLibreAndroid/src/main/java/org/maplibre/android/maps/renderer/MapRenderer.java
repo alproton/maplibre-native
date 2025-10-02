@@ -360,6 +360,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
     }
 
     if(SwappyRenderer.isEnabled()) {
+      Logger.i("Swappy", "Setting Maximum FPS to: " + maximumFps);
       SwappyPerformanceMonitor.reset();
       SwappyRenderer.setTargetFrameRate(maximumFps);
     } else {

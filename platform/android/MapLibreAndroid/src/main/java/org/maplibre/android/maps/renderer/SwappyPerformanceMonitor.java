@@ -200,6 +200,7 @@ public class SwappyPerformanceMonitor {
      * Clear all statistics and reset monitoring.
      */
     public static void reset() {
+        Logger.i(TAG, "Resetting Swappy performance monitoring");
         SwappyRenderer.clearStats();
         frameCount = 0;
         lastStatsLogTime = 0;
@@ -377,7 +378,7 @@ public class SwappyPerformanceMonitor {
 
         // Emergency fix for severe compositor delays (like your 100%)
         if (compositorDelay > 80.0) {
-            Logger.w(TAG, "Applying aggressive buffer stuffing fix for severe delays");
+            Logger.w(TAG, "Applying aggressive buffer stuffing fix for severe delays: nframes - 4");
             SwappyRenderer.setBufferStuffingFixWait(4);
         }
 
