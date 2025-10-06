@@ -93,7 +93,7 @@ android {
             dimension = "renderer"
             externalNativeBuild {
                 cmake {
-                    arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON", "-DANDROID_STL=c++_shared")
+                    arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON", "-DANDROID_STL=c++_shared", "-DMLN_USE_TRACY=ON")
                 }
             }
         }

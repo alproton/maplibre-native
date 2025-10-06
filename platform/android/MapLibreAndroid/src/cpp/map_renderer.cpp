@@ -240,6 +240,18 @@ void MapRenderer::scheduleSnapshot(std::unique_ptr<SnapshotCallback> callback) {
 void MapRenderer::render(JNIEnv&) {
     assert(renderer);
 
+#ifdef MLN_TRACY_ENABLE
+    Log::Info(Event::OpenGL, "MLN_TRACE_ENABLE enabled in MapRenderer::render");
+#else
+    Log::Info(Event::OpenGL, "MLN_TRACE_ENABLE disabled in MapRenderer::render");
+#endif
+
+#ifdef TRACY_ENABLE
+    Log::Info(Event::OpenGL, "TRACY_ENABLE enabled in MapRenderer::render");
+#else
+    Log::Info(Event::OpenGL, "TRACY_ENABLE enabled in MapRenderer::render");
+#endif
+
     // Set the swap interval if it has been changed
     if (backend && swapInterval != -1) {
         backend->setSwapInterval(swapInterval);
@@ -301,22 +313,22 @@ void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface
         backend.reset();
         window.reset();
 
-    if (surface) {
-        window = std::unique_ptr<ANativeWindow, std::function<void(ANativeWindow*)>>(
-            ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get())),
-            [](ANativeWindow* window_) { ANativeWindow_release(window_); });
+        if (surface) {
+            window = std::unique_ptr<ANativeWindow, std::function<void(ANativeWindow*)>>(
+                ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get())),
+                [](ANativeWindow* window_) { ANativeWindow_release(window_); });
 
 #if MLN_RENDER_BACKEND_OPENGL
-        // Set the current window to Swappy if enabled
-        if (SwappyFramePacing::isEnabled()) {
-            ANativeWindow* swappyWindow = ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get()));
-            if (swappyWindow) {
-                SwappyFramePacing::setWindow(swappyWindow);
-                ANativeWindow_release(swappyWindow);
+            // Set the current window to Swappy if enabled
+            if (SwappyFramePacing::isEnabled()) {
+                ANativeWindow* swappyWindow = ANativeWindow_fromSurface(&env, reinterpret_cast<jobject>(surface.get()));
+                if (swappyWindow) {
+                    SwappyFramePacing::setWindow(swappyWindow);
+                    ANativeWindow_release(swappyWindow);
+                }
             }
-        }
 #endif
-    }
+        }
 
         // Create the new backend and renderer
         backend = AndroidRendererBackend::Create(window.get());
