@@ -140,7 +140,6 @@ const void* castGpuIdToTracyPtr(GpuId id) {
 #define MLN_TRACE_FREE_CONST_BUFFER(id) ((void)0)
 #define MLN_TRACE_FUNC() ((void)0)
 #define MLN_TRACE_ZONE(label) ((void)0)
-#error "MLN_TRACY_ENABLE is not defined. MLN_TRACY_ENABLE is expected to be defined in CMake and Bazel"
 #endif // MLN_TRACY_ENABLE
 
 #define MLN_RENDER_BACKEND_OPENGL 1

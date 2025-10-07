@@ -1,6 +1,6 @@
 if (MLN_USE_TRACY)
     add_definitions(-DTRACY_ENABLE)
-    add_definitions(-DMLN_TRACY_ENABLE)
+    target_compile_definitions(mbgl-core PUBLIC MLN_TRACY_ENABLE)
 else()
     return()
 endif()

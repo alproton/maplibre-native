@@ -17,7 +17,7 @@ option(MLN_WITH_WERROR "Make all compilation warnings errors" ON)
 option(MLN_LEGACY_RENDERER "Include the legacy rendering pathway" ON)
 option(MLN_DRAWABLE_RENDERER "Include the drawable rendering pathway" OFF)
 option(MLN_USE_UNORDERED_DENSE "Use ankerl dense containers for performance" ON)
-option(MLN_USE_TRACY "Enable Tracy instrumentation" ON)
+option(MLN_USE_TRACY "Enable Tracy instrumentation" OFF)
 option(MLN_USE_RUST "Use components in Rust" OFF)
 option(MLN_CORE_INCLUDE_DEPS "Include depdendencies in static build of core" OFF)
 
