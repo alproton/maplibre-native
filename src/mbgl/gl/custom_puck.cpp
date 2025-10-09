@@ -150,6 +150,9 @@ void CustomPuck::drawImpl(const gfx::CustomPuckSampledStyle& style) {
     if (!style.icon2.name.empty()) {
         draw(style.icon2);
     }
+    if (!style.icon3.name.empty()) {
+        draw(style.icon3);
+    }
 }
 
 gfx::CustomPuckState CustomPuck::getState() {

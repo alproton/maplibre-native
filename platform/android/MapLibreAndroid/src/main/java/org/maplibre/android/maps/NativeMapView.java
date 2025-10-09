@@ -1309,7 +1309,12 @@ final class NativeMapView implements NativeMap {
 
   @Override
   public void setPuckIconState(String state) {
-    nativeSetPuckIconState(state);
+    nativeSetPuckIconState(state, "");
+  }
+
+  @Override
+  public void setPuckIconStates(String state, String secondaryState) {
+    nativeSetPuckIconState(state, secondaryState);
   }
 
   @Override
@@ -1788,7 +1793,7 @@ final class NativeMapView implements NativeMap {
   private native void nativeSetPuckVariant(String variant);
 
   @Keep
-  private native void nativeSetPuckIconState(String state);
+  private native void nativeSetPuckIconState(String state, String secondaryState);
 
   //---------------------Custom Dots APIs---------------------
   @Keep

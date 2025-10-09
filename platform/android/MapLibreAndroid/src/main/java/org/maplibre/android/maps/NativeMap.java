@@ -318,6 +318,8 @@ interface NativeMap {
 
   void setPuckIconState(String state);
 
+  void setPuckIconStates(String state, String secondaryState);
+
   //
   // Custom Dots API
   //

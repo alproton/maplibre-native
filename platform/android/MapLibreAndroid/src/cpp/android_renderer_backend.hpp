@@ -40,7 +40,7 @@ public:
 
     void setPuckVariant(const std::string& variant);
 
-    void setPuckIconState(const std::string& state);
+    void setPuckIconState(const std::string& state, const std::string& secondaryState = "");
 
     void setCustomPuckState(const gfx::CustomPuckState& state) noexcept { customPuckState = state; }
 

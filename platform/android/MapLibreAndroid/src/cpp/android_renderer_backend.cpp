@@ -43,12 +43,12 @@ void AndroidRendererBackend::setPuckVariant(const std::string& variant) {
     getImpl().customPuck->setPuckVariant(variant);
 }
 
-void AndroidRendererBackend::setPuckIconState(const std::string& state) {
+void AndroidRendererBackend::setPuckIconState(const std::string& state, const std::string& secondaryState) {
     if (!getImpl().customPuck) {
         Log::Debug(Event::Android, "Custom puck not enabled");
         return;
     }
-    getImpl().customPuck->setPuckIconState(state);
+    getImpl().customPuck->setPuckIconState(state, secondaryState);
 }
 
 void AndroidRendererBackend::setCustomDotsNextLayer(std::string layer) {

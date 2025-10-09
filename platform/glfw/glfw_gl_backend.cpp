@@ -70,11 +70,11 @@ void GLFWGLBackend::enableCustomPuck(bool onOff) {
     customPuckState_.bearing = 0;
     if (onOff) {
         assert(!assetPath.empty() && "Asset path must be set before enabling custom puck.");
-        std::string puckStylePath = assetPath + "puck_style.json";
+        std::string puckStylePath = "puck_style.json";
+        customPuck->setAssetPath(MLN_ASSETS_PATH);
         customPuck->setPuckStyle(puckStylePath);
         customPuck->setPuckVariant("default");
         customPuck->setPuckIconState("default");
-        customPuck->setAssetPath(MLN_ASSETS_PATH);
     }
 };
 
