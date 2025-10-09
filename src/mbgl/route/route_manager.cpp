@@ -1347,50 +1347,45 @@ void RouteManager::applyEmergencyDiagnostics() {
         // get route layers and 2 layers before and after
         const auto getLayersNearRoutes = [&]() -> std::vector<std::string> {
             std::vector<std::string> retLayers;
-            std::unordered_set<std::string> addedLayers; // Track what we've added
 
             if (style_ != nullptr) {
                 std::vector<style::Layer*> layers = style_->getLayers();
 
                 if (!layers.empty()) {
-                    // Collect all route layer indices
+                    // Collect all route layer names
                     std::unordered_set<std::string> routeLayerNames;
-                    std::vector<size_t> routeLayerIndices;
-
                     for (const auto& routePair : routeMap_) {
                         const RouteID& routeID = routePair.first;
                         routeLayerNames.insert(getActiveRouteLayerName(routeID));
                         routeLayerNames.insert(getBaseRouteLayerName(routeID));
                     }
 
-                    // Find all route layer indices
+                    // Find the topmost and bottommost route layer indices
+                    size_t topMostRouteIdx = layers.size(); // Initialize to invalid
+                    size_t bottomMostRouteIdx = 0;
+                    bool foundAnyRouteLayer = false;
+
                     for (size_t i = 0; i < layers.size(); ++i) {
                         if (routeLayerNames.find(layers[i]->getID()) != routeLayerNames.end()) {
-                            routeLayerIndices.push_back(i);
+                            if (!foundAnyRouteLayer) {
+                                topMostRouteIdx = i;
+                                bottomMostRouteIdx = i;
+                                foundAnyRouteLayer = true;
+                            } else {
+                                if (i < topMostRouteIdx) topMostRouteIdx = i;
+                                if (i > bottomMostRouteIdx) bottomMostRouteIdx = i;
+                            }
                         }
                     }
 
-                    // For each route layer, add it + context layers
-                    for (size_t idx : routeLayerIndices) {
-                        // Add 2 before
-                        if (idx >= 2 && addedLayers.insert(layers[idx - 2]->getID()).second) {
-                            retLayers.push_back(layers[idx - 2]->getID());
-                        }
-                        if (idx >= 1 && addedLayers.insert(layers[idx - 1]->getID()).second) {
-                            retLayers.push_back(layers[idx - 1]->getID());
-                        }
+                    if (foundAnyRouteLayer) {
+                        // Calculate the range: 2 layers before top, to 2 layers after bottom
+                        size_t startIdx = (topMostRouteIdx >= 2) ? (topMostRouteIdx - 2) : 0;
+                        size_t endIdx = std::min(bottomMostRouteIdx + 2, layers.size() - 1);
 
-                        // Add route layer
-                        if (addedLayers.insert(layers[idx]->getID()).second) {
-                            retLayers.push_back(layers[idx]->getID());
-                        }
-
-                        // Add 2 after
-                        if (idx + 1 < layers.size() && addedLayers.insert(layers[idx + 1]->getID()).second) {
-                            retLayers.push_back(layers[idx + 1]->getID());
-                        }
-                        if (idx + 2 < layers.size() && addedLayers.insert(layers[idx + 2]->getID()).second) {
-                            retLayers.push_back(layers[idx + 2]->getID());
+                        // Collect all layers in this range
+                        for (size_t i = startIdx; i <= endIdx; ++i) {
+                            retLayers.push_back(layers[i]->getID());
                         }
                     }
                 }
