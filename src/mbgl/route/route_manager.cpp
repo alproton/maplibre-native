@@ -39,7 +39,6 @@ const std::string RouteManager::GEOJSON_CASING_ROUTE_SOURCE_ID = "base_route_geo
 const std::string RouteManager::GEOJSON_ACTIVE_ROUTE_SOURCE_ID = "active_route_geojson_source_";
 
 namespace {
-
 std::string tabs(uint32_t tabcount) {
     std::string tabstr;
     for (size_t i = 0; i < tabcount; ++i) {
@@ -101,23 +100,86 @@ std::string tabs(uint32_t tabcount) {
     return ss.str();
 }
 
+inline void updateOrAddAPICapture(const std::string& functionName,
+                                  std::deque<std::string>& apiCaptures,
+                                  const std::unordered_map<std::string, std::string>& args,
+                                  const std::string& resultType,
+                                  const std::string& resultValue,
+                                  const std::unordered_map<std::string, std::string>& extraDataMap,
+                                  const std::string& extraData) {
+    // List of high-frequency methods to deduplicate
+    static const std::unordered_set<std::string> highFreqMethods = {
+        "routeSetProgressPercent", "routeSetProgressPoint"
+        // Add more methods here if needed
+    };
+
+    bool isHighFreq = highFreqMethods.find(functionName) != highFreqMethods.end();
+
+    if (isHighFreq && !apiCaptures.empty()) {
+        // Check if last entry is the same function
+        const std::string& lastCall = apiCaptures.back();
+        std::string searchPattern = "\"api_name\" : \"" + functionName + "\"";
+
+        if (lastCall.find(searchPattern) != std::string::npos) {
+            // Update the last entry
+            std::string updatedCall = createAPIcapture(
+                functionName, args, resultType, resultValue, extraDataMap, extraData);
+            apiCaptures.back() = updatedCall;
+            return; // Don't add new entry
+        }
+    }
+
+    // Add new entry
+    if (apiCaptures.size() >= 100) {
+        apiCaptures.pop_front();
+    }
+
+    apiCaptures.push_back(createAPIcapture(functionName, args, resultType, resultValue, extraDataMap, extraData));
+}
+
 #define TRACE_ROUTE_CALL(apiCaptures, functionParamMap, resultType, resultValue, extraDataMap, extraData) \
-    apiCaptures.push_back(                                                                                \
-        createAPIcapture(__FUNCTION__, functionParamMap, resultType, resultValue, extraDataMap, extraData));
+    updateOrAddAPICapture(__FUNCTION__, apiCaptures, functionParamMap, resultType, resultValue, extraDataMap, extraData)
 
 [[maybe_unused]] std::string toString(bool onOff) {
     return onOff ? "true" : "false";
 }
 
-[[maybe_unused]] std::string toString(const LineString<double>& line, uint32_t tabcount) {
+[[maybe_unused]] std::string toString(const LineString<double>& line, uint32_t tabcount = 0, int limit = -1) {
     std::stringstream ss;
     ss << tabs(tabcount) << "[" << std::endl;
-    for (size_t i = 0; i < line.size(); i++) {
+    const size_t lineLimit = limit < 0 ? line.size() : limit;
+    for (size_t i = 0; i < lineLimit; i++) {
         std::string terminatingCommaStr = i == line.size() - 1 ? "" : ",";
         ss << tabs(tabcount + 1) << "[" << std::to_string(line[i].x) << ", " << std::to_string(line[i].y) << "]"
            << terminatingCommaStr << std::endl;
     }
     ss << tabs(tabcount) << "]";
+
+    return ss.str();
+}
+
+[[maybe_unused]] std::string toString(const RouteSegmentOptions& routeSegOpts, uint32_t tabcount = 0, int limit = -1) {
+    std::stringstream ss;
+    ss << tabs(tabcount) << "{" << std::endl;
+    ss << tabs(tabcount + 1) << "\"firstIndex\": " << "\"" << std::to_string(routeSegOpts.firstIndex) << "\","
+       << std::endl;
+    ss << tabs(tabcount + 1) << "\"firstIndexFraction\": " << "\"" << std::to_string(routeSegOpts.firstIndexFraction)
+       << "\"," << std::endl;
+    ss << tabs(tabcount + 1) << "\"lastIndex\": " << "\"" << std::to_string(routeSegOpts.lastIndex) << "\","
+       << std::endl;
+    ss << tabs(tabcount + 1) << "\"lastIndexFraction\": " << "\"" << std::to_string(routeSegOpts.lastIndexFraction)
+       << "\"," << std::endl;
+    ss << tabs(tabcount + 1) << "\"priority\": " << "\"" << toString(routeSegOpts.priority) << "\"" << std::endl;
+    ss << tabs(tabcount + 1) << "\"color\": " << "[" << std::to_string(routeSegOpts.color.r) << ", "
+       << std::to_string(routeSegOpts.color.g) << ", " << std::to_string(routeSegOpts.color.b) << ", "
+       << std::to_string(routeSegOpts.color.a) << "]," << std::endl;
+    ss << tabs(tabcount + 1) << "\"outerColor\": " << "[" << std::to_string(routeSegOpts.outerColor.r) << ", "
+       << std::to_string(routeSegOpts.outerColor.g) << ", " << std::to_string(routeSegOpts.outerColor.b) << ", "
+       << std::to_string(routeSegOpts.outerColor.a) << "]," << std::endl;
+    size_t geomLimit = limit < 0 ? routeSegOpts.geometry.size() : limit;
+    ss << tabs(tabcount + 1) << "\"geometry\": " << toString(routeSegOpts.geometry, tabcount + 1, geomLimit)
+       << std::endl;
+    ss << tabs(tabcount) << "}";
 
     return ss.str();
 }
@@ -389,6 +451,13 @@ RouteID RouteManager::routeCreate(const LineString<double>& geometry, const Rout
         routeCreateStat.lastStartTime = now;
     }
 
+    // trace
+    std::string geometryStr = toString(geometry, 0, 5);
+    std::string roptsStr = toString(ropts, 0);
+    std::unordered_map<std::string, std::string> functionParamMap = {{"geometry", geometryStr},
+                                                                     {"routeOptions", roptsStr}};
+    TRACE_ROUTE_CALL(stats_.recentApiCalls, functionParamMap, "RouteID", std::to_string(rid.id), {}, "");
+
     return rid;
 }
 
@@ -423,6 +492,7 @@ bool RouteManager::routeSet(const RouteID& routeID, const LineString<double>& ge
 bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegmentOptions& routeSegOpts) {
     assert(routeID.isValid() && "Invalid route ID");
     assert(routeMap_.find(routeID) != routeMap_.end() && "Route not found internally");
+    bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         // route segments must have atleast 2 points
         if (routeSegOpts.firstIndex == INVALID_UINT || routeSegOpts.lastIndex == INVALID_UINT ||
@@ -431,16 +501,20 @@ bool RouteManager::routeSegmentCreate(const RouteID& routeID, const RouteSegment
             return false;
         }
 
-        bool success = routeMap_[routeID].routeSegmentCreate(routeSegOpts);
+        success = routeMap_[routeID].routeSegmentCreate(routeSegOpts);
         if (success) {
             stats_.numRouteSegments++;
             validateAddToDirtyBin(routeID, DirtyType::dtRouteSegments);
         }
-
-        return success;
     }
 
-    return false;
+    // trace
+    std::string routeSegOptsStr = toString(routeSegOpts, 0, 5);
+    std::unordered_map<std::string, std::string> functionParamMap = {{"RouteID", std::to_string(routeID.id)},
+                                                                     {"routeSegmentOptions", routeSegOptsStr}};
+    TRACE_ROUTE_CALL(stats_.recentApiCalls, functionParamMap, "bool", toString(success), {}, "");
+
+    return success;
 }
 
 void RouteManager::captureNavStops(bool onOff) {
@@ -806,6 +880,10 @@ void RouteManager::routeClearSegments(const RouteID& routeID) {
         }
         routeSegmentCreateStat.lastStartTime = now;
     }
+
+    // trace
+    std::unordered_map<std::string, std::string> functionParamMap = {{"RouteID", std::to_string(routeID.id)}};
+    TRACE_ROUTE_CALL(stats_.recentApiCalls, functionParamMap, "void", "", {}, "");
 }
 
 bool RouteManager::routeDispose(const RouteID& routeID) {
@@ -837,8 +915,13 @@ bool RouteManager::routeDispose(const RouteID& routeID) {
         routeIDpool_.destroyID(routeID.id);
         stats_.numRoutes--;
 
-        return success;
+        // Clean up the progress tracking for this route
+        previousProgressMap_.erase(routeID);
     }
+
+    // trace
+    std::unordered_map<std::string, std::string> functionParamMap = {{"RouteID", std::to_string(routeID.id)}};
+    TRACE_ROUTE_CALL(stats_.recentApiCalls, functionParamMap, "bool", toString(success), {}, "");
 
     return success;
 }
@@ -853,11 +936,31 @@ bool RouteManager::routeSetProgressPercent(const RouteID& routeID, const double 
     double validProgress = std::clamp(progress, 0.0, 1.0);
     bool success = false;
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
+        // Check for large delta in progress
+        auto prevProgressIter = previousProgressMap_.find(routeID);
+        if (prevProgressIter != previousProgressMap_.end()) {
+            double previousProgress = prevProgressIter->second;
+            double delta = std::abs(validProgress - previousProgress);
+
+            // If delta exceeds threshold, increment counter
+            if (delta > largeDeltaThreshold_) {
+                stats_.numLargeDeltaVanishingPercents++;
+            }
+        }
+
+        // Update the previous progress for this route
+        previousProgressMap_[routeID] = validProgress;
+
         routeMap_[routeID].routeSetProgress(validProgress, captureNavStops_);
         validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
 
         success = true;
     }
+
+    // trace
+    std::unordered_map<std::string, std::string> functionParamMap = {{"RouteID", std::to_string(routeID.id)},
+                                                                     {"progress", std::to_string(progress)}};
+    TRACE_ROUTE_CALL(stats_.recentApiCalls, functionParamMap, "bool", toString(success), {}, "");
 
     return success;
 }
@@ -896,6 +999,16 @@ double RouteManager::routeSetProgressPoint(const RouteID& routeID,
             validateAddToDirtyBin(routeID, DirtyType::dtRouteProgress);
         }
     }
+
+    // trace
+    std::string precisionStr = (precision == Precision::Coarse) ? "Coarse"
+                               : (precision == Precision::Fine) ? "Fine"
+                                                                : "Exact";
+    std::unordered_map<std::string, std::string> functionParamMap = {
+        {"RouteID", std::to_string(routeID.id)},
+        {"progressPoint", std::to_string(progressPoint.x) + ", " + std::to_string(progressPoint.y)},
+        {"precision", precisionStr}};
+    TRACE_ROUTE_CALL(stats_.recentApiCalls, functionParamMap, "double", std::to_string(percentage), {}, "");
 
     return percentage;
 }
@@ -950,6 +1063,7 @@ const std::string RouteManager::getStats() {
         "min_route_vanishing_elapsed_millis", std::to_string(stats_.minRouteVanishingElapsedMillis), allocator);
     route_stats.AddMember(
         "avg_route_vanishing_elapsed_millis", std::to_string(stats_.avgRouteVanishingElapsedMillis), allocator);
+    route_stats.AddMember("num_large_delta_vanishing_percents", stats_.numLargeDeltaVanishingPercents, allocator);
 
     document.AddMember("route_stats", route_stats, allocator);
 
@@ -1221,6 +1335,8 @@ void RouteManager::finalize() {
     }
     auto stopclock = high_resolution_clock::now();
     stats_.finalizeMillis = duration_cast<milliseconds>(stopclock - startclock).count();
+
+    TRACE_ROUTE_CALL(stats_.recentApiCalls, {}, "void", "", {}, "");
 }
 
 RouteManager::~RouteManager() {}

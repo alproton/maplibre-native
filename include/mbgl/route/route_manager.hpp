@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
+#include <deque>
 
 namespace mbgl {
 
@@ -28,6 +29,9 @@ struct RouteMgrStats {
     long long maxRouteVanishingElapsedMillis = 0.0;
     long long minRouteVanishingElapsedMillis = 0.0;
     double avgRouteVanishingElapsedMillis = 0.0;
+    long numLargeDeltaVanishingPercents = 0.0;
+
+    std::deque<std::string> recentApiCalls;
 };
 
 struct ScrubOptions {
@@ -128,6 +132,11 @@ private:
     long long totalVanishingRouteElapsedMillis = 0;
     long long numVanisingRouteInvocations = 0;
     bool captureNavStops_ = false;
+
+    // Track previous progress values for each route to detect large deltas
+    std::unordered_map<RouteID, double, IDHasher<RouteID>> previousProgressMap_;
+    // Threshold for what constitutes a large delta (default 20% = 0.20)
+    double largeDeltaThreshold_ = 0.20;
 };
 }; // namespace route
 
