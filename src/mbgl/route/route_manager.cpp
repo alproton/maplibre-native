@@ -149,8 +149,7 @@ inline void updateOrAddAPICapture(const std::string& functionName,
 [[maybe_unused]] std::string toString(const LineString<double>& line, uint32_t tabcount = 0, int limit = -1) {
     std::stringstream ss;
     ss << tabs(tabcount) << "[" << std::endl;
-    size_t lineLimit = limit < 0 ? line.size() : limit;
-    lineLimit = std::min(lineLimit, line.size());
+    size_t lineLimit = limit < 0 ? line.size() : std::min(static_cast<size_t>(limit), line.size());
     for (size_t i = 0; i < lineLimit; i++) {
         std::string terminatingCommaStr = i == line.size() - 1 ? "" : ",";
         ss << tabs(tabcount + 1) << "[" << std::to_string(line[i].x) << ", " << std::to_string(line[i].y) << "]"
@@ -1344,11 +1343,11 @@ void RouteManager::applyEmergencyDiagnostics() {
     }
 
     if (logTraces) {
-        std::call_once(apiTraceOnceFlag_, [this]() {
-            std::string apitraces = embeddAPIcaptures(stats_.recentApiCalls);
-            Log::Warning(Event::Route, "Last 100 API traces leading to the issue: ");
-            Log::Warning(Event::Route, apitraces);
-        });
+        std::string apitraces = embeddAPIcaptures(stats_.recentApiCalls);
+        Log::Warning(Event::Route, "Last 100 API traces leading to the issue: ");
+        Log::Warning(Event::Route, apitraces);
+        // reset the stats after logging
+        stats_ = RouteMgrStats();
     } else {
         Log::Info(Event::Route, "Route diagnostics applied and found no issues ");
     }
