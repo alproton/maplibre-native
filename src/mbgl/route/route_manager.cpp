@@ -1344,8 +1344,11 @@ void RouteManager::applyEmergencyDiagnostics() {
     }
 
     if (logTraces) {
-        std::string apitraces = embeddAPIcaptures(stats_.recentApiCalls);
-        Log::Warning(Event::Route, apitraces);
+        std::call_once(apiTraceOnceFlag_, [this]() {
+            std::string apitraces = embeddAPIcaptures(stats_.recentApiCalls);
+            Log::Warning(Event::Route, "Last 100 API traces leading to the issue: ");
+            Log::Warning(Event::Route, apitraces);
+        });
     } else {
         Log::Info(Event::Route, "Route diagnostics applied and found no issues ");
     }
