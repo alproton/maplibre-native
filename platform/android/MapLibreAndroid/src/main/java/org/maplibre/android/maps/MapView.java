@@ -737,6 +737,19 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     return new RouteID(-1);
   }
 
+  /**
+   * We internally collect stats about how the route API is being used. ie, if its in invalid state or
+   * if there is an unusual frequency of calls to certain APIs. If such cases are detected, we log the
+   * issues to the console and the most recent 100 API calls that were made to the route.
+   *
+   * NB: This API may be expensive as it adds 100 API traces at each invocation to the log.
+   */
+  public void applyRouteDiagnostics() {
+    if(nativeMapView != null) {
+      nativeMapView.applyRouteDiagnostics();
+    }
+  }
+
   /***
    * Set the custom puck style
    */

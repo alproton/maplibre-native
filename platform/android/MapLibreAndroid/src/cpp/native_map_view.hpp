@@ -293,6 +293,8 @@ public:
 
     jboolean routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue);
 
+    void routeApplyDiagnostics(JNIEnv& env);
+
     //------------------------------------------------
 
     jni::Local<jni::String> getRenderingStats(JNIEnv& env, jni::jboolean oneline);

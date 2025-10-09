@@ -9,7 +9,6 @@
 #include <unordered_set>
 #include <string>
 #include <deque>
-#include <mutex>
 
 namespace mbgl {
 
@@ -139,7 +138,6 @@ private:
     std::unordered_map<RouteID, double, IDHasher<RouteID>> previousProgressMap_;
     // Threshold for what constitutes a large delta (default 20% = 0.20)
     double largeDeltaThreshold_ = 0.20;
-    std::once_flag apiTraceOnceFlag_;
 };
 }; // namespace route
 

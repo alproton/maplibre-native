@@ -1344,11 +1344,80 @@ void RouteManager::applyEmergencyDiagnostics() {
     }
 
     if (logTraces) {
-        std::call_once(apiTraceOnceFlag_, [this]() {
-            std::string apitraces = embeddAPIcaptures(stats_.recentApiCalls);
-            Log::Warning(Event::Route, "Last 100 API traces leading to the issue: ");
-            Log::Warning(Event::Route, apitraces);
-        });
+        // get route layers and 2 layers before and after
+        const auto getLayersNearRoutes = [&]() -> std::vector<std::string> {
+            std::vector<std::string> retLayers;
+            std::unordered_set<std::string> addedLayers; // Track what we've added
+
+            if (style_ != nullptr) {
+                std::vector<style::Layer*> layers = style_->getLayers();
+
+                if (!layers.empty()) {
+                    // Collect all route layer indices
+                    std::unordered_set<std::string> routeLayerNames;
+                    std::vector<size_t> routeLayerIndices;
+
+                    for (const auto& routePair : routeMap_) {
+                        const RouteID& routeID = routePair.first;
+                        routeLayerNames.insert(getActiveRouteLayerName(routeID));
+                        routeLayerNames.insert(getBaseRouteLayerName(routeID));
+                    }
+
+                    // Find all route layer indices
+                    for (size_t i = 0; i < layers.size(); ++i) {
+                        if (routeLayerNames.find(layers[i]->getID()) != routeLayerNames.end()) {
+                            routeLayerIndices.push_back(i);
+                        }
+                    }
+
+                    // For each route layer, add it + context layers
+                    for (size_t idx : routeLayerIndices) {
+                        // Add 2 before
+                        if (idx >= 2 && addedLayers.insert(layers[idx - 2]->getID()).second) {
+                            retLayers.push_back(layers[idx - 2]->getID());
+                        }
+                        if (idx >= 1 && addedLayers.insert(layers[idx - 1]->getID()).second) {
+                            retLayers.push_back(layers[idx - 1]->getID());
+                        }
+
+                        // Add route layer
+                        if (addedLayers.insert(layers[idx]->getID()).second) {
+                            retLayers.push_back(layers[idx]->getID());
+                        }
+
+                        // Add 2 after
+                        if (idx + 1 < layers.size() && addedLayers.insert(layers[idx + 1]->getID()).second) {
+                            retLayers.push_back(layers[idx + 1]->getID());
+                        }
+                        if (idx + 2 < layers.size() && addedLayers.insert(layers[idx + 2]->getID()).second) {
+                            retLayers.push_back(layers[idx + 2]->getID());
+                        }
+                    }
+                }
+            }
+
+            return retLayers;
+        };
+
+        // Get and log the layers
+        std::vector<std::string> nearbyLayers = getLayersNearRoutes();
+
+        std::string apitraces = embeddAPIcaptures(stats_.recentApiCalls);
+        Log::Warning(Event::Route, "Last 100 API traces leading to the issue: ");
+        Log::Warning(Event::Route, apitraces);
+
+        // Format and log the layer information
+        std::stringstream layerInfo;
+        layerInfo << "[";
+        for (size_t i = 0; i < nearbyLayers.size(); ++i) {
+            layerInfo << "\"" << nearbyLayers[i] << "\"";
+            if (i < nearbyLayers.size() - 1) {
+                layerInfo << ", ";
+            }
+        }
+        layerInfo << "]";
+        Log::Warning(Event::Route, "Layers in route proximity: " + layerInfo.str());
+
     } else {
         Log::Info(Event::Route, "Route diagnostics applied and found no issues ");
     }

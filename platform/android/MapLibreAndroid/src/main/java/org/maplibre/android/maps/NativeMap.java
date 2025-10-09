@@ -305,6 +305,8 @@ interface NativeMap {
 
   boolean finalizeRoutes();
 
+  void applyRouteDiagnostics();
+
   String getRenderingStats(boolean oneline);
 
   String getSnapshotCapture();
