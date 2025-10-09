@@ -87,6 +87,7 @@ void CustomPuck::draw(const TransformState& transform) {
     double dy = iconPixelSize / static_cast<double>(screenSize.height);
 
     CustomPuckIconsStyle iconsStyle;
+    CustomPuckIconsStyle secondaryIconsStyle;
     CustomPuckSampledStyle sampledStyle;
     {
         std::lock_guard<std::mutex> lock(styleMutex);
@@ -94,19 +95,25 @@ void CustomPuck::draw(const TransformState& transform) {
             return; // Style not set yet
         }
         if (!style.icons.empty()) {
-            epochTime = std::chrono::steady_clock::now();
+            epochTime = secondaryEpochTime = std::chrono::steady_clock::now();
         }
         sampledStyle.icons = std::move(style.icons); // only needed once to load the textures
         style.icons.clear();
         assert(style.variants.count(variantName) > 0);
         assert(style.variants[variantName].count(iconStateName) > 0);
         iconsStyle = style.variants[variantName][iconStateName];
+        if (!secondaryIconStateName.empty()) {
+            assert(style.variants[variantName].count(secondaryIconStateName) > 0);
+            secondaryIconsStyle = style.variants[variantName][secondaryIconStateName];
+        }
     }
     if (!iconsStyle.icon1 && !iconsStyle.icon2) {
         return; // Style not set yet
     }
 
     auto deltaTime = std::chrono::duration<float>(std::chrono::steady_clock::now() - epochTime).count();
+    auto secondaryDeltaTime =
+        std::chrono::duration<float>(std::chrono::steady_clock::now() - secondaryEpochTime).count();
 
     if (iconsStyle.icon1) {
         sampledStyle.icon1 = customPuckSampledIcon(
@@ -115,6 +122,10 @@ void CustomPuck::draw(const TransformState& transform) {
     if (iconsStyle.icon2) {
         sampledStyle.icon2 = customPuckSampledIcon(
             *iconsStyle.icon2, deltaTime, screenCoord, dx, dy, cosPitch, cosBearing, sinBearing);
+    }
+    if (secondaryIconsStyle.icon2) {
+        sampledStyle.icon3 = customPuckSampledIcon(
+            *secondaryIconsStyle.icon2, secondaryDeltaTime, screenCoord, dx, dy, cosPitch, cosBearing, sinBearing);
     }
 
     drawImpl(sampledStyle);
@@ -136,10 +147,16 @@ void CustomPuck::setPuckVariant(std::string variant) {
     variantName = std::move(variant);
 }
 
-void CustomPuck::setPuckIconState(std::string state) {
+void CustomPuck::setPuckIconState(std::string state, std::string secondaryState) {
     std::lock_guard<std::mutex> lock(styleMutex);
+    if (state != iconStateName) {
+        epochTime = std::chrono::steady_clock::now();
+    }
     iconStateName = std::move(state);
-    epochTime = std::chrono::steady_clock::now();
+    if (secondaryState != secondaryIconStateName) {
+        secondaryEpochTime = std::chrono::steady_clock::now();
+    }
+    secondaryIconStateName = std::move(secondaryState);
 }
 
 #ifdef __ANDROID__

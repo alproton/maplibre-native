@@ -398,7 +398,7 @@ public:
 
     void setPuckVariant(JNIEnv&, const jni::String& variant);
 
-    void setPuckIconState(JNIEnv&, const jni::String& state);
+    void setPuckIconState(JNIEnv&, const jni::String& state, const jni::String& secondaryState);
 
     void setCustomDotsNextLayer(JNIEnv&, const jni::String& layer);
 

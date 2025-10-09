@@ -35,6 +35,7 @@ struct CustomPuckSampledIcon {
 struct CustomPuckSampledStyle {
     CustomPuckSampledIcon icon1;
     CustomPuckSampledIcon icon2;
+    CustomPuckSampledIcon icon3;
     CustomPuckIconMap icons;
 };
 
@@ -46,7 +47,7 @@ public:
 
     void setPuckStyle(const std::string& style_file_path);
     void setPuckVariant(std::string variant);
-    void setPuckIconState(std::string state);
+    void setPuckIconState(std::string state, std::string secondaryState = "");
     void setAssetPath(const std::string& path);
 
 #ifdef __ANDROID__
@@ -66,10 +67,12 @@ protected:
 
 private:
     std::chrono::time_point<std::chrono::steady_clock> epochTime = std::chrono::steady_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> secondaryEpochTime = std::chrono::steady_clock::now();
     PremultipliedImage bitmap{};
     CustomPuckStyle style{};
     std::string variantName;
     std::string iconStateName;
+    std::string secondaryIconStateName;
     std::string assetPath;
     // The style is updated in the UI thread and is used in the rendering thread
     // This mutex ensures the puck is not modified by the UI thread while being rendered in the render thread
