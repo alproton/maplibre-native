@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
+#include <deque>
+#include <mutex>
 
 namespace mbgl {
 
@@ -23,11 +25,14 @@ struct RouteMgrStats {
     uint32_t numRouteSegments = 0;
     std::string finalizeMillis;
     bool inconsistentAPIusage = false;
-    double avgRouteCreationInterval = 0.0;
-    double avgRouteSegmentCreationInterval = 0.0;
-    long long maxRouteVanishingElapsedMillis = 0.0;
-    long long minRouteVanishingElapsedMillis = 0.0;
-    double avgRouteVanishingElapsedMillis = 0.0;
+    double avgRouteCreationInterval = -1.0;
+    double avgRouteSegmentCreationInterval = -1.0;
+    long long maxRouteVanishingElapsedMillis = -1.0;
+    long long minRouteVanishingElapsedMillis = -1.0;
+    double avgRouteVanishingElapsedMillis = -1.0;
+    long numLargeDeltaVanishingPercents = -1.0;
+
+    std::deque<std::string> recentApiCalls;
 };
 
 struct ScrubOptions {
@@ -77,6 +82,7 @@ public:
                            double* bearing = nullptr) const;
     std::optional<LineString<double>> routeGetGeometry(const RouteID& routeID) const;
     void routeClearSegments(const RouteID&);
+    void applyEmergencyDiagnostics();
     bool routeDispose(const RouteID&);
     bool setVanishingRouteID(const RouteID& routeID);
     RouteID getVanishingRouteID() const;
@@ -128,6 +134,12 @@ private:
     long long totalVanishingRouteElapsedMillis = 0;
     long long numVanisingRouteInvocations = 0;
     bool captureNavStops_ = false;
+
+    // Track previous progress values for each route to detect large deltas
+    std::unordered_map<RouteID, double, IDHasher<RouteID>> previousProgressMap_;
+    // Threshold for what constitutes a large delta (default 20% = 0.20)
+    double largeDeltaThreshold_ = 0.20;
+    std::once_flag apiTraceOnceFlag_;
 };
 }; // namespace route
 
