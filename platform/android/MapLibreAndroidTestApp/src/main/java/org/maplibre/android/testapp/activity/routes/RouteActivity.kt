@@ -55,6 +55,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         val addRouteButton = findViewById<Button>(R.id.add_route)
         addRouteButton?.setOnClickListener {
             RouteUtils.addRoute(mapView, useFractionalRouteSegments)
+            mapView.applyRouteDiagnostics()
 
             Toast.makeText(this, "Added Route", Toast.LENGTH_SHORT).show()
         }

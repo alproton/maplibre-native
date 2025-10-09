@@ -47,13 +47,15 @@ std::string tabs(uint32_t tabcount) {
     return tabstr;
 }
 
-[[maybe_unused]] std::string embeddAPIcaptures(const std::vector<std::string>& apiCaptures) {
+[[maybe_unused]] std::string embeddAPIcaptures(std::deque<std::string>& apiCaptures) {
     std::stringstream ss;
     ss << "{" << std::endl;
     ss << tabs(1) << "\"apiCalls\":[" << std::endl;
-    for (size_t i = 0; i < apiCaptures.size(); ++i) {
-        ss << tabs(2) << apiCaptures[i];
-        if (i == (apiCaptures.size() - 1)) {
+    while (!apiCaptures.empty()) {
+        std::string apiCapture = apiCaptures.front();
+        apiCaptures.pop_front();
+        ss << tabs(2) << apiCapture;
+        if (apiCaptures.empty()) {
             ss << std::endl;
         } else {
             ss << "," << std::endl;
@@ -147,7 +149,8 @@ inline void updateOrAddAPICapture(const std::string& functionName,
 [[maybe_unused]] std::string toString(const LineString<double>& line, uint32_t tabcount = 0, int limit = -1) {
     std::stringstream ss;
     ss << tabs(tabcount) << "[" << std::endl;
-    const size_t lineLimit = limit < 0 ? line.size() : limit;
+    size_t lineLimit = limit < 0 ? line.size() : limit;
+    lineLimit = std::min(lineLimit, line.size());
     for (size_t i = 0; i < lineLimit; i++) {
         std::string terminatingCommaStr = i == line.size() - 1 ? "" : ",";
         ss << tabs(tabcount + 1) << "[" << std::to_string(line[i].x) << ", " << std::to_string(line[i].y) << "]"
@@ -1063,7 +1066,8 @@ const std::string RouteManager::getStats() {
         "min_route_vanishing_elapsed_millis", std::to_string(stats_.minRouteVanishingElapsedMillis), allocator);
     route_stats.AddMember(
         "avg_route_vanishing_elapsed_millis", std::to_string(stats_.avgRouteVanishingElapsedMillis), allocator);
-    route_stats.AddMember("num_large_delta_vanishing_percents", stats_.numLargeDeltaVanishingPercents, allocator);
+    route_stats.AddMember(
+        "num_large_delta_vanishing_percents", std::to_string(stats_.numLargeDeltaVanishingPercents), allocator);
 
     document.AddMember("route_stats", route_stats, allocator);
 
@@ -1311,6 +1315,40 @@ double RouteManager::getTotalDistance(const RouteID& routeID) {
     }
 
     return result;
+}
+
+void RouteManager::applyEmergencyDiagnostics() {
+    // check if there is inconsistent API usage (TODO: perhaps we should throw an exception rather than just logging it)
+    bool logTraces = false;
+    if (stats_.inconsistentAPIusage) {
+        Log::Warning(Event::Route,
+                     "Inconsistent API usage detected in RouteManager. The layers are being modified without complete "
+                     "finalizing of its creation");
+        logTraces = true;
+    }
+    // check if there is a very high frequent geometry change
+    if (stats_.avgRouteCreationInterval > 0 && stats_.avgRouteCreationInterval < 1.0) {
+        Log::Warning(Event::Route,
+                     "High frequency of route geometry changes detected in RouteManager. Average interval between "
+                     "route creations is " +
+                         std::to_string(stats_.avgRouteCreationInterval) + " seconds");
+        logTraces = true;
+    }
+    // check if there is a very large change in route vanishing
+    if (stats_.numLargeDeltaVanishingPercents > 0) {
+        Log::Warning(
+            Event::Route,
+            "Large delta changes in route vanishing detected in RouteManager. Number of large delta changes: " +
+                std::to_string(stats_.numLargeDeltaVanishingPercents));
+        logTraces = true;
+    }
+
+    if (logTraces) {
+        std::string apitraces = embeddAPIcaptures(stats_.recentApiCalls);
+        Log::Warning(Event::Route, apitraces);
+    } else {
+        Log::Info(Event::Route, "Route diagnostics applied and found no issues ");
+    }
 }
 
 void RouteManager::finalize() {

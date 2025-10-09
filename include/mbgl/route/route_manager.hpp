@@ -24,12 +24,12 @@ struct RouteMgrStats {
     uint32_t numRouteSegments = 0;
     std::string finalizeMillis;
     bool inconsistentAPIusage = false;
-    double avgRouteCreationInterval = 0.0;
-    double avgRouteSegmentCreationInterval = 0.0;
-    long long maxRouteVanishingElapsedMillis = 0.0;
-    long long minRouteVanishingElapsedMillis = 0.0;
-    double avgRouteVanishingElapsedMillis = 0.0;
-    long numLargeDeltaVanishingPercents = 0.0;
+    double avgRouteCreationInterval = -1.0;
+    double avgRouteSegmentCreationInterval = -1.0;
+    long long maxRouteVanishingElapsedMillis = -1.0;
+    long long minRouteVanishingElapsedMillis = -1.0;
+    double avgRouteVanishingElapsedMillis = -1.0;
+    long numLargeDeltaVanishingPercents = -1.0;
 
     std::deque<std::string> recentApiCalls;
 };
@@ -81,6 +81,7 @@ public:
                            double* bearing = nullptr) const;
     std::optional<LineString<double>> routeGetGeometry(const RouteID& routeID) const;
     void routeClearSegments(const RouteID&);
+    void applyEmergencyDiagnostics();
     bool routeDispose(const RouteID&);
     bool setVanishingRouteID(const RouteID& routeID);
     RouteID getVanishingRouteID() const;

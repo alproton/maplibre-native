@@ -1630,6 +1630,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeLoadCapture, "nativeRouteLoadCapture"),
         METHOD(&NativeMapView::routeCatpureScrub, "nativeScrubCapturedRoute"),
         METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
+        METHOD(&NativeMapView::routeApplyDiagnostics, "nativeRouteApplyDiagnostics"),
         // Custom Puck API
         METHOD(&NativeMapView::setPuckStyle, "nativeSetPuckStyle"),
         METHOD(&NativeMapView::setPuckVariant, "nativeSetPuckVariant"),
@@ -1832,6 +1833,12 @@ jboolean NativeMapView::routeCatpureScrub(JNIEnv& env, jni::jdouble scrubValue) 
     }
 
     return false;
+}
+
+void NativeMapView::routeApplyDiagnostics(JNIEnv& env) {
+    if (routeMgr) {
+        routeMgr->applyEmergencyDiagnostics();
+    }
 }
 
 jboolean NativeMapView::routeProgressSet(JNIEnv& env, jni::jint routeID, jni::jdouble progress) {

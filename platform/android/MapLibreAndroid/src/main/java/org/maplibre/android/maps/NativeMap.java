@@ -309,6 +309,8 @@ interface NativeMap {
 
   String getSnapshotCapture();
 
+  void applyRouteDiagnostics();
+
   //
   // Custom Puck API
   //
