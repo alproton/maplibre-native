@@ -1412,6 +1412,7 @@ void RouteManager::applyEmergencyDiagnostics() {
         }
         layerInfo << "]";
         Log::Warning(Event::Route, "Layers in route proximity: " + layerInfo.str());
+        Log::Warning(Event::Route, "Route stats: "+getStats());
 
     } else {
         Log::Info(Event::Route, "Route diagnostics applied and found no issues ");
