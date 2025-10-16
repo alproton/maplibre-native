@@ -36,9 +36,10 @@ public:
             return T(0);
         }
 
-        auto it = std::lower_bound(this->begin(), this->end(), time, [](const CustomPuckValue<T>& sample, float time) {
-            return sample.time < time;
-        });
+        auto it = std::lower_bound(
+            this->begin(), this->end(), time, [](const CustomPuckValue<T>& sample_, float time_) {
+                return sample_.time < time_;
+            });
 
         if (it == this->end()) {
             return this->back().value;
