@@ -1431,8 +1431,9 @@ void NativeMapView::setPuckVariant(JNIEnv& env, const jni::String& variant) {
     mapRenderer.getRendererBackend().setPuckVariant(jni::Make<std::string>(env, variant));
 }
 
-void NativeMapView::setPuckIconState(JNIEnv& env, const jni::String& state) {
-    mapRenderer.getRendererBackend().setPuckIconState(jni::Make<std::string>(env, state));
+void NativeMapView::setPuckIconState(JNIEnv& env, const jni::String& state, const jni::String& secondaryState) {
+    mapRenderer.getRendererBackend().setPuckIconState(jni::Make<std::string>(env, state),
+                                                      jni::Make<std::string>(env, secondaryState));
 }
 
 void NativeMapView::setCustomDotsNextLayer(JNIEnv& env, const jni::String& layer) {
