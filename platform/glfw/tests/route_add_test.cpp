@@ -10,7 +10,7 @@ RouteAddTest::RouteAddTest(const std::string& testDir)
 bool RouteAddTest::produceTestCommands(mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
     assert(map != nullptr && "invalid map!");
     if (map != nullptr) {
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
             using namespace mbgl::route;
             using namespace route_fixtures;
             map->setDebug(mbgl::MapDebugOptions::NoDebug);

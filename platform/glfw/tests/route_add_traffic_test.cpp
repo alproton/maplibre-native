@@ -13,9 +13,9 @@ bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map, [
         using namespace mbgl::route;
         using namespace route_fixtures;
 
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map *map, [[maybe_unused]] GLFWView *view) {
-            map->setDebug(mbgl::MapDebugOptions::NoDebug);
-            map->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(2).withBearing(0.0).withPitch(0.0));
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map *glmap, [[maybe_unused]] GLFWView *glfwview) {
+            glmap->setDebug(mbgl::MapDebugOptions::NoDebug);
+            glmap->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(2).withBearing(0.0).withPitch(0.0));
             mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
             mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
             std::vector<mbgl::Color> colors = {color0, color1};
@@ -51,7 +51,7 @@ bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map, [
             routeMap_[routeID] = rd;
         });
 
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map *map, [[maybe_unused]] GLFWView *view) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map *glmap, [[maybe_unused]] GLFWView *glfwview) {
             std::vector<TrafficBlock> trafficBlks;
             for (const auto &iter : routeMap_) {
                 const auto &routeID = iter.first;
@@ -113,8 +113,8 @@ bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map, [
 
                     rsegopts.priority = trafficBlks[i].priority;
                     rsegopts.outerColor = mbgl::Color(float(i) / float(trafficBlks.size() - 1), 0.0, 0.0, 1.0);
-                    const bool success = rmptr_->routeSegmentCreate(routeID, rsegopts);
-                    assert(success && "failed to create route segment");
+                    const bool routeCreationSuccess = rmptr_->routeSegmentCreate(routeID, rsegopts);
+                    assert(routeCreationSuccess && "failed to create route segment");
                 }
                 trafficBlks.clear();
             }

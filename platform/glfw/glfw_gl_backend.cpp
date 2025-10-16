@@ -108,9 +108,9 @@ mbgl::Size GLFWGLBackend::getSize() const {
 mbgl::PremultipliedImage GLFWGLBackend::captureImage() {
     int width, height;
     glfwGetWindowSize(window, &width, &height);
-    mbgl::Size size(width, height);
+    mbgl::Size sz(width, height);
 
-    mbgl::PremultipliedImage image = readFramebuffer(size);
+    mbgl::PremultipliedImage image = readFramebuffer(sz);
     return image;
 }
 

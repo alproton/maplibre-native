@@ -10,9 +10,9 @@ bool RouteTrafficPriorityTest::produceTestCommands([[maybe_unused]] mbgl::Map* m
     if (map != nullptr) {
         using namespace mbgl::route;
         using namespace route_fixtures;
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
-            map->setDebug(mbgl::MapDebugOptions::NoDebug);
-            map->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(2).withBearing(0.0).withPitch(0.0));
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
+            glmap->setDebug(mbgl::MapDebugOptions::NoDebug);
+            glmap->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(2).withBearing(0.0).withPitch(0.0));
 
             mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
             mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
@@ -48,19 +48,19 @@ bool RouteTrafficPriorityTest::produceTestCommands([[maybe_unused]] mbgl::Map* m
             routeMap_[routeID] = rd;
         });
 
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
             setTrafficCase(RouteSegmentTestCases::Blk1HighPriorityIntersecting);
         });
 
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
             setTrafficCase(RouteSegmentTestCases::Blk1LowPriorityIntersecting);
         });
 
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
             setTrafficCase(RouteSegmentTestCases::Blk12NonIntersecting);
         });
 
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
             setTrafficCase(RouteSegmentTestCases::Blk12SameColorIntersecting);
         });
 

@@ -16,9 +16,9 @@ bool RouteNavCircleTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
     bool success = false;
 
     if (map != nullptr && view != nullptr) {
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
-            map->setDebug(mbgl::MapDebugOptions::TileBorders);
-            map->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(2).withBearing(0.0).withPitch(0.0));
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
+            glmap->setDebug(mbgl::MapDebugOptions::TileBorders);
+            glmap->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(2).withBearing(0.0).withPitch(0.0));
 
             mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
             mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
@@ -55,55 +55,55 @@ bool RouteNavCircleTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
             setVanishingRouteID(routeID);
             routeMap_[routeID] = rd;
 
-            view->enablePuck(true);
+            glfwview->enablePuck(true);
             assert(routeID.isValid() && "invalid route ID!");
             if (routeID.isValid()) {
                 double bearing = 0.0;
                 mbgl::Point<double> location = rmptr_->getPoint(routeID, 0.0, Precision::Fine, &bearing);
-                view->setPuckLocation(location.y, location.x, bearing); // Set puck at the center of the circle
+                glfwview->setPuckLocation(location.y, location.x, bearing); // Set puck at the center of the circle
             }
         });
 
         success = true;
     }
 
-    testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+    testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
         const RouteID& routeID = routeMap_.begin()->first;
         assert(routeID.isValid() && "invalid route ID!");
         if (routeID.isValid()) {
             double bearing = 0.0;
             mbgl::Point<double> location = rmptr_->getPoint(routeID, 0.25, Precision::Fine, &bearing);
-            view->setPuckLocation(location.y, location.x, bearing);
+            glfwview->setPuckLocation(location.y, location.x, bearing);
         }
     });
 
-    testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+    testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* gfwview) {
         const RouteID& routeID = routeMap_.begin()->first;
         assert(routeID.isValid() && "invalid route ID!");
         if (routeID.isValid()) {
             double bearing = 0.0;
             mbgl::Point<double> location = rmptr_->getPoint(routeID, 0.5, Precision::Fine, &bearing);
-            view->setPuckLocation(location.y, location.x, bearing);
+            gfwview->setPuckLocation(location.y, location.x, bearing);
         }
     });
 
-    testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+    testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
         const RouteID& routeID = routeMap_.begin()->first;
         assert(routeID.isValid() && "invalid route ID!");
         if (routeID.isValid()) {
             double bearing = 0.0;
             mbgl::Point<double> location = rmptr_->getPoint(routeID, 0.75, Precision::Fine, &bearing);
-            view->setPuckLocation(location.y, location.x, bearing);
+            glfwview->setPuckLocation(location.y, location.x, bearing);
         }
     });
 
-    testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+    testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
         const RouteID& routeID = routeMap_.begin()->first;
         assert(routeID.isValid() && "invalid route ID!");
         if (routeID.isValid()) {
             double bearing = 0.0;
             mbgl::Point<double> location = rmptr_->getPoint(routeID, 1, Precision::Fine, &bearing);
-            view->setPuckLocation(location.y, location.x, bearing);
+            glfwview->setPuckLocation(location.y, location.x, bearing);
         }
     });
 
