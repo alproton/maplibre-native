@@ -1293,6 +1293,11 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public void applyRouteDiagnostics() {
+    nativeRouteApplyDiagnostics();
+  }
+
+  @Override
   public String getRenderingStats(boolean oneline) {
     return nativeGetRenderingStats(oneline);
   }
@@ -1784,6 +1789,9 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   native void nativeRoutesClearStats();
+
+  @Keep
+  native void nativeRouteApplyDiagnostics();
 
   //---------------------Custom Puck APIs---------------------
   @Keep

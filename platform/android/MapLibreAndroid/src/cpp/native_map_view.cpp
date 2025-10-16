@@ -1630,6 +1630,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::routeLoadCapture, "nativeRouteLoadCapture"),
         METHOD(&NativeMapView::routeCatpureScrub, "nativeScrubCapturedRoute"),
         METHOD(&NativeMapView::routesFinalize, "nativeRoutesFinalize"),
+        METHOD(&NativeMapView::routeApplyDiagnostics, "nativeRouteApplyDiagnostics"),
         // Custom Puck API
         METHOD(&NativeMapView::setPuckStyle, "nativeSetPuckStyle"),
         METHOD(&NativeMapView::setPuckVariant, "nativeSetPuckVariant"),
@@ -1883,6 +1884,12 @@ jboolean NativeMapView::routesFinalize(JNIEnv& env) {
     }
 
     return false;
+}
+
+void NativeMapView::routeApplyDiagnostics(JNIEnv& env) {
+    if (routeMgr) {
+        routeMgr->applyEmergencyDiagnostics();
+    }
 }
 
 jni::Local<jni::String> NativeMapView::getRenderingStats(JNIEnv& env, jni::jboolean oneline) {
