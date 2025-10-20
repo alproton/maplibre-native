@@ -84,11 +84,11 @@ bool RoutePickTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
     assert(view != nullptr && "invalid view!");
 
     if (map) {
-        testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+        testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
             using namespace mbgl::route;
             using namespace route_fixtures;
-            map->setDebug(mbgl::MapDebugOptions::NoDebug);
-            map->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(0).withBearing(0.0).withPitch(0.0));
+            glmap->setDebug(mbgl::MapDebugOptions::NoDebug);
+            glmap->jumpTo(mbgl::CameraOptions().withCenter(mbgl::LatLng{}).withZoom(0).withBearing(0.0).withPitch(0.0));
 
             mbgl::Color color0 = routeColorTable.at(RouteColorType::RouteMapColor);
             mbgl::Color color1 = routeColorTable.at(RouteColorType::RouteMapAlternative);
@@ -126,9 +126,9 @@ bool RoutePickTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
         });
     }
 
-    testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+    testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
         double screenSpaceX = 416, screenSpaceY = 412;
-        bool picked = pickRoute(view, screenSpaceX, screenSpaceY);
+        bool picked = pickRoute(glfwview, screenSpaceX, screenSpaceY);
         std::string pickedStr = picked ? "true" : "false";
         mbgl::Log::Info(mbgl::Event::Route, "Route is " + pickedStr);
         using namespace route_fixtures;
@@ -154,9 +154,9 @@ bool RoutePickTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
         assert(success && "failed to create route segment");
     });
 
-    testCommands_.push([&]([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
+    testCommands_.push([&]([[maybe_unused]] mbgl::Map* glmap, [[maybe_unused]] GLFWView* glfwview) {
         double screenSpaceX = 0, screenSpaceY = 0;
-        bool picked = pickRoute(view, screenSpaceX, screenSpaceY);
+        bool picked = pickRoute(glfwview, screenSpaceX, screenSpaceY);
         std::string pickedStr = picked ? "true" : "false";
         mbgl::Log::Info(mbgl::Event::Route, "Route is " + pickedStr);
         using namespace route_fixtures;

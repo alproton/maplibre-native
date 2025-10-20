@@ -13,7 +13,7 @@ public:
 
     ~CustomPuck() noexcept override;
 
-    void drawImpl(const gfx::CustomPuckSampledStyle& style) override;
+    void drawImpl(const gfx::CustomPuckSampledStyle& sampledStyle) override;
     gfx::CustomPuckState getState() override;
 
 private:

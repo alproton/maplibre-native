@@ -134,24 +134,24 @@ CustomPuck::CustomPuck(gl::Context& context_)
     : context(context_),
       program(createPuckShader(context_)) {}
 
-void CustomPuck::drawImpl(const gfx::CustomPuckSampledStyle& style) {
+void CustomPuck::drawImpl(const gfx::CustomPuckSampledStyle& sampledStyle) {
     MLN_TRACE_FUNC();
 
     ScopedGlStates glStates;
 
-    if (!style.icons.empty()) {
-        updateTextures(style.icons);
+    if (!sampledStyle.icons.empty()) {
+        updateTextures(sampledStyle.icons);
     }
 
     MBGL_CHECK_ERROR(glUseProgram(program));
-    if (!style.icon1.name.empty()) {
-        draw(style.icon1);
+    if (!sampledStyle.icon1.name.empty()) {
+        draw(sampledStyle.icon1);
     }
-    if (!style.icon2.name.empty()) {
-        draw(style.icon2);
+    if (!sampledStyle.icon2.name.empty()) {
+        draw(sampledStyle.icon2);
     }
-    if (!style.icon3.name.empty()) {
-        draw(style.icon3);
+    if (!sampledStyle.icon3.name.empty()) {
+        draw(sampledStyle.icon3);
     }
 }
 

@@ -334,7 +334,8 @@ int RouteManager::getTopMost(const std::vector<RouteID>& routeList) const {
         std::vector<style::Layer*> layers = style_->getLayers();
 
         if (!layers.empty()) {
-            for (size_t i = layers.size() - 1; i >= 0; i--) {
+            int layercount = static_cast<int>(layers.size());
+            for (int i = layercount-1; i >= 0; i--) {
                 const std::string currLayerName = layers[i]->getID();
 
                 for (size_t j = 0; j < routeList.size(); j++) {
