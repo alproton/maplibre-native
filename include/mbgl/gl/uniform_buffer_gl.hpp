@@ -30,7 +30,7 @@ private:
     // unique id used for debugging and profiling purposes
     // localID should not be used as unique id because a const buffer pool is managed using IBufferAllocator
 // Currently unique IDs for constant buffers are only used when Tracy profiling is enabled
-#ifdef MLN_TRACY_ENABLE
+#if defined(MLN_TRACY_ENABLE) && !defined(MLN_TRACY_DISABLE_GL)
     int64_t uniqueDebugId = -1;
 #endif
 

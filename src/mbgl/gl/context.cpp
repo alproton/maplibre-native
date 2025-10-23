@@ -76,7 +76,7 @@ GLint getMaxVertexAttribs() {
 }
 
 // Currently renderBufferByteSize is only used when Tracy profiling is enabled
-#ifdef MLN_TRACY_ENABLE
+#if defined(MLN_TRACY_ENABLE) && !defined(MLN_TRACY_DISABLE_GL)
 constexpr size_t renderBufferByteSize(const gfx::RenderbufferPixelType type, const Size size) noexcept {
     size_t sz = size.width * size.height;
     switch (type) {
@@ -179,7 +179,7 @@ void Context::initializeExtensions(const std::function<gl::ProcAddress(const cha
         }
 
 // Currently GL timestamp queries are only used when Tracy profiling is enabled
-#ifdef MLN_TRACY_ENABLE
+#if defined(MLN_TRACY_ENABLE) && !defined(MLN_TRACY_DISABLE_GL)
         extension::loadTimeStampQueryExtension(fn);
 #endif
     }
