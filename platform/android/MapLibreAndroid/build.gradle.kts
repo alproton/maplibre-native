@@ -74,7 +74,9 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments("-DMLN_LEGACY_RENDERER=ON", "-DMLN_DRAWABLE_RENDERER=OFF", "-DANDROID_STL=c++_shared")
+                arguments("-DMLN_LEGACY_RENDERER=ON", "-DMLN_DRAWABLE_RENDERER=OFF", "-DANDROID_STL=c++_shared", "-DMLN_USE_TRACY=${project.findProperty("MLN_USE_TRACY") ?: "OFF"}",
+                    "-DMLN_TRACY_DISABLE_GL=${project.findProperty("MLN_TRACY_DISABLE_GL") ?: "OFF"}"
+                )
             }
         }
     }
@@ -93,7 +95,9 @@ android {
             dimension = "renderer"
             externalNativeBuild {
                 cmake {
-                    arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON", "-DANDROID_STL=c++_shared")
+                    arguments("-DMLN_LEGACY_RENDERER=OFF", "-DMLN_DRAWABLE_RENDERER=ON", "-DANDROID_STL=c++_shared", "-DMLN_USE_TRACY=${project.findProperty("MLN_USE_TRACY") ?: "OFF"}",
+                        "-DMLN_TRACY_DISABLE_GL=${project.findProperty("MLN_TRACY_DISABLE_GL") ?: "OFF"}"
+                    )
                 }
             }
         }
