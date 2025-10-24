@@ -17,7 +17,7 @@ using namespace platform;
 namespace {
 
 // Currently unique IDs for constant buffers are only used when Tracy profiling is enabled
-#ifdef MLN_TRACY_ENABLE
+#if defined(MLN_TRACY_ENABLE) && !defined(MLN_TRACY_DISABLE_GL)
 int64_t generateDebugId() noexcept {
     static std::atomic_int64_t counter(0);
     return ++counter;
@@ -28,7 +28,7 @@ int64_t generateDebugId() noexcept {
 
 UniformBufferGL::UniformBufferGL(const void* data_, std::size_t size_, IBufferAllocator& allocator_)
     : UniformBuffer(size_),
-#ifdef MLN_TRACY_ENABLE
+#if defined(MLN_TRACY_ENABLE) && !defined(MLN_TRACY_DISABLE_GL)
       uniqueDebugId(generateDebugId()),
 #endif
       managedBuffer(allocator_, this) {
@@ -48,21 +48,21 @@ UniformBufferGL::UniformBufferGL(const void* data_, std::size_t size_, IBufferAl
 
 UniformBufferGL::UniformBufferGL(UniformBufferGL&& rhs) noexcept
     : UniformBuffer(rhs.size),
-#ifdef MLN_TRACY_ENABLE
+#if defined(MLN_TRACY_ENABLE) && !defined(MLN_TRACY_DISABLE_GL)
       uniqueDebugId(rhs.uniqueDebugId),
 #endif
       isManagedAllocation(rhs.isManagedAllocation),
       localID(rhs.localID),
       managedBuffer(std::move(rhs.managedBuffer)) {
     managedBuffer.setOwner(this);
-#ifdef MLN_TRACY_ENABLE
+#if defined(MLN_TRACY_ENABLE) && !defined(MLN_TRACY_DISABLE_GL)
     rhs.uniqueDebugId = -1;
 #endif
 }
 
 UniformBufferGL::UniformBufferGL(const UniformBufferGL& other)
     : UniformBuffer(other),
-#ifdef MLN_TRACY_ENABLE
+#if defined(MLN_TRACY_ENABLE) && !defined(MLN_TRACY_DISABLE_GL)
       uniqueDebugId(generateDebugId()),
 #endif
       managedBuffer(other.managedBuffer.allocator, this) {
@@ -80,7 +80,7 @@ UniformBufferGL::UniformBufferGL(const UniformBufferGL& other)
 }
 
 UniformBufferGL::~UniformBufferGL() {
-#ifdef MLN_TRACY_ENABLE
+#if defined(MLN_TRACY_ENABLE) && !defined(MLN_TRACY_DISABLE_GL)
     assert(uniqueDebugId > 0);
 #endif
     MLN_TRACE_FREE_CONST_BUFFER(uniqueDebugId);
