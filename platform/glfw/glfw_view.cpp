@@ -137,6 +137,8 @@ TileLodMode nextTileLodMode(TileLodMode current) {
         case TileLodMode::Aggressive:
             return TileLodMode::Default;
     }
+
+    return TileLodMode::Default;
 }
 
 void cycleTileLodMode(mbgl::Map &map) {
