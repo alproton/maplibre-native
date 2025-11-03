@@ -1177,6 +1177,16 @@ final class NativeMapView implements NativeMap {
 
   @Override
   public RouteID createRoute(LineString routeGeom, RouteOptions routeOptions) {
+    // Validate route geometry
+    if (routeGeom == null) {
+      throw new IllegalArgumentException("Route geometry cannot be null");
+    }
+
+    if (routeGeom.coordinates() == null || routeGeom.coordinates().size() < 2) {
+      throw new IllegalArgumentException("Route geometry must contain at least 2 points, got: " +
+              (routeGeom.coordinates() == null ? "null" : routeGeom.coordinates().size()));
+    }
+
     double[] outerDynamicWidthZooms = getDoubleArrayKeys(routeOptions.outerDynamicWidthZoomStops);
     double[] outerDynamicWidths = getDoubleArrayValues(routeOptions.outerDynamicWidthZoomStops);
     double[] innerDynamicWidthZooms = getDoubleArrayKeys(routeOptions.innerDynamicWidthZoomStops);
