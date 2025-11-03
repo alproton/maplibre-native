@@ -1688,6 +1688,24 @@ jint NativeMapView::routeCreate(JNIEnv& env,
         if (routeMgr->hasStyle()) {
             using namespace mbgl::android::conversion;
             const auto& linestring = mbgl::android::geojson::LineString::convert(env, routeGeom);
+
+            // Validate the converted linestring
+            if (linestring.empty()) {
+                jni::ThrowNew(env,
+                             jni::FindClass(env, "java/lang/IllegalArgumentException"),
+                             "Route geometry cannot be empty - must contain at least 2 points");
+                return -1;
+            }
+
+            if (linestring.size() < 2) {
+                std::string msg = "Route geometry must contain at least 2 points, got: " +
+                                 std::to_string(linestring.size());
+                jni::ThrowNew(env,
+                             jni::FindClass(env, "java/lang/IllegalArgumentException"),
+                             msg.c_str());
+                return -1;
+            }
+
             mbgl::route::RouteOptions routeOptions;
             Converter<mbgl::Color, int> colorConverter;
             Result<Color> outerColorRes = colorConverter(env, outerColor);
