@@ -162,6 +162,19 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
       geometry_(geometry) {
     assert(!geometry_.empty() && "route geometry cannot be empty");
     assert((!std::isnan(geometry_[0].x) && !std::isnan(geometry_[0].y)) && "invalid geometry point");
+    // Validate geometry - use runtime exceptions instead of asserts so they work in release builds
+    if (geometry_.empty()) {
+        throw std::invalid_argument("Route geometry cannot be empty - must contain at least 2 points");
+    }
+
+    if (geometry_.size() < 2) {
+        throw std::invalid_argument("Route geometry must contain at least 2 points, got: " +
+                                   std::to_string(geometry_.size()));
+    }
+
+    if (std::isnan(geometry_[0].x) || std::isnan(geometry_[0].y)) {
+        throw std::invalid_argument("Invalid geometry point at index 0: coordinates cannot be NaN");
+    }
 
     intervalLengths_.reserve(geometry_.size() - 1);
     cumulativeIntervalDistances_.reserve(geometry_.size());
@@ -172,6 +185,13 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
         const mbgl::Point<double>& p2 = geometry_[i + 1];
         assert((!std::isnan(p1.x) && !std::isnan(p1.y) && !std::isnan(p2.x) && !std::isnan(p2.y)) &&
                "invalid geometry point");
+
+        // Validate each point
+        if (std::isnan(p1.x) || std::isnan(p1.y) || std::isnan(p2.x) || std::isnan(p2.y)) {
+            throw std::invalid_argument("Invalid geometry point at index " + std::to_string(i) +
+                                       " or " + std::to_string(i + 1) + ": coordinates cannot be NaN");
+        }
+
         double segLen;
         if (ropts.useMercatorProjection) {
             const mbgl::Point<double>& p1merc = toMercProject(p1);
