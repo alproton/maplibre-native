@@ -81,6 +81,12 @@ void Layer::setFilter(jni::JNIEnv& env, const jni::Array<jni::Object<>>& jfilter
     using namespace mbgl::style;
     using namespace mbgl::style::conversion;
 
+    // Handle null/invalid filter array - clear the filter
+    if (!jfilter) {
+        layer.setFilter({});
+        return;
+    }
+
     Error error;
     std::optional<Filter> converted = convert<Filter>(Value(env, jfilter), error);
     if (!converted) {
