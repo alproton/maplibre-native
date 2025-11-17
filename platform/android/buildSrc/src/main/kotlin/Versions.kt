@@ -1,4 +1,4 @@
 object Versions {
-    const val ndkVersion = "27.0.12077973"
+    const val ndkVersion = "26.1.10909125"
     const val cmakeVersion = "3.24.0+"
 }

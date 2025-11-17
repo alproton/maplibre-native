@@ -211,9 +211,9 @@ if(MLN_WITH_OPENGL)
             PRIVATE MLN_RENDER_BACKEND_OPENGL=1
     )
 
-    # Only find and link Swappy package for OpenGL builds
-    find_package(games-frame-pacing REQUIRED CONFIG)
-    target_link_libraries(maplibre PRIVATE games-frame-pacing::swappy_static)
+    # Build Swappy from source (using c++_static)
+    add_subdirectory(../../../third_party/swappy ${CMAKE_CURRENT_BINARY_DIR}/swappy)
+    target_link_libraries(maplibre PRIVATE swappy_static)
 endif()
 
 if(MLN_WITH_VULKAN)

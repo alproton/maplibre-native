@@ -58,3 +58,4 @@ out.png
 **/target/
 **/*.rs.bk
 **/*.profraw
+platform/android/third_party/gamesdk/
