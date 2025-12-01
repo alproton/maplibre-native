@@ -75,6 +75,9 @@ void AndroidGLRendererBackend::markContextLost() {
 
 void AndroidGLRendererBackend::setSwapInterval(int interval) {
     if (swapInterval != interval) {
+        Log::Info(Event::Swappy, "[C++] setSwapInterval called: old=" + std::to_string(swapInterval) + 
+                  ", new=" + std::to_string(interval) + " (equivalent to " + std::to_string(60/interval) + " FPS)");
+        
         swapInterval = interval;
 
         // Try to use Swappy frame pacing if available
@@ -84,15 +87,15 @@ void AndroidGLRendererBackend::setSwapInterval(int interval) {
             int targetFps = (interval > 0) ? (60 / interval) : 60;
             SwappyFramePacing::setTargetFrameRate(targetFps);
             Log::Info(Event::Swappy,
-                      "Setting Swappy frame rate to " + std::to_string(targetFps) +
+                      "[C++] Setting Swappy frame rate to " + std::to_string(targetFps) +
                           " FPS (interval: " + std::to_string(swapInterval) + ")");
         } else {
             // Fall back to standard EGL swap interval
             bool success = eglSwapInterval(eglGetCurrentDisplay(), swapInterval);
             if (!success) {
-                Log::Info(Event::OpenGL, "Failure in setting EGL swap interval");
+                Log::Info(Event::OpenGL, "[C++] Failure in setting legacy EGL swap interval");
             } else {
-                Log::Info(Event::OpenGL, "Setting EGL swap interval to " + std::to_string(swapInterval));
+                Log::Info(Event::OpenGL, "[C++] Setting legacy EGL swap interval to " + std::to_string(swapInterval));
             }
         }
     }
