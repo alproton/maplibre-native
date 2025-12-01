@@ -36,6 +36,7 @@ kotlinxCoroutines = { strictly = "[1.0, 2.0[" }
 androidGradlePlugin = "8.6.0"
 appcompatVersion = "1.7.0"
 activity = "1.8.0"
+uiText = "1.9.5"
 
 [libraries]
 gamesFramePacing = { module = "androidx.games:games-frame-pacing", version.ref = "gamesFramePacing" }
@@ -89,6 +90,7 @@ kotlinxSerializationJson = { group = "org.jetbrains.kotlinx", name = "kotlinx-se
 androidGradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompatVersion" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+uiText = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 
 
 [plugins]

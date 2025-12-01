@@ -315,6 +315,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
     }
   }
 
+  public void enableFrameTimingCollection(boolean enable) {
+    mapRenderer.enableFrameTimingCollection(enable);
+  }
+
   private void initializeDrawingSurface(MapLibreMapOptions options) {
     mapRenderer = MapRenderer.create(options, getContext(), () -> MapView.this.onSurfaceCreated());
     renderView = mapRenderer.getView();
