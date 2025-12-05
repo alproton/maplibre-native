@@ -100,6 +100,10 @@ void Layer::setFilter(jni::JNIEnv& env, const jni::Array<jni::Object<>>& jfilter
         return;
     }
 
+    if (!jfilter) {
+        return;
+    }
+
     Error error;
     std::optional<Filter> converted = convert<Filter>(Value(env, jfilter), error);
     if (!converted) {
