@@ -200,59 +200,6 @@ void NativeMapView::onDidFailLoadingMap(MapLoadError, const std::string& error) 
     }
 }
 
-void NativeMapView::onWillStartRenderingFrame() {
-    assert(vm != nullptr);
-
-    android::UniqueEnv _env = android::AttachEnv();
-    static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
-    static auto onWillStartRenderingFrame = javaClass.GetMethod<void()>(*_env, "onWillStartRenderingFrame");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onWillStartRenderingFrame);
-    }
-}
-
-void NativeMapView::onDidFinishRenderingFrame(MapObserver::RenderFrameStatus status) {
-    assert(vm != nullptr);
-
-    android::UniqueEnv _env = android::AttachEnv();
-    static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
-    static auto onDidFinishRenderingFrame = javaClass.GetMethod<void(jboolean, jdouble, jdouble)>(
-        *_env, "onDidFinishRenderingFrame");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env,
-                           onDidFinishRenderingFrame,
-                           (jboolean)(status.mode != MapObserver::RenderMode::Partial),
-                           (jdouble)status.frameEncodingTime,
-                           (jdouble)status.frameRenderingTime);
-    }
-}
-
-void NativeMapView::onWillStartRenderingMap() {
-    assert(vm != nullptr);
-
-    android::UniqueEnv _env = android::AttachEnv();
-    static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
-    static auto onWillStartRenderingMap = javaClass.GetMethod<void()>(*_env, "onWillStartRenderingMap");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onWillStartRenderingMap);
-    }
-}
-
-void NativeMapView::onDidFinishRenderingMap(MapObserver::RenderMode mode) {
-    assert(vm != nullptr);
-
-    android::UniqueEnv _env = android::AttachEnv();
-    static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
-    static auto onDidFinishRenderingMap = javaClass.GetMethod<void(jboolean)>(*_env, "onDidFinishRenderingMap");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onDidFinishRenderingMap, (jboolean)(mode != MapObserver::RenderMode::Partial));
-    }
-}
-
 void NativeMapView::onDidBecomeIdle() {
     assert(vm != nullptr);
 
