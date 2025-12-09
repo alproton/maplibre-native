@@ -59,6 +59,7 @@ std::unique_ptr<mbgl::style::Layer> Layer::releaseCoreLayer() {
 }
 
 jni::Local<jni::String> Layer::getId(jni::JNIEnv& env) {
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return jni::Make<jni::String>(env, "");
@@ -72,6 +73,7 @@ style::Layer& Layer::get() {
 }
 
 void Layer::setProperty(jni::JNIEnv& env, const jni::String& jname, const jni::Object<>& jvalue) {
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return;
@@ -91,8 +93,14 @@ void Layer::setFilter(jni::JNIEnv& env, const jni::Array<jni::Object<>>& jfilter
     using namespace mbgl::style;
     using namespace mbgl::style::conversion;
 
+    // Hold lock to prevent layer destruction during operation
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
+        return;
+    }
+
+    if (!jfilter) {
         return;
     }
 
@@ -110,6 +118,7 @@ jni::Local<jni::Object<gson::JsonElement>> Layer::getFilter(jni::JNIEnv& env) {
     using namespace mbgl::style;
     using namespace mbgl::style::conversion;
 
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return jni::Local<jni::Object<gson::JsonElement>>(env, nullptr);
@@ -125,6 +134,7 @@ jni::Local<jni::Object<gson::JsonElement>> Layer::getFilter(jni::JNIEnv& env) {
 }
 
 void Layer::setSourceLayer(jni::JNIEnv& env, const jni::String& sourceLayer) {
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return;
@@ -134,6 +144,7 @@ void Layer::setSourceLayer(jni::JNIEnv& env, const jni::String& sourceLayer) {
 }
 
 jni::Local<jni::String> Layer::getSourceLayer(jni::JNIEnv& env) {
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return jni::Make<jni::String>(env, "");
@@ -143,6 +154,7 @@ jni::Local<jni::String> Layer::getSourceLayer(jni::JNIEnv& env) {
 }
 
 jni::Local<jni::String> Layer::getSourceId(jni::JNIEnv& env) {
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return jni::Make<jni::String>(env, "");
@@ -152,6 +164,7 @@ jni::Local<jni::String> Layer::getSourceId(jni::JNIEnv& env) {
 }
 
 jni::jfloat Layer::getMinZoom(jni::JNIEnv&) {
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return 0.0f;
@@ -161,6 +174,7 @@ jni::jfloat Layer::getMinZoom(jni::JNIEnv&) {
 }
 
 jni::jfloat Layer::getMaxZoom(jni::JNIEnv&) {
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return 0.0f;
@@ -170,6 +184,7 @@ jni::jfloat Layer::getMaxZoom(jni::JNIEnv&) {
 }
 
 void Layer::setMinZoom(jni::JNIEnv&, jni::jfloat zoom) {
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return;
@@ -179,6 +194,7 @@ void Layer::setMinZoom(jni::JNIEnv&, jni::jfloat zoom) {
 }
 
 void Layer::setMaxZoom(jni::JNIEnv&, jni::jfloat zoom) {
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return;
@@ -190,6 +206,7 @@ void Layer::setMaxZoom(jni::JNIEnv&, jni::jfloat zoom) {
 jni::Local<jni::Object<>> Layer::getVisibility(jni::JNIEnv& env) {
     using namespace mbgl::android::conversion;
 
+    auto guard = layerPtr.lock();
     auto layer = layerPtr.get();
     if (!layer) {
         return std::move(*convert<jni::Local<jni::Object<>>>(env, style::VisibilityType::None));
