@@ -64,10 +64,6 @@ public:
     void onWillStartLoadingMap() override;
     void onDidFinishLoadingMap() override;
     void onDidFailLoadingMap(MapLoadError, const std::string&) override;
-    void onWillStartRenderingFrame() override;
-    void onDidFinishRenderingFrame(MapObserver::RenderFrameStatus) override;
-    void onWillStartRenderingMap() override;
-    void onDidFinishRenderingMap(MapObserver::RenderMode) override;
     void onDidBecomeIdle() override;
     void onDidFinishLoadingStyle() override;
     void onSourceChanged(mbgl::style::Source&) override;
