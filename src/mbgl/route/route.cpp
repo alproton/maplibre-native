@@ -463,7 +463,7 @@ bool Route::hasRouteSegments() const {
 
 bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
     std::vector<double> normalizedPositions;
-    const auto& getNormalizedPosition = [&](uint32_t index, float indexFraction) {
+    const auto& getNormalizedPosition = [&](uint32_t index, double indexFraction) {
         double indexDistanceAlongRoute = cumulativeIntervalDistances_[index] +
                                          (indexFraction * intervalLengths_[index]);
 
@@ -586,7 +586,7 @@ std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& 
         double lastPos = sr.range.second;
 
         double pre_pos = firstPos - HALF_EPSILON < 0.0 ? 0.0 : firstPos - HALF_EPSILON;
-        double post_pos = lastPos + HALF_EPSILON > 1.0f ? 1.0f : lastPos + HALF_EPSILON;
+        double post_pos = lastPos + HALF_EPSILON > 1.0 ? 1.0 : lastPos + HALF_EPSILON;
 
         colorStops[pre_pos] = routeColor;
         colorStops[firstPos] = sr.color;
