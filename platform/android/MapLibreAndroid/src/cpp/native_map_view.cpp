@@ -99,6 +99,11 @@ NativeMapView::NativeMapView(jni::JNIEnv& _env,
         return;
     }
 
+    // Cache a global reference to the Java peer to avoid blocking javaPeer.get() calls
+    // on every frame. This prevents ANR during SCREEN_OFF when GC may be holding JVM locks.
+    // This is safe because this object is created on the main thread and lives until destroy().
+    cachedJavaPeer = jni::NewGlobal(_env, _obj);
+
     // Create a renderer frontend
     rendererFrontend = AndroidRendererFrontend::create(_env, jMapRenderer);
     routeMgr = std::make_unique<mbgl::route::RouteManager>();
@@ -125,6 +130,7 @@ NativeMapView::NativeMapView(jni::JNIEnv& _env,
  */
 NativeMapView::~NativeMapView() {
     map.reset();
+    cachedJavaPeer.reset(); // Clear the cached global reference
     vm = nullptr;
 }
 
@@ -203,13 +209,14 @@ void NativeMapView::onDidFailLoadingMap(MapLoadError, const std::string& error) 
 void NativeMapView::onWillStartRenderingFrame() {
     assert(vm != nullptr);
 
+    // Use cached global reference instead of javaPeer.get() to avoid blocking on JVM locks
+    // This prevents ANR during SCREEN_OFF when GC may be holding locks
+    if (!cachedJavaPeer) return;
+
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onWillStartRenderingFrame = javaClass.GetMethod<void()>(*_env, "onWillStartRenderingFrame");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onWillStartRenderingFrame);
-    }
+    cachedJavaPeer.Call(*_env, onWillStartRenderingFrame);
 }
 
 void NativeMapView::onDidFinishRenderingFrame(MapObserver::RenderFrameStatus status) {
