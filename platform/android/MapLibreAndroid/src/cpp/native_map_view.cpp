@@ -211,7 +211,10 @@ void NativeMapView::onWillStartRenderingFrame() {
 
     // Use cached global reference instead of javaPeer.get() to avoid blocking on JVM locks
     // This prevents ANR during SCREEN_OFF when GC may be holding locks
-    if (!cachedJavaPeer) return;
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onWillStartRenderingFrame: cachedJavaPeer is null");
+        return;
+    }
 
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
@@ -222,42 +225,51 @@ void NativeMapView::onWillStartRenderingFrame() {
 void NativeMapView::onDidFinishRenderingFrame(MapObserver::RenderFrameStatus status) {
     assert(vm != nullptr);
 
+    // Use cached global reference instead of javaPeer.get() to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onDidFinishRenderingFrame: cachedJavaPeer is null");
+        return;
+    }
+
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onDidFinishRenderingFrame = javaClass.GetMethod<void(jboolean, jdouble, jdouble)>(
         *_env, "onDidFinishRenderingFrame");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env,
-                           onDidFinishRenderingFrame,
-                           (jboolean)(status.mode != MapObserver::RenderMode::Partial),
-                           (jdouble)status.frameEncodingTime,
-                           (jdouble)status.frameRenderingTime);
-    }
+    cachedJavaPeer.Call(*_env,
+                        onDidFinishRenderingFrame,
+                        (jboolean)(status.mode != MapObserver::RenderMode::Partial),
+                        (jdouble)status.frameEncodingTime,
+                        (jdouble)status.frameRenderingTime);
 }
 
 void NativeMapView::onWillStartRenderingMap() {
     assert(vm != nullptr);
 
+    // Use cached global reference instead of javaPeer.get() to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onWillStartRenderingMap: cachedJavaPeer is null");
+        return;
+    }
+
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onWillStartRenderingMap = javaClass.GetMethod<void()>(*_env, "onWillStartRenderingMap");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onWillStartRenderingMap);
-    }
+    cachedJavaPeer.Call(*_env, onWillStartRenderingMap);
 }
 
 void NativeMapView::onDidFinishRenderingMap(MapObserver::RenderMode mode) {
     assert(vm != nullptr);
 
+    // Use cached global reference instead of javaPeer.get() to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onDidFinishRenderingMap: cachedJavaPeer is null");
+        return;
+    }
+
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onDidFinishRenderingMap = javaClass.GetMethod<void(jboolean)>(*_env, "onDidFinishRenderingMap");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onDidFinishRenderingMap, (jboolean)(mode != MapObserver::RenderMode::Partial));
-    }
+    cachedJavaPeer.Call(*_env, onDidFinishRenderingMap, (jboolean)(mode != MapObserver::RenderMode::Partial));
 }
 
 void NativeMapView::onDidBecomeIdle() {
