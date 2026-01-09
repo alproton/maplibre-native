@@ -64,6 +64,10 @@ public:
     void onWillStartLoadingMap() override;
     void onDidFinishLoadingMap() override;
     void onDidFailLoadingMap(MapLoadError, const std::string&) override;
+    void onWillStartRenderingFrame() override;
+    void onDidFinishRenderingFrame(MapObserver::RenderFrameStatus) override;
+    void onWillStartRenderingMap() override;
+    void onDidFinishRenderingMap(MapObserver::RenderMode) override;
     void onDidBecomeIdle() override;
     void onDidFinishLoadingStyle() override;
     void onSourceChanged(mbgl::style::Source&) override;
@@ -448,6 +452,10 @@ private:
 
     JavaVM* vm = nullptr;
     jni::WeakReference<jni::Object<NativeMapView>> javaPeer;
+    
+    // Cached global reference to avoid blocking javaPeer.get() calls on every frame
+    // This prevents ANR during SCREEN_OFF when GC may be holding JVM locks
+    jni::Global<jni::Object<NativeMapView>> cachedJavaPeer;
 
     MapRenderer& mapRenderer;
 
