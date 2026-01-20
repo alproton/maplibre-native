@@ -530,11 +530,12 @@ std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeTy
         const RouteSegmentOptions& prevOptions = segments[i - 1].getRouteSegmentOptions();
         const RouteSegmentOptions& currOptions = segments[i].getRouteSegmentOptions();
 
-        const auto& prevDist = prevPositions[prevPositions.size() - 1];
+        // Compare against the last compacted segment's end position, not the original segment
+        const auto& prevCompactedEnd = compacted.rbegin()->range.second;
         const auto& currDist = currPositions[0];
         const auto& prevColor = routeType == RouteType::Inner ? prevOptions.color : prevOptions.outerColor;
         const auto& currColor = routeType == RouteType::Inner ? currOptions.color : currOptions.outerColor;
-        bool isIntersecting = prevDist >= currDist;
+        bool isIntersecting = prevCompactedEnd >= currDist;
         if (isIntersecting) {
             if (prevColor == currColor) {
                 // merge the segments
@@ -542,7 +543,8 @@ std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeTy
                 continue;
 
             } else if (prevOptions.priority >= currOptions.priority) {
-                firstPos = prevPositions[prevPositions.size() - 1] + EPSILON;
+                // Start current segment right after the compacted previous segment
+                firstPos = prevCompactedEnd + EPSILON;
                 lastPos = currPositions[currPositions.size() - 1];
                 sr.range = {firstPos, lastPos};
                 sr.color = currColor;
@@ -581,22 +583,52 @@ std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& 
     // Initialize the color ramp with the routeColor
     colorStops[0.0] = routeColor;
 
-    for (const auto& sr : compacted) {
+    for (size_t i = 0; i < compacted.size(); i++) {
+        const auto& sr = compacted[i];
         double firstPos = sr.range.first;
         double lastPos = sr.range.second;
 
-        double pre_pos = firstPos - HALF_EPSILON < 0.0 ? 0.0 : firstPos - HALF_EPSILON;
-        double post_pos = lastPos + HALF_EPSILON > 1.0 ? 1.0 : lastPos + HALF_EPSILON;
+        // Check if there's a gap before this segment (need transition from routeColor)
+        bool needPreTransition = false;
+        if (i == 0) {
+            // First segment: need transition if it doesn't start at 0.0
+            needPreTransition = firstPos > HALF_EPSILON;
+        } else {
+            // Subsequent segments: need transition if there's a gap from previous segment
+            double prevLastPos = compacted[i - 1].range.second;
+            double gap = firstPos - prevLastPos;
+            needPreTransition = gap > EPSILON;
+        }
 
-        colorStops[pre_pos] = routeColor;
+        // Check if there's a gap after this segment (need transition to routeColor)
+        bool needPostTransition = false;
+        if (i == compacted.size() - 1) {
+            // Last segment: need transition if it doesn't end at 1.0
+            needPostTransition = lastPos < (1.0 - HALF_EPSILON);
+        } else {
+            // Not the last segment: check if there's a gap to the next segment
+            double nextFirstPos = compacted[i + 1].range.first;
+            double gap = nextFirstPos - lastPos;
+            needPostTransition = gap > EPSILON;
+        }
+
+        // Add color stops with transitions only where needed
+        if (needPreTransition) {
+            double pre_pos = firstPos - HALF_EPSILON < 0.0 ? 0.0 : firstPos - HALF_EPSILON;
+            colorStops[pre_pos] = routeColor;
+        }
+        
         colorStops[firstPos] = sr.color;
         colorStops[lastPos] = sr.color;
-        if (lastPos < 1.0) {
+        
+        if (needPostTransition) {
+            double post_pos = lastPos + HALF_EPSILON > 1.0 ? 1.0 : lastPos + HALF_EPSILON;
             colorStops[post_pos] = routeColor;
         }
     }
 
-    if (colorStops.rbegin()->first != 1.0) {
+    // Ensure the route ends with routeColor at 1.0
+    if (colorStops.rbegin()->first < 1.0 - HALF_EPSILON) {
         colorStops[1.0] = routeColor;
     }
 
