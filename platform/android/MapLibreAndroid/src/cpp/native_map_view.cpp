@@ -138,11 +138,10 @@ void NativeMapView::onCameraWillChange(MapObserver::CameraChangeMode mode) {
     assert(vm != nullptr);
 
     android::UniqueEnv _env = android::AttachEnv();
-    static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
-    static auto onCameraWillChange = javaClass.GetMethod<void(jboolean)>(*_env, "onCameraWillChange");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onCameraWillChange, (jboolean)(mode != MapObserver::CameraChangeMode::Immediate));
+    if (cachedJavaPeer) {
+        static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
+        static auto onCameraWillChange = javaClass.GetMethod<void(jboolean)>(*_env, "onCameraWillChange");
+        cachedJavaPeer.Call(*_env, onCameraWillChange, (jboolean)(mode != MapObserver::CameraChangeMode::Immediate));
     }
 }
 
@@ -150,11 +149,10 @@ void NativeMapView::onCameraIsChanging() {
     assert(vm != nullptr);
 
     android::UniqueEnv _env = android::AttachEnv();
-    static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
-    static auto onCameraIsChanging = javaClass.GetMethod<void()>(*_env, "onCameraIsChanging");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onCameraIsChanging);
+    if (cachedJavaPeer) {
+        static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
+        static auto onCameraIsChanging = javaClass.GetMethod<void()>(*_env, "onCameraIsChanging");
+        cachedJavaPeer.Call(*_env, onCameraIsChanging);
     }
 }
 
@@ -162,11 +160,10 @@ void NativeMapView::onCameraDidChange(MapObserver::CameraChangeMode mode) {
     assert(vm != nullptr);
 
     android::UniqueEnv _env = android::AttachEnv();
-    static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
-    static auto onCameraDidChange = javaClass.GetMethod<void(jboolean)>(*_env, "onCameraDidChange");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onCameraDidChange, (jboolean)(mode != MapObserver::CameraChangeMode::Immediate));
+    if (cachedJavaPeer) {
+        static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
+        static auto onCameraDidChange = javaClass.GetMethod<void(jboolean)>(*_env, "onCameraDidChange");
+        cachedJavaPeer.Call(*_env, onCameraDidChange, (jboolean)(mode != MapObserver::CameraChangeMode::Immediate));
     }
 }
 
