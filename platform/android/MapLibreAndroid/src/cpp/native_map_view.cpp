@@ -169,38 +169,41 @@ void NativeMapView::onCameraDidChange(MapObserver::CameraChangeMode mode) {
 
 void NativeMapView::onWillStartLoadingMap() {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onWillStartLoadingMap: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onWillStartLoadingMap = javaClass.GetMethod<void()>(*_env, "onWillStartLoadingMap");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onWillStartLoadingMap);
-    }
+    cachedJavaPeer.Call(*_env, onWillStartLoadingMap);
 }
 
 void NativeMapView::onDidFinishLoadingMap() {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onDidFinishLoadingMap: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onDidFinishLoadingMap = javaClass.GetMethod<void()>(*_env, "onDidFinishLoadingMap");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onDidFinishLoadingMap);
-    }
+    cachedJavaPeer.Call(*_env, onDidFinishLoadingMap);
 }
 
 void NativeMapView::onDidFailLoadingMap(MapLoadError, const std::string& error) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onDidFailLoadingMap: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onDidFailLoadingMap = javaClass.GetMethod<void(jni::String)>(*_env, "onDidFailLoadingMap");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onDidFailLoadingMap, jni::Make<jni::String>(*_env, error));
-    }
+    cachedJavaPeer.Call(*_env, onDidFailLoadingMap, jni::Make<jni::String>(*_env, error));
 }
 
 void NativeMapView::onWillStartRenderingFrame() {
@@ -271,66 +274,69 @@ void NativeMapView::onDidFinishRenderingMap(MapObserver::RenderMode mode) {
 
 void NativeMapView::onDidBecomeIdle() {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onDidBecomeIdle: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onDidBecomeIdle = javaClass.GetMethod<void()>(*_env, "onDidBecomeIdle");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onDidBecomeIdle);
-    }
+    cachedJavaPeer.Call(*_env, onDidBecomeIdle);
 }
 
 void NativeMapView::onDidFinishLoadingStyle() {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onDidFinishLoadingStyle: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onDidFinishLoadingStyle = javaClass.GetMethod<void()>(*_env, "onDidFinishLoadingStyle");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onDidFinishLoadingStyle);
-    }
+    cachedJavaPeer.Call(*_env, onDidFinishLoadingStyle);
 }
 
 void NativeMapView::onSourceChanged(mbgl::style::Source& source) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onSourceChanged: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onSourceChanged = javaClass.GetMethod<void(jni::String)>(*_env, "onSourceChanged");
     auto sourceId = jni::Make<jni::String>(*_env, source.getID());
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onSourceChanged, sourceId);
-    }
+    cachedJavaPeer.Call(*_env, onSourceChanged, sourceId);
 }
 
 void NativeMapView::onStyleImageMissing(const std::string& imageId) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onStyleImageMissing: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onStyleImageMissing = javaClass.GetMethod<void(jni::String)>(*_env, "onStyleImageMissing");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onStyleImageMissing, jni::Make<jni::String>(*_env, imageId));
-    }
+    cachedJavaPeer.Call(*_env, onStyleImageMissing, jni::Make<jni::String>(*_env, imageId));
 }
 
 bool NativeMapView::onCanRemoveUnusedStyleImage(const std::string& imageId) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onCanRemoveUnusedStyleImage: cachedJavaPeer is null");
+        return true; // Safe default: allow removal if callback unavailable
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onCanRemoveUnusedStyleImage = javaClass.GetMethod<jboolean(jni::String)>(*_env,
                                                                                          "onCanRemoveUnusedStyleImage");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        return weakReference.Call(*_env, onCanRemoveUnusedStyleImage, jni::Make<jni::String>(*_env, imageId));
-    }
-
-    return true;
+    return cachedJavaPeer.Call(*_env, onCanRemoveUnusedStyleImage, jni::Make<jni::String>(*_env, imageId));
 }
 
 // JNI Methods //
@@ -689,13 +695,15 @@ void NativeMapView::scheduleSnapshot(jni::JNIEnv&) {
         // Convert image to bitmap
         auto bitmap = Bitmap::CreateBitmap(*_env, std::move(image));
 
+        // Use cached global reference to avoid blocking on JVM locks
+        if (!cachedJavaPeer) {
+            mbgl::Log::Warning(mbgl::Event::General, "onSnapshotReady: cachedJavaPeer is null");
+            return;
+        }
         // invoke Mapview#OnSnapshotReady
         static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
         static auto onSnapshotReady = javaClass.GetMethod<void(jni::Object<Bitmap>)>(*_env, "onSnapshotReady");
-        auto weakReference = javaPeer.get(*_env);
-        if (weakReference) {
-            weakReference.Call(*_env, onSnapshotReady, bitmap);
-        }
+        cachedJavaPeer.Call(*_env, onSnapshotReady, bitmap);
     });
 }
 
@@ -1968,63 +1976,70 @@ void NativeMapView::onPreCompileShader(shaders::BuiltIn id,
                                        gfx::Backend::Type type,
                                        const std::string& additionalDefines) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onPreCompileShader: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onPreCompileShader = javaClass.GetMethod<void(jni::jint, jni::jint, jni::String)>(*_env,
                                                                                                   "onPreCompileShader");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env,
-                           onPreCompileShader,
-                           static_cast<jni::jint>(id),
-                           static_cast<jni::jint>(type),
-                           jni::Make<jni::String>(*_env, additionalDefines));
-    }
+    cachedJavaPeer.Call(*_env,
+                       onPreCompileShader,
+                       static_cast<jni::jint>(id),
+                       static_cast<jni::jint>(type),
+                       jni::Make<jni::String>(*_env, additionalDefines));
 }
 
 void NativeMapView::onPostCompileShader(shaders::BuiltIn id,
                                         gfx::Backend::Type type,
                                         const std::string& additionalDefines) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onPostCompileShader: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onPostCompileShader = javaClass.GetMethod<void(jni::jint, jni::jint, jni::String)>(
         *_env, "onPostCompileShader");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env,
-                           onPostCompileShader,
-                           static_cast<jni::jint>(id),
-                           static_cast<jni::jint>(type),
-                           jni::Make<jni::String>(*_env, additionalDefines));
-    }
+    cachedJavaPeer.Call(*_env,
+                       onPostCompileShader,
+                       static_cast<jni::jint>(id),
+                       static_cast<jni::jint>(type),
+                       jni::Make<jni::String>(*_env, additionalDefines));
 }
 
 void NativeMapView::onShaderCompileFailed(shaders::BuiltIn id,
                                           gfx::Backend::Type type,
                                           const std::string& additionalDefines) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onShaderCompileFailed: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onShaderCompileFailed = javaClass.GetMethod<void(jni::jint, jni::jint, jni::String)>(
         *_env, "onShaderCompileFailed");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env,
-                           onShaderCompileFailed,
-                           static_cast<jni::jint>(id),
-                           static_cast<jni::jint>(type),
-                           jni::Make<jni::String>(*_env, additionalDefines));
-    }
+    cachedJavaPeer.Call(*_env,
+                       onShaderCompileFailed,
+                       static_cast<jni::jint>(id),
+                       static_cast<jni::jint>(type),
+                       jni::Make<jni::String>(*_env, additionalDefines));
 }
 
 // Glyph requests
 void NativeMapView::onGlyphsLoaded(const FontStack& stack, const GlyphRange& range) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onGlyphsLoaded: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onGlyphsLoaded = javaClass.GetMethod<void(jni::Array<jni::String>, jni::jint, jni::jint)>(
@@ -2035,15 +2050,16 @@ void NativeMapView::onGlyphsLoaded(const FontStack& stack, const GlyphRange& ran
         fontStack.Set(*_env, i, jni::Make<jni::String>(*_env, stack.at(i)));
     }
 
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onGlyphsLoaded, fontStack, range.first, range.second);
-    }
+    cachedJavaPeer.Call(*_env, onGlyphsLoaded, fontStack, range.first, range.second);
 }
 
 void NativeMapView::onGlyphsError(const FontStack& stack, const GlyphRange& range, std::exception_ptr) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onGlyphsError: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onGlyphsError = javaClass.GetMethod<void(jni::Array<jni::String>, jni::jint, jni::jint)>(
@@ -2054,15 +2070,16 @@ void NativeMapView::onGlyphsError(const FontStack& stack, const GlyphRange& rang
         fontStack.Set(*_env, i, jni::Make<jni::String>(*_env, stack.at(i)));
     }
 
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onGlyphsError, fontStack, range.first, range.second);
-    }
+    cachedJavaPeer.Call(*_env, onGlyphsError, fontStack, range.first, range.second);
 }
 
 void NativeMapView::onGlyphsRequested(const FontStack& stack, const GlyphRange& range) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onGlyphsRequested: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onGlyphsRequested = javaClass.GetMethod<void(jni::Array<jni::String>, jni::jint, jni::jint)>(
@@ -2073,84 +2090,91 @@ void NativeMapView::onGlyphsRequested(const FontStack& stack, const GlyphRange& 
         fontStack.Set(*_env, i, jni::Make<jni::String>(*_env, stack.at(i)));
     }
 
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env, onGlyphsRequested, fontStack, range.first, range.second);
-    }
+    cachedJavaPeer.Call(*_env, onGlyphsRequested, fontStack, range.first, range.second);
 }
 
 // Tile requests
 void NativeMapView::onTileAction(mbgl::TileOperation op, const OverscaledTileID& id, const std::string& sourceID) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onTileAction: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onTileAction = javaClass.GetMethod<void(
         jni::Object<mbgl::android::TileOperation>, jni::jint, jni::jint, jni::jint, jni::jint, jni::jint, jni::String)>(
         *_env, "onTileAction");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference) {
-        weakReference.Call(*_env,
-                           onTileAction,
-                           mbgl::android::TileOperation::Create(*_env, op),
-                           static_cast<jni::jint>(id.canonical.x),
-                           static_cast<jni::jint>(id.canonical.y),
-                           static_cast<jni::jint>(id.canonical.z),
-                           static_cast<jni::jint>(id.wrap),
-                           static_cast<jni::jint>(id.overscaledZ),
-                           jni::Make<jni::String>(*_env, sourceID));
-    }
+    cachedJavaPeer.Call(*_env,
+                       onTileAction,
+                       mbgl::android::TileOperation::Create(*_env, op),
+                       static_cast<jni::jint>(id.canonical.x),
+                       static_cast<jni::jint>(id.canonical.y),
+                       static_cast<jni::jint>(id.canonical.z),
+                       static_cast<jni::jint>(id.wrap),
+                       static_cast<jni::jint>(id.overscaledZ),
+                       jni::Make<jni::String>(*_env, sourceID));
 }
 
 // Sprite requests
 void NativeMapView::onSpriteLoaded(const std::optional<style::Sprite>& sprite) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onSpriteLoaded: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onSpriteLoaded = javaClass.GetMethod<void(jni::String, jni::String)>(*_env, "onSpriteLoaded");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference && sprite) {
-        weakReference.Call(*_env,
+    if (sprite) {
+        cachedJavaPeer.Call(*_env,
                            onSpriteLoaded,
                            jni::Make<jni::String>(*_env, sprite->id),
                            jni::Make<jni::String>(*_env, sprite->spriteURL));
     } else {
-        weakReference.Call(*_env, onSpriteLoaded, jni::Make<jni::String>(*_env, ""), jni::Make<jni::String>(*_env, ""));
+        cachedJavaPeer.Call(*_env, onSpriteLoaded, jni::Make<jni::String>(*_env, ""), jni::Make<jni::String>(*_env, ""));
     }
 }
 
 void NativeMapView::onSpriteError(const std::optional<style::Sprite>& sprite, std::exception_ptr ex) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onSpriteError: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onSpriteError = javaClass.GetMethod<void(jni::String, jni::String)>(*_env, "onSpriteError");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference && sprite) {
-        weakReference.Call(*_env,
+    if (sprite) {
+        cachedJavaPeer.Call(*_env,
                            onSpriteError,
                            jni::Make<jni::String>(*_env, sprite->id),
                            jni::Make<jni::String>(*_env, sprite->spriteURL));
     } else {
-        weakReference.Call(*_env, onSpriteError, jni::Make<jni::String>(*_env, ""), jni::Make<jni::String>(*_env, ""));
+        cachedJavaPeer.Call(*_env, onSpriteError, jni::Make<jni::String>(*_env, ""), jni::Make<jni::String>(*_env, ""));
     }
 }
 
 void NativeMapView::onSpriteRequested(const std::optional<style::Sprite>& sprite) {
     assert(vm != nullptr);
-
+    // Use cached global reference to avoid blocking on JVM locks
+    if (!cachedJavaPeer) {
+        mbgl::Log::Warning(mbgl::Event::General, "onSpriteRequested: cachedJavaPeer is null");
+        return;
+    }
     android::UniqueEnv _env = android::AttachEnv();
     static auto& javaClass = jni::Class<NativeMapView>::Singleton(*_env);
     static auto onSpriteRequested = javaClass.GetMethod<void(jni::String, jni::String)>(*_env, "onSpriteRequested");
-    auto weakReference = javaPeer.get(*_env);
-    if (weakReference && sprite) {
-        weakReference.Call(*_env,
+    if (sprite) {
+        cachedJavaPeer.Call(*_env,
                            onSpriteRequested,
                            jni::Make<jni::String>(*_env, sprite->id),
                            jni::Make<jni::String>(*_env, sprite->spriteURL));
     } else {
-        weakReference.Call(
+        cachedJavaPeer.Call(
             *_env, onSpriteRequested, jni::Make<jni::String>(*_env, ""), jni::Make<jni::String>(*_env, ""));
     }
 }
