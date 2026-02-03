@@ -98,8 +98,6 @@ public class HttpRequestImpl implements HttpRequest {
   public void cancelRequest() {
     // call can be null if the constructor gets aborted (e.g, under a NoRouteToHostException).
     if (call != null) {
-      HttpLogger.log(Log.INFO, String.format("[HTTP] This request was cancelled (%s). This is expected for tiles"
-        + " that were being prefetched but are no longer needed for the map to render.", call.request().url()));
       call.cancel();
     }
   }
