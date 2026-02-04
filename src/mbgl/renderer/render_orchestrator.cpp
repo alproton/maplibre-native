@@ -881,15 +881,13 @@ void RenderOrchestrator::onStyleChange() {
     MLN_TRACE_FUNC();
 
     // Guard against use-after-free when style change message is processed
-    // after the orchestrator has been marked for destruction or context lost
-    if (contextLost || renderSources.empty()) {
+    // after the orchestrator has been marked for destruction
+    if (contextLost) {
         return;
     }
 
     for (auto& source : renderSources) {
-        if (source.second) {
-            source.second->onStyleChange();
-        }
+        source.second->onStyleChange();
     }
 }
 
