@@ -880,8 +880,16 @@ bool RenderOrchestrator::isLoaded() const {
 void RenderOrchestrator::onStyleChange() {
     MLN_TRACE_FUNC();
 
+    // Guard against use-after-free when style change message is processed
+    // after the orchestrator has been marked for destruction or context lost
+    if (contextLost || renderSources.empty()) {
+        return;
+    }
+
     for (auto& source : renderSources) {
-        source.second->onStyleChange();
+        if (source.second) {
+            source.second->onStyleChange();
+        }
     }
 }
 
