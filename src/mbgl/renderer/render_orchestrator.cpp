@@ -887,7 +887,9 @@ void RenderOrchestrator::onStyleChange() {
     }
 
     for (auto& source : renderSources) {
-        source.second->onStyleChange();
+        if(source.second) {
+            source.second->onStyleChange();
+        }
     }
 }
 
