@@ -281,6 +281,14 @@ gfx::RenderingStats MapRenderer::getRenderingStats() {
     return backend->getImpl().getRenderingStats();
 }
 
+uint64_t MapRenderer::getRendererGeneration() const {
+    return rendererGeneration.load();
+}
+
+Renderer* MapRenderer::getRenderer() const {
+    return renderer.get();
+}
+
 void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface>& surface) {
     // Lock as the initialization can come from the main thread or the GL thread first
     {
@@ -295,6 +303,8 @@ void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface
         // attempt to clean them up will fail
         if (backend) backend->markContextLost();
         if (renderer) renderer->markContextLost();
+
+        ++rendererGeneration;
 
         // Reset in opposite order
         renderer.reset();

@@ -880,9 +880,19 @@ bool RenderOrchestrator::isLoaded() const {
 void RenderOrchestrator::onStyleChange() {
     MLN_TRACE_FUNC();
 
-    for (auto& source : renderSources) {
-        source.second->onStyleChange();
+    // Guard against use-after-free when style change message is processed
+    // after the orchestrator has been marked for destruction
+    if (contextLost) {
+        return;
     }
+
+    for (auto& source : renderSources) {
+        if(source.second) {
+            source.second->onStyleChange();
+        }
+    }
+
+    Log::Info(Event::Style, "MaplibreNative RenderOrchestrator::OnStyleChange() completed");
 }
 
 void RenderOrchestrator::clearData() {

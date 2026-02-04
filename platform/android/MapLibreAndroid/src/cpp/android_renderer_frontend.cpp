@@ -176,7 +176,17 @@ void AndroidRendererFrontend::clearData() {
 }
 
 void AndroidRendererFrontend::onStyleChange() {
-    mapRenderer.actor().invoke(&Renderer::onStyleChange);
+    const uint64_t gen = mapRenderer.getRendererGeneration();
+    mapRenderer.schedule([this, gen]() {
+    if (gen != mapRenderer.getRendererGeneration()) {
+        // New renderer will get fresh style on initialization
+        Log::Debug(Event::Android, "Renderer was recreated, discarding stale message");
+        return;
+    }
+    if (auto* renderer = mapRenderer.getRenderer()) {
+        renderer->onStyleChange();
+    }
+});
 }
 
 std::vector<Feature> AndroidRendererFrontend::querySourceFeatures(const std::string& sourceID,
