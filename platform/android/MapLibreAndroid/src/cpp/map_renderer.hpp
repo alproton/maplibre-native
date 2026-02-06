@@ -98,6 +98,9 @@ public:
 
     int getLastRenderedTileCount() const noexcept;
 
+    uint64_t getRendererGeneration() const;
+    Renderer* getRenderer() const;
+
 protected:
     // Called from the GL Thread //
 
@@ -161,6 +164,7 @@ private:
     std::mutex updateMutex;
 
     std::atomic<bool> destroyed{false};
+    std::atomic<uint64_t> rendererGeneration{0};
 
     std::unique_ptr<SnapshotCallback> snapshotCallback;
 
