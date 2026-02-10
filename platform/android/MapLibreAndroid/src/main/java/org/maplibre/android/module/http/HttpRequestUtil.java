@@ -1,5 +1,6 @@
 package org.maplibre.android.module.http;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -50,6 +51,35 @@ public class HttpRequestUtil {
   public static void setOkHttpClient(@Nullable Call.Factory client) {
     HttpRequestImpl.setOkHttpClient(client);
   }
+
+  /**
+   * Enable or disable logging of elapsed time for native HTTP tile requests.
+   * When enabled, the native layer logs the round-trip duration for each tile
+   * download at Info severity, or Warning severity on failure.
+   * <p>
+   * Default value is false. This configuration will outlast the lifecycle of the Map.
+   * </p>
+   *
+   * @param enabled True will enable timing logs, false will disable
+   */
+  public static void setTimingLogsEnabled(boolean enabled) {
+    nativeSetTimingLogsEnabled(enabled);
+  }
+
+  /**
+   * Returns whether native HTTP tile request timing logs are enabled.
+   *
+   * @return True if timing logs are enabled, false otherwise
+   */
+  public static boolean isTimingLogsEnabled() {
+    return nativeIsTimingLogsEnabled();
+  }
+
+  @Keep
+  private static native void nativeSetTimingLogsEnabled(boolean enabled);
+
+  @Keep
+  private static native boolean nativeIsTimingLogsEnabled();
 
   @NonNull
   static String toHumanReadableAscii(String s) {

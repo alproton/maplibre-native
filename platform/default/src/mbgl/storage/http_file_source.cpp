@@ -84,6 +84,8 @@ public:
 
     void handleResult(CURLcode code);
 
+    static bool timingLogsEnabled;
+
 private:
     static size_t headerCallback(char *buffer, size_t size, size_t nmemb, void *userp);
     static size_t writeCallback(void *contents, size_t size, size_t nmemb, void *userp);
@@ -101,6 +103,8 @@ private:
 
     CURL *handle = nullptr;
     curl_slist *headers = nullptr;
+
+    TimePoint requestStartTime;
 
     char error[CURL_ERROR_SIZE] = {0};
 };
@@ -268,7 +272,8 @@ HTTPRequest::HTTPRequest(HTTPFileSource::Impl *context_, Resource resource_, Fil
     : context(context_),
       resource(std::move(resource_)),
       callback(std::move(callback_)),
-      handle(context->getHandle()) {
+      handle(context->getHandle()),
+      requestStartTime(Clock::now()) {
     if (resource.dataRange) {
         const std::string header = std::string("Range: bytes=") + std::to_string(resource.dataRange->first) +
                                    std::string("-") + std::to_string(resource.dataRange->second);
@@ -400,6 +405,24 @@ void HTTPRequest::handleResult(CURLcode code) {
         response = std::make_unique<Response>();
     }
 
+    if (timingLogsEnabled && resource.kind == Resource::Kind::Tile) {
+        auto elapsed = std::chrono::duration_cast<Milliseconds>(Clock::now() - requestStartTime);
+        long logResponseCode = 0;
+        curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &logResponseCode);
+        if (code != CURLE_OK) {
+            Log::Warning(Event::HttpRequest,
+                         "Tile download failed: URL=" + resource.url +
+                         " CurlError=" + std::string{curl_easy_strerror(code)} +
+                         " Elapsed=" + util::toString(elapsed.count()) + "ms");
+        } else {
+            Log::Info(Event::HttpRequest,
+                      "Tile download completed: URL=" + resource.url +
+                      " Status=" + util::toString(logResponseCode) +
+                      " Size=" + (data ? util::toString(data->size()) : "0") + "B" +
+                      " Elapsed=" + util::toString(elapsed.count()) + "ms");
+        }
+    }
+
     using Error = Response::Error;
 
     // Add human-readable error code
@@ -452,6 +475,8 @@ void HTTPRequest::handleResult(CURLcode code) {
     auto response_ = *response;
     callback_(response_);
 }
+
+bool HTTPRequest::timingLogsEnabled = false;
 
 HTTPFileSource::HTTPFileSource(const ResourceOptions &resourceOptions, const ClientOptions &clientOptions)
     : impl(std::make_unique<Impl>(resourceOptions, clientOptions)) {}

@@ -3,6 +3,7 @@
 #include <mbgl/storage/resource_options.hpp>
 #include <mbgl/storage/response.hpp>
 #include <mbgl/util/client_options.hpp>
+#include <mbgl/util/chrono.hpp>
 #include <mbgl/util/logging.hpp>
 
 #include <mbgl/util/async_request.hpp>
@@ -53,12 +54,15 @@ public:
                     const jni::String& xRateLimitReset,
                     const jni::Array<jni::jbyte>& body);
 
+    static bool timingLogsEnabled;
+
     jni::Global<jni::Object<HTTPRequest>> javaRequest;
 
 private:
     Resource resource;
     FileSource::Callback callback;
     Response response;
+    TimePoint requestStartTime;
 
     util::AsyncTask async{[this] {
         // Calling `callback` may result in deleting `this`. Copy data to temporaries first.
@@ -74,6 +78,20 @@ private:
 
 namespace android {
 
+// JNI bridge for HttpRequestUtil static native methods
+class HttpRequestUtil {
+public:
+    static constexpr auto Name() { return "org/maplibre/android/module/http/HttpRequestUtil"; }
+
+    static void nativeSetTimingLogsEnabled(jni::JNIEnv&, const jni::Class<HttpRequestUtil>&, jni::jboolean enabled) {
+        HTTPRequest::timingLogsEnabled = enabled;
+    }
+
+    static jni::jboolean nativeIsTimingLogsEnabled(jni::JNIEnv&, const jni::Class<HttpRequestUtil>&) {
+        return HTTPRequest::timingLogsEnabled;
+    }
+};
+
 void RegisterNativeHTTPRequest(jni::JNIEnv& env) {
     static auto& javaClass = jni::Class<HTTPRequest>::Singleton(env);
 
@@ -84,13 +102,24 @@ void RegisterNativeHTTPRequest(jni::JNIEnv& env) {
                                          "nativePtr",
                                          METHOD(&HTTPRequest::onFailure, "nativeOnFailure"),
                                          METHOD(&HTTPRequest::onResponse, "nativeOnResponse"));
+
+    // Register static native methods on HttpRequestUtil
+    static auto& httpRequestUtilClass = jni::Class<HttpRequestUtil>::Singleton(env);
+    jni::RegisterNatives(
+        env,
+        *httpRequestUtilClass,
+        jni::MakeNativeMethod<decltype(&HttpRequestUtil::nativeSetTimingLogsEnabled),
+                              &HttpRequestUtil::nativeSetTimingLogsEnabled>("nativeSetTimingLogsEnabled"),
+        jni::MakeNativeMethod<decltype(&HttpRequestUtil::nativeIsTimingLogsEnabled),
+                              &HttpRequestUtil::nativeIsTimingLogsEnabled>("nativeIsTimingLogsEnabled"));
 }
 
 } // namespace android
 
 HTTPRequest::HTTPRequest(jni::JNIEnv& env, const Resource& resource_, FileSource::Callback callback_)
     : resource(resource_),
-      callback(callback_) {
+      callback(callback_),
+      requestStartTime(Clock::now()) {
     std::string dataRangeStr;
     std::string etagStr;
     std::string modifiedStr;
@@ -141,6 +170,16 @@ void HTTPRequest::onResponse(jni::JNIEnv& env,
                              const jni::String& jRetryAfter,
                              const jni::String& jXRateLimitReset,
                              const jni::Array<jni::jbyte>& body) {
+    if (timingLogsEnabled && resource.kind == Resource::Kind::Tile) {
+        auto elapsed = std::chrono::duration_cast<Milliseconds>(Clock::now() - requestStartTime);
+        size_t dataSize = body ? body.Length(env) : 0;
+        Log::Info(Event::HttpRequest,
+                  "Tile download completed: URL=" + resource.url +
+                  " Status=" + util::toString(code) +
+                  " Size=" + util::toString(dataSize) + "B" +
+                  " Elapsed=" + util::toString(elapsed.count()) + "ms");
+    }
+
     using Error = Response::Error;
 
     if (etag) {
@@ -200,6 +239,14 @@ void HTTPRequest::onResponse(jni::JNIEnv& env,
 void HTTPRequest::onFailure(jni::JNIEnv& env, int type, const jni::String& message) {
     std::string messageStr = jni::Make<std::string>(env, message);
 
+    if (timingLogsEnabled && resource.kind == Resource::Kind::Tile) {
+        auto elapsed = std::chrono::duration_cast<Milliseconds>(Clock::now() - requestStartTime);
+        Log::Warning(Event::HttpRequest,
+                     "Tile download failed: URL=" + resource.url +
+                     " Error=" + messageStr +
+                     " Elapsed=" + util::toString(elapsed.count()) + "ms");
+    }
+
     using Error = Response::Error;
 
     switch (type) {
@@ -215,6 +262,8 @@ void HTTPRequest::onFailure(jni::JNIEnv& env, int type, const jni::String& messa
 
     async.send();
 }
+
+bool HTTPRequest::timingLogsEnabled = false;
 
 HTTPFileSource::HTTPFileSource(const ResourceOptions& resourceOptions, const ClientOptions& clientOptions)
     : impl(std::make_unique<Impl>(resourceOptions.clone(), clientOptions.clone())) {}
