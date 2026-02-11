@@ -1,5 +1,6 @@
 package org.maplibre.android.module.http;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -50,6 +51,43 @@ public class HttpRequestUtil {
   public static void setOkHttpClient(@Nullable Call.Factory client) {
     HttpRequestImpl.setOkHttpClient(client);
   }
+
+  /**
+   * Enable or disable native HTTP tile request timing logs.
+   * <p>
+   * When enabled, every individual tile download is logged with its URL, HTTP status,
+   * response size and elapsed time (equivalent to {@link HttpRequestLogLevel#VERBOSE}).
+   * When disabled, native tile request logging is turned off.
+   * </p>
+   * <p>
+   * This configuration will outlast the lifecycle of the Map.
+   * </p>
+   *
+   * @param enabled true to enable per-tile timing logs, false to disable
+   */
+  public static void setTimingLogsEnabled(boolean enabled) {
+    nativeSetTimingLogsEnabled(enabled);
+  }
+
+  /**
+   * Configure native HTTP tile request logging.
+   * <p>
+   * This configuration will outlast the lifecycle of the Map.
+   * </p>
+   *
+   * @param options the log options
+   * @see HttpRequestLogOptions
+   * @see HttpRequestLogLevel
+   */
+  public static void setHttpRequestLogOptions(@NonNull HttpRequestLogOptions options) {
+    nativeSetHttpRequestLogOptions(options.getLevel().ordinal(), options.getDurationSeconds());
+  }
+
+  @Keep
+  private static native void nativeSetTimingLogsEnabled(boolean enabled);
+
+  @Keep
+  private static native void nativeSetHttpRequestLogOptions(int level, long durationSeconds);
 
   @NonNull
   static String toHumanReadableAscii(String s) {

@@ -3,6 +3,7 @@
 #include <mbgl/storage/resource_options.hpp>
 #include <mbgl/storage/response.hpp>
 #include <mbgl/util/client_options.hpp>
+#include <mbgl/util/chrono.hpp>
 #include <mbgl/util/logging.hpp>
 
 #include <mbgl/util/async_request.hpp>
@@ -10,6 +11,10 @@
 #include <mbgl/util/http_header.hpp>
 #include <mbgl/util/string.hpp>
 #include <mbgl/util/util.hpp>
+
+#include <algorithm>
+#include <atomic>
+#include <vector>
 
 #include <jni/jni.hpp>
 #include "attach_env.hpp"
@@ -35,6 +40,62 @@ private:
     ClientOptions clientOptions;
 };
 
+// Log level enum — ordinal values must match Java HttpRequestLogLevel
+enum class HTTPRequestLogLevel : int {
+    Verbose = 0,
+    Stats = 1
+};
+
+struct HTTPRequestLogOptions {
+    HTTPRequestLogLevel level = HTTPRequestLogLevel::Stats;
+    Seconds statsDuration{0};
+};
+
+struct HTTPRequestStats {
+    TimePoint windowStart = Clock::now();
+    uint32_t totalRequests = 0;
+    uint32_t successfulRequests = 0;
+    uint32_t failedRequests = 0;
+    std::vector<int64_t> successElapsedMs;
+
+    void reset() {
+        windowStart = Clock::now();
+        totalRequests = 0;
+        successfulRequests = 0;
+        failedRequests = 0;
+        successElapsedMs.clear();
+    }
+
+    void logAndReset(Seconds windowDuration) {
+        if (totalRequests == 0) {
+            reset();
+            return;
+        }
+
+        int64_t minMs = 0, maxMs = 0, medianMs = 0;
+        if (!successElapsedMs.empty()) {
+            std::sort(successElapsedMs.begin(), successElapsedMs.end());
+            minMs = successElapsedMs.front();
+            maxMs = successElapsedMs.back();
+            size_t n = successElapsedMs.size();
+            medianMs = (n % 2 == 0)
+                ? (successElapsedMs[n / 2 - 1] + successElapsedMs[n / 2]) / 2
+                : successElapsedMs[n / 2];
+        }
+
+        Log::Info(Event::HttpRequest,
+                  "Tile download stats (" + util::toString(windowDuration.count()) + "s window):"
+                  " Total=" + util::toString(totalRequests) +
+                  " Success=" + util::toString(successfulRequests) +
+                  " Failed=" + util::toString(failedRequests) +
+                  " Min=" + util::toString(minMs) + "ms" +
+                  " Max=" + util::toString(maxMs) + "ms" +
+                  " Median=" + util::toString(medianMs) + "ms");
+
+        reset();
+    }
+};
+
 class HTTPRequest : public AsyncRequest {
 public:
     static constexpr auto Name() { return "org/maplibre/android/http/NativeHttpRequest"; };
@@ -53,12 +114,19 @@ public:
                     const jni::String& xRateLimitReset,
                     const jni::Array<jni::jbyte>& body);
 
+    static std::atomic<bool> timingLogsEnabled;
+    static HTTPRequestLogOptions logOptions;
+    static HTTPRequestStats stats;
+
     jni::Global<jni::Object<HTTPRequest>> javaRequest;
 
 private:
+    void recordTileStats(int64_t elapsedMs, bool success);
+
     Resource resource;
     FileSource::Callback callback;
     Response response;
+    TimePoint requestStartTime;
 
     util::AsyncTask async{[this] {
         // Calling `callback` may result in deleting `this`. Copy data to temporaries first.
@@ -74,6 +142,26 @@ private:
 
 namespace android {
 
+// JNI bridge for HttpRequestUtil static native methods
+class HttpRequestUtil {
+public:
+    static constexpr auto Name() { return "org/maplibre/android/module/http/HttpRequestUtil"; }
+
+    static void nativeSetTimingLogsEnabled(jni::JNIEnv&, const jni::Class<HttpRequestUtil>&,
+                                           jni::jboolean enabled) {
+        HTTPRequest::timingLogsEnabled.store(enabled, std::memory_order_relaxed);
+    }
+
+    static void nativeSetHttpRequestLogOptions(jni::JNIEnv&, const jni::Class<HttpRequestUtil>&,
+                                               jni::jint level, jni::jlong durationSeconds) {
+        HTTPRequestLogOptions opts;
+        opts.level = static_cast<HTTPRequestLogLevel>(level);
+        opts.statsDuration = Seconds(durationSeconds);
+        HTTPRequest::logOptions = opts;
+        HTTPRequest::stats.reset();
+    }
+};
+
 void RegisterNativeHTTPRequest(jni::JNIEnv& env) {
     static auto& javaClass = jni::Class<HTTPRequest>::Singleton(env);
 
@@ -84,13 +172,24 @@ void RegisterNativeHTTPRequest(jni::JNIEnv& env) {
                                          "nativePtr",
                                          METHOD(&HTTPRequest::onFailure, "nativeOnFailure"),
                                          METHOD(&HTTPRequest::onResponse, "nativeOnResponse"));
+
+    // Register static native methods on HttpRequestUtil
+    static auto& httpRequestUtilClass = jni::Class<HttpRequestUtil>::Singleton(env);
+    jni::RegisterNatives(
+        env,
+        *httpRequestUtilClass,
+        jni::MakeNativeMethod<decltype(&HttpRequestUtil::nativeSetTimingLogsEnabled),
+                              &HttpRequestUtil::nativeSetTimingLogsEnabled>("nativeSetTimingLogsEnabled"),
+        jni::MakeNativeMethod<decltype(&HttpRequestUtil::nativeSetHttpRequestLogOptions),
+                              &HttpRequestUtil::nativeSetHttpRequestLogOptions>("nativeSetHttpRequestLogOptions"));
 }
 
 } // namespace android
 
 HTTPRequest::HTTPRequest(jni::JNIEnv& env, const Resource& resource_, FileSource::Callback callback_)
     : resource(resource_),
-      callback(callback_) {
+      callback(callback_),
+      requestStartTime(Clock::now()) {
     std::string dataRangeStr;
     std::string etagStr;
     std::string modifiedStr;
@@ -141,6 +240,27 @@ void HTTPRequest::onResponse(jni::JNIEnv& env,
                              const jni::String& jRetryAfter,
                              const jni::String& jXRateLimitReset,
                              const jni::Array<jni::jbyte>& body) {
+    if (resource.kind == Resource::Kind::Tile && timingLogsEnabled) {
+        auto elapsed = std::chrono::duration_cast<Milliseconds>(Clock::now() - requestStartTime);
+        // A tile download is considered successful when the server returned
+        // either a 2xx (OK, No Content, Partial Content, etc.) or 304
+        // (Not Modified — cached data is still valid). Server errors (4xx, 5xx)
+        // are not counted as successful since no usable tile data was obtained.
+        // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
+        bool success = ((code >= 200 && code < 300) || code == 304);
+
+        if (logOptions.level == HTTPRequestLogLevel::Verbose) {
+            size_t dataSize = body ? body.Length(env) : 0;
+            Log::Info(Event::HttpRequest,
+                      "Tile download completed: URL=" + resource.url +
+                      " Status=" + util::toString(code) +
+                      " Size=" + util::toString(dataSize) + "B" +
+                      " Elapsed=" + util::toString(elapsed.count()) + "ms");
+        } else if (logOptions.level == HTTPRequestLogLevel::Stats) {
+            recordTileStats(elapsed.count(), success);
+        }
+    }
+
     using Error = Response::Error;
 
     if (etag) {
@@ -200,6 +320,19 @@ void HTTPRequest::onResponse(jni::JNIEnv& env,
 void HTTPRequest::onFailure(jni::JNIEnv& env, int type, const jni::String& message) {
     std::string messageStr = jni::Make<std::string>(env, message);
 
+    if (resource.kind == Resource::Kind::Tile && timingLogsEnabled) {
+        auto elapsed = std::chrono::duration_cast<Milliseconds>(Clock::now() - requestStartTime);
+
+        if (logOptions.level == HTTPRequestLogLevel::Verbose) {
+            Log::Warning(Event::HttpRequest,
+                         "Tile download failed: URL=" + resource.url +
+                         " Error=" + messageStr +
+                         " Elapsed=" + util::toString(elapsed.count()) + "ms");
+        } else if (logOptions.level == HTTPRequestLogLevel::Stats) {
+            recordTileStats(elapsed.count(), false);
+        }
+    }
+
     using Error = Response::Error;
 
     switch (type) {
@@ -214,6 +347,25 @@ void HTTPRequest::onFailure(jni::JNIEnv& env, int type, const jni::String& messa
     }
 
     async.send();
+}
+
+std::atomic<bool> HTTPRequest::timingLogsEnabled{false};
+HTTPRequestLogOptions HTTPRequest::logOptions;
+HTTPRequestStats HTTPRequest::stats;
+
+void HTTPRequest::recordTileStats(int64_t elapsedMs, bool success) {
+    stats.totalRequests++;
+    if (success) {
+        stats.successfulRequests++;
+        stats.successElapsedMs.push_back(elapsedMs);
+    } else {
+        stats.failedRequests++;
+    }
+
+    auto elapsed = std::chrono::duration_cast<Seconds>(Clock::now() - stats.windowStart);
+    if (elapsed >= logOptions.statsDuration) {
+        stats.logAndReset(logOptions.statsDuration);
+    }
 }
 
 HTTPFileSource::HTTPFileSource(const ResourceOptions& resourceOptions, const ClientOptions& clientOptions)

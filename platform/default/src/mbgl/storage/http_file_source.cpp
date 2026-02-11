@@ -15,8 +15,11 @@
 #include <curl/curl.h>
 
 #include <dlfcn.h>
+#include <algorithm>
+#include <atomic>
 #include <queue>
 #include <map>
+#include <vector>
 #include <cassert>
 #include <cstring>
 #include <cstdio>
@@ -35,6 +38,63 @@ static void handleError(CURLcode code) {
 }
 
 namespace mbgl {
+
+// Log level enum — ordinal values must match Java HttpRequestLogLevel
+enum class HTTPRequestLogLevel : int {
+    None = -1,
+    Verbose = 0,
+    Stats = 1
+};
+
+struct HTTPRequestLogOptions {
+    HTTPRequestLogLevel level = HTTPRequestLogLevel::None;
+    Seconds statsDuration{0};
+};
+
+struct HTTPRequestStats {
+    TimePoint windowStart = Clock::now();
+    uint32_t totalRequests = 0;
+    uint32_t successfulRequests = 0;
+    uint32_t failedRequests = 0;
+    std::vector<int64_t> successElapsedMs;
+
+    void reset() {
+        windowStart = Clock::now();
+        totalRequests = 0;
+        successfulRequests = 0;
+        failedRequests = 0;
+        successElapsedMs.clear();
+    }
+
+    void logAndReset(Seconds windowDuration) {
+        if (totalRequests == 0) {
+            reset();
+            return;
+        }
+
+        int64_t minMs = 0, maxMs = 0, medianMs = 0;
+        if (!successElapsedMs.empty()) {
+            std::sort(successElapsedMs.begin(), successElapsedMs.end());
+            minMs = successElapsedMs.front();
+            maxMs = successElapsedMs.back();
+            size_t n = successElapsedMs.size();
+            medianMs = (n % 2 == 0)
+                ? (successElapsedMs[n / 2 - 1] + successElapsedMs[n / 2]) / 2
+                : successElapsedMs[n / 2];
+        }
+
+        Log::Info(Event::HttpRequest,
+                  "Tile download stats (" + util::toString(windowDuration.count()) + "s window):"
+                  " Total=" + util::toString(totalRequests) +
+                  " Success=" + util::toString(successfulRequests) +
+                  " Failed=" + util::toString(failedRequests) +
+                  " Min=" + util::toString(minMs) + "ms" +
+                  " Max=" + util::toString(maxMs) + "ms" +
+                  " Median=" + util::toString(medianMs) + "ms");
+
+        reset();
+    }
+};
 
 class HTTPFileSource::Impl {
 public:
@@ -84,7 +144,13 @@ public:
 
     void handleResult(CURLcode code);
 
+    static std::atomic<bool> timingLogsEnabled;
+    static HTTPRequestLogOptions logOptions;
+    static HTTPRequestStats stats;
+
 private:
+    void recordTileStats(int64_t elapsedMs, bool success);
+
     static size_t headerCallback(char *buffer, size_t size, size_t nmemb, void *userp);
     static size_t writeCallback(void *contents, size_t size, size_t nmemb, void *userp);
 
@@ -101,6 +167,8 @@ private:
 
     CURL *handle = nullptr;
     curl_slist *headers = nullptr;
+
+    TimePoint requestStartTime;
 
     char error[CURL_ERROR_SIZE] = {0};
 };
@@ -268,7 +336,8 @@ HTTPRequest::HTTPRequest(HTTPFileSource::Impl *context_, Resource resource_, Fil
     : context(context_),
       resource(std::move(resource_)),
       callback(std::move(callback_)),
-      handle(context->getHandle()) {
+      handle(context->getHandle()),
+      requestStartTime(Clock::now()) {
     if (resource.dataRange) {
         const std::string header = std::string("Range: bytes=") + std::to_string(resource.dataRange->first) +
                                    std::string("-") + std::to_string(resource.dataRange->second);
@@ -400,6 +469,46 @@ void HTTPRequest::handleResult(CURLcode code) {
         response = std::make_unique<Response>();
     }
 
+    if (resource.kind == Resource::Kind::Tile
+        && timingLogsEnabled.load(std::memory_order_relaxed)
+        && logOptions.level != HTTPRequestLogLevel::None) {
+        auto elapsed = std::chrono::duration_cast<Milliseconds>(Clock::now() - requestStartTime);
+        long logResponseCode = 0;
+        curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &logResponseCode);
+
+        if (code != CURLE_OK) {
+            Log::Warning(Event::HttpRequest,
+                         "Tile download failed: URL=" + resource.url +
+                         " CurlError=" + std::string{curl_easy_strerror(code)} +
+                         " Elapsed=" + util::toString(elapsed.count()) + "ms");
+        }
+
+        // A tile download is considered successful when curl completed without
+        // a transport error AND the server returned either a 2xx (OK, No Content,
+        // Partial Content, etc.) or 304 (Not Modified — cached data is still valid).
+        // Server errors (4xx, 5xx) delivered over a healthy connection are not
+        // counted as successful since no usable tile data was obtained.
+        // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
+        bool success = (code == CURLE_OK) && ((logResponseCode >= 200 && logResponseCode < 300) || logResponseCode == 304);
+
+        switch (logOptions.level) {
+            case HTTPRequestLogLevel::Verbose:
+                if (code == CURLE_OK) {
+                    Log::Info(Event::HttpRequest,
+                              "Tile download completed: URL=" + resource.url +
+                              " Status=" + util::toString(logResponseCode) +
+                              " Size=" + (data ? util::toString(data->size()) : "0") + "B" +
+                              " Elapsed=" + util::toString(elapsed.count()) + "ms");
+                }
+                break;
+            case HTTPRequestLogLevel::Stats:
+                recordTileStats(elapsed.count(), success);
+                break;
+            default:
+                break;
+        }
+    }
+
     using Error = Response::Error;
 
     // Add human-readable error code
@@ -451,6 +560,25 @@ void HTTPRequest::handleResult(CURLcode code) {
     auto callback_ = callback;
     auto response_ = *response;
     callback_(response_);
+}
+
+std::atomic<bool> HTTPRequest::timingLogsEnabled{false};
+HTTPRequestLogOptions HTTPRequest::logOptions;
+HTTPRequestStats HTTPRequest::stats;
+
+void HTTPRequest::recordTileStats(int64_t elapsedMs, bool success) {
+    stats.totalRequests++;
+    if (success) {
+        stats.successfulRequests++;
+        stats.successElapsedMs.push_back(elapsedMs);
+    } else {
+        stats.failedRequests++;
+    }
+
+    auto elapsed = std::chrono::duration_cast<Seconds>(Clock::now() - stats.windowStart);
+    if (elapsed >= logOptions.statsDuration) {
+        stats.logAndReset(logOptions.statsDuration);
+    }
 }
 
 HTTPFileSource::HTTPFileSource(const ResourceOptions &resourceOptions, const ClientOptions &clientOptions)

@@ -13,6 +13,9 @@ import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.maplibre.android.module.http.HttpRequestLogLevel;
+import org.maplibre.android.module.http.HttpRequestLogOptions;
+import org.maplibre.android.module.http.HttpRequestUtil;
 import org.maplibre.geojson.Feature;
 import org.maplibre.geojson.Geometry;
 import org.maplibre.android.LibraryLoader;
@@ -113,6 +116,10 @@ final class NativeMapView implements NativeMap {
     this.thread = Thread.currentThread();
     this.stateCallback = stateCallback;
     nativeInitialize(this, fileSource, mapRenderer, pixelRatio, crossSourceCollisions);
+
+    HttpRequestLogOptions httpLogOptions = new HttpRequestLogOptions(HttpRequestLogLevel.VERBOSE, 5);
+    HttpRequestUtil.setHttpRequestLogOptions(httpLogOptions);
+    HttpRequestUtil.setTimingLogsEnabled(true);
   }
 
   //
