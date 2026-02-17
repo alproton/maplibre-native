@@ -117,7 +117,7 @@ final class NativeMapView implements NativeMap {
     this.stateCallback = stateCallback;
     nativeInitialize(this, fileSource, mapRenderer, pixelRatio, crossSourceCollisions);
 
-    HttpRequestLogOptions httpLogOptions = new HttpRequestLogOptions(HttpRequestLogLevel.VERBOSE, 5);
+    HttpRequestLogOptions httpLogOptions = new HttpRequestLogOptions(HttpRequestLogLevel.STATS, 5);
     HttpRequestUtil.setHttpRequestLogOptions(httpLogOptions);
     HttpRequestUtil.setTimingLogsEnabled(true);
   }

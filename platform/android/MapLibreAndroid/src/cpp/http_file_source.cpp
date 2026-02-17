@@ -72,7 +72,7 @@ struct HTTPRequestStats {
             return;
         }
 
-        int64_t minMs = 0, maxMs = 0, medianMs = 0;
+        int64_t minMs = 0, maxMs = 0, medianMs = 0, avgMs = 0;
         if (!successElapsedMs.empty()) {
             std::sort(successElapsedMs.begin(), successElapsedMs.end());
             minMs = successElapsedMs.front();
@@ -81,6 +81,9 @@ struct HTTPRequestStats {
             medianMs = (n % 2 == 0)
                 ? (successElapsedMs[n / 2 - 1] + successElapsedMs[n / 2]) / 2
                 : successElapsedMs[n / 2];
+            int64_t sum = 0;
+            for (int64_t ms : successElapsedMs) { sum += ms; }
+            avgMs = sum / static_cast<int64_t>(n);
         }
 
         Log::Info(Event::HttpRequest,
@@ -90,6 +93,7 @@ struct HTTPRequestStats {
                   " Failed=" + util::toString(failedRequests) +
                   " Min=" + util::toString(minMs) + "ms" +
                   " Max=" + util::toString(maxMs) + "ms" +
+                  " Avg=" + util::toString(avgMs) + "ms" +
                   " Median=" + util::toString(medianMs) + "ms");
 
         reset();
