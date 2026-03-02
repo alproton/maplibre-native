@@ -25,6 +25,11 @@ private:
     UniqueProgram program;
     std::unordered_map<gfx::CustomPuckIconName, TextureID> textures;
     int storage = 0;
+    GLint loc_v0 = -1;
+    GLint loc_v1 = -1;
+    GLint loc_v2 = -1;
+    GLint loc_v3 = -1;
+    GLint loc_color = -1;
 };
 
 } // namespace gl

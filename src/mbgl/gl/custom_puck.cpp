@@ -132,7 +132,13 @@ private:
 
 CustomPuck::CustomPuck(gl::Context& context_)
     : context(context_),
-      program(createPuckShader(context_)) {}
+      program(createPuckShader(context_)) {
+    loc_v0 = MBGL_CHECK_ERROR(glGetUniformLocation(program, "v0"));
+    loc_v1 = MBGL_CHECK_ERROR(glGetUniformLocation(program, "v1"));
+    loc_v2 = MBGL_CHECK_ERROR(glGetUniformLocation(program, "v2"));
+    loc_v3 = MBGL_CHECK_ERROR(glGetUniformLocation(program, "v3"));
+    loc_color = MBGL_CHECK_ERROR(glGetUniformLocation(program, "color"));
+}
 
 void CustomPuck::drawImpl(const gfx::CustomPuckSampledStyle& sampledStyle) {
     MLN_TRACE_FUNC();
@@ -197,10 +203,11 @@ void CustomPuck::draw(const gfx::CustomPuckSampledIcon& icon) const {
     assert(textures.count(icon.name) > 0);
     auto tex = textures.at(icon.name);
     MBGL_CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, tex));
+    const GLint locs[4] = {loc_v0, loc_v1, loc_v2, loc_v3};
     for (int i = 0; i < 4; ++i) {
-        MBGL_CHECK_ERROR(glUniform2f(i, static_cast<float>(icon.quad[i].x), static_cast<float>(icon.quad[i].y)));
+        MBGL_CHECK_ERROR(glUniform2f(locs[i], static_cast<float>(icon.quad[i].x), static_cast<float>(icon.quad[i].y)));
     }
-    MBGL_CHECK_ERROR(glUniform4f(4, icon.color.r, icon.color.g, icon.color.b, icon.color.a));
+    MBGL_CHECK_ERROR(glUniform4f(loc_color, icon.color.r, icon.color.g, icon.color.b, icon.color.a));
     MBGL_CHECK_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 }
 

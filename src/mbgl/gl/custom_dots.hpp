@@ -22,6 +22,10 @@ private:
     VertexArrayID vao = 0;
     VertexArrayID vbo = 0;
     size_t vboSize = 0;
+    GLint loc_size = -1;
+    GLint loc_innerColor = -1;
+    GLint loc_outerColor = -1;
+    GLint loc_innerFactor = -1;
 };
 
 } // namespace gl

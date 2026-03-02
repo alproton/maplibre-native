@@ -80,7 +80,12 @@ private:
 
 CustomDots::CustomDots(gl::Context& context_)
     : context(context_),
-      program(createShader(context_)) {}
+      program(createShader(context_)) {
+    loc_size = MBGL_CHECK_ERROR(glGetUniformLocation(program, "size"));
+    loc_innerColor = MBGL_CHECK_ERROR(glGetUniformLocation(program, "innerColor"));
+    loc_outerColor = MBGL_CHECK_ERROR(glGetUniformLocation(program, "outerColor"));
+    loc_innerFactor = MBGL_CHECK_ERROR(glGetUniformLocation(program, "innerFactor"));
+}
 
 CustomDots::~CustomDots() noexcept {
     clearVertexBufferImpl();
@@ -154,10 +159,10 @@ void CustomDots::drawImpl() {
         const auto& outer = p.options.outerColor;
         std::ptrdiff_t bufferOffset = p.vertexOffset * 2 * sizeof(float);
         MBGL_CHECK_ERROR(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(bufferOffset)));
-        MBGL_CHECK_ERROR(glUniform2f(1, p.iconDx, p.iconDy));
-        MBGL_CHECK_ERROR(glUniform3f(2, inner.r, inner.g, inner.b));
-        MBGL_CHECK_ERROR(glUniform3f(3, outer.r, outer.g, outer.b));
-        MBGL_CHECK_ERROR(glUniform1f(4, p.innerFactor));
+        MBGL_CHECK_ERROR(glUniform2f(loc_size, p.iconDx, p.iconDy));
+        MBGL_CHECK_ERROR(glUniform3f(loc_innerColor, inner.r, inner.g, inner.b));
+        MBGL_CHECK_ERROR(glUniform3f(loc_outerColor, outer.r, outer.g, outer.b));
+        MBGL_CHECK_ERROR(glUniform1f(loc_innerFactor, p.innerFactor));
         MBGL_CHECK_ERROR(glDrawArraysInstanced(GL_TRIANGLES, 0, 6, p.vertexCount));
     }
 }
