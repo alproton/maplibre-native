@@ -3,6 +3,7 @@
 #include <mbgl/gl/renderer_backend.hpp>
 #include <mbgl/shaders/gl/custom_dots.hpp>
 #include <mbgl/util/instrumentation.hpp>
+#include <mbgl/util/logging.hpp>
 #include <cstddef>
 
 namespace mbgl {
@@ -85,6 +86,19 @@ CustomDots::CustomDots(gl::Context& context_)
     loc_innerColor = MBGL_CHECK_ERROR(glGetUniformLocation(program, "innerColor"));
     loc_outerColor = MBGL_CHECK_ERROR(glGetUniformLocation(program, "outerColor"));
     loc_innerFactor = MBGL_CHECK_ERROR(glGetUniformLocation(program, "innerFactor"));
+
+    Log::Info(Event::OpenGL,
+              "CustomDots shader uniform locations - size: " + std::to_string(loc_size) +
+                  ", innerColor: " + std::to_string(loc_innerColor) + ", outerColor: " + std::to_string(loc_outerColor) +
+                  ", innerFactor: " + std::to_string(loc_innerFactor) +
+                  " (expected: 1, 2, 3, 4 for GL ES 3.1 layout locations)");
+
+    if (loc_size < 0 || loc_innerColor < 0 || loc_outerColor < 0 || loc_innerFactor < 0) {
+        Log::Error(Event::OpenGL,
+                   "CustomDots shader has invalid uniform locations! Rendering will fail. "
+                   "size=" + std::to_string(loc_size) + " innerColor=" + std::to_string(loc_innerColor) +
+                       " outerColor=" + std::to_string(loc_outerColor) + " innerFactor=" + std::to_string(loc_innerFactor));
+    }
 }
 
 CustomDots::~CustomDots() noexcept {
@@ -158,6 +172,20 @@ void CustomDots::drawImpl() {
         const auto& inner = p.options.innerColor;
         const auto& outer = p.options.outerColor;
         std::ptrdiff_t bufferOffset = p.vertexOffset * 2 * sizeof(float);
+
+        Log::Debug(Event::OpenGL,
+                   "CustomDots::drawImpl using uniform locations - size_loc=" + std::to_string(loc_size) +
+                       " innerColor_loc=" + std::to_string(loc_innerColor) +
+                       " outerColor_loc=" + std::to_string(loc_outerColor) +
+                       " innerFactor_loc=" + std::to_string(loc_innerFactor));
+        Log::Debug(Event::OpenGL,
+                   "CustomDots::drawImpl values - size=(" + std::to_string(p.iconDx) + "," + std::to_string(p.iconDy) +
+                       ") innerColor=(" + std::to_string(inner.r) + "," + std::to_string(inner.g) + "," +
+                       std::to_string(inner.b) + ") outerColor=(" + std::to_string(outer.r) + "," +
+                       std::to_string(outer.g) + "," + std::to_string(outer.b) +
+                       ") innerFactor=" + std::to_string(p.innerFactor) +
+                       " vertexCount=" + std::to_string(p.vertexCount));
+
         MBGL_CHECK_ERROR(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(bufferOffset)));
         MBGL_CHECK_ERROR(glUniform2f(loc_size, p.iconDx, p.iconDy));
         MBGL_CHECK_ERROR(glUniform3f(loc_innerColor, inner.r, inner.g, inner.b));

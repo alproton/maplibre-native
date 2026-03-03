@@ -138,6 +138,20 @@ CustomPuck::CustomPuck(gl::Context& context_)
     loc_v2 = MBGL_CHECK_ERROR(glGetUniformLocation(program, "v2"));
     loc_v3 = MBGL_CHECK_ERROR(glGetUniformLocation(program, "v3"));
     loc_color = MBGL_CHECK_ERROR(glGetUniformLocation(program, "color"));
+
+    Log::Info(Event::OpenGL,
+              "CustomPuck shader uniform locations - v0: " + std::to_string(loc_v0) +
+                  ", v1: " + std::to_string(loc_v1) + ", v2: " + std::to_string(loc_v2) +
+                  ", v3: " + std::to_string(loc_v3) + ", color: " + std::to_string(loc_color) +
+                  " (expected: 0, 1, 2, 3, 4 for GL ES 3.1 layout locations)");
+
+    if (loc_v0 < 0 || loc_v1 < 0 || loc_v2 < 0 || loc_v3 < 0 || loc_color < 0) {
+        Log::Error(Event::OpenGL,
+                   "CustomPuck shader has invalid uniform locations! Rendering will fail. "
+                   "v0=" + std::to_string(loc_v0) + " v1=" + std::to_string(loc_v1) +
+                       " v2=" + std::to_string(loc_v2) + " v3=" + std::to_string(loc_v3) +
+                       " color=" + std::to_string(loc_color));
+    }
 }
 
 void CustomPuck::drawImpl(const gfx::CustomPuckSampledStyle& sampledStyle) {
@@ -204,6 +218,21 @@ void CustomPuck::draw(const gfx::CustomPuckSampledIcon& icon) const {
     auto tex = textures.at(icon.name);
     MBGL_CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, tex));
     const GLint locs[4] = {loc_v0, loc_v1, loc_v2, loc_v3};
+
+    Log::Debug(Event::OpenGL,
+               "CustomPuck::draw icon=" + icon.name + " using uniform locations [" + std::to_string(locs[0]) + ", " +
+                   std::to_string(locs[1]) + ", " + std::to_string(locs[2]) + ", " + std::to_string(locs[3]) +
+                   "] color_loc=" + std::to_string(loc_color));
+    Log::Debug(Event::OpenGL,
+               "CustomPuck::draw quad values - v0=(" + std::to_string(icon.quad[0].x) + "," +
+                   std::to_string(icon.quad[0].y) + ") v1=(" + std::to_string(icon.quad[1].x) + "," +
+                   std::to_string(icon.quad[1].y) + ") v2=(" + std::to_string(icon.quad[2].x) + "," +
+                   std::to_string(icon.quad[2].y) + ") v3=(" + std::to_string(icon.quad[3].x) + "," +
+                   std::to_string(icon.quad[3].y) + ")");
+    Log::Debug(Event::OpenGL,
+               "CustomPuck::draw color=(" + std::to_string(icon.color.r) + "," + std::to_string(icon.color.g) + "," +
+                   std::to_string(icon.color.b) + "," + std::to_string(icon.color.a) + ")");
+
     for (int i = 0; i < 4; ++i) {
         MBGL_CHECK_ERROR(glUniform2f(locs[i], static_cast<float>(icon.quad[i].x), static_cast<float>(icon.quad[i].y)));
     }
