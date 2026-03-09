@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <mutex>
 #include <vector>
 
 #include <jni/jni.hpp>
@@ -119,6 +120,7 @@ public:
                     const jni::Array<jni::jbyte>& body);
 
     static std::atomic<bool> timingLogsEnabled;
+    static std::mutex statsMutex;
     static HTTPRequestLogOptions logOptions;
     static HTTPRequestStats stats;
 
@@ -158,6 +160,8 @@ public:
 
     static void nativeSetHttpRequestLogOptions(jni::JNIEnv&, const jni::Class<HttpRequestUtil>&,
                                                jni::jint level, jni::jlong durationSeconds) {
+        std::lock_guard<std::mutex> lock(HTTPRequest::statsMutex);
+
         HTTPRequestLogOptions opts;
         opts.level = static_cast<HTTPRequestLogLevel>(level);
         opts.statsDuration = Seconds(durationSeconds);
@@ -354,10 +358,13 @@ void HTTPRequest::onFailure(jni::JNIEnv& env, int type, const jni::String& messa
 }
 
 std::atomic<bool> HTTPRequest::timingLogsEnabled{false};
+std::mutex HTTPRequest::statsMutex;
 HTTPRequestLogOptions HTTPRequest::logOptions;
 HTTPRequestStats HTTPRequest::stats;
 
 void HTTPRequest::recordTileStats(int64_t elapsedMs, bool success) {
+    std::lock_guard<std::mutex> lock(statsMutex);
+
     stats.totalRequests++;
     if (success) {
         stats.successfulRequests++;
