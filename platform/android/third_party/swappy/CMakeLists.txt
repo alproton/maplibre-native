@@ -2,13 +2,39 @@ cmake_minimum_required(VERSION 3.18.1)
 project(swappy C CXX)
 set(CMAKE_CXX_STANDARD 17)
 
-# Swappy source directories (external to MapLibre Native repo)
-# Set GAMESDK_DIR environment variable or it defaults to ~/android-gamesdk
+# Resolve the Android Game SDK source directory.
+#
+# Priority order:
+#   1. GAMESDK_DIR environment variable (explicit override)
+#   2. GAMESDK_DIR CMake variable (e.g. -DGAMESDK_DIR=... or FETCHCONTENT_SOURCE_DIR_GAMESDK)
+#   3. Auto-download via FetchContent from googlesource (default for fresh builds)
 if(DEFINED ENV{GAMESDK_DIR})
     set(GAMESDK_DIR "$ENV{GAMESDK_DIR}")
-else()
-    set(GAMESDK_DIR "$ENV{HOME}/android-gamesdk/gamesdk")
+elseif(NOT DEFINED GAMESDK_DIR)
+    include(FetchContent)
+    FetchContent_Declare(
+        gamesdk
+        GIT_REPOSITORY https://android.googlesource.com/platform/frameworks/opt/gamesdk
+        GIT_TAG 044fd03c4a7d3b75aeb6ca2bd7fb6155d2cdb787
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+    )
+    FetchContent_GetProperties(gamesdk)
+    if(NOT gamesdk_POPULATED)
+        FetchContent_Populate(gamesdk)
+    endif()
+    set(GAMESDK_DIR "${gamesdk_SOURCE_DIR}")
+    message(STATUS "Swappy: auto-fetched Game SDK to ${GAMESDK_DIR}")
 endif()
+
+if(NOT EXISTS "${GAMESDK_DIR}/games-frame-pacing")
+    message(FATAL_ERROR
+        "Game SDK not found at ${GAMESDK_DIR}\n"
+        "Either:\n"
+        "  - Let the build auto-download it (remove GAMESDK_DIR override), or\n"
+        "  - Set GAMESDK_DIR env var to a valid Game SDK checkout containing games-frame-pacing/")
+endif()
+
 set(SWAPPY_DIR "${GAMESDK_DIR}/games-frame-pacing")
 
 # Compiler flags from original Swappy build (relaxed for compatibility)

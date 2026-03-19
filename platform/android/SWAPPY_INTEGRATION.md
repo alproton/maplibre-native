@@ -17,22 +17,25 @@ MapLibre Native and `android-spatialite` both included `libc++_shared.so`, causi
 
 1. **Static C++ Linking**: Build MapLibre Native with `libc++_static` instead of `libc++_shared`
 2. **Swappy from Source**: Build Swappy statically from Game SDK source (not available as prebuilt static library)
-3. **External Source Management**: Keep Game SDK source outside the repository to avoid bloat
+3. **Auto-Download via FetchContent**: Game SDK source is automatically fetched during the first build -- no manual setup required
 
 ## Architecture Changes
 
 ### Repository Size Impact
 - **Before:** `third_party/` = 252 MB (with embedded Game SDK source)
 - **After:** `third_party/` = 12 KB (build config only)
-- **Reduction:** 99.995% smaller ✅
+- **Reduction:** 99.995% smaller
 
 ### Build Configuration
 
-**Location:** `/home/sid/android-gamesdk/gamesdk/` (external to repo)
+**Source:** Auto-fetched into `<build-dir>/_deps/gamesdk-src/` via CMake FetchContent
+(or manual override via `GAMESDK_DIR` env var)
 
 **Build Flow:**
 ```
-Game SDK Source (external)
+CMake Configure
+    ↓
+FetchContent auto-downloads Game SDK (if GAMESDK_DIR not set)
     ↓
 Swappy CMake Build
     ↓
@@ -173,39 +176,32 @@ Swappy: Initialized successfully
 
 ## Developer Workflow
 
-### One-time Setup
-```bash
-# 1. Clone Game SDK
-cd ~
-git clone https://github.com/android/games-samples.git
-mkdir -p android-gamesdk
-ln -s ~/games-samples/agdk/agde android-gamesdk/gamesdk
-
-# 2. Verify structure
-ls ~/android-gamesdk/gamesdk/games-frame-pacing/
-```
-
-### Build Process
+### Build (no setup required)
 ```bash
 cd ~/mln-proton/platform/android
-
-# Clean build
-./gradlew clean :MapLibreAndroid:assembleDrawableRelease
+./gradlew :MapLibreAndroid:assembleDrawableRelease
 
 # The build automatically:
-# 1. Finds Game SDK at ~/android-gamesdk/gamesdk
+# 1. Fetches Game SDK via FetchContent (first build only)
 # 2. Compiles Swappy from source
 # 3. Links statically with MapLibre
 # 4. Packages Java classes into AAR
 ```
 
-### Updating Game SDK
+### Using a local Game SDK (optional)
 ```bash
-cd ~/android-gamesdk/gamesdk
-git pull
-cd ~/mln-proton/platform/android
-./gradlew clean :MapLibreAndroid:assembleDrawableRelease
+export GAMESDK_DIR=/path/to/your/gamesdk
+./gradlew :MapLibreAndroid:assembleDrawableRelease
 ```
+
+### CI caching
+```bash
+# Pre-populate the FetchContent cache to avoid re-downloading
+cmake ... -DFETCHCONTENT_SOURCE_DIR_GAMESDK=/path/to/cached/gamesdk
+```
+
+### Updating the pinned Game SDK version
+Update the `GIT_TAG` commit hash in `third_party/swappy/CMakeLists.txt`, then clean and rebuild.
 
 ## Troubleshooting
 
@@ -213,10 +209,11 @@ cd ~/mln-proton/platform/android
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| `Cannot find GAMESDK_DIR` | Game SDK not at expected location | Ensure `~/android-gamesdk/gamesdk` exists or set `GAMESDK_DIR` env var |
+| `Game SDK not found at ...` | `GAMESDK_DIR` points to invalid path | Fix the path or unset `GAMESDK_DIR` to use auto-download |
 | `_binary_classes_dex_start undefined` | Missing DEX linkage flag | Verify `ANDROIDGAMESDK_NO_BINARY_DEX_LINKAGE` in CMakeLists.txt |
 | `<numbers> file not found` | NDK too old | Use NDK 26.1.10909125+ |
 | `AChoreographer_postVsyncCallback redefinition` | NDK version conflict | Applied patch to ChoreographerShim.h |
+| FetchContent download failure | Network issue or git not available | Check connectivity; or set `GAMESDK_DIR` for offline builds |
 
 ### Runtime Errors
 
@@ -241,12 +238,7 @@ cd ~/mln-proton/platform/android
 
 - [Android Game SDK](https://developer.android.com/games/sdk)
 - [Swappy Frame Pacing](https://developer.android.com/games/sdk/frame-pacing)
-- [Game SDK Source](https://github.com/android/games-samples/tree/main/agdk)
+- [Game SDK Source (googlesource)](https://android.googlesource.com/platform/frameworks/opt/gamesdk)
 - [NDK C++ Library Support](https://developer.android.com/ndk/guides/cpp-support)
 - [Static vs Shared STL](https://developer.android.com/ndk/guides/cpp-support#static_runtimes)
-
-## Credits
-
-Integration completed: October 30, 2024
-Configuration: Static C++ library with external source management
 

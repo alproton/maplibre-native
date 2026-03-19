@@ -4,60 +4,58 @@ This directory contains the build configuration for integrating [Android Game SD
 
 ## Overview
 
-Swappy is built from source as a **static library** using `libc++_static` to avoid conflicts with other native dependencies. The Game SDK source code is kept **outside the MapLibre Native repository** to reduce repository size.
+Swappy is built from source as a **static library** using `libc++_static` to avoid conflicts with other native dependencies. The Game SDK source is **automatically downloaded** during the first build via CMake's FetchContent. No manual setup is required.
 
-## Directory Structure
+## Quick Start
 
-```
-~/android-gamesdk/gamesdk/           # Game SDK source (external, not in repo)
-  └── games-frame-pacing/            # Swappy source code
-      ├── common/
-      ├── opengl/
-      └── vulkan/
-
-~/mln-proton/platform/android/
-  ├── third_party/swappy/
-  │   ├── CMakeLists.txt             # Build configuration (in repo)
-  │   └── README.md                  # This file
-  └── MapLibreAndroid/src/main/java/com/google/androidgamesdk/
-      ├── SwappyDisplayManager.java  # Java support classes
-      ├── ChoreographerCallback.java
-      └── GameSdkDeviceInfoJni.java
-```
-
-## Initial Setup
-
-### 1. Download Game SDK Source
-
-```bash
-cd ~
-git clone https://github.com/android/games-samples.git
-cd games-samples/agdk
-# The gamesdk directory should be at ~/games-samples/agdk/agde/
-```
-
-**Note:** If you cloned it to a different location, create a symbolic link:
-```bash
-mkdir -p ~/android-gamesdk
-ln -s ~/games-samples/agdk/agde ~/android-gamesdk/gamesdk
-```
-
-Or set the `GAMESDK_DIR` environment variable:
-```bash
-export GAMESDK_DIR=/path/to/your/gamesdk
-```
-
-### 2. Verify Directory Structure
-
-Ensure the following files exist:
-- `~/android-gamesdk/gamesdk/include/swappy/swappyGL.h`
-- `~/android-gamesdk/gamesdk/games-frame-pacing/common/SwappyCommon.cpp`
-
-### 3. Build MapLibre Native
+Just build -- no extra setup needed:
 
 ```bash
 cd ~/mln-proton/platform/android
 ./gradlew :MapLibreAndroid:assembleDrawableRelease
+```
+
+On the first build, CMake will automatically fetch the Android Game SDK source from
+`https://android.googlesource.com/platform/frameworks/opt/gamesdk` into the build
+directory. Subsequent builds reuse the cached download.
+
+## Advanced: Using a Local Game SDK Checkout
+
+If you prefer to use a local checkout (e.g., for offline builds or custom patches),
+set the `GAMESDK_DIR` environment variable:
+
+```bash
+export GAMESDK_DIR=/path/to/your/gamesdk
+```
+
+This skips the auto-download and uses your local copy instead. The directory must
+contain `games-frame-pacing/`, `include/swappy/`, and `src/common/`.
+
+For CI caching, you can also use CMake's built-in override:
+
+```bash
+-DFETCHCONTENT_SOURCE_DIR_GAMESDK=/path/to/cached/gamesdk
+```
+
+## Directory Structure
+
+```
+<build-dir>/_deps/gamesdk-src/      # Auto-fetched Game SDK (in build dir, not in repo)
+  ├── include/swappy/               # Public headers
+  ├── games-frame-pacing/           # Swappy source code
+  │   ├── common/
+  │   ├── opengl/
+  │   └── vulkan/
+  └── src/common/                   # Shared utilities
+
+platform/android/
+  ├── third_party/swappy/
+  │   ├── CMakeLists.txt            # Build configuration (in repo)
+  │   └── README.md                 # This file
+  └── MapLibreAndroid/src/main/java/com/google/androidgamesdk/
+      ├── SwappyDisplayManager.java # Java support classes
+      ├── ChoreographerCallback.java
+      └── GameSdkDeviceInfoJni.java
 ```
 
 ## How It Works
@@ -65,7 +63,8 @@ cd ~/mln-proton/platform/android
 ### Build Process
 
 1. **CMake Configuration** (`CMakeLists.txt`):
-   - Locates Game SDK source at `~/android-gamesdk/gamesdk` (or `$GAMESDK_DIR`)
+   - Checks for `GAMESDK_DIR` env var (manual override)
+   - If not set, auto-fetches the Game SDK via FetchContent (pinned to a known-good commit)
    - Compiles Swappy C++ sources into `libswappy_static.a`
    - Uses `-DANDROIDGAMESDK_NO_BINARY_DEX_LINKAGE` to skip embedded DEX
 
@@ -126,21 +125,24 @@ const val ndkVersion = "26.1.10909125"
 
 ## Maintenance
 
-### Updating Game SDK
+### Updating the Pinned Game SDK Version
 
-```bash
-cd ~/android-gamesdk/gamesdk
-git pull
-# Then rebuild MapLibre Native
-cd ~/mln-proton/platform/android
-./gradlew clean :MapLibreAndroid:assembleDrawableRelease
-```
+The Game SDK is pinned to a specific commit in `CMakeLists.txt` (the `GIT_TAG` in the
+`FetchContent_Declare` call). To update:
+
+1. Find the desired commit hash from
+   https://android.googlesource.com/platform/frameworks/opt/gamesdk/+log/refs/heads/main
+2. Update the `GIT_TAG` value in `CMakeLists.txt`
+3. Clean and rebuild:
+   ```bash
+   ./gradlew clean :MapLibreAndroid:assembleDrawableRelease
+   ```
 
 ### Troubleshooting
 
-**Build Error: "Cannot find GAMESDK_DIR"**
-- Ensure `~/android-gamesdk/gamesdk` exists
-- Or set `GAMESDK_DIR` environment variable
+**Build Error: "Game SDK not found at ..."**
+- If using `GAMESDK_DIR`, verify the path contains `games-frame-pacing/`
+- If auto-downloading, check your network connection and try a clean build
 
 **Runtime Error: "jmethodID was NULL"**
 - Java classes are missing from the AAR
@@ -150,6 +152,11 @@ cd ~/mln-proton/platform/android
 **Linker Error: "_binary_classes_dex_start undefined"**
 - `ANDROIDGAMESDK_NO_BINARY_DEX_LINKAGE` flag is missing
 - Check `CMakeLists.txt` for the flag in `CMAKE_CXX_FLAGS`
+
+**Slow first build**
+- The initial FetchContent clone is a one-time cost (~10-20 MB shallow clone)
+- Subsequent builds reuse the cached source in `<build-dir>/_deps/gamesdk-src/`
+- For CI, pre-populate the cache with `-DFETCHCONTENT_SOURCE_DIR_GAMESDK=...`
 
 ## References
 
