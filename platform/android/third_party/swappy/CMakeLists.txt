@@ -22,6 +22,20 @@ elseif(NOT DEFINED GAMESDK_DIR)
     FetchContent_GetProperties(gamesdk)
     if(NOT gamesdk_POPULATED)
         FetchContent_Populate(gamesdk)
+
+        # NDK 26+ declares all Choreographer APIs unconditionally (with availability attributes),
+        # which conflicts with the Game SDK's ChoreographerShim.h typedefs that share the same
+        # names. Patch the guard to also check __NDK_MAJOR__.
+        set(_shim_file "${gamesdk_SOURCE_DIR}/src/common/ChoreographerShim.h")
+        if(EXISTS "${_shim_file}")
+            file(READ "${_shim_file}" _shim_contents)
+            string(REPLACE
+                "#if __ANDROID_API__ < 33"
+                "#if __ANDROID_API__ < 33 && (!defined(__NDK_MAJOR__) || __NDK_MAJOR__ < 26)"
+                _shim_contents "${_shim_contents}")
+            file(WRITE "${_shim_file}" "${_shim_contents}")
+            message(STATUS "Swappy: patched ChoreographerShim.h for NDK 26+ compatibility")
+        endif()
     endif()
     set(GAMESDK_DIR "${gamesdk_SOURCE_DIR}")
     message(STATUS "Swappy: auto-fetched Game SDK to ${GAMESDK_DIR}")
