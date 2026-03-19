@@ -124,10 +124,10 @@ public class MapView extends FrameLayout implements NativeMapView.ViewCallback {
   }
 
   @UiThread
-  public MapView(@NonNull Context context, @Nullable MapLibreMapOptions options) {
+  public MapView(@NonNull Context context, @NonNull MapLibreMapOptions options) {
     super(context);
     Timber.d("MapView constructed with context and MapLibreMapOptions");
-    initialize(context, options == null ? MapLibreMapOptions.createFromAttributes(context) : options);
+    initialize(context, options);
   }
 
   @CallSuper
