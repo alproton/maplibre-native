@@ -323,6 +323,53 @@ class MapLibreMapOptionsTest {
         )
     }
 
+    @Test
+    fun testSwappy_disabledByDefault() {
+        // Swappy and modern EGL must default to false so that callers opt in explicitly.
+        // Hardcoding them to true in createFromAttributes() caused Swappy to be silently
+        // active for any MapView inflated from XML, bypassing the caller's configuration.
+        val options = MapLibreMapOptions.createFromAttributes(RuntimeEnvironment.application, null)
+        Assert.assertFalse("useSwappy must default to false", options.useSwappy)
+        Assert.assertFalse("enableSwappyLogs must default to false", options.enableSwappyLogs)
+        Assert.assertFalse("useSwappyFrameMetrics must default to false", options.useSwappyFrameMetrics)
+        Assert.assertFalse("useModernEGL must default to false when Swappy is off", options.useModernEGL)
+    }
+
+    @Test
+    fun testSwappy_canBeEnabledExplicitly() {
+        val options = MapLibreMapOptions.createFromAttributes(RuntimeEnvironment.application, null)
+            .enableUseSwappy(true)
+            .enableSwappyLogs(true)
+            .enableSwappyFrameMetrics(true)
+        Assert.assertTrue(options.useSwappy)
+        Assert.assertTrue(options.enableSwappyLogs)
+        Assert.assertTrue(options.useSwappyFrameMetrics)
+    }
+
+    @Test
+    fun testSwappy_enableUseSwappy_impliesModernEGL() {
+        // Swappy requires the modern EGL path. Enabling Swappy must automatically
+        // enable modern EGL; disabling it must revert modern EGL to false.
+        val options = MapLibreMapOptions()
+        Assert.assertFalse(options.useModernEGL)
+
+        options.enableUseSwappy(true)
+        Assert.assertTrue("enableUseSwappy(true) must also set useModernEGL=true", options.useModernEGL)
+
+        options.enableUseSwappy(false)
+        Assert.assertFalse("enableUseSwappy(false) must also set useModernEGL=false", options.useModernEGL)
+    }
+
+    @Test
+    fun testSwappy_defaultConstructorDisabled() {
+        // The no-arg constructor must also default Swappy and modern EGL to false.
+        val options = MapLibreMapOptions()
+        Assert.assertFalse(options.useSwappy)
+        Assert.assertFalse(options.enableSwappyLogs)
+        Assert.assertFalse(options.useSwappyFrameMetrics)
+        Assert.assertFalse(options.useModernEGL)
+    }
+
     companion object {
         private const val DELTA = 1e-15
     }

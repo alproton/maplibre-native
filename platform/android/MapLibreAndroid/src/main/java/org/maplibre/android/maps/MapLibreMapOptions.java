@@ -214,10 +214,6 @@ public class MapLibreMapOptions implements Parcelable {
     float pxlRatio = context.getResources().getDisplayMetrics().density;
     try {
       maplibreMapOptions.camera(new CameraPosition.Builder(typedArray).build());
-      maplibreMapOptions.useModernEGL = true;
-      maplibreMapOptions.useSwappy = true;
-      maplibreMapOptions.enableSwappyLogs = true;
-      maplibreMapOptions.useSwappyFrameMetrics = true;
 
       // deprecated
       maplibreMapOptions.apiBaseUrl(typedArray.getString(R.styleable.maplibre_MapView_maplibre_apiBaseUrl));
@@ -785,6 +781,7 @@ public class MapLibreMapOptions implements Parcelable {
   @NonNull
   public MapLibreMapOptions enableUseSwappy(boolean enable) {
     this.useSwappy = enable;
+    this.useModernEGL = enable;
     return this;
   }
 

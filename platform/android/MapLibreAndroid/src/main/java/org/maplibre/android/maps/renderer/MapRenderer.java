@@ -82,6 +82,12 @@ public abstract class MapRenderer implements MapRendererScheduler {
       boolean useSwappy = options.getUseSwappy();
       boolean enableSwappyLogs = options.getEnableSwappyLogs();
       boolean enableSwappyFrameMetrics = options.getUseSwappyFrameMetrics();
+      if (useSwappy && !useModernEGL) {
+        Logger.w(TAG, "useSwappy=true requires useModernEGL=true; disabling Swappy to avoid "
+            + "initializing it on the legacy EGL path.");
+        useSwappy = false;
+      }
+
       renderer = MapRendererFactory.newSurfaceViewMapRenderer(context, localFontFamily,
               renderSurfaceOnTop, initCallback, threadPriorityOverride, useModernEGL);
 
