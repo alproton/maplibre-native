@@ -65,13 +65,14 @@ public:
 
     std::string segmentsToString(uint32_t tabcount) const;
 
-private:
     struct SegmentRange {
         std::pair<double, double> range;
         Color color;
     };
 
     std::vector<SegmentRange> compactSegments(const RouteType& routeType) const;
+
+private:
     Point<double> getPointCoarse(double percent, double* bearing = nullptr) const;
     Point<double> getPointFine(double percent, double* bearing = nullptr) const;
     double getProgressProjectionLERP(const Point<double>& queryPoint, bool capture = false);

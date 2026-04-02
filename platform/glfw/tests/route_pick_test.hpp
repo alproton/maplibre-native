@@ -4,7 +4,7 @@
 class RoutePickTest : public RouteTest {
 public:
     RoutePickTest() = delete;
-    RoutePickTest(const std::string& testDir);
+    RoutePickTest(const std::string& testDir, mbgl::route::RouteManager* rm);
     bool produceTestCommands(mbgl::Map* map, GLFWView* view) override;
     ~RoutePickTest() override;
 

@@ -50,6 +50,30 @@ struct alignas(16) LineGradientDrawableUBO {
 static_assert(sizeof(LineGradientDrawableUBO) == 7 * 16);
 
 //
+// Route traffic segments (high-precision UBO path)
+
+constexpr int MAX_ROUTE_TRAFFIC_SEGMENTS = 32;
+
+struct alignas(16) RouteTrafficSegmentData {
+    /*  0 */ std::array<float, 4> color;
+    /* 16 */ float start;
+    /* 20 */ float end;
+    /* 24 */ float pad1;
+    /* 28 */ float pad2;
+    /* 32 */
+};
+static_assert(sizeof(RouteTrafficSegmentData) == 2 * 16);
+
+struct alignas(16) LineTrafficSegmentsUBO {
+    /*    0 */ RouteTrafficSegmentData segments[MAX_ROUTE_TRAFFIC_SEGMENTS];
+    /* 1024 */ int useHighPrecision;
+    /* 1028 */ int segmentCount;
+    /* 1032 */ float pad1, pad2;
+    /* 1040 */
+};
+static_assert(sizeof(LineTrafficSegmentsUBO) == 65 * 16);
+
+//
 // Line pattern
 
 struct alignas(16) LinePatternDrawableUBO {

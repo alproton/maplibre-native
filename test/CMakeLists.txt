@@ -19,6 +19,7 @@ add_library(
     ${PROJECT_SOURCE_DIR}/test/math/wrap.test.cpp
     ${PROJECT_SOURCE_DIR}/test/platform/settings.test.cpp
     ${PROJECT_SOURCE_DIR}/test/programs/symbol_program.test.cpp
+    ${PROJECT_SOURCE_DIR}/test/route/route_traffic.test.cpp
     ${PROJECT_SOURCE_DIR}/test/renderer/image_manager.test.cpp
     ${PROJECT_SOURCE_DIR}/test/renderer/pattern_atlas.test.cpp
     ${PROJECT_SOURCE_DIR}/test/renderer/shader_registry.test.cpp

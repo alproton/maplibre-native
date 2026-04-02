@@ -1,16 +1,21 @@
 
 #include "route_test.hpp"
 
-RouteTest::RouteTest(const std::string& testDir, const std::string& testName)
-    : GLFWGraphicsTest(testName, testDir) {}
+RouteTest::RouteTest(const std::string& testDir, const std::string& testName,
+                     mbgl::route::RouteManager* routeManager)
+    : GLFWGraphicsTest(testName, testDir),
+      rmptr_(routeManager) {
+    assert(rmptr_ != nullptr && "RouteManager must not be null");
+    if (!rmptr_) {
+        throw std::invalid_argument("RouteManager pointer must not be null");
+    }
+}
 
 bool RouteTest::initTestFixtures([[maybe_unused]] mbgl::Map* map) {
     assert(map != nullptr && "invalid map!");
     bool status = false;
     if (map != nullptr) {
-        rmptr_ = std::make_unique<mbgl::route::RouteManager>();
         rmptr_->setStyle(map->getStyle());
-
         status = true;
     }
 

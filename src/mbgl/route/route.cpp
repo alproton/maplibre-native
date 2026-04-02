@@ -500,6 +500,10 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
 }
 
 std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeType) const {
+    if (segments_.empty()) {
+        return {};
+    }
+
     std::vector<RouteSegment> segments = segments_;
 
     std::sort(segments.begin(), segments.end(), [](const RouteSegment& a, const RouteSegment& b) {

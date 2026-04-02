@@ -2,8 +2,8 @@
 #include "../glfw_view.hpp"
 #include "../glfw_renderer_frontend.hpp"
 
-RoutePickTest::RoutePickTest(const std::string& testDir)
-    : RouteTest("route_pick_test", testDir) {}
+RoutePickTest::RoutePickTest(const std::string& testDir, mbgl::route::RouteManager* rm)
+    : RouteTest("route_pick_test", testDir, rm) {}
 
 bool RoutePickTest::pickRoute(GLFWView* view, double x, double y) {
     pickedRouteID = RouteID();

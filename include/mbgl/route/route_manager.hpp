@@ -102,6 +102,9 @@ public:
     bool hasRoutes() const;
     void finalize();
 
+    void setUseHighPrecisionTraffic(bool useHighPrecision);
+    bool getUseHighPrecisionTraffic() const;
+
     ~RouteManager();
 
 private:
@@ -138,6 +141,8 @@ private:
     std::unordered_map<RouteID, double, IDHasher<RouteID>> previousProgressMap_;
     // Threshold for what constitutes a large delta (default 20% = 0.20)
     double largeDeltaThreshold_ = 0.20;
+
+    bool useHighPrecisionTraffic_ = false;
 };
 }; // namespace route
 

@@ -123,6 +123,17 @@ public:
 
     void setIsLayerUsingRoute(bool isRouteLayer);
     bool getIsLayerUsingRoute() const;
+
+    void setUseHighPrecisionTraffic(bool useHighPrecision);
+    bool getUseHighPrecisionTraffic() const;
+
+    struct TrafficSegment {
+        double start;
+        double end;
+        Color color;
+    };
+    void setTrafficSegments(std::vector<TrafficSegment> segments);
+
     // Private implementation
 
     class Impl;
