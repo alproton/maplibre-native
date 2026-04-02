@@ -2,12 +2,14 @@
 
 #include <mbgl/renderer/layer_tweaker.hpp>
 #include <mbgl/style/layers/line_layer_properties.hpp>
+#include <mbgl/style/layers/line_layer_impl.hpp>
 
 #if MLN_RENDER_BACKEND_METAL
 #include <mbgl/shaders/line_layer_ubo.hpp>
 #endif // MLN_RENDER_BACKEND_METAL
 
 #include <string>
+#include <vector>
 
 namespace mbgl {
 
@@ -35,6 +37,7 @@ public:
 
     void setGradientLineClip(double clip);
     void setGradientLineClipColor(const mbgl::Color& color);
+    void setTrafficSegments(const std::vector<style::TrafficSegmentData>& segments, bool useHighPrecision);
 
     void execute(LayerGroupBase&, const PaintParameters&) override;
 
@@ -54,6 +57,9 @@ private:
     auto evaluate(const PaintParameters& parameters) const;
     double line_clip_ = 0.0;
     mbgl::Color line_clip_color = mbgl::Color(0.0, 0.0, 0.0, 0.0);
+    std::vector<style::TrafficSegmentData> trafficSegments_;
+    bool useHighPrecisionTraffic_ = false;
+    gfx::UniformBufferPtr trafficSegmentsUniformBuffer;
 
 #if MLN_RENDER_BACKEND_METAL
     template <typename Result>

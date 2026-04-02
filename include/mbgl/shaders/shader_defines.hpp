@@ -198,6 +198,7 @@ enum {
 enum {
     idLineEvaluatedPropsUBO = getLayerStartValue(lineDrawableUBOCount),
     idLineExpressionUBO,
+    idLineTrafficSegmentsUBO,
     lineUBOCount
 };
 

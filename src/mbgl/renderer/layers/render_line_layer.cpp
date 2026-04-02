@@ -591,8 +591,9 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                     addDrawable(std::move(drawable), LineLayerTweaker::LineType::Pattern);
                 }
             }
-        } else if (!unevaluated.get<LineGradient>().getValue().isUndefined()) {
-            // gradient line
+        } else if (!unevaluated.get<LineGradient>().getValue().isUndefined() ||
+                   impl_cast(baseImpl).useHighPrecisionTraffic) {
+            // gradient line or high-precision traffic segments
             if (!lineGradientShaderGroup) {
                 lineGradientShaderGroup = shaders.getShaderGroup("LineGradientShader");
                 if (!lineGradientShaderGroup) {
@@ -615,6 +616,12 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                     LineLayerTweakerPtr lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
                     lineLayerTweaker->setGradientLineClipColor(currLineClipColorValue);
                 }
+            }
+            if (layerTweaker) {
+                auto lineLayerTweaker = std::static_pointer_cast<LineLayerTweaker>(layerTweaker);
+                lineLayerTweaker->setTrafficSegments(
+                    impl_cast(baseImpl).trafficSegments,
+                    impl_cast(baseImpl).useHighPrecisionTraffic);
             }
             auto shader = lineGradientShaderGroup->getOrCreateShader(
                 context, propertiesAsUniforms, posNormalAttribName);
@@ -639,16 +646,15 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
                 colorRampTexture2D->setSamplerConfiguration(
                     {filterType, gfx::TextureWrapType::Clamp, gfx::TextureWrapType::Clamp});
             }
-
             if (colorRampTexture2D) {
                 builder->setTexture(colorRampTexture2D, idLineImageTexture);
+            }
 
-                setSegments(builder, bucket);
+            setSegments(builder, bucket);
 
-                builder->flush(context);
-                for (auto& drawable : builder->clearDrawables()) {
-                    addDrawable(std::move(drawable), LineLayerTweaker::LineType::Gradient, isLayerUsingRoute());
-                }
+            builder->flush(context);
+            for (auto& drawable : builder->clearDrawables()) {
+                addDrawable(std::move(drawable), LineLayerTweaker::LineType::Gradient, isLayerUsingRoute());
             }
         } else {
             // simple line

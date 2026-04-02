@@ -1,4 +1,4 @@
-layout (std140) uniform LineEvaluatedPropsUBO {
+layout (std140) uniform LineEvaluatedPropsUBO {f
     highp vec4 u_color;
     lowp float u_blur;
     lowp float u_opacity;

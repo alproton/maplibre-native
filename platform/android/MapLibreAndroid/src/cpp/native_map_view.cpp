@@ -107,8 +107,9 @@ NativeMapView::NativeMapView(jni::JNIEnv& _env,
     // Create a renderer frontend
     rendererFrontend = AndroidRendererFrontend::create(_env, jMapRenderer);
     routeMgr = std::make_unique<mbgl::route::RouteManager>();
+    routeMgr->setUseHighPrecisionTraffic(true);
 
-    // Create Map options
+            // Create Map options
     MapOptions options;
     options.withMapMode(MapMode::Continuous)
         .withSize(mbgl::Size{static_cast<uint32_t>(width), static_cast<uint32_t>(height)})

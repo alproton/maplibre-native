@@ -142,9 +142,14 @@ std::shared_ptr<ShaderProgramGL> ShaderProgramGL::create(
 
         for (const auto& blockInfo : uniformBlocksInfo) {
             GLint index = MBGL_CHECK_ERROR(glGetUniformBlockIndex(program, blockInfo.name.data()));
+            if (index == static_cast<GLint>(GL_INVALID_INDEX)) {
+                continue;
+            }
             GLint size = 0;
             MBGL_CHECK_ERROR(glGetActiveUniformBlockiv(program, index, GL_UNIFORM_BLOCK_DATA_SIZE, &size));
-            assert(size > 0);
+            if (size <= 0) {
+                continue;
+            }
             GLint binding = static_cast<GLint>(blockInfo.binding);
             MBGL_CHECK_ERROR(glUniformBlockBinding(program, index, binding));
         }
@@ -152,7 +157,6 @@ std::shared_ptr<ShaderProgramGL> ShaderProgramGL::create(
         SamplerLocationArray samplerLocations;
         for (const auto& textureInfo : texturesInfo) {
             GLint location = MBGL_CHECK_ERROR(glGetUniformLocation(program, textureInfo.name.data()));
-            assert(location != -1);
             if (location != -1) {
                 samplerLocations[textureInfo.id] = location;
             }

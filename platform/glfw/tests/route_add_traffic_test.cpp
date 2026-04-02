@@ -3,8 +3,8 @@
 #include "route_fixtures.hpp"
 #include "../glfw_view.hpp"
 
-RouteAddTrafficTest::RouteAddTrafficTest(const std::string &testDir)
-    : RouteTest("route_add_traffic_test", testDir) {}
+RouteAddTrafficTest::RouteAddTrafficTest(const std::string &testDir, mbgl::route::RouteManager* rm)
+    : RouteTest("route_add_traffic_test", testDir, rm) {}
 
 bool RouteAddTrafficTest::produceTestCommands([[maybe_unused]] mbgl::Map *map, [[maybe_unused]] GLFWView *view) {
     assert(map != nullptr && "invalid map!");
