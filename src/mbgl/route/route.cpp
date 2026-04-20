@@ -468,6 +468,7 @@ bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
         rsegopts.lastIndex < rsegopts.firstIndex ||
         (rsegopts.lastIndex == rsegopts.firstIndex &&
          rsegopts.lastIndexFraction < rsegopts.firstIndexFraction)) {
+        Log::Error(Event::Route, "Route::routeSegmentCreate(...) : Invalid route segment ranges");
         return false;
     }
 
