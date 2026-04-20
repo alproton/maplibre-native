@@ -176,6 +176,13 @@ mediump float width = u_width;
     lowp float props_pad2;
 };
 
+layout (std140) uniform LineTrafficSegmentsUBO {
+    vec4 u_traffic_data[64];
+    int u_use_high_precision;
+    int u_traffic_segment_count;
+    float traffic_pad1, traffic_pad2;
+};
+
 uniform sampler2D u_image;
 
 in vec2 v_width2;
@@ -209,11 +216,25 @@ lowp float opacity = u_opacity;
     float blur2 = (blur + 1.0 / DEVICE_PIXEL_RATIO) * v_gamma_scale;
     float alpha = clamp(min(dist - (v_width2.t - blur2), v_width2.s - dist) / blur2, 0.0, 1.0);
 
-    // For gradient lines, v_lineprogress is the ratio along the entire line,
-    // scaled to [0, 2^15), and the gradient ramp is stored in a texture.
-    vec4 color = texture(u_image, vec2(v_lineprogress, 0.5));
+    vec4 color;
+    if (u_use_high_precision != 0) {
+        color = u_color;
+        for (int i = 0; i < u_traffic_segment_count; i++) {
+            int idx = i * 2;
+            vec4 segColor = u_traffic_data[idx];
+            vec4 segRange = u_traffic_data[idx + 1];
+            if (v_lineprogress >= segRange.x && v_lineprogress < segRange.y) {
+                color = segColor;
+                break;
+            }
+        }
+    } else {
+        // For gradient lines, v_lineprogress is the ratio along the entire line,
+        // scaled to [0, 2^15), and the gradient ramp is stored in a texture.
+        color = texture(u_image, vec2(v_lineprogress, 0.5));
+    }
 
-    if(v_lineprogress <= v_line_clip) {
+    if (v_lineprogress <= v_line_clip) {
         color = v_clip_color;
     }
 

@@ -4,8 +4,8 @@
 #include "rapidjson/document.h"
 #include <fstream>
 
-RouteCaptureTest::RouteCaptureTest(const std::string& testDir)
-    : RouteTest(testDir, "route_capture_test") {}
+RouteCaptureTest::RouteCaptureTest(const std::string& testDir, mbgl::route::RouteManager* rm)
+    : RouteTest(testDir, "route_capture_test", rm) {}
 
 bool RouteCaptureTest::readAndLoadCapture(const std::string& capture_file_name, mbgl::Map* map) {
     using namespace route_fixtures;

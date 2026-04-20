@@ -496,6 +496,31 @@ const PropertyValue<Color>& LineLayer::getGradientLineClipColor() const {
     return impl().paint.template get<LineClipColor>().value;
 }
 
+void LineLayer::setUseHighPrecisionTraffic(bool useHighPrecision) {
+    if (useHighPrecision == getUseHighPrecisionTraffic()) {
+        return;
+    }
+    auto impl_ = mutableImpl();
+    impl_->useHighPrecisionTraffic = useHighPrecision;
+    baseImpl = std::move(impl_);
+    observer->onLayerChanged(*this);
+}
+
+bool LineLayer::getUseHighPrecisionTraffic() const {
+    return impl().useHighPrecisionTraffic;
+}
+
+void LineLayer::setTrafficSegments(std::vector<TrafficSegment> segments) {
+    auto impl_ = mutableImpl();
+    impl_->trafficSegments.clear();
+    impl_->trafficSegments.reserve(segments.size());
+    for (const auto& seg : segments) {
+        impl_->trafficSegments.push_back({seg.start, seg.end, seg.color});
+    }
+    baseImpl = std::move(impl_);
+    observer->onLayerChanged(*this);
+}
+
 using namespace conversion;
 
 namespace {

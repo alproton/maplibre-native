@@ -335,7 +335,7 @@ int RouteManager::getTopMost(const std::vector<RouteID>& routeList) const {
 
         if (!layers.empty()) {
             int layercount = static_cast<int>(layers.size());
-            for (int i = layercount-1; i >= 0; i--) {
+            for (int i = layercount - 1; i >= 0; i--) {
                 const std::string currLayerName = layers[i]->getID();
 
                 for (size_t j = 0; j < routeList.size(); j++) {
@@ -1143,6 +1143,7 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
         layer->setGradientLineFilter(LineGradientFilterType::Nearest);
         layer->setGradientLineClipColor(clipColor);
         layer->setIsLayerUsingRoute(true);
+        layer->setUseHighPrecisionTraffic(useHighPrecisionTraffic_);
 
         if (zoomstops.empty()) {
             layer->setLineWidth(width);
@@ -1189,11 +1190,13 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
     if (routeID.isValid() && routeMap_.find(routeID) != routeMap_.end()) {
         bool updateRouteLayers = false;
         bool updateGradients = false;
+        bool updateTrafficSegments = false;
         bool updateProgress = false;
         switch (dt) {
             case DirtyType::dtRouteGeometry: {
                 updateRouteLayers = true;
-                updateGradients = true;
+                updateGradients = !useHighPrecisionTraffic_;
+                updateTrafficSegments = useHighPrecisionTraffic_;
                 updateProgress = true;
             } break;
 
@@ -1202,7 +1205,8 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             } break;
 
             case DirtyType::dtRouteSegments: {
-                updateGradients = true;
+                updateGradients = !useHighPrecisionTraffic_;
+                updateTrafficSegments = useHighPrecisionTraffic_;
             } break;
         }
 
@@ -1262,28 +1266,39 @@ void RouteManager::finalizeRoute(const RouteID& routeID, const DirtyType& dt) {
             mbgl::Log::Info(mbgl::Event::Style, "Trying to update a layer that is not created");
         }
 
-        // Create the gradient colors expressions and set on the active layer
         std::unordered_map<std::string, std::string> gradientDebugMap;
         if (updateGradients) {
-            // create the gradient expression for active route.
             std::map<double, mbgl::Color> innerGradientMap = route.getRouteSegmentColorStops(RouteType::Inner,
                                                                                              routeOptions.innerColor);
-
             std::unique_ptr<expression::Expression> innerGradientExpression = createGradientExpression(
                 innerGradientMap);
-
             ColorRampPropertyValue activeColorRampProp(std::move(innerGradientExpression));
             activeRouteLineLayer->setLineGradient(activeColorRampProp);
 
-            // create the gradient expression for the base route
             std::map<double, mbgl::Color> casingLayerGradient = route.getRouteSegmentColorStops(
                 RouteType::Casing, routeOptions.outerColor);
-            // std::map<double, mbgl::Color> casingLayerGradient = route.getRouteColorStops(routeOptions.outerColor);
             std::unique_ptr<expression::Expression> casingLayerExpression = createGradientExpression(
                 casingLayerGradient);
-
             ColorRampPropertyValue casingColorRampProp(std::move(casingLayerExpression));
             casingRouteLineLayer->setLineGradient(casingColorRampProp);
+        }
+
+        if (updateTrafficSegments) {
+            auto toTrafficSegments =
+                [](const std::vector<Route::SegmentRange>& ranges) -> std::vector<style::LineLayer::TrafficSegment> {
+                std::vector<style::LineLayer::TrafficSegment> result;
+                result.reserve(ranges.size());
+                for (const auto& sr : ranges) {
+                    result.push_back({sr.range.first, sr.range.second, sr.color});
+                }
+                return result;
+            };
+
+            auto innerSegments = route.compactSegments(RouteType::Inner);
+            activeRouteLineLayer->setTrafficSegments(toTrafficSegments(innerSegments));
+
+            auto casingSegments = route.compactSegments(RouteType::Casing);
+            casingRouteLineLayer->setTrafficSegments(toTrafficSegments(casingSegments));
         }
 
         if (updateProgress) {
@@ -1413,7 +1428,7 @@ void RouteManager::applyEmergencyDiagnostics() {
         }
         layerInfo << "]";
         Log::Warning(Event::Route, "Layers in route proximity: " + layerInfo.str());
-        Log::Warning(Event::Route, "Route stats: "+getStats());
+        Log::Warning(Event::Route, "Route stats: " + getStats());
 
     } else {
         Log::Info(Event::Route, "Route diagnostics applied and found no issues ");
@@ -1444,6 +1459,14 @@ void RouteManager::finalize() {
     stats_.finalizeMillis = duration_cast<milliseconds>(stopclock - startclock).count();
 
     TRACE_ROUTE_CALL(stats_.recentApiCalls, {}, "void", "", {}, "");
+}
+
+void RouteManager::setUseHighPrecisionTraffic(bool useHighPrecision) {
+    useHighPrecisionTraffic_ = useHighPrecision;
+}
+
+bool RouteManager::getUseHighPrecisionTraffic() const {
+    return useHighPrecisionTraffic_;
 }
 
 RouteManager::~RouteManager() {}

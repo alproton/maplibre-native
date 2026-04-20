@@ -1,8 +1,8 @@
 #include "route_traffic_priority_test.hpp"
 #include "../glfw_view.hpp"
 
-RouteTrafficPriorityTest::RouteTrafficPriorityTest(const std::string& testDir)
-    : RouteTest("route_traffic_priority_test", testDir) {}
+RouteTrafficPriorityTest::RouteTrafficPriorityTest(const std::string& testDir, mbgl::route::RouteManager* rm)
+    : RouteTest("route_traffic_priority_test", testDir, rm) {}
 
 bool RouteTrafficPriorityTest::produceTestCommands([[maybe_unused]] mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
     assert(map != nullptr && "invalid map!");
