@@ -107,6 +107,7 @@ NativeMapView::NativeMapView(jni::JNIEnv& _env,
     // Create a renderer frontend
     rendererFrontend = AndroidRendererFrontend::create(_env, jMapRenderer);
     routeMgr = std::make_unique<mbgl::route::RouteManager>();
+    routeMgr->setUseHighPrecisionTraffic(true);
 
     // Create Map options
     MapOptions options;
@@ -1716,17 +1717,15 @@ jint NativeMapView::routeCreate(JNIEnv& env,
             // Validate the converted linestring
             if (linestring.empty()) {
                 jni::ThrowNew(env,
-                             jni::FindClass(env, "java/lang/IllegalArgumentException"),
-                             "Route geometry cannot be empty - must contain at least 2 points");
+                              jni::FindClass(env, "java/lang/IllegalArgumentException"),
+                              "Route geometry cannot be empty - must contain at least 2 points");
                 return -1;
             }
 
             if (linestring.size() < 2) {
                 std::string msg = "Route geometry must contain at least 2 points, got: " +
-                                 std::to_string(linestring.size());
-                jni::ThrowNew(env,
-                             jni::FindClass(env, "java/lang/IllegalArgumentException"),
-                             msg.c_str());
+                                  std::to_string(linestring.size());
+                jni::ThrowNew(env, jni::FindClass(env, "java/lang/IllegalArgumentException"), msg.c_str());
                 return -1;
             }
 
@@ -1986,10 +1985,10 @@ void NativeMapView::onPreCompileShader(shaders::BuiltIn id,
     static auto onPreCompileShader = javaClass.GetMethod<void(jni::jint, jni::jint, jni::String)>(*_env,
                                                                                                   "onPreCompileShader");
     cachedJavaPeer.Call(*_env,
-                       onPreCompileShader,
-                       static_cast<jni::jint>(id),
-                       static_cast<jni::jint>(type),
-                       jni::Make<jni::String>(*_env, additionalDefines));
+                        onPreCompileShader,
+                        static_cast<jni::jint>(id),
+                        static_cast<jni::jint>(type),
+                        jni::Make<jni::String>(*_env, additionalDefines));
 }
 
 void NativeMapView::onPostCompileShader(shaders::BuiltIn id,
@@ -2006,10 +2005,10 @@ void NativeMapView::onPostCompileShader(shaders::BuiltIn id,
     static auto onPostCompileShader = javaClass.GetMethod<void(jni::jint, jni::jint, jni::String)>(
         *_env, "onPostCompileShader");
     cachedJavaPeer.Call(*_env,
-                       onPostCompileShader,
-                       static_cast<jni::jint>(id),
-                       static_cast<jni::jint>(type),
-                       jni::Make<jni::String>(*_env, additionalDefines));
+                        onPostCompileShader,
+                        static_cast<jni::jint>(id),
+                        static_cast<jni::jint>(type),
+                        jni::Make<jni::String>(*_env, additionalDefines));
 }
 
 void NativeMapView::onShaderCompileFailed(shaders::BuiltIn id,
@@ -2026,10 +2025,10 @@ void NativeMapView::onShaderCompileFailed(shaders::BuiltIn id,
     static auto onShaderCompileFailed = javaClass.GetMethod<void(jni::jint, jni::jint, jni::String)>(
         *_env, "onShaderCompileFailed");
     cachedJavaPeer.Call(*_env,
-                       onShaderCompileFailed,
-                       static_cast<jni::jint>(id),
-                       static_cast<jni::jint>(type),
-                       jni::Make<jni::String>(*_env, additionalDefines));
+                        onShaderCompileFailed,
+                        static_cast<jni::jint>(id),
+                        static_cast<jni::jint>(type),
+                        jni::Make<jni::String>(*_env, additionalDefines));
 }
 
 // Glyph requests
@@ -2107,14 +2106,14 @@ void NativeMapView::onTileAction(mbgl::TileOperation op, const OverscaledTileID&
         jni::Object<mbgl::android::TileOperation>, jni::jint, jni::jint, jni::jint, jni::jint, jni::jint, jni::String)>(
         *_env, "onTileAction");
     cachedJavaPeer.Call(*_env,
-                       onTileAction,
-                       mbgl::android::TileOperation::Create(*_env, op),
-                       static_cast<jni::jint>(id.canonical.x),
-                       static_cast<jni::jint>(id.canonical.y),
-                       static_cast<jni::jint>(id.canonical.z),
-                       static_cast<jni::jint>(id.wrap),
-                       static_cast<jni::jint>(id.overscaledZ),
-                       jni::Make<jni::String>(*_env, sourceID));
+                        onTileAction,
+                        mbgl::android::TileOperation::Create(*_env, op),
+                        static_cast<jni::jint>(id.canonical.x),
+                        static_cast<jni::jint>(id.canonical.y),
+                        static_cast<jni::jint>(id.canonical.z),
+                        static_cast<jni::jint>(id.wrap),
+                        static_cast<jni::jint>(id.overscaledZ),
+                        jni::Make<jni::String>(*_env, sourceID));
 }
 
 // Sprite requests
@@ -2130,11 +2129,12 @@ void NativeMapView::onSpriteLoaded(const std::optional<style::Sprite>& sprite) {
     static auto onSpriteLoaded = javaClass.GetMethod<void(jni::String, jni::String)>(*_env, "onSpriteLoaded");
     if (sprite) {
         cachedJavaPeer.Call(*_env,
-                           onSpriteLoaded,
-                           jni::Make<jni::String>(*_env, sprite->id),
-                           jni::Make<jni::String>(*_env, sprite->spriteURL));
+                            onSpriteLoaded,
+                            jni::Make<jni::String>(*_env, sprite->id),
+                            jni::Make<jni::String>(*_env, sprite->spriteURL));
     } else {
-        cachedJavaPeer.Call(*_env, onSpriteLoaded, jni::Make<jni::String>(*_env, ""), jni::Make<jni::String>(*_env, ""));
+        cachedJavaPeer.Call(
+            *_env, onSpriteLoaded, jni::Make<jni::String>(*_env, ""), jni::Make<jni::String>(*_env, ""));
     }
 }
 
@@ -2150,9 +2150,9 @@ void NativeMapView::onSpriteError(const std::optional<style::Sprite>& sprite, st
     static auto onSpriteError = javaClass.GetMethod<void(jni::String, jni::String)>(*_env, "onSpriteError");
     if (sprite) {
         cachedJavaPeer.Call(*_env,
-                           onSpriteError,
-                           jni::Make<jni::String>(*_env, sprite->id),
-                           jni::Make<jni::String>(*_env, sprite->spriteURL));
+                            onSpriteError,
+                            jni::Make<jni::String>(*_env, sprite->id),
+                            jni::Make<jni::String>(*_env, sprite->spriteURL));
     } else {
         cachedJavaPeer.Call(*_env, onSpriteError, jni::Make<jni::String>(*_env, ""), jni::Make<jni::String>(*_env, ""));
     }
@@ -2170,9 +2170,9 @@ void NativeMapView::onSpriteRequested(const std::optional<style::Sprite>& sprite
     static auto onSpriteRequested = javaClass.GetMethod<void(jni::String, jni::String)>(*_env, "onSpriteRequested");
     if (sprite) {
         cachedJavaPeer.Call(*_env,
-                           onSpriteRequested,
-                           jni::Make<jni::String>(*_env, sprite->id),
-                           jni::Make<jni::String>(*_env, sprite->spriteURL));
+                            onSpriteRequested,
+                            jni::Make<jni::String>(*_env, sprite->id),
+                            jni::Make<jni::String>(*_env, sprite->spriteURL));
     } else {
         cachedJavaPeer.Call(
             *_env, onSpriteRequested, jni::Make<jni::String>(*_env, ""), jni::Make<jni::String>(*_env, ""));

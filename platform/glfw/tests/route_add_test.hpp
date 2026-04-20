@@ -5,7 +5,7 @@
 class RouteAddTest : public RouteTest {
 public:
     RouteAddTest() = delete;
-    RouteAddTest(const std::string& testDir);
+    RouteAddTest(const std::string& testDir, mbgl::route::RouteManager* rm);
     bool produceTestCommands(mbgl::Map* map, GLFWView* view) override;
     ~RouteAddTest() override;
 };

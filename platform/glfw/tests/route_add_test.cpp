@@ -4,8 +4,8 @@
 #include "route_fixtures.hpp"
 #include "../glfw_view.hpp"
 
-RouteAddTest::RouteAddTest(const std::string& testDir)
-    : RouteTest("route_add_test", testDir) {}
+RouteAddTest::RouteAddTest(const std::string& testDir, mbgl::route::RouteManager* rm)
+    : RouteTest("route_add_test", testDir, rm) {}
 
 bool RouteAddTest::produceTestCommands(mbgl::Map* map, [[maybe_unused]] GLFWView* view) {
     assert(map != nullptr && "invalid map!");

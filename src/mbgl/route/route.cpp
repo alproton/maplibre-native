@@ -169,7 +169,7 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
 
     if (geometry_.size() < 2) {
         throw std::invalid_argument("Route geometry must contain at least 2 points, got: " +
-                                   std::to_string(geometry_.size()));
+                                    std::to_string(geometry_.size()));
     }
 
     if (std::isnan(geometry_[0].x) || std::isnan(geometry_[0].y)) {
@@ -188,8 +188,8 @@ Route::Route(const LineString<double>& geometry, const RouteOptions& ropts)
 
         // Validate each point
         if (std::isnan(p1.x) || std::isnan(p1.y) || std::isnan(p2.x) || std::isnan(p2.y)) {
-            throw std::invalid_argument("Invalid geometry point at index " + std::to_string(i) +
-                                       " or " + std::to_string(i + 1) + ": coordinates cannot be NaN");
+            throw std::invalid_argument("Invalid geometry point at index " + std::to_string(i) + " or " +
+                                        std::to_string(i + 1) + ": coordinates cannot be NaN");
         }
 
         double segLen;
@@ -462,12 +462,9 @@ bool Route::hasRouteSegments() const {
 }
 
 bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
-    if (intervalLengths_.empty() ||
-        rsegopts.firstIndex >= intervalLengths_.size() ||
-        rsegopts.lastIndex >= intervalLengths_.size() ||
-        rsegopts.lastIndex < rsegopts.firstIndex ||
-        (rsegopts.lastIndex == rsegopts.firstIndex &&
-         rsegopts.lastIndexFraction < rsegopts.firstIndexFraction)) {
+    if (intervalLengths_.empty() || rsegopts.firstIndex >= intervalLengths_.size() ||
+        rsegopts.lastIndex >= intervalLengths_.size() || rsegopts.lastIndex < rsegopts.firstIndex ||
+        (rsegopts.lastIndex == rsegopts.firstIndex && rsegopts.lastIndexFraction < rsegopts.firstIndexFraction)) {
         Log::Error(Event::Route, "Route::routeSegmentCreate(...) : Invalid route segment ranges");
         return false;
     }
@@ -510,6 +507,10 @@ std::map<double, mbgl::Color> Route::getRouteColorStops(const mbgl::Color& route
 }
 
 std::vector<Route::SegmentRange> Route::compactSegments(const RouteType& routeType) const {
+    if (segments_.empty()) {
+        return {};
+    }
+
     std::vector<RouteSegment> segments = segments_;
 
     std::sort(segments.begin(), segments.end(), [](const RouteSegment& a, const RouteSegment& b) {
@@ -627,10 +628,10 @@ std::map<double, mbgl::Color> Route::getRouteSegmentColorStops(const RouteType& 
             double pre_pos = firstPos - HALF_EPSILON < 0.0 ? 0.0 : firstPos - HALF_EPSILON;
             colorStops[pre_pos] = routeColor;
         }
-        
+
         colorStops[firstPos] = sr.color;
         colorStops[lastPos] = sr.color;
-        
+
         if (needPostTransition) {
             double post_pos = lastPos + HALF_EPSILON > 1.0 ? 1.0 : lastPos + HALF_EPSILON;
             colorStops[post_pos] = routeColor;
