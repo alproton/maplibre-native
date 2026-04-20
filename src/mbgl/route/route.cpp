@@ -462,6 +462,13 @@ bool Route::hasRouteSegments() const {
 }
 
 bool Route::routeSegmentCreate(const RouteSegmentOptions& rsegopts) {
+    if (intervalLengths_.empty() || rsegopts.firstIndex >= intervalLengths_.size() ||
+        rsegopts.lastIndex >= intervalLengths_.size() || rsegopts.lastIndex < rsegopts.firstIndex ||
+        (rsegopts.lastIndex == rsegopts.firstIndex && rsegopts.lastIndexFraction < rsegopts.firstIndexFraction)) {
+        Log::Error(Event::Route, "Route::routeSegmentCreate(...) : Invalid route segment ranges");
+        return false;
+    }
+
     std::vector<double> normalizedPositions;
     const auto& getNormalizedPosition = [&](uint32_t index, double indexFraction) {
         double indexDistanceAlongRoute = cumulativeIntervalDistances_[index] +
