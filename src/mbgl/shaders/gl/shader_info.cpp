@@ -367,6 +367,7 @@ const std::vector<UniformBlockInfo> LineGradientShaderInfo::uniformBlocks = {
     UniformBlockInfo{"GlobalPaintParamsUBO", idGlobalPaintParamsUBO},
     UniformBlockInfo{"LineGradientDrawableUBO", idLineDrawableUBO},
     UniformBlockInfo{"LineEvaluatedPropsUBO", idLineEvaluatedPropsUBO},
+    UniformBlockInfo{"LineTrafficSegmentsUBO", idLineTrafficSegmentsUBO},
 };
 const std::vector<AttributeInfo> LineGradientShaderInfo::attributes = {
     AttributeInfo{"a_pos_normal", idLinePosNormalVertexAttribute},

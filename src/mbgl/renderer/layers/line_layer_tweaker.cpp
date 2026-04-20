@@ -13,6 +13,7 @@
 #include <mbgl/shaders/line_layer_ubo.hpp>
 #include <mbgl/shaders/shader_program_base.hpp>
 #include <mbgl/style/layers/line_layer_properties.hpp>
+#include <mbgl/style/layers/line_layer_impl.hpp>
 #include <mbgl/util/logging.hpp>
 #include <mbgl/util/math.hpp>
 
@@ -72,6 +73,15 @@ void LineLayerTweaker::setGradientLineClip(double clip) {
 
 void LineLayerTweaker::setGradientLineClipColor(const mbgl::Color& color) {
     line_clip_color = color;
+}
+
+void LineLayerTweaker::setTrafficSegments(const std::vector<style::TrafficSegmentData>& segments,
+                                          bool useHighPrecision) {
+    trafficSegments_ = segments;
+    useHighPrecisionTraffic_ = useHighPrecision;
+    if (useHighPrecision) {
+        Log::Error(Event::Route, "LineLayerTweaker: using high precision traffic segment data");
+    }
 }
 
 void LineLayerTweaker::execute(LayerGroupBase& layerGroup, const PaintParameters& parameters) {
@@ -165,6 +175,24 @@ void LineLayerTweaker::execute(LayerGroupBase& layerGroup, const PaintParameters
     }
     auto& layerUniforms = layerGroup.mutableUniformBuffers();
     layerUniforms.set(idLineEvaluatedPropsUBO, evaluatedPropsUniformBuffer);
+
+    {
+        LineTrafficSegmentsUBO trafficUBO{};
+        trafficUBO.useHighPrecision = useHighPrecisionTraffic_ ? 1 : 0;
+        if (!trafficSegments_.empty()) {
+            trafficUBO.segmentCount = std::min(static_cast<int>(trafficSegments_.size()), MAX_ROUTE_TRAFFIC_SEGMENTS);
+            for (int s = 0; s < trafficUBO.segmentCount; s++) {
+                trafficUBO.segments[s].start = static_cast<float>(trafficSegments_[s].start);
+                trafficUBO.segments[s].end = static_cast<float>(trafficSegments_[s].end);
+                trafficUBO.segments[s].color = {trafficSegments_[s].color.r,
+                                                trafficSegments_[s].color.g,
+                                                trafficSegments_[s].color.b,
+                                                trafficSegments_[s].color.a};
+            }
+        }
+        context.emplaceOrUpdateUniformBuffer(trafficSegmentsUniformBuffer, &trafficUBO);
+        layerUniforms.set(idLineTrafficSegmentsUBO, trafficSegmentsUniformBuffer);
+    }
 
 #if MLN_RENDER_BACKEND_METAL
     // GPU Expressions

@@ -5,8 +5,8 @@
 #include "route_fixtures.hpp"
 #include "../glfw_view.hpp"
 
-RouteNavCircleTest::RouteNavCircleTest(const std::string testDir)
-    : RouteTest(testDir, "route_nav_circle_test") {}
+RouteNavCircleTest::RouteNavCircleTest(const std::string testDir, mbgl::route::RouteManager* rm)
+    : RouteTest(testDir, "route_nav_circle_test", rm) {}
 
 bool RouteNavCircleTest::produceTestCommands(mbgl::Map* map, GLFWView* view) {
     assert(map != nullptr && "invalid map!");

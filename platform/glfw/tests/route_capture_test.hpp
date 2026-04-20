@@ -4,7 +4,7 @@
 class RouteCaptureTest : public RouteTest {
 public:
     RouteCaptureTest() = delete;
-    RouteCaptureTest(const std::string& testDir);
+    RouteCaptureTest(const std::string& testDir, mbgl::route::RouteManager* rm);
     bool produceTestCommands(mbgl::Map* map, GLFWView* view) override;
     ~RouteCaptureTest() override;
 

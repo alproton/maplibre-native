@@ -238,6 +238,7 @@ GLFWView::GLFWView(bool fullscreen_,
 
     glfwSetErrorCallback(glfwError);
     rmptr_ = std::make_unique<mbgl::route::RouteManager>();
+    rmptr_->setUseHighPrecisionTraffic(true);
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
     if (!glfwInit()) {
@@ -318,17 +319,17 @@ GLFWView::GLFWView(bool fullscreen_,
     backend = GLFWBackend::Create(window, capFrameRate);
     backend->assetPath = MLN_ASSETS_PATH;
     if (testRunnerData.testName == "route_add_test") {
-        autoTest_ = std::make_unique<RouteAddTest>(testRunnerData.testDir);
+        autoTest_ = std::make_unique<RouteAddTest>(testRunnerData.testDir, rmptr_.get());
     } else if (testRunnerData.testName == "route_add_traffic_test") {
-        autoTest_ = std::make_unique<RouteAddTrafficTest>(testRunnerData.testDir);
+        autoTest_ = std::make_unique<RouteAddTrafficTest>(testRunnerData.testDir, rmptr_.get());
     } else if (testRunnerData.testName == "route_traffic_priority_test") {
-        autoTest_ = std::make_unique<RouteTrafficPriorityTest>(testRunnerData.testDir);
+        autoTest_ = std::make_unique<RouteTrafficPriorityTest>(testRunnerData.testDir, rmptr_.get());
     } else if (testRunnerData.testName == "route_pick_test") {
-        autoTest_ = std::make_unique<RoutePickTest>(testRunnerData.testDir);
+        autoTest_ = std::make_unique<RoutePickTest>(testRunnerData.testDir, rmptr_.get());
     } else if (testRunnerData.testName == "route_capture_test") {
-        autoTest_ = std::make_unique<RouteCaptureTest>(testRunnerData.testDir);
+        autoTest_ = std::make_unique<RouteCaptureTest>(testRunnerData.testDir, rmptr_.get());
     } else if (testRunnerData.testName == "route_nav_circle_test") {
-        autoTest_ = std::make_unique<RouteNavCircleTest>(testRunnerData.testDir);
+        autoTest_ = std::make_unique<RouteNavCircleTest>(testRunnerData.testDir, rmptr_.get());
     }
 
 #if defined(__APPLE__) && !defined(MLN_RENDER_BACKEND_VULKAN)
@@ -1018,7 +1019,7 @@ int GLFWView::getTopMost(const std::vector<RouteID> &routeList) const {
 }
 
 void GLFWView::addRoute() {
-    std::unique_ptr<RouteAddTest> addRoute = std::make_unique<RouteAddTest>("");
+    std::unique_ptr<RouteAddTest> addRoute = std::make_unique<RouteAddTest>("", rmptr_.get());
     addRoute->initTestFixtures(map);
     addRoute->produceTestCommands(map, this);
     addRoute->consumeTestCommand(map, this);
@@ -1047,7 +1048,7 @@ void GLFWView::setPuckLocation(double lat, double lon, double bearing) {
 }
 
 void GLFWView::addTrafficSegments() {
-    std::unique_ptr<RouteAddTrafficTest> addTraffic = std::make_unique<RouteAddTrafficTest>("");
+    std::unique_ptr<RouteAddTrafficTest> addTraffic = std::make_unique<RouteAddTrafficTest>("", rmptr_.get());
     addTraffic->initTestFixtures(map);
     addTraffic->produceTestCommands(map, this);
     addTraffic->consumeTestCommand(map, this);

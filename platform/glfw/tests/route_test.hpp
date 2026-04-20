@@ -9,7 +9,7 @@
 class RouteTest : public GLFWGraphicsTest {
 public:
     RouteTest() = delete;
-    RouteTest(const std::string& testDir, const std::string& testName);
+    RouteTest(const std::string& testDir, const std::string& testName, mbgl::route::RouteManager* routeManager);
     bool initTestFixtures(mbgl::Map* map) override;
     bool teardownTestFixtures(mbgl::Map* map) override;
     int consumeTestCommand(mbgl::Map* map, GLFWView* view) override;
@@ -19,7 +19,7 @@ public:
     ~RouteTest() override;
 
 protected:
-    std::unique_ptr<mbgl::route::RouteManager> rmptr_;
+    mbgl::route::RouteManager* rmptr_ = nullptr;
     std::unordered_map<RouteID, route_fixtures::RouteData, IDHasher<RouteID>> routeMap_;
     RouteID vanishingRouteID_;
 };

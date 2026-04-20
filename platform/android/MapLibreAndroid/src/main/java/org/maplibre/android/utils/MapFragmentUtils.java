@@ -40,13 +40,13 @@ public class MapFragmentUtils {
    * @param args    The fragment arguments
    * @return converted MapLibreMapOptions
    */
-  @Nullable
+  @NonNull
   public static MapLibreMapOptions resolveArgs(@NonNull Context context, @Nullable Bundle args) {
-    MapLibreMapOptions options;
+    MapLibreMapOptions options = null;
     if (args != null && args.containsKey(MapLibreConstants.FRAG_ARG_MAPLIBREMAPOPTIONS)) {
       options = args.getParcelable(MapLibreConstants.FRAG_ARG_MAPLIBREMAPOPTIONS);
-    } else {
-      // load default options
+    }
+    if (options == null) {
       options = MapLibreMapOptions.createFromAttributes(context);
     }
     return options;
