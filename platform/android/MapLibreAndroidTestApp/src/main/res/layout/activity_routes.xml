@@ -9,12 +9,14 @@
         android:orientation="vertical">
 
     <org.maplibre.android.maps.MapView
-            android:id="@id/mapView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:maplibre_cameraTargetLat="45.38301927899065"
-            app:maplibre_cameraTargetLng="8.63525390625"
-            app:maplibre_cameraZoom="7"/>
+        android:id="@id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:maplibre_cameraTargetLat="45.38301927899065"
+        app:maplibre_cameraTargetLng="8.63525390625"
+        app:maplibre_cameraZoom="7">
+
+    </org.maplibre.android.maps.MapView>
 
     <LinearLayout
             android:layout_width="wrap_content"
@@ -83,6 +85,45 @@
                 />
 
         </LinearLayout>
+
+        <Button
+            android:id="@+id/toggle_fps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toggle FPS"
+            tools:ignore="HardcodedText" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/fps_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FPS"
+                tools:ignore="HardcodedText"/>
+
+            <TextView
+                android:id="@+id/fsp_view_value"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="NA"
+                tools:ignore="HardcodedText"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/refresh_mode_toggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Toggle RefreshMode"
+            tools:ignore="HardcodedText"/>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"/>
+
 
     </LinearLayout>
 

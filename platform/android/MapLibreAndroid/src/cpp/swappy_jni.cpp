@@ -231,13 +231,13 @@ Java_org_maplibre_android_maps_renderer_SwappyRenderer_nativeGetNativeFrameTimin
         return nullptr; // No stats available
     }
 
-    // Create Java long array with 14 elements
-    jlongArray result = env->NewLongArray(14);
+    // Create Java long array with 15 elements
+    jlongArray result = env->NewLongArray(15);
     if (!result) {
         return nullptr;
     }
 
-    jlong values[14] = {stats.avgCpuTimeNs,
+    jlong values[15] = {stats.avgCpuTimeNs,
                         stats.minCpuTimeNs,
                         stats.maxCpuTimeNs,
                         stats.medianCpuTimeNs,
@@ -250,9 +250,10 @@ Java_org_maplibre_android_maps_renderer_SwappyRenderer_nativeGetNativeFrameTimin
                         stats.maxTotalTimeNs,
                         stats.medianTotalTimeNs,
                         static_cast<jlong>(stats.sampleCount),
-                        stats.collectionDurationMs};
+                        stats.collectionDurationMs,
+                        static_cast<jlong>(stats.currentSwapInterval)};
 
-    env->SetLongArrayRegion(result, 0, 14, values);
+    env->SetLongArrayRegion(result, 0, 15, values);
     return result;
 }
 

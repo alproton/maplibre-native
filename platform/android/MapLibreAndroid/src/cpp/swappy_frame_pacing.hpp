@@ -39,6 +39,7 @@ struct FrameTimingStats {
     // Collection metadata
     int sampleCount;
     int64_t collectionDurationMs;
+    uint64_t currentSwapInterval;
 
     // Constructor
     FrameTimingStats()
@@ -55,7 +56,8 @@ struct FrameTimingStats {
           maxTotalTimeNs(0),
           medianTotalTimeNs(0),
           sampleCount(0),
-          collectionDurationMs(0) {}
+          collectionDurationMs(0),
+          currentSwapInterval(0) {}
 };
 
 /**
@@ -96,7 +98,7 @@ public:
      *
      * @param swapIntervalNs Swap interval in nanoseconds
      */
-    static void setSwapInterval(uint64_t swapIntervalNs);
+    static bool setSwapInterval(uint64_t swapIntervalNs);
 
     /**
      * Set the swap interval using predefined frame rates.

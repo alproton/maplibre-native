@@ -292,6 +292,7 @@ public abstract class MapRenderer implements MapRendererScheduler {
   }
 
   public void setSwapInterval(int interval) {
+      Logger.i(TAG, "setSwapInterval called with interval: " + interval + " (equivalent to " + (60/interval) + " FPS)");
       SwappyPerformanceMonitor.reset();
       nativeSetSwapInterval(interval);
   }
@@ -367,7 +368,24 @@ public abstract class MapRenderer implements MapRendererScheduler {
 
     if(SwappyRenderer.isEnabled()) {
       SwappyPerformanceMonitor.reset();
+
+      // Disable auto modes FIRST before setting target FPS
+      SwappyRenderer.setAutoSwapInterval(false);
+      SwappyRenderer.setAutoPipelineMode(false);
+
+      // Set the target frame rate directly (this internally sets the swap interval)
       SwappyRenderer.setTargetFrameRate(maximumFps);
+
+      // Reset frame pacing to clear old timing history
+      SwappyRenderer.resetFramePacing();
+      
+      // Clear stats to start fresh measurement
+      SwappyRenderer.clearStats();
+      
+      // Log for diagnostics
+      Logger.i(TAG, "setMaximumFps: Set target to " + maximumFps + " FPS via Swappy");
+      Logger.i(TAG, "Swappy enabled: " + SwappyRenderer.isEnabled());
+      Logger.i(TAG, "setMaximumFps completed successfully");
     } else {
       expectedRenderTime = 1E9 / maximumFps;
     }

@@ -240,9 +240,10 @@ void MapRenderer::scheduleSnapshot(std::unique_ptr<SnapshotCallback> callback) {
 void MapRenderer::render(JNIEnv&) {
     assert(renderer);
 
-    // Set the swap interval if it has been changed
-    if (backend && swapInterval != -1) {
+    // Set the swap interval only when it has been changed (not every frame!)
+    if (backend && swapIntervalChanged && swapInterval != -1) {
         backend->setSwapInterval(swapInterval);
+        swapIntervalChanged = false; // Reset the flag after applying
     }
 
     std::shared_ptr<UpdateParameters> params;
@@ -344,6 +345,12 @@ void MapRenderer::onSurfaceCreated(JNIEnv& env, const jni::Object<AndroidSurface
         backend->setSwapBehavior(swapBehaviorFlush ? gfx::Renderable::SwapBehaviour::Flush
                                                    : gfx::Renderable::SwapBehaviour::NoFlush);
 
+        // Apply swap interval if it was set before surface creation
+        if (swapInterval != -1) {
+            backend->setSwapInterval(swapInterval);
+            swapIntervalChanged = false; // Already applied
+        }
+
         // Set the observer on the new Renderer implementation
         if (rendererObserver) {
             renderer->setObserver(rendererObserver.get());
@@ -387,6 +394,7 @@ void MapRenderer::setSwapBehaviorFlush(JNIEnv&, jboolean flush) {
 
 void MapRenderer::setSwapInterval(JNIEnv&, jint interval) {
     swapInterval = interval;
+    swapIntervalChanged = true;
 }
 
 void MapRenderer::setCustomPuckState(

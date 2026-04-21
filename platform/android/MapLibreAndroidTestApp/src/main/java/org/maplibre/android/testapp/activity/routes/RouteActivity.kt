@@ -11,6 +11,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.maplibre.android.camera.CameraPosition
@@ -29,8 +30,10 @@ import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ApiKeyUtils
 import org.maplibre.geojson.Point
 import timber.log.Timber
+import java.util.*
+import org.maplibre.android.maps.renderer.MapRenderer
 
-class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
+class RouteActivity : AppCompatActivity(), OnMapReadyCallback, MapLibreMap.OnFpsChangedListener {
     private lateinit var mapView: MapView
     private lateinit var maplibreMap : MapLibreMap
     private var progressPrecisionCoarse : Boolean = true
@@ -39,6 +42,19 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     private val useLocationEngine = false
     private var permissionsManager: PermissionsManager? = null
     private var locationManager : LocationManager? = null
+    private var maxFPSval : Int = 60
+
+    // FPS smoothing using Exponential Moving Average
+    private var smoothedFps: Double = 60.0
+    private val fpsAlpha: Double = 0.15  // Smoothing factor (0.1 = very smooth, 0.3 = more responsive)
+
+    // FPS statistics
+    private var instantFps: Double = 60.0
+    private var minFps: Double = Double.MAX_VALUE
+    private var maxFps: Double = 0.0
+    private var totalFps: Double = 0.0
+    private var frameCount: Int = 0
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +67,7 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.getMapAsync(this)
         mapView.setAutoVanishingRoute(enableAutoVanishingRoute)
         mapView.enableCaptureRouteNavStops(false)
+
         //Add route
         val addRouteButton = findViewById<Button>(R.id.add_route)
         addRouteButton?.setOnClickListener {
@@ -71,6 +88,19 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             val snapshot = mapView.getSnapshotCapture()
             Timber.tag("ROUTE_PROGRESS").i("Route snapshot: $snapshot")
         }
+
+        //Toggle FPS cap
+        val toggleFPS = findViewById<Button>(R.id.toggle_fps)
+        toggleFPS?.setOnClickListener {
+            maxFPSval = when (maxFPSval) {
+                60 -> 30
+                else -> 60
+            }
+            mapView.setMaximumFps(maxFPSval)
+            Toast.makeText(this, "Setting FPS to "+maxFPSval, Toast.LENGTH_SHORT).show()
+        }
+
+        //Toggle refresh mode (continuous or
 
         //route progress precision
         val progressPrecisionSpinner = findViewById<Spinner>(R.id.route_progress_precision)
@@ -132,7 +162,34 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+    }
 
+    override fun onFpsChanged(fps: Double) {
+        // Store instant FPS
+        instantFps = fps
+
+        // Apply exponential moving average for smooth display
+        smoothedFps = (fpsAlpha * fps) + ((1.0 - fpsAlpha) * smoothedFps)
+
+        // Update statistics
+        minFps = minOf(minFps, fps)
+        maxFps = maxOf(maxFps, fps)
+        totalFps += fps
+        frameCount++
+        val avgFps = totalFps / frameCount
+
+        // Update display with smoothed FPS
+        val fpsView = findViewById<TextView>(R.id.fsp_view_value)
+        fpsView.text = String.format(Locale.US, "%4.1f (min: %4.1f, max: %4.1f)", smoothedFps, minFps, maxFps)
+    }
+
+    private fun resetFpsStats() {
+        smoothedFps = 60.0
+        instantFps = 60.0
+        minFps = Double.MAX_VALUE
+        maxFps = 0.0
+        totalFps = 0.0
+        frameCount = 0
     }
 
     private fun prepareLocationComp(style: Style) {
@@ -275,6 +332,35 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 Toast.makeText(applicationContext, "Nothing selected", Toast.LENGTH_SHORT).show()
             }
+        }
+        mapView.enableFrameTimingCollection(true)
+        maplibreMap.setOnFpsChangedListener(this)
+
+        val refreshModeToggle = findViewById<Button>(R.id.refresh_mode_toggle)
+        refreshModeToggle?.setOnClickListener {
+            // Get current mode
+            val currentMode = mapView.getRenderingRefreshMode()
+
+            // Toggle to the opposite mode
+            val newMode = if (currentMode == MapRenderer.RenderingRefreshMode.WHEN_DIRTY) {
+                MapRenderer.RenderingRefreshMode.CONTINUOUS
+            } else {
+                MapRenderer.RenderingRefreshMode.WHEN_DIRTY
+            }
+
+            // Set the new mode
+            mapView.setRenderingRefreshMode(newMode)
+
+            // Reset FPS statistics when switching modes
+            resetFpsStats()
+
+            // Update button text to show current mode
+            refreshModeToggle.text = when (newMode) {
+                MapRenderer.RenderingRefreshMode.WHEN_DIRTY -> "On-Demand"
+                MapRenderer.RenderingRefreshMode.CONTINUOUS -> "Continuous"
+            }
+
+            Toast.makeText(this, "Rendering mode: $newMode", Toast.LENGTH_SHORT).show()
         }
     }
 

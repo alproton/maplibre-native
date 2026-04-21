@@ -30,7 +30,7 @@ int64_t SwappyFramePacing::sCollectionStartTime = 0;
 
 bool SwappyFramePacing::initialize(JNIEnv* env, jobject jactivity) {
     if (sInitialized) {
-        Log::Warning(Event::Swappy, "SwappyFramePacing already initialized");
+        Log::Warning(Event::Swappy, "SwappyFramePacing already tried initializing, success: " + std::to_string(sEnabled));
         return sEnabled;
     }
 
@@ -87,14 +87,16 @@ bool SwappyFramePacing::isEnabled() {
     return SwappyGL_isEnabled();
 }
 
-void SwappyFramePacing::setSwapInterval(uint64_t swapIntervalNs) {
+bool SwappyFramePacing::setSwapInterval(uint64_t swapIntervalNs) {
     if (!sInitialized || !sEnabled) {
         Log::Debug(Event::Swappy, "SwappyFramePacing not available, skipping setSwapInterval");
-        return;
+        return false;
     }
 
     SwappyGL_setSwapIntervalNS(swapIntervalNs);
     Log::Debug(Event::Swappy, "SwappyFramePacing swap interval set to " + std::to_string(swapIntervalNs) + " ns");
+
+    return true;
 }
 
 void SwappyFramePacing::setTargetFrameRate(int targetFps) {
@@ -117,7 +119,39 @@ void SwappyFramePacing::setTargetFrameRate(int targetFps) {
     }
 
     setSwapInterval(swapIntervalNs);
-    Log::Info(Event::Swappy, "SwappyFramePacing target frame rate set to " + std::to_string(targetFps) + " FPS");
+    Log::Info(Event::Swappy, "SwappyFramePacing target frame rate set to " + std::to_string(targetFps) + " FPS, swapIntervalNS: " + std::to_string(swapIntervalNs));
+    
+    // Log current Swappy configuration for diagnostics
+    Log::Info(Event::Swappy, "=== Swappy Configuration ===");
+    
+    try {
+        Log::Info(Event::Swappy, "Target FPS: " + std::to_string(targetFps));
+        Log::Info(Event::Swappy, "Swap Interval: " + std::to_string(swapIntervalNs) + " ns");
+        
+        double expectedFrameTime = swapIntervalNs / 1000000.0;
+        Log::Info(Event::Swappy, "Expected frame time: " + std::to_string(expectedFrameTime) + " ms");
+        
+        Log::Info(Event::Swappy, sInitialized ? "Swappy initialized: YES" : "Swappy initialized: NO");
+        Log::Info(Event::Swappy, sEnabled ? "Swappy enabled: YES" : "Swappy enabled: NO");
+        
+        // Get current refresh rate from Swappy - wrap in try-catch as this might fail
+        try {
+            uint64_t refreshPeriod = SwappyGL_getRefreshPeriodNanos();
+            if (refreshPeriod > 0) {
+                double displayFps = 1000000000.0 / refreshPeriod;
+                Log::Info(Event::Swappy, "Display refresh rate: " + std::to_string(displayFps) + " Hz");
+                Log::Info(Event::Swappy, "Display refresh period: " + std::to_string(refreshPeriod) + " ns");
+            } else {
+                Log::Warning(Event::Swappy, "Display refresh rate: UNKNOWN (returned 0)");
+            }
+        } catch (...) {
+            Log::Warning(Event::Swappy, "Failed to get display refresh rate");
+        }
+        
+        Log::Info(Event::Swappy, "=== End Configuration ===");
+    } catch (...) {
+        Log::Error(Event::Swappy, "Error logging Swappy configuration");
+    }
 }
 
 void SwappyFramePacing::setFenceTimeout(uint64_t fenceTimeoutNs) {
@@ -151,11 +185,54 @@ void SwappyFramePacing::setWindow(ANativeWindow* window) {
 bool SwappyFramePacing::swap(EGLDisplay display, EGLSurface surface) {
     if (!sInitialized) {
         // Fall back to standard eglSwapBuffers if Swappy is not initialized
+        Log::Warning(Event::Swappy, "SWAP: Swappy not initialized, using eglSwapBuffers");
         return eglSwapBuffers(display, surface) == EGL_TRUE;
     }
 
-    // SwappyGL_swap handles the case where Swappy is not enabled by falling back to eglSwapBuffers
-    return SwappyGL_swap(display, surface);
+    static int frameCount = 0;
+    static auto fpsCountStart = std::chrono::steady_clock::now();
+    static int fpsFrameCount = 0;
+    
+    auto now = std::chrono::steady_clock::now();
+    frameCount++;
+    fpsFrameCount++;
+    
+    // Calculate and log actual FPS every 2 seconds
+    auto fpsDuration = std::chrono::duration_cast<std::chrono::milliseconds>(now - fpsCountStart).count();
+    if (fpsDuration >= 2000) {  // Every 2 seconds
+        try {
+            double actualFps = (fpsFrameCount * 1000.0) / fpsDuration;
+            Log::Info(Event::Swappy, "ACTUAL FPS: " + std::to_string(actualFps));
+            
+            // Get Swappy's configured target
+            uint64_t swapInterval = SwappyGL_getSwapIntervalNS();
+            if (swapInterval > 0) {
+                double targetFps = 1000000000.0 / swapInterval;
+                Log::Info(Event::Swappy, "TARGET FPS: " + std::to_string(targetFps));
+                
+                if (actualFps > targetFps * 1.5) {
+                    Log::Warning(Event::Swappy, "WARNING: ACTUAL FPS MUCH HIGHER THAN TARGET!");
+                } else if (actualFps >= targetFps * 0.9 && actualFps <= targetFps * 1.1) {
+                    Log::Info(Event::Swappy, "SUCCESS: FPS within target range");
+                }
+            }
+        } catch (...) {
+            Log::Error(Event::Swappy, "Error calculating FPS");
+        }
+        
+        fpsCountStart = now;
+        fpsFrameCount = 0;
+    }
+    
+    // Log occasional diagnostic info
+    if (frameCount % 120 == 0) {
+        Log::Info(Event::Swappy, "Using SwappyGL_swap, frame: " + std::to_string(frameCount));
+    }
+
+    // Call SwappyGL_swap
+    bool result = SwappyGL_swap(display, surface);
+    
+    return result;
 }
 
 // === METRICS AND STATISTICS ===
@@ -242,22 +319,25 @@ void SwappyFramePacing::setMaxAutoSwapInterval(uint64_t maxSwapIntervalNs) {
 
 void SwappyFramePacing::setAutoSwapInterval(bool enabled) {
     if (!sInitialized || !sEnabled) {
+        Log::Warning(Event::Swappy, "setAutoSwapInterval called but Swappy not initialized/enabled");
         return;
     }
 
     SwappyGL_setAutoSwapInterval(enabled);
-    Log::Debug(Event::Swappy,
-               std::string("SwappyFramePacing auto swap interval ") + (enabled ? "enabled" : "disabled"));
+    Log::Info(Event::Swappy,
+               std::string("[CONFIG] Auto swap interval ") + (enabled ? "ENABLED" : "DISABLED") + 
+               " (if enabled, Swappy will auto-adjust FPS and override manual settings!)");
 }
 
 void SwappyFramePacing::setAutoPipelineMode(bool enabled) {
     if (!sInitialized || !sEnabled) {
+        Log::Warning(Event::Swappy, "setAutoPipelineMode called but Swappy not initialized/enabled");
         return;
     }
 
     SwappyGL_setAutoPipelineMode(enabled);
-    Log::Debug(Event::Swappy,
-               std::string("SwappyFramePacing auto pipeline mode ") + (enabled ? "enabled" : "disabled"));
+    Log::Info(Event::Swappy,
+               std::string("[CONFIG] Auto pipeline mode ") + (enabled ? "ENABLED" : "DISABLED"));
 }
 
 void SwappyFramePacing::logFrameStats() {
@@ -427,6 +507,7 @@ bool SwappyFramePacing::getNativeFrameTimingStats(FrameTimingStats* stats) {
                               std::chrono::steady_clock::now().time_since_epoch())
                               .count();
     stats->collectionDurationMs = currentTime - sCollectionStartTime;
+    stats->currentSwapInterval = SwappyGL_getSwapIntervalNS();
 
     return true;
 }

@@ -26,6 +26,7 @@ public class FrameTimingStats {
     // Collection metadata
     public final int sampleCount;
     public final long collectionDurationMs;
+    public final long currentSwapInterval;
 
     /**
      * Constructor that takes the native timing data array.
@@ -35,7 +36,7 @@ public class FrameTimingStats {
      *                sampleCount, collectionDurationMs]
      */
     FrameTimingStats(long[] nativeStats) {
-        if (nativeStats == null || nativeStats.length != 14) {
+        if (nativeStats == null || nativeStats.length != 15) {
             throw new IllegalArgumentException("Invalid native stats array");
         }
 
@@ -60,6 +61,7 @@ public class FrameTimingStats {
         // Collection metadata
         this.sampleCount = (int) nativeStats[12];
         this.collectionDurationMs = nativeStats[13];
+        this.currentSwapInterval = nativeStats[14];
     }
 
     @Override
@@ -74,6 +76,7 @@ public class FrameTimingStats {
                         "  CPU: avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms\n" +
                         "  GPU: avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms\n" +
                         "  Total: avg=%.2fms, min=%.2fms, max=%.2fms, median=%.2fms\n" +
+                        "  currentSwapInterval = %d" +
                         "}",
                 sampleCount, collectionDurationMs,
                 avgCpuTimeNs / 1_000_000.0, minCpuTimeNs / 1_000_000.0,
@@ -81,7 +84,8 @@ public class FrameTimingStats {
                 avgGpuTimeNs / 1_000_000.0, minGpuTimeNs / 1_000_000.0,
                 maxGpuTimeNs / 1_000_000.0, medianGpuTimeNs / 1_000_000.0,
                 avgTotalTimeNs / 1_000_000.0, minTotalTimeNs / 1_000_000.0,
-                maxTotalTimeNs / 1_000_000.0, medianTotalTimeNs / 1_000_000.0
+                maxTotalTimeNs / 1_000_000.0, medianTotalTimeNs / 1_000_000.0,
+                currentSwapInterval
         );
     }
 

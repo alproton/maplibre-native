@@ -264,95 +264,95 @@ public class SwappyPerformanceMonitor {
     public static void emergencyDiagnostics() {
         SwappyFrameStats stats = SwappyRenderer.getStats();
         if (stats == null) {
-            Logger.e(TAG, "=== EMERGENCY DIAGNOSTICS ===");
-            Logger.e(TAG, "ERROR: No Swappy statistics available!");
-            Logger.e(TAG, "Check if Swappy is initialized and stats are enabled");
-            Logger.e(TAG, "=== END DIAGNOSTICS ===");
+            Logger.i(TAG, "=== EMERGENCY DIAGNOSTICS ===");
+            Logger.i(TAG, "ERROR: No Swappy statistics available!");
+            Logger.i(TAG, "Check if Swappy is initialized and stats are enabled");
+            Logger.i(TAG, "=== END DIAGNOSTICS ===");
             return;
         }
 
-        Logger.e(TAG, "=== EMERGENCY DIAGNOSTICS ===");
-        Logger.e(TAG, "Total Frames: " + stats.getTotalFrames());
-        Logger.e(TAG, "Overall Performance: " + stats.toString());
+        Logger.i(TAG, "=== EMERGENCY DIAGNOSTICS ===");
+        Logger.i(TAG, "Total Frames: " + stats.getTotalFrames());
+        Logger.i(TAG, "Overall Performance: " + stats.toString());
 
         // Detailed idle frame breakdown (SurfaceFlinger delays)
-        Logger.e(TAG, "--- Compositor Queue Delays (idleFrames) ---");
+        Logger.i(TAG, "--- Compositor Queue Delays (idleFrames) ---");
         long[] idleFrames = stats.getIdleFrames();
         long totalIdle = 0;
         for (int i = 0; i < idleFrames.length; i++) {
             if (idleFrames[i] > 0) {
                 double percentage = (double)idleFrames[i] / stats.getTotalFrames() * 100.0;
-                Logger.e(TAG, String.format("Frames idle for %d refresh periods: %d (%.1f%%)",
+                Logger.i(TAG, String.format("Frames idle for %d refresh periods: %d (%.1f%%)",
                          i, idleFrames[i], percentage));
                 totalIdle += idleFrames[i];
             }
         }
-        Logger.e(TAG, String.format("Total idle frames: %d (%.1f%% of all frames)",
+        Logger.i(TAG, String.format("Total idle frames: %d (%.1f%% of all frames)",
                  totalIdle, (double)totalIdle / stats.getTotalFrames() * 100.0));
 
         // Detailed late frame breakdown (missed deadlines)
-        Logger.e(TAG, "--- Missed Presentation Deadlines (lateFrames) ---");
+        Logger.i(TAG, "--- Missed Presentation Deadlines (lateFrames) ---");
         long[] lateFrames = stats.getLateFrames();
         long totalLate = 0;
         for (int i = 0; i < lateFrames.length; i++) {
             if (lateFrames[i] > 0) {
                 double percentage = (double)lateFrames[i] / stats.getTotalFrames() * 100.0;
-                Logger.e(TAG, String.format("Frames %d refresh periods late: %d (%.1f%%)",
+                Logger.i(TAG, String.format("Frames %d refresh periods late: %d (%.1f%%)",
                          i, lateFrames[i], percentage));
                 totalLate += lateFrames[i];
             }
         }
-        Logger.e(TAG, String.format("Total late frames: %d (%.1f%% of all frames)",
+        Logger.i(TAG, String.format("Total late frames: %d (%.1f%% of all frames)",
                  totalLate, (double)totalLate / stats.getTotalFrames() * 100.0));
 
         // Frame timing consistency analysis
-        Logger.e(TAG, "--- Frame Timing Consistency (offsetFromPreviousFrame) ---");
+        Logger.i(TAG, "--- Frame Timing Consistency (offsetFromPreviousFrame) ---");
         long[] offsetFrames = stats.getOffsetFromPreviousFrame();
         for (int i = 0; i < offsetFrames.length; i++) {
             if (offsetFrames[i] > 0) {
                 double percentage = (double)offsetFrames[i] / stats.getTotalFrames() * 100.0;
-                Logger.e(TAG, String.format("Frames with %d refresh periods since previous: %d (%.1f%%)",
+                Logger.i(TAG, String.format("Frames with %d refresh periods since previous: %d (%.1f%%)",
                          i, offsetFrames[i], percentage));
             }
         }
 
         // End-to-end latency analysis
-        Logger.e(TAG, "--- End-to-End Latency (latencyFrames) ---");
+        Logger.i(TAG, "--- End-to-End Latency (latencyFrames) ---");
         long[] latencyFrames = stats.getLatencyFrames();
         for (int i = 0; i < latencyFrames.length; i++) {
             if (latencyFrames[i] > 0) {
                 double percentage = (double)latencyFrames[i] / stats.getTotalFrames() * 100.0;
-                Logger.e(TAG, String.format("Frames with %d refresh periods total latency: %d (%.1f%%)",
+                Logger.i(TAG, String.format("Frames with %d refresh periods total latency: %d (%.1f%%)",
                          i, latencyFrames[i], percentage));
             }
         }
 
         // === DIAGNOSTIC RECOMMENDATIONS ===
-        Logger.e(TAG, "--- DIAGNOSTIC RECOMMENDATIONS ---");
+        Logger.i(TAG, "--- DIAGNOSTIC RECOMMENDATIONS ---");
 
         if (totalIdle > stats.getTotalFrames() * 0.8) {
-            Logger.e(TAG, "SEVERE: >80% frames waiting in compositor queue");
-            Logger.e(TAG, "SOLUTION: Apply buffer stuffing fix immediately");
-            Logger.e(TAG, "SwappyRenderer.setBufferStuffingFixWait(4);");
+            Logger.i(TAG, "SEVERE: >80% frames waiting in compositor queue");
+            Logger.i(TAG, "SOLUTION: Apply buffer stuffing fix immediately");
+            Logger.i(TAG, "SwappyRenderer.setBufferStuffingFixWait(4);");
         }
 
         if (totalIdle > totalLate) {
-            Logger.e(TAG, "ANALYSIS: Compositor bottleneck (not rendering bottleneck)");
-            Logger.e(TAG, "PRIMARY: Buffer stuffing fix should resolve this");
+            Logger.i(TAG, "ANALYSIS: Compositor bottleneck (not rendering bottleneck)");
+            Logger.i(TAG, "PRIMARY: Buffer stuffing fix should resolve this");
         } else {
-            Logger.e(TAG, "ANALYSIS: Rendering bottleneck (CPU/GPU performance)");
-            Logger.e(TAG, "PRIMARY: Optimize rendering or reduce frame rate");
+            Logger.i(TAG, "ANALYSIS: Rendering bottleneck (CPU/GPU performance)");
+            Logger.i(TAG, "PRIMARY: Optimize rendering or reduce frame rate");
         }
 
         // Check for specific patterns
         if (idleFrames.length > 3 && idleFrames[3] > stats.getTotalFrames() * 0.3) {
-            Logger.e(TAG, "PATTERN: Frames waiting 3+ refresh periods");
-            Logger.e(TAG, "This is classic buffer stuffing - apply fix immediately");
+            Logger.i(TAG, "PATTERN: Frames waiting 3+ refresh periods");
+            Logger.i(TAG, "This is classic buffer stuffing - apply fix immediately");
         }
 
         applyEmergencyFixes();
 
-        Logger.e(TAG, "=== END EMERGENCY DIAGNOSTICS ===");
+        Logger.i(TAG, "=== END EMERGENCY DIAGNOSTICS ===");
     }
 
     /**
@@ -367,7 +367,7 @@ public class SwappyPerformanceMonitor {
 
         SwappyFrameStats stats = SwappyRenderer.getStats();
         if (stats == null) {
-            Logger.e(TAG, "Cannot apply emergency fixes - no stats available");
+            Logger.i(TAG, "Cannot apply emergency fixes - no stats available");
             return;
         }
 
