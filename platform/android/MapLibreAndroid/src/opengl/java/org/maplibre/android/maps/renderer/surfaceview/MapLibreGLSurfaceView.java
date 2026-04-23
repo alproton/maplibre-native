@@ -370,6 +370,7 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
         boolean doRenderNotification = false;
         boolean askedToReleaseEglContext = false;
         boolean isWaitingFrame = false;
+        boolean needStartEgl = false;
         int w = 0;
         int h = 0;
         Runnable event = null;
@@ -460,16 +461,13 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
                   if (askedToReleaseEglContext) {
                     askedToReleaseEglContext = false;
                   } else {
-                    try {
-                      eglHelper.start();
-                    } catch (RuntimeException exception) {
-                      renderThreadManager.notifyAll();
-                      return;
-                    }
-                    haveEglContext = true;
-                    createEglContext = true;
-
-                    renderThreadManager.notifyAll();
+                    // Initialize EGL outside the renderThreadManager monitor.
+                    // On some drivers eglGetDisplay
+                    // can hang inside an internal driver mutex; holding this
+                    // monitor during that hang would ANR the main thread in
+                    // surfaceRedrawNeededAsync.
+                    needStartEgl = true;
+                    break;
                   }
                 }
 
@@ -512,6 +510,24 @@ public class MapLibreGLSurfaceView extends MapLibreSurfaceView {
               renderThreadManager.wait();
             }
           } // end of synchronized(sGLThreadManager)
+
+          if (needStartEgl) {
+            needStartEgl = false;
+            try {
+              eglHelper.start();
+            } catch (RuntimeException exception) {
+              synchronized (renderThreadManager) {
+                renderThreadManager.notifyAll();
+              }
+              return;
+            }
+            synchronized (renderThreadManager) {
+              haveEglContext = true;
+              renderThreadManager.notifyAll();
+            }
+            createEglContext = true;
+            continue;
+          }
 
           if (event != null) {
             event.run();

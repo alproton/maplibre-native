@@ -10,11 +10,26 @@ import org.maplibre.android.maps.renderer.MapRenderer;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public abstract class MapLibreSurfaceView extends SurfaceView implements SurfaceHolder.Callback2 {
 
   protected static final String TAG = "MapLibreSurfaceView";
   protected final RenderThreadManager renderThreadManager = new RenderThreadManager();
+
+  /**
+   * Publishes render requests from the UI thread without taking the render
+   * thread's monitor on the UI thread. Shared across MapLibreSurfaceView
+   * instances; a stuck publish on one view will not leak a thread per view.
+   * See {@link #surfaceRedrawNeededAsync}.
+   */
+  private static final ExecutorService REDRAW_PUBLISHER =
+    Executors.newSingleThreadExecutor(r -> {
+      Thread t = new Thread(r, "MapLibreSurfaceView-RedrawPublisher");
+      t.setDaemon(true);
+      return t;
+    });
 
   protected SurfaceViewMapRenderer renderer;
   protected RenderThread renderThread;
@@ -166,11 +181,21 @@ public abstract class MapLibreSurfaceView extends SurfaceView implements Surface
   /**
    * This method is part of the SurfaceHolder.Callback2 interface, and is
    * not normally called or subclassed by clients of MapLibreSurfaceView.
+   *
+   * <p>Publishes the render request asynchronously so the UI thread never
+   * blocks on the render thread's monitor. On some drivers the render thread
+   * can be stuck inside eglGetDisplay while holding that monitor;
+   * if this method blocked, the UI thread would ANR during layout
+   * and freeze the display.</p>
    */
   @Override
   public void surfaceRedrawNeededAsync(SurfaceHolder holder, Runnable finishDrawing) {
-    if (renderThread != null) {
-      renderThread.requestRenderAndNotify(finishDrawing);
+    RenderThread rt = renderThread;
+    if (rt != null) {
+      rt.postRenderRequest();
+    }
+    if (finishDrawing != null) {
+      finishDrawing.run();
     }
   }
 
@@ -350,6 +375,30 @@ public abstract class MapLibreSurfaceView extends SurfaceView implements Surface
 
         renderThreadManager.notifyAll();
       }
+    }
+
+    /**
+     * Publish a render request without blocking the caller on the render
+     * thread's monitor. Intended for UI-thread surface callbacks (see
+     * {@link MapLibreSurfaceView#surfaceRedrawNeededAsync}): the monitor
+     * is taken on a dedicated background thread so a stuck render thread
+     * cannot ANR the UI thread. Ordering between successive posts is
+     * preserved by the single-threaded publisher.
+     */
+    public void postRenderRequest() {
+      // If the render thread is asking itself to render (re-entrancy during
+      // a client callback), just flag the state directly; we already hold
+      // the thread of execution, no need to round-trip through the publisher.
+      if (Thread.currentThread() == this) {
+        requestRender = true;
+        return;
+      }
+      REDRAW_PUBLISHER.execute(() -> {
+        synchronized (renderThreadManager) {
+          requestRender = true;
+          renderThreadManager.notifyAll();
+        }
+      });
     }
 
     public void surfaceCreated() {
