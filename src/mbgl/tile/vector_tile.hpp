@@ -17,6 +17,7 @@ public:
                TileObserver* observer = nullptr);
     ~VectorTile() override;
 
+    void reloadIfFailed() override;
     void setNecessity(TileNecessity) final;
     void setUpdateParameters(const TileUpdateParameters&) final;
     void setMetadata(std::optional<Timestamp> modified, std::optional<Timestamp> expires);

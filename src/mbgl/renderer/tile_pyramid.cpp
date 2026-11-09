@@ -461,6 +461,12 @@ void TilePyramid::updateTileCacheSettings(const TileCacheSettingsMap& settings) 
     skipRelayoutClear = it->second.skipRelayoutClear;
 }
 
+void TilePyramid::reloadFailedTiles() {
+    for (auto& entry : tiles) {
+        entry.second->reloadIfFailed();
+    }
+}
+
 void TilePyramid::reduceMemoryUse() {
     cache.clear();
 }

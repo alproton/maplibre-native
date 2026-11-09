@@ -145,6 +145,10 @@ void RasterDEMTile::setMask(TileMask&& mask) {
     }
 }
 
+void RasterDEMTile::reloadIfFailed() {
+    loader.reloadIfFailed();
+}
+
 void RasterDEMTile::setNecessity(TileNecessity necessity) {
     loader.setNecessity(necessity);
 }

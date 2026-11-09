@@ -361,6 +361,7 @@ public:
 
     jni::jint getPrefetchZoomDelta(JNIEnv&);
 
+    void reloadFailedTiles(JNIEnv&);
     void setTileCacheEnabled(JNIEnv&, jni::jboolean);
 
     jni::jboolean getTileCacheEnabled(JNIEnv&);

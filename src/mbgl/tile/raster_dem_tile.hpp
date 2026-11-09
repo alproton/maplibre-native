@@ -66,6 +66,7 @@ public:
     ~RasterDEMTile() override;
 
     std::unique_ptr<TileRenderData> createRenderData() override;
+    void reloadIfFailed() override;
     void setNecessity(TileNecessity) override;
     void setUpdateParameters(const TileUpdateParameters&) override;
 

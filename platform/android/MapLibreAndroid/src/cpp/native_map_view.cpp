@@ -1364,6 +1364,10 @@ jni::jint NativeMapView::getPrefetchZoomDelta(JNIEnv&) {
     return jni::jint(map->getPrefetchZoomDelta());
 }
 
+void NativeMapView::reloadFailedTiles(JNIEnv&) {
+    rendererFrontend->reloadFailedTiles();
+}
+
 void NativeMapView::setTileCacheEnabled(JNIEnv&, jni::jboolean enabled) {
     rendererFrontend->setTileCacheEnabled(enabled);
 }
@@ -1624,6 +1628,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::getPrefetchTiles, "nativeGetPrefetchTiles"),
         METHOD(&NativeMapView::setPrefetchZoomDelta, "nativeSetPrefetchZoomDelta"),
         METHOD(&NativeMapView::getPrefetchZoomDelta, "nativeGetPrefetchZoomDelta"),
+        METHOD(&NativeMapView::reloadFailedTiles, "nativeReloadFailedTiles"),
         METHOD(&NativeMapView::setTileCacheEnabled, "nativeSetTileCacheEnabled"),
         METHOD(&NativeMapView::getTileCacheEnabled, "nativeGetTileCacheEnabled"),
         METHOD(&NativeMapView::addTileCacheSettings, "nativeAddTileCacheSettings"),

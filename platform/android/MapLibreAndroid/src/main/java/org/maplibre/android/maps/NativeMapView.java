@@ -824,6 +824,14 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public void reloadFailedTiles() {
+    if (checkState("reloadFailedTiles")) {
+      return;
+    }
+    nativeReloadFailedTiles();
+  }
+
+  @Override
   public void setTileCacheEnabled(boolean enabled) {
     if (checkState("setTileCacheEnabled")) {
       return;
@@ -2023,6 +2031,9 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   private native void nativeSetPrefetchZoomDelta(int delta);
+
+  @Keep
+  private native void nativeReloadFailedTiles();
 
   @Keep
   private native void nativeSetTileCacheEnabled(boolean enabled);

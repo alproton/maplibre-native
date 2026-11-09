@@ -69,6 +69,7 @@ public:
                                                  const std::optional<std::map<std::string, mbgl::Value>>& args) const;
 
     // Memory
+    void reloadFailedTiles();
     void setTileCacheEnabled(bool);
     bool getTileCacheEnabled() const;
     void addTileCacheSettings(const TileCacheSettings& settings);

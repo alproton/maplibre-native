@@ -1,5 +1,6 @@
 #include <mbgl/test/util.hpp>
 #include <mbgl/test/fake_file_source.hpp>
+#include <mbgl/storage/response.hpp>
 #include <mbgl/tile/raster_dem_tile.hpp>
 #include <mbgl/tile/tile_loader_impl.hpp>
 
@@ -40,6 +41,23 @@ public:
                          {Scheduler::GetBackground(), uniqueID}},
           style{fileSource, 1, tileParameters.threadPool} {}
 };
+
+TEST(RasterDEMTile, ReloadFailedNetworkRequest) {
+    RasterDEMTileTest test;
+    auto fileSource = std::static_pointer_cast<FakeFileSource>(test.fileSource);
+    RasterDEMTile tile(OverscaledTileID(0, 0, 0), "testSource", test.tileParameters, test.tileset);
+    tile.setNecessity(TileNecessity::Required);
+    Response failure;
+    failure.error = std::make_unique<Response::Error>(Response::Error::Reason::Connection, "Connection failed");
+    ASSERT_TRUE(fileSource->respond(Resource::Tile, failure));
+    EXPECT_TRUE(tile.isLoaded());
+    EXPECT_FALSE(tile.isRenderable());
+    EXPECT_TRUE(fileSource->requests.empty());
+    tile.reloadIfFailed();
+    ASSERT_EQ(1u, fileSource->requests.size());
+    tile.reloadIfFailed();
+    EXPECT_EQ(1u, fileSource->requests.size());
+}
 
 TEST(RasterDEMTile, setError) {
     RasterDEMTileTest test;

@@ -580,6 +580,10 @@ void RenderTileSource::updateTileCacheSettings(const TileCacheSettingsMap& setti
     tilePyramid.updateTileCacheSettings(settings);
 }
 
+void RenderTileSource::reloadFailedTiles() {
+    tilePyramid.reloadFailedTiles();
+}
+
 void RenderTileSource::reduceMemoryUse() {
     tilePyramid.reduceMemoryUse();
 }

@@ -20,6 +20,10 @@ VectorTile::~VectorTile() {
     GeometryTile::cancel();
 }
 
+void VectorTile::reloadIfFailed() {
+    loader.reloadIfFailed();
+}
+
 void VectorTile::setNecessity(TileNecessity necessity) {
     loader.setNecessity(necessity);
 }

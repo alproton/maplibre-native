@@ -108,6 +108,9 @@ public:
      */
     const std::vector<PlacedSymbolData>& getPlacedSymbolsData() const;
 
+    /// Retry failed network requests for retained, required tiles without discarding loaded tiles.
+    void reloadFailedTiles();
+
     // Memory
     void setTileCacheEnabled(bool);
     bool getTileCacheEnabled() const;

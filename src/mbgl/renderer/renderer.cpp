@@ -139,6 +139,10 @@ const std::vector<PlacedSymbolData>& Renderer::getPlacedSymbolsData() const {
     return impl->orchestrator.getPlacedSymbolsData();
 }
 
+void Renderer::reloadFailedTiles() {
+    impl->orchestrator.reloadFailedTiles();
+}
+
 void Renderer::setTileCacheEnabled(bool enable) {
     impl->orchestrator.setTileCacheEnabled(enable);
 }

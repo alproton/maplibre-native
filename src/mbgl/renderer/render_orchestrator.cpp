@@ -792,6 +792,13 @@ void RenderOrchestrator::addTileCacheSettings(const TileCacheSettings& settings)
     }
 }
 
+void RenderOrchestrator::reloadFailedTiles() {
+    for (const auto& entry : renderSources) {
+        entry.second->reloadFailedTiles();
+    }
+    observer->onInvalidate();
+}
+
 void RenderOrchestrator::reduceMemoryUse() {
     MLN_TRACE_FUNC();
 

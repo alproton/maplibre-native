@@ -100,6 +100,7 @@ public:
     void setTileCacheEnabled(bool);
     bool getTileCacheEnabled() const;
     void addTileCacheSettings(const TileCacheSettings& settings);
+    void reloadFailedTiles();
     void reduceMemoryUse();
     void dumpDebugLogs();
     void collectPlacedSymbolData(bool);
