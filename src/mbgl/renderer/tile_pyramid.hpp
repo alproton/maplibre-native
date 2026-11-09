@@ -64,6 +64,7 @@ public:
     void setCacheEnabled(bool);
     void setCacheSource(std::string source) { cache.setSource(std::move(source)); }
     void updateTileCacheSettings(const TileCacheSettingsMap& settings);
+    void reloadFailedTiles();
     void reduceMemoryUse();
 
     void setObserver(TileObserver*);

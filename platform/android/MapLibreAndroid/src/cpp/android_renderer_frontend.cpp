@@ -155,6 +155,10 @@ const TaggedScheduler& AndroidRendererFrontend::getThreadPool() const {
     return mapRenderer.getThreadPool();
 }
 
+void AndroidRendererFrontend::reloadFailedTiles() {
+    mapRenderer.actor().invoke(&Renderer::reloadFailedTiles);
+}
+
 void AndroidRendererFrontend::setTileCacheEnabled(bool enabled) {
     mapRenderer.actor().invoke(&Renderer::setTileCacheEnabled, enabled);
 }

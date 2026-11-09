@@ -2,6 +2,10 @@
 
 ## main
 
+### ✨ Features and improvements
+
+- Add `MapLibreMap.reloadFailedTiles()` to retry failed tile network requests when connectivity returns without discarding loaded tiles.
+
 ## 11.8.6
 
 ### ✨ Features and improvements

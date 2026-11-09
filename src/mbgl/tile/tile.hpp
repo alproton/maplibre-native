@@ -95,6 +95,8 @@ public:
 
     virtual float getQueryPadding(const std::unordered_map<std::string, const RenderLayer*>&);
 
+    virtual void reloadIfFailed() {}
+
     void setTriedCache();
 
     // Returns true when the tile source has received a first response,

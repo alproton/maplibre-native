@@ -23,6 +23,7 @@ public:
     TileLoader(T&, const OverscaledTileID&, const TileParameters&, const Tileset&);
     ~TileLoader();
 
+    void reloadIfFailed();
     void setNecessity(TileNecessity newNecessity);
     void setUpdateParameters(const TileUpdateParameters&);
 
@@ -48,6 +49,7 @@ private:
 
     T& tile;
     TileNecessity necessity;
+    bool networkRequestFailed = false;
     Resource resource;
     std::shared_ptr<FileSource> fileSource;
     std::unique_ptr<AsyncRequest> request;

@@ -4,6 +4,8 @@
 
 ### ✨ New features
 
+- [core] Add `Renderer::reloadFailedTiles()` to retry failed tile network requests without discarding loaded tiles.
+
 - *...Add new stuff here...*
 - [core] Added new map observer events: onPreCompileShader, onPostCompileShader, onShaderCompileFailed, onGlyphsLoaded, onGlyphsError, onGlyphsRequested, onTileAction, onSpriteLoaded, onSpriteError, onSpriteRequested ([#2694](https://github.com/maplibre/maplibre-native/pull/2694)).
 - [core] Add WebP image decoding support to default platform (Linux, Windows)

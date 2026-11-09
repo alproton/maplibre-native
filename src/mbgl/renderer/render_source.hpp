@@ -107,6 +107,8 @@ public:
     virtual void setCacheSource(std::string){};
     virtual void updateTileCacheSettings(const TileCacheSettingsMap&) {};
 
+    virtual void reloadFailedTiles() {}
+
     virtual void reduceMemoryUse() = 0;
 
     virtual void dumpDebugLogs() const = 0;

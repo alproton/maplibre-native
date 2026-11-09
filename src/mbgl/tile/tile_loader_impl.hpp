@@ -75,6 +75,14 @@ TileLoader<T>::~TileLoader() {
 }
 
 template <typename T>
+void TileLoader<T>::reloadIfFailed() {
+    if (networkRequestFailed && necessity == TileNecessity::Required && !request) {
+        networkRequestFailed = false;
+        loadFromNetwork();
+    }
+}
+
+template <typename T>
 void TileLoader<T>::setNecessity(TileNecessity newNecessity) {
     if (newNecessity != necessity) {
         necessity = newNecessity;
@@ -160,6 +168,9 @@ void TileLoader<T>::makeOptional() {
 
 template <typename T>
 void TileLoader<T>::loadedData(const Response& res, Resource::LoadingMethod method) {
+    if (method == Resource::LoadingMethod::NetworkOnly) {
+        networkRequestFailed = res.error && res.error->reason != Response::Error::Reason::NotFound;
+    }
     if (res.error && res.error->reason != Response::Error::Reason::NotFound) {
         tile.setError(std::make_exception_ptr(std::runtime_error(res.error->message)));
         tile.onTileAction(TileOperation::Error);
@@ -193,6 +204,7 @@ void TileLoader<T>::loadFromNetwork() {
         return;
     }
 
+    networkRequestFailed = false;
     tile.onTileAction(TileOperation::RequestedFromNetwork);
 
     // Instead of using Resource::LoadingMethod::All, we're first doing a

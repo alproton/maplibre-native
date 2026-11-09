@@ -51,6 +51,7 @@ public:
     void setCacheEnabled(bool) override;
     void setCacheSource(std::string name) override { tilePyramid.setCacheSource(std::move(name)); }
     void updateTileCacheSettings(const TileCacheSettingsMap& settings) override;
+    void reloadFailedTiles() override;
     void reduceMemoryUse() override;
     void dumpDebugLogs() const override;
 

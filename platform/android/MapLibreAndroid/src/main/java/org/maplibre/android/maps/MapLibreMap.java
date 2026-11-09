@@ -328,6 +328,16 @@ public final class MapLibreMap {
   }
 
   /**
+   * Retries retained, required tiles whose last network request failed, without discarding loaded tiles.
+   * Call this method when network connectivity returns.
+   * It is safe to call repeatedly; requests already in progress are not duplicated.
+   * This method must be called on the UI thread.
+   */
+  public void reloadFailedTiles() {
+    nativeMapView.reloadFailedTiles();
+  }
+
+  /**
    * Indicating whether the map may cache tiles for different zoom levels or not.
    *
    * @param enabled true causes the map view to consume more memory and have a smoother user

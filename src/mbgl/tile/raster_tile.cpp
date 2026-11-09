@@ -98,6 +98,10 @@ void RasterTile::setMask(TileMask&& mask) {
     }
 }
 
+void RasterTile::reloadIfFailed() {
+    loader.reloadIfFailed();
+}
+
 void RasterTile::setNecessity(TileNecessity necessity) {
     loader.setNecessity(necessity);
 }

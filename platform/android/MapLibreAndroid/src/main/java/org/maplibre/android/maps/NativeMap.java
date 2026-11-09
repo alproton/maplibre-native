@@ -237,6 +237,8 @@ interface NativeMap {
   @IntRange(from = 0)
   int getPrefetchZoomDelta();
 
+  void reloadFailedTiles();
+
   void setTileCacheEnabled(boolean enabled);
 
   boolean getTileCacheEnabled();
